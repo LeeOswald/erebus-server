@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.leeoswald.erebus";
+option java_outer_classname = "ErebusProto";
+option objc_class_prefix = "Er";
+
+package erebus;
+
+
+service Erebus {
+  rpc Exit (ExitRequest) returns (GenericReply) {}
+  rpc Version(Void) returns (ServerVersionReply) {}
+}
+
+message Void {
+}
+
+message GenericReply {
+  ResultCode code = 1;  
+}
+
+message ServerVersionReply {
+  GenericReply header = 1;
+  uint32 major = 2;
+  uint32 minor = 3;
+  uint32 patch = 4;
+}
+
+message ExitRequest {
+  bool restart = 1;
+}
+
+enum ResultCode {
+  Success = 0;
+  Failure = 1;
+}
+

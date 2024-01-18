@@ -87,6 +87,10 @@ if(WIN32)
     add_definitions(-D_WIN32_WINNT=0x0601)
 endif()
 
+# require gRPC & protobuf
+find_package(gRPC CONFIG REQUIRED)
+find_package(Protobuf REQUIRED)
+
 # component names
 set(EREBUS_LIB erebus)
 set(EREBUS_SERVER erebus-server)
