@@ -5,6 +5,7 @@ enable_testing()
 add_executable(
     ${TARGET}
     common.hpp
+    exception.cpp
     main.cpp
 )
 

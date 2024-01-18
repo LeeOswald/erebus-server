@@ -6,9 +6,9 @@
 namespace Er
 {
 
-struct Empty
+struct EREBUS_EXPORT Empty
 {
-    Empty() noexcept = default;
+    constexpr Empty() noexcept = default;
 };
 
 

@@ -1,8 +1,31 @@
+if(ER_POSIX)
+    set(PLATFORM_FILES
+        ../../include/erebus/util/posixerror.hxx
+        util/posixerror_posix.cxx
+    )
+endif()
+
 add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/empty.hxx
     ../../include/erebus/erebus.hxx
+    ../../include/erebus/exception.hxx
+    ../../include/erebus/knownprops.hxx
+    ../../include/erebus/log.hxx
     ../../include/erebus/platform.hxx
+    ../../include/erebus/property.hxx
+    ../../include/erebus/sourcelocation.hxx
+    ../../include/erebus/stringliteral.hxx
+    ../../include/erebus/util/autoptr.hxx
+    ../../include/erebus/util/condition.hxx
+    ../../include/erebus/util/crc32.hxx
+    ../../include/erebus/util/exceptionutil.hxx
+    ../../include/erebus/util/format.hxx
+    ../../include/erebus/util/generichandle.hxx
+    exception.cxx
     init.cxx
+    knownprops.cxx
+    util/exceptionutil.cxx
+    util/format.cxx
     ${PLATFORM_FILES}
 )
 
