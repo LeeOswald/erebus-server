@@ -3,6 +3,11 @@ if(ER_POSIX)
         ../../include/erebus/util/posixerror.hxx
         util/posixerror_posix.cxx
     )
+elseif(ER_WINDOWS)
+    set(PLATFORM_FILES
+        ../../include/erebus/util/win32error.hxx
+        util/win32error_win32.cxx
+    )
 endif()
 
 add_library(${EREBUS_LIB} SHARED
@@ -24,6 +29,7 @@ add_library(${EREBUS_LIB} SHARED
     exception.cxx
     init.cxx
     knownprops.cxx
+    util/condition.cxx
     util/exceptionutil.cxx
     util/format.cxx
     ${PLATFORM_FILES}

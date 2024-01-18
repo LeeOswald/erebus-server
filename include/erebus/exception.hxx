@@ -143,6 +143,7 @@ void registerAll();
 
 using DecodedError = PropertyInfo<std::string, ER_PROPID("decoded_error"), "Error message", PropertyFormatter<std::string>>;
 using PosixErrorCode = PropertyInfo<int, ER_PROPID("posix_error_code"), "POSIX error code", PropertyFormatter<int>>;
+using Win32ErrorCode = PropertyInfo<DWORD, ER_PROPID("win32_error_code"), "WIN32 error code", PropertyFormatter<DWORD>>;
 
 
 } // ExceptionProps {}

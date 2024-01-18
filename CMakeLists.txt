@@ -89,14 +89,11 @@ endif()
 
 # component names
 set(EREBUS_LIB erebus)
-
-if(ER_LINUX)
-    set(ER_SERVER erebus-server)
-endif()
-
-set(ER_CTL erebus-ctl)
+set(EREBUS_SERVER erebus-server)
+set(EREBUS_CTL erebus-ctl)
 
 # components
 add_subdirectory(3rd_party/googletest)
 add_subdirectory(src/erebus)
+add_subdirectory(src/erebus-server)
 add_subdirectory(tests)

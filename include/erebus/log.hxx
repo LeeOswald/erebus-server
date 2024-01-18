@@ -26,7 +26,6 @@ struct ILog
     virtual bool writev(Level l, const char* format, va_list args) noexcept = 0;
     virtual bool write(Level l, const char* format, ...) noexcept = 0;
     virtual bool write(Level l, std::string_view s) noexcept = 0;
-    virtual bool write(Level l, std::string&& s) noexcept = 0;
 
 protected:
     virtual ~ILog() {}

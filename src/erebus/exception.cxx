@@ -14,6 +14,7 @@ void registerAll()
 {
     registerProperty(new PropertyInfoWrapper<DecodedError>);
     registerProperty(new PropertyInfoWrapper<PosixErrorCode>);
+    registerProperty(new PropertyInfoWrapper<Win32ErrorCode>);
 }
 
 } // namespace Private {}

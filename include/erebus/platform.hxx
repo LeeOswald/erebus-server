@@ -41,6 +41,10 @@
     #include <unistd.h>
 #endif
 
+#if ER_WINDOWS
+    #include <windows.h>
+#endif
+
 // often-used std headers
 #include <algorithm>
 #include <cassert>
