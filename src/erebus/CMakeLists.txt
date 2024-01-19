@@ -20,6 +20,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/property.hxx
     ../../include/erebus/sourcelocation.hxx
     ../../include/erebus/stringliteral.hxx
+    ../../include/erebus/time.hxx
     ../../include/erebus/util/autoptr.hxx
     ../../include/erebus/util/condition.hxx
     ../../include/erebus/util/crc32.hxx
@@ -29,6 +30,8 @@ add_library(${EREBUS_LIB} SHARED
     exception.cxx
     init.cxx
     knownprops.cxx
+    log.cxx
+    time.cxx
     util/condition.cxx
     util/exceptionutil.cxx
     util/format.cxx

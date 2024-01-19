@@ -92,7 +92,7 @@ find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
 # component names
-set(EREBUS_LIB erebus)
+set(EREBUS_LIB erebus-rtl)
 set(EREBUS_SERVER erebus-server)
 set(EREBUS_CTL erebus-ctl)
 

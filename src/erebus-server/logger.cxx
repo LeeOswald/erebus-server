@@ -2,6 +2,7 @@
 
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
+#include <erebus/time.hxx>
 
 #if ER_POSIX
     #include <fcntl.h>
@@ -14,8 +15,6 @@
     #include <erebus/util/win32error.hxx>
 #endif
 
-#include <ctime>
-#include <time.h>
 
 #include <iostream>
 
@@ -92,36 +91,11 @@ bool Logger::write(Er::Log::Level level, std::string_view s) noexcept
         case Er::Log::Level::Error: strLevel = "E"; break;
         case Er::Log::Level::Fatal: strLevel = "!"; break;
         }
-
-#if ER_POSIX
-        struct tm localNow = {};
-        struct timespec now = {};
-        ::clock_gettime(CLOCK_REALTIME, &now);
-
-        // round nanoseconds to milliseconds
-        long msec = 0;
-        if (now.tv_nsec >= 999500000)
-        {
-            now.tv_sec++;
-            msec = 0;
-        }
-        else
-        {
-            msec = (now.tv_nsec + 500000) / 1000000;
-        }
-
-        ::localtime_r(&now.tv_sec, &localNow);
+        
+        auto time = Er::Time::local();
 
         char prefix[256];
-        ::snprintf(prefix, _countof(prefix), "[%02d:%02d:%02d.%03d %s] ", localNow.tm_hour, localNow.tm_min, localNow.tm_sec, msec, strLevel);
-
-#elif ER_WINDOWS
-        SYSTEMTIME time = {};
-        ::GetLocalTime(&time);
-
-        char prefix[256];
-        ::snprintf(prefix, _countof(prefix), "[%02d:%02d:%02d.%03d %s] ", time.wHour, time.wMinute, time.wSecond, time.wMilliseconds, strLevel);
-#endif
+        ::snprintf(prefix, _countof(prefix), "[%02d:%02d:%02d.%03d %s] ", time.hour, time.minute, time.second, time.milli, strLevel);
 
         std::string message = std::string(prefix);
         message.append(s);
