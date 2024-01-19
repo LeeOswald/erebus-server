@@ -1,3 +1,3 @@
-# KernelExplorer server component 
+# Erebus system monitor server component 
 
 Under construction.
