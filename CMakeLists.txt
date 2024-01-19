@@ -88,8 +88,8 @@ if(WIN32)
 endif()
 
 # require gRPC & protobuf
-find_package(gRPC CONFIG REQUIRED)
 find_package(Protobuf REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
 
 # component names
 set(EREBUS_LIB erebus)
