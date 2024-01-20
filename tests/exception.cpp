@@ -5,7 +5,7 @@
 #include <erebus/util/exceptionutil.hxx>
 
 
-TEST(Kes_Exception, simple)
+TEST(Er_Exception, simple)
 {
     try
     {

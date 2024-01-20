@@ -1,0 +1,207 @@
+#include "common.hpp"
+
+#include <erebus/log.hxx>
+
+#include <mutex>
+#include <thread>
+
+
+class Logger
+    : public Er::Log::LogBase
+{
+public:
+    explicit Logger(Er::Log::Level level)
+        : Er::Log::LogBase(level, 65536)
+    {
+        addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
+    }
+
+    std::queue<std::shared_ptr<Er::Log::Record>>& queue()
+    {
+        return m_queue;
+    }
+
+private:
+    void delegate(std::shared_ptr<Er::Log::Record> r)
+    {
+        std::lock_guard l(m_mutex);
+
+        m_queue.push(r);
+    }
+
+    std::mutex m_mutex;
+    std::queue<std::shared_ptr<Er::Log::Record>> m_queue;
+};
+
+
+TEST(Er_LogBase, simple)
+{
+    Logger log(Er::Log::Level::Warning);
+
+    // this record will be dropped
+    log.write(Er::Log::Level::Info,  "hello world");
+
+    log.write(Er::Log::Level::Warning, "simple warning");
+    
+    // this record will be dropped
+    log.write(Er::Log::Level::Debug, "hello world");
+    
+    // test formatting
+    log.write(Er::Log::Level::Error, "format %s %d", "test", 12);
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto& q = log.queue();
+
+    ASSERT_EQ(q.size(), 2);
+    auto r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Warning);
+    EXPECT_STREQ(r->message.c_str(), "simple warning");
+
+    q.pop();
+
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Error);
+    EXPECT_STREQ(r->message.c_str(), "format test 12");
+
+}
+
+TEST(Er_LogWrapper, simple)
+{
+    Logger log(Er::Log::Level::Info);
+
+    // nullptr_t
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << nullptr << nullptr;
+    // char
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << 'f' << 'a' << 'c' << 't';
+    // const char*
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << "hello " << "world";
+    // std::string_view
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << std::string_view("string_") << std::string_view("view");
+    // std::string
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << std::string("std::") << std::string("string");
+    // bool
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Error) << true << false;
+    // const void*
+#if ER_64
+    auto pvoid = reinterpret_cast<const void*>(uintptr_t(0xBABAEBA0FFFFFFFF));
+#else
+    auto pvoid = reinterpret_cast<const void*>(uintptr_t(0xBABAEBA0));
+#endif
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Error) << pvoid;
+    // int16_t
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << int16_t(10) << Er::Log::Hex() << Er::Log::Width(4) << int16_t(0xad) << int16_t(0x2020);
+    // uint16_t
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << uint16_t(10) << Er::Log::Hex() << Er::Log::Width(4) << uint16_t(0xad) << uint16_t(0x2020);
+    // int32_t
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << int32_t(333) << Er::Log::Hex() << Er::Log::Width(8) << int32_t(0xfdad) << int32_t(0xdeaa2020);
+    // uint32_t
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << uint32_t(333) << Er::Log::Hex() << Er::Log::Width(8) << uint32_t(0xfdad) << uint32_t(0xdeaa2020);
+    // int64_t
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << int64_t(4444) << Er::Log::Hex() << Er::Log::Width(16) << int64_t(0x77778888) << int64_t(0x7fffffff55664455);
+    // uint64_t
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << uint64_t(4444) << Er::Log::Hex() << Er::Log::Width(16) << uint64_t(0x77778888) << uint64_t(0x7fffffff55664455);
+    // float
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << Er::Log::Float(3) << float(0.1233);
+    // double
+    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << Er::Log::Float(3) << double(0.1233);
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto& q = log.queue();
+
+    ASSERT_EQ(q.size(), 15);
+    auto r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Warning);
+    EXPECT_STREQ(r->message.c_str(), "(nullptr)(nullptr)");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Warning);
+    EXPECT_STREQ(r->message.c_str(), "fact");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Warning);
+    EXPECT_STREQ(r->message.c_str(), "hello world");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Warning);
+    EXPECT_STREQ(r->message.c_str(), "string_view");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Warning);
+    EXPECT_STREQ(r->message.c_str(), "std::string");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Error);
+    EXPECT_STREQ(r->message.c_str(), "truefalse");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Error);
+#if ER_64
+    EXPECT_STRCASEEQ(r->message.c_str(), "BABAEBA0FFFFFFFF");
+#else
+    EXPECT_STRCASEEQ(r->message.c_str(), "BABAEBA0");
+#endif
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Info);
+    EXPECT_STRCASEEQ(r->message.c_str(), "1000ad2020");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Info);
+    EXPECT_STRCASEEQ(r->message.c_str(), "1000ad2020");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Info);
+    EXPECT_STRCASEEQ(r->message.c_str(), "3330000fdaddeaa2020");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Info);
+    EXPECT_STRCASEEQ(r->message.c_str(), "3330000fdaddeaa2020");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Info);
+    EXPECT_STRCASEEQ(r->message.c_str(), "444400000000777788887fffffff55664455");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Info);
+    EXPECT_STRCASEEQ(r->message.c_str(), "444400000000777788887fffffff55664455");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Info);
+    EXPECT_STREQ(r->message.c_str(), "0.123");
+
+    q.pop();
+    r = q.front();
+
+    EXPECT_EQ(r->level, Er::Log::Level::Info);
+    EXPECT_STREQ(r->message.c_str(), "0.123");
+
+}
