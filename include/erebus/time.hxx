@@ -6,6 +6,9 @@
 namespace Er
 {
 
+//
+// we need something like 'struct tm' but with milliseconds field
+//
 
 struct EREBUS_EXPORT Time final
 {

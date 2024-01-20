@@ -6,6 +6,7 @@ add_executable(
     ${TARGET}
     common.hpp
     exception.cpp
+    log.cpp
     main.cpp
 )
 

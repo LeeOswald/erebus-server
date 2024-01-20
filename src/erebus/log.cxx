@@ -1,6 +1,5 @@
 #include <erebus/log.hxx>
 
-#include <iomanip>
 
 
 namespace Er
@@ -8,196 +7,196 @@ namespace Er
     
 namespace Log
 {
-    
-LogWrapperBase::~LogWrapperBase()
+
+LogBase::~LogBase()
 {
     flush();
+
+    m_stop = true;
+    m_event.set();
+
+    if (m_worker.joinable())
+        m_worker.join();
 }
 
-LogWrapperBase::LogWrapperBase(ILog* log, Level level) noexcept
-    : m_log(log)
-    , m_level(level)
+LogBase::LogBase(Level level, size_t maxQueue) noexcept
+    : m_level(level)
+    , m_maxQueue(maxQueue)
+    , m_event(true)
+    , m_worker([this]() { run(); })
 {
 }
 
-void LogWrapperBase::flush() noexcept
+void LogBase::addDelegate(std::string_view id, Delegate d) noexcept
 {
     try
     {
-        m_log->write(m_level, std::string_view(m_stream.str()));
-        m_stream = std::ostringstream();
+        std::lock_guard g(m_mutex);
+
+        m_delegates.insert({ std::string(id), d });
     }
     catch (...)
     {
     }
 }
 
-void LogWrapperBase::write(std::string_view s) noexcept
+void LogBase::removeDelegate(std::string_view id) noexcept
 {
     try
     {
-        m_stream << s;
+        std::lock_guard g(m_mutex);
+
+        auto it = m_delegates.find(std::string(id));
+        if (it != m_delegates.end())
+        {
+            m_delegates.erase(it);
+        }
     }
     catch (...)
     {
     }
 }
 
-LogWrapperBase& LogWrapperBase::operator<<(nullptr_t) noexcept
-{
-    write("(nullptr)");
-    return *this;
-}
-
-LogWrapperBase& LogWrapperBase::operator<<(char c) noexcept
-{
-    write(std::string_view(&c, 1));
-    return *this;
-}
-
-LogWrapperBase& LogWrapperBase::operator<<(const char* s) noexcept
-{
-    if (s)
-        write(s);
-    else
-        write(nullptr);
-
-    return *this;
-}
-
-LogWrapperBase& LogWrapperBase::operator<<(std::string_view s) noexcept
-{
-    write(s);
-    return *this;
-}
-
-LogWrapperBase& LogWrapperBase::operator<<(const std::string& s) noexcept
-{
-    write(s);
-    return *this;
-}
-
-LogWrapperBase& LogWrapperBase::operator<<(bool b) noexcept
-{
-    write(b ? "true" : "false");
-    return *this;
-}
-
-LogWrapperBase& LogWrapperBase::operator<<(Hex) noexcept
-{
-    m_hex = true;
-    return *this;
-}
-
-LogWrapperBase& LogWrapperBase::operator<<(Width w) noexcept
-{
-    m_width = w.width;
-    return *this;
-}
-
-LogWrapperBase& LogWrapperBase::operator<<(const void* v) noexcept
+void LogBase::run() noexcept
 {
     try
     {
-        m_stream << v;
+        while (!m_stop)
+        {
+            m_event.wait();
+
+            flush();
+        }
     }
     catch (...)
     {
     }
-    return *this;
 }
 
-void LogWrapperBase::applyOptions()
+void LogBase::_flush() noexcept
 {
-    if (m_hex)
+    while (!m_queue.empty())
     {
-        m_stream << std::hex;
-        m_hex = false;
-    }
+        for (auto it = m_delegates.begin(); it != m_delegates.end(); ++it)
+        {
+            try
+            {
+                auto record = m_queue.front();
+                it->second(record);
+            }
+            catch (...)
+            {
+            }
+        }
 
-    if (m_width)
-    {
-        m_stream << std::setw(*m_width) << std::setfill('0');
-        m_width = std::nullopt;
+        m_queue.pop();
     }
 }
 
-LogWrapperBase& LogWrapperBase::operator<<(int16_t i) noexcept
+void LogBase::flush() noexcept
 {
+    std::lock_guard g(m_mutex);
+
+    _flush();
+}
+
+Level LogBase::level() const noexcept
+{
+    return m_level;
+}
+
+bool LogBase::write(std::shared_ptr<Record> r) noexcept
+{
+    if (r->level < m_level)
+        return false;
+
+    if (!r)
+        return true;
+    
+    std::lock_guard g(m_mutex);
+
     try
     {
-        applyOptions();
-        m_stream << i;
+        m_queue.push(r);
+    }
+    catch (...)
+    {
+        return false;
+    }
+
+    m_event.set();
+
+    // drop the older events to avoid the queue overflow
+    while (m_queue.size() > m_maxQueue)
+        m_queue.pop();
+
+    return true;
+}
+
+bool LogBase::write(Level l, std::string_view s) noexcept
+{
+    if (l < m_level)
+        return false;
+
+#if ER_POSIX
+    auto pid = static_cast<uintptr_t>(::getpid());
+    auto tid = static_cast<uintptr_t>(::gettid());
+#elif ER_WINDOWS
+    auto pid = static_cast<uintptr_t>(::GetCurrentProcessId());
+    auto tid = static_cast<uintptr_t>(::GetCurrentThreadId());
+#endif
+
+    try
+    {
+        auto record = std::make_shared<Record>(l, Time::local(), pid, tid, s);
+        return write(record);
     }
     catch (...)
     {
     }
-    return *this;
+
+    return false;
 }
 
-LogWrapperBase& LogWrapperBase::operator<<(uint16_t u) noexcept
+bool LogBase::writev(Level l, const char* format, va_list args) noexcept
 {
+    if (l < m_level)
+        return false;
+
     try
     {
-        applyOptions();
-        m_stream << u;
+        va_list args1;
+        va_copy(args1, args);
+        auto required = ::vsnprintf(nullptr, 0, format, args1);
+
+        std::string formatted;
+        formatted.resize(required);
+        ::vsnprintf(formatted.data(), required + 1, format, args);
+
+        va_end(args1);
+
+        return write(l, std::string_view(formatted));
     }
     catch (...)
     {
     }
-    return *this;
+
+    return false;
 }
 
-LogWrapperBase& LogWrapperBase::operator<<(int32_t i) noexcept
+bool LogBase::write(Level l, const char* format, ...) noexcept
 {
-    try
-    {
-        applyOptions();
-        m_stream << i;
-    }
-    catch (...)
-    {
-    }
-    return *this;
-}
+    if (l < m_level)
+        return false;
 
-LogWrapperBase& LogWrapperBase::operator<<(uint32_t u) noexcept
-{
-    try
-    {
-        applyOptions();
-        m_stream << u;
-    }
-    catch (...)
-    {
-    }
-    return *this;
-}
+    va_list args;
+    va_start(args, format);
 
-LogWrapperBase& LogWrapperBase::operator<<(int64_t i) noexcept
-{
-    try
-    {
-        applyOptions();
-        m_stream << i;
-    }
-    catch (...)
-    {
-    }
-    return *this;
-}
+    auto b = writev(l, format, args);
 
-LogWrapperBase& LogWrapperBase::operator<<(uint64_t u) noexcept
-{
-    try
-    {
-        applyOptions();
-        m_stream << u;
-    }
-    catch (...)
-    {
-    }
-    return *this;
+    va_end(args);
+
+    return b;
 }
 
 

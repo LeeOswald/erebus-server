@@ -170,8 +170,6 @@ int main(int argc, char* argv[])
         }
 
         Er::finalize();
-
-        g_log = nullptr;
     }
     catch (Er::Exception& e)
     {
