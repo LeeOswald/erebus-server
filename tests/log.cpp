@@ -143,6 +143,9 @@ TEST(Er_LogWrapper, simple)
     r = q.front();
 
     EXPECT_EQ(r->level, Er::Log::Level::Error);
+    if (r->message.starts_with("0x"))
+        r->message.erase(0, 2);
+        
 #if ER_64
     EXPECT_STRCASEEQ(r->message.c_str(), "BABAEBA0FFFFFFFF");
 #else

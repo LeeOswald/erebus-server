@@ -133,8 +133,14 @@ int main(int argc, char* argv[])
 
     Er::Log::Level logLevel = vm.count("verbose") ? Er::Log::Level::Debug : Er::Log::Level::Info;
 
-#if ER_LINUX && !ER_DEBUG
-    Er::Private::Logger logger(logLevel, "/var/log/erebus-server.log");
+#if ER_LINUX 
+    #if !ER_DEBUG
+        Er::Private::Logger logger(logLevel, "/var/log/erebus-server.log");
+    #else
+        std::string home(std::getenv("HOME"));
+        home.append("/erebus-server.log");
+        Er::Private::Logger logger(logLevel, home.c_str());
+    #endif
 #else
     Er::Private::Logger logger(logLevel, "erebus-server.log");
 #endif

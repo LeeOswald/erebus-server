@@ -36,10 +36,10 @@ struct Record
     uintptr_t tid = 0;
     std::string message;
 
-    constexpr Record() noexcept = default;
+    Record() noexcept = default;
 
     template <typename MessageT>
-    explicit constexpr Record(Level level, const Time& time, uintptr_t pid, uintptr_t tid, MessageT&& message)
+    explicit Record(Level level, const Time& time, uintptr_t pid, uintptr_t tid, MessageT&& message)
         : level(level)
         , time(time)
         , pid(pid)

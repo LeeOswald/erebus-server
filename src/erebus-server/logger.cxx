@@ -2,6 +2,7 @@
 
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
+#include <erebus/syncstream.hxx>
 #include <erebus/time.hxx>
 
 #if ER_POSIX
@@ -17,7 +18,6 @@
 
 
 #include <iostream>
-#include <syncstream>
 
 
 namespace Er
@@ -44,18 +44,18 @@ Logger::Logger(Er::Log::Level level, const char* fileName)
 #if ER_POSIX
     if (m_file == -1)
     {
-        std::osyncstream(std::cerr) << "Failed to create the logfile: " << errno << "\n";
+        Er::osyncstream(std::cerr) << "Failed to create the logfile: " << errno << "\n";
     }
     else if (::flock(m_file, LOCK_EX | LOCK_NB) == -1)
     {
         if (errno == EWOULDBLOCK)
         {
             m_exclusive = false;
-            std::osyncstream(std::cerr) << "Server is already running\n";
+            Er::osyncstream(std::cerr) << "Server is already running\n";
         }
         else
         {
-            std::osyncstream(std::cerr) << "Failed to lock the logfile: " << errno << "\n";
+            Er::osyncstream(std::cerr) << "Failed to lock the logfile: " << errno << "\n";
         }
     }
 #elif ER_WINDOWS
@@ -65,11 +65,11 @@ Logger::Logger(Er::Log::Level level, const char* fileName)
         if (e == ERROR_SHARING_VIOLATION)
         {
             m_exclusive = false;
-            std::osyncstream(std::cerr) << "Server is already running\n";
+            Er::osyncstream(std::cerr) << "Server is already running\n";
         }
         else
         {
-            std::osyncstream(std::cerr) << "Failed to create the logfile: " << e << "\n";
+            Er::osyncstream(std::cerr) << "Failed to create the logfile: " << e << "\n";
         }
     }
 #endif
@@ -104,7 +104,7 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
 #endif
     {
         // if we failed to create a logfile we have nothing else than std::cerr
-        std::osyncstream(std::cerr) << message;
+        Er::osyncstream(std::cerr) << message;
     }
     else
     {
@@ -112,9 +112,9 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
 #if ER_DEBUG
         // for debug purposes use std::cout
         if (r->level < Er::Log::Level::Warning)
-            std::osyncstream(std::cout) << message;
+            Er::osyncstream(std::cout) << message;
         else
-            std::osyncstream(std::cerr) << message;
+            Er::osyncstream(std::cerr) << message;
 #endif
     }
 
