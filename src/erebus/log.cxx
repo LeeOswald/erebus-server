@@ -75,6 +75,9 @@ void LogBase::run() noexcept
 
 void LogBase::_flush() noexcept
 {
+    if (m_mute)
+        return;
+
     while (!m_queue.empty())
     {
         for (auto it = m_delegates.begin(); it != m_delegates.end(); ++it)
@@ -91,6 +94,16 @@ void LogBase::_flush() noexcept
 
         m_queue.pop();
     }
+}
+
+void LogBase::mute() noexcept
+{
+    m_mute = true;
+}
+
+void LogBase::unmute() noexcept
+{
+    m_mute = false;
 }
 
 void LogBase::flush() noexcept
@@ -123,12 +136,12 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
     {
         return false;
     }
-
-    m_event.set();
-
+    
     // drop the older events to avoid the queue overflow
     while (m_queue.size() > m_maxQueue)
         m_queue.pop();
+
+    m_event.set();
 
     return true;
 }

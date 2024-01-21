@@ -28,6 +28,7 @@ namespace Private
 
 Logger::~Logger()
 {
+    // we have to flush here before we remove our delegate
     flush();
     removeDelegate("this");
 }
@@ -37,7 +38,7 @@ Logger::Logger(Er::Log::Level level, const char* fileName)
 #if ER_POSIX
     , m_file(::open(fileName, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH))
 #elif ER_WINDOWS
-    , m_file(::CreateFileA(fileName, GENERIC_READ, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0))
+    , m_file(::CreateFileA(fileName, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0))
 #endif
 {
 #if ER_POSIX

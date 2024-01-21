@@ -143,6 +143,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
 
     g_log = &logger;
+    logger.unmute();
 
     std::set_terminate(terminateHandler);
 

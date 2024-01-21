@@ -14,6 +14,7 @@ public:
         : Er::Log::LogBase(level, 65536)
     {
         addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
+        unmute();
     }
 
     std::queue<std::shared_ptr<Er::Log::Record>>& queue()

@@ -76,6 +76,8 @@ public:
 
     void addDelegate(std::string_view id, Delegate d) noexcept;
     void removeDelegate(std::string_view id) noexcept;
+    void mute() noexcept;
+    void unmute() noexcept;
 
     Level level() const noexcept override;
     bool writev(Level l, const char* format, va_list args) noexcept override;
@@ -96,6 +98,7 @@ private:
     Util::Condition m_event;
     bool m_stop = false;
     std::thread m_worker;
+    bool m_mute = true;
 };
 
 
