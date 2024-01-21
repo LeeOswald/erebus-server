@@ -71,53 +71,45 @@ TEST(Er_LogWrapper, simple)
 {
     Logger log(Er::Log::Level::Info);
 
-    // nullptr_t
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << nullptr << nullptr;
     // char
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << 'f' << 'a' << 'c' << 't';
+    Er::Log::Warning(&log) << 'f' << 'a' << 'c' << 't';
     // const char*
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << "hello " << "world";
+    Er::Log::Warning(&log) << "hello " << "world";
     // std::string_view
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << std::string_view("string_") << std::string_view("view");
+    Er::Log::Warning(&log) << std::string_view("string_") << std::string_view("view");
     // std::string
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Warning) << std::string("std::") << std::string("string");
+    Er::Log::Warning(&log) << std::string("std::") << std::string("string");
     // bool
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Error) << true << false;
+    Er::Log::Error(&log) << std::boolalpha << true << false;
     // const void*
 #if ER_64
     auto pvoid = reinterpret_cast<const void*>(uintptr_t(0xBABAEBA0FFFFFFFF));
 #else
     auto pvoid = reinterpret_cast<const void*>(uintptr_t(0xBABAEBA0));
 #endif
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Error) << pvoid;
+    Er::Log::Error(&log) << pvoid;
     // int16_t
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << int16_t(10) << Er::Log::Hex() << Er::Log::Width(4) << int16_t(0xad) << int16_t(0x2020);
+    Er::Log::Info(&log) << int16_t(10) << std::hex << std::setw(4) << std::setfill('0') << int16_t(0xad) << int16_t(0x2020);
     // uint16_t
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << uint16_t(10) << Er::Log::Hex() << Er::Log::Width(4) << uint16_t(0xad) << uint16_t(0x2020);
+    Er::Log::Info(&log) << uint16_t(10) << std::hex << std::setw(4) << std::setfill('0') << uint16_t(0xad) << uint16_t(0x2020);
     // int32_t
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << int32_t(333) << Er::Log::Hex() << Er::Log::Width(8) << int32_t(0xfdad) << int32_t(0xdeaa2020);
+    Er::Log::Info(&log) << int32_t(333) << std::hex << std::setw(8) << std::setfill('0') << int32_t(0xfdad) << int32_t(0xdeaa2020);
     // uint32_t
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << uint32_t(333) << Er::Log::Hex() << Er::Log::Width(8) << uint32_t(0xfdad) << uint32_t(0xdeaa2020);
+    Er::Log::Info(&log) << uint32_t(333) << std::hex << std::setw(8) << std::setfill('0') << uint32_t(0xfdad) << uint32_t(0xdeaa2020);
     // int64_t
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << int64_t(4444) << Er::Log::Hex() << Er::Log::Width(16) << int64_t(0x77778888) << int64_t(0x7fffffff55664455);
+    Er::Log::Info(&log) << int64_t(4444) << std::hex << std::setw(16) << std::setfill('0') << int64_t(0x77778888) << int64_t(0x7fffffff55664455);
     // uint64_t
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << uint64_t(4444) << Er::Log::Hex() << Er::Log::Width(16) << uint64_t(0x77778888) << uint64_t(0x7fffffff55664455);
+    Er::Log::Info(&log) << uint64_t(4444) << std::hex << std::setw(16) << std::setfill('0') << uint64_t(0x77778888) << uint64_t(0x7fffffff55664455);
     // float
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << Er::Log::Float(3) << float(0.1233);
+    Er::Log::Info(&log) << std::fixed << std::setprecision(3) << float(0.1233);
     // double
-    Er::Log::LogWrapperBase(&log, Er::Log::Level::Info) << Er::Log::Float(3) << double(0.1233);
+    Er::Log::Info(&log) << std::fixed << std::setprecision(3) << double(0.1233);
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     auto& q = log.queue();
 
-    ASSERT_EQ(q.size(), 15);
+    ASSERT_EQ(q.size(), 14);
     auto r = q.front();
-
-    EXPECT_EQ(r->level, Er::Log::Level::Warning);
-    EXPECT_STREQ(r->message.c_str(), "(nullptr)(nullptr)");
-
-    q.pop();
-    r = q.front();
 
     EXPECT_EQ(r->level, Er::Log::Level::Warning);
     EXPECT_STREQ(r->message.c_str(), "fact");

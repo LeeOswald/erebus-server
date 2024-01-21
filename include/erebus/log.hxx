@@ -4,6 +4,7 @@
 #include <erebus/util/condition.hxx>
 
 #include <functional>
+#include <iomanip>
 #include <mutex>
 #include <queue>
 #include <sstream>
@@ -98,69 +99,47 @@ private:
 };
 
 
-struct Hex
-{
-    constexpr Hex() noexcept = default;
-};
-
-struct Dec
-{
-    constexpr Dec() noexcept = default;
-};
-
-struct Width
-{
-    constexpr explicit Width(uint16_t width) noexcept
-        : width(width)
-    {
-    }
-
-    uint16_t width;
-};
-
-struct Float
-{
-    constexpr explicit Float(uint16_t precision) noexcept
-        : precision(precision)
-    {
-    }
-
-    uint16_t precision;
-};
-
-
-class EREBUS_EXPORT LogWrapperBase
+class LogWrapperBase
     : public boost::noncopyable
 {
 public:
-    ~LogWrapperBase();
-    explicit LogWrapperBase(ILog* log, Level level) noexcept;
+    ~LogWrapperBase()
+    {
+        flush();
+    }
 
-    void flush() noexcept;
+    explicit LogWrapperBase(ILog* log, Level level) noexcept
+        : m_log(log)
+        , m_level(level)
+    {
+    }
 
-    LogWrapperBase& operator<<(nullptr_t) noexcept;
-    LogWrapperBase& operator<<(char c) noexcept;
-    LogWrapperBase& operator<<(const char* s) noexcept;
-    LogWrapperBase& operator<<(std::string_view s) noexcept;
-    LogWrapperBase& operator<<(const std::string& s) noexcept;
-    LogWrapperBase& operator<<(bool b) noexcept;
-    LogWrapperBase& operator<<(Hex) noexcept;
-    LogWrapperBase& operator<<(Dec) noexcept;
-    LogWrapperBase& operator<<(Width w) noexcept;
-    LogWrapperBase& operator<<(const void* v) noexcept;
-    LogWrapperBase& operator<<(int16_t i) noexcept;
-    LogWrapperBase& operator<<(uint16_t u) noexcept;
-    LogWrapperBase& operator<<(int32_t i) noexcept;
-    LogWrapperBase& operator<<(uint32_t u) noexcept;
-    LogWrapperBase& operator<<(int64_t i) noexcept;
-    LogWrapperBase& operator<<(uint64_t u) noexcept;
-    LogWrapperBase& operator<<(Float f) noexcept;
-    LogWrapperBase& operator<<(float f) noexcept;
-    LogWrapperBase& operator<<(double d) noexcept;
+    void flush() noexcept
+    {
+        try
+        {
+            m_log->write(m_level, std::string_view(m_stream.str()));
+            m_stream = std::ostringstream();
+        }
+        catch (...)
+        {
+        }
+    }
+
+    template <typename T>
+    LogWrapperBase& operator<<(T&& v) noexcept
+    {
+        try
+        {
+            m_stream << std::forward<T>(v);
+        }
+        catch (...)
+        {
+        }
+        return *this;
+    }
 
 private:
-    void write(std::string_view s) noexcept;
-
     ILog* m_log;
     Level m_level;
     std::ostringstream m_stream;
