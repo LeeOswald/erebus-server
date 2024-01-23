@@ -26,6 +26,36 @@ namespace Er
 namespace Private
 {
 
+LogRotator::LogRotator(Er::Log::Level level, const char* fileName)
+    : Er::Log::LogBase(level, 65536)
+{
+    int i = kKeep;
+    while (i >= 0)
+    {
+        std::string nameNew = std::string(fileName) + std::string(".") + std::to_string(i);
+        std::remove(nameNew.c_str());
+        std::string nameOld = std::string(fileName);
+        if (i > 0)
+        {
+            nameOld.append(".");
+            nameOld.append(std::to_string(i - 1));
+        }
+        else
+        {
+            nameOld = fileName;
+        }
+
+        auto status = std::rename(nameOld.c_str(), nameNew.c_str());
+        if (status != 0)
+        {
+            // nothing we can do here
+        }
+
+        --i;
+    }
+}
+
+
 Logger::~Logger()
 {
     // we have to flush here before we remove our delegate
@@ -34,7 +64,7 @@ Logger::~Logger()
 }
 
 Logger::Logger(Er::Log::Level level, const char* fileName)
-    : Er::Log::LogBase(level, 65536)
+    : LogRotator(level, fileName)
 #if ER_POSIX
     , m_file(::open(fileName, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH))
 #elif ER_WINDOWS
@@ -90,7 +120,20 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
     }
         
     char prefix[256];
-    ::snprintf(prefix, _countof(prefix), "[%02d:%02d:%02d.%03d %s] ", r->time.hour, r->time.minute, r->time.second, r->time.milli, strLevel);
+    ::snprintf(prefix, 
+        _countof(prefix), 
+        "[%02d.%02d.%04d %02d:%02d:%02d.%03d @%zu:%zu %s] ",
+        r->time.day,
+        r->time.month,
+        r->time.year,
+        r->time.hour, 
+        r->time.minute, 
+        r->time.second,
+        r->time.milli,
+        r->pid,
+        r->tid,
+        strLevel
+    );
 
     std::string message = std::string(prefix);
     message.append(r->message);

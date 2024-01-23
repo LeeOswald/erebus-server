@@ -12,9 +12,9 @@ namespace Private
 
 void registerAll()
 {
-    registerProperty(new PropertyInfoWrapper<DecodedError>);
-    registerProperty(new PropertyInfoWrapper<PosixErrorCode>);
-    registerProperty(new PropertyInfoWrapper<Win32ErrorCode>);
+    registerProperty(std::make_shared<PropertyInfoWrapper<DecodedError>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<PosixErrorCode>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<Win32ErrorCode>>());
 }
 
 } // namespace Private {}

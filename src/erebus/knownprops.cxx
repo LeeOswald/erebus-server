@@ -12,52 +12,93 @@ namespace Er
 namespace
 {
 
-struct
+struct Registry
 {
     std::mutex mutex;
-    std::unordered_map<PropId, IPropertyInfo*> propsById;
-    std::unordered_map<std::string, IPropertyInfo*> propsByName;
-} s_registry;
+    std::unordered_map<PropId, IPropertyInfo::Ptr> propsById;
+    std::unordered_map<std::string, IPropertyInfo::Ptr> propsByName;
+};
+    
+Registry* s_registry = nullptr;
 
 
 } // namespace {}
 
-
-EREBUS_EXPORT void registerProperty(IPropertyInfo* pi)
+namespace Private
 {
-    std::lock_guard l(s_registry.mutex);
 
-    auto ret1 = s_registry.propsById.insert({ pi->id(), pi });
-    if (!ret1.second)
-    {
-        throw Exception(ER_HERE(), Util::format("Property with ID %08x already registered", pi->id()));
-    }
+EREBUS_EXPORT void initializeKnownProps()
+{
+    assert(!s_registry);
+    s_registry = new Registry;
+}
 
-    auto ret2 = s_registry.propsByName.insert({ pi->idstr(), pi });
-    if (!ret2.second)
+EREBUS_EXPORT void finalizeKnownProps()
+{
+    if (s_registry)
     {
-        throw Exception(ER_HERE(), Util::format("Property with ID %s already registered", pi->idstr()));
+        auto p = s_registry;
+        s_registry = nullptr;
+        delete p;
     }
 }
 
-EREBUS_EXPORT IPropertyInfo* lookupProperty(PropId id)
-{
-    std::lock_guard l(s_registry.mutex);
+} // namespace Private {}
 
-    auto it = s_registry.propsById.find(id);
-    if (it == s_registry.propsById.end())
-        return nullptr;
+
+
+EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi)
+{
+    std::lock_guard l(s_registry->mutex);
+
+    auto ret1 = s_registry->propsById.insert({ pi->id(), pi });
+    if (!ret1.second)
+    {
+        throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->idstr()));
+    }
+
+    auto ret2 = s_registry->propsByName.insert({ pi->idstr(), pi });
+    if (!ret2.second)
+    {
+        throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->idstr()));
+    }
+}
+
+EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi)
+{
+    std::lock_guard l(s_registry->mutex);
+
+    auto it1 = s_registry->propsById.find(pi->id());
+    if (it1 != s_registry->propsById.end())
+    {
+        s_registry->propsById.erase(it1);
+    }
+
+    auto it2 = s_registry->propsByName.find(pi->idstr());
+    if (it2 != s_registry->propsByName.end())
+    {
+        s_registry->propsByName.erase(it2);
+    }
+}
+
+EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id)
+{
+    std::lock_guard l(s_registry->mutex);
+
+    auto it = s_registry->propsById.find(id);
+    if (it == s_registry->propsById.end())
+        return IPropertyInfo::Ptr();
 
     return it->second;
 }
 
-EREBUS_EXPORT IPropertyInfo* lookupProperty(const char* id)
+EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id)
 {
-    std::lock_guard l(s_registry.mutex);
+    std::lock_guard l(s_registry->mutex);
 
-    auto it = s_registry.propsByName.find(id);
-    if (it == s_registry.propsByName.end())
-        return nullptr;
+    auto it = s_registry->propsByName.find(id);
+    if (it == s_registry->propsByName.end())
+        return IPropertyInfo::Ptr();
 
     return it->second;
 }

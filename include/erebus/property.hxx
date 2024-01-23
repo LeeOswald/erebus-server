@@ -132,6 +132,8 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value
 
 struct IPropertyInfo
 {
+    using Ptr = std::shared_ptr<IPropertyInfo>;
+
     virtual const std::type_info& type() const = 0;
     virtual const std::type_info& base() const = 0;
     virtual PropId id() const = 0;
@@ -148,34 +150,37 @@ template <class PropertyInfoT>
 struct PropertyInfoWrapper
     : public IPropertyInfo
 {
+    using PropertyInfo = PropertyInfoT;
+    using Formatter = typename PropertyInfo::Formatter;
+
     const std::type_info& type() const override
     {
-        return PropertyInfoT::type();
+        return PropertyInfo::type();
     }
 
     const std::type_info& base() const override
     {
-        return PropertyInfoT::base();
+        return PropertyInfo::base();
     }
 
     PropId id() const override
     {
-        return PropertyInfoT::id();
+        return PropertyInfo::id();
     }
 
     const char* idstr() const override
     {
-        return PropertyInfoT::idstr();
+        return PropertyInfo::idstr();
     }
 
     const char* name() const override
     {
-        return PropertyInfoT::name();
+        return PropertyInfo::name();
     }
 
     void format(const Property& v, std::ostream& s) override
     {
-        typename PropertyInfoT::Formatter f;
+        Formatter f;
         f(v, s);
     }
 };
@@ -184,5 +189,6 @@ struct PropertyInfoWrapper
 } // namespace Er {}
 
 
+#define ER_PROPID_(s)   Er::Util::crc32(s)
 #define ER_PROPID(s)   Er::Util::crc32(s), s
 

@@ -1,6 +1,8 @@
 #include <erebus/knownprops.hxx>
 #include <erebus/util/condition.hxx>
 #include <erebus/util/exceptionutil.hxx>
+#include <erebus-srv/erebus-srv.hxx>
+
 
 #include "logger.hxx"
 
@@ -20,6 +22,7 @@ namespace
 
 Er::Log::ILog* g_log = nullptr;
 Er::Util::Condition g_exitCondition(false);
+bool g_restartRequired = false;
 std::optional<int> g_signalReceived;
 
 
@@ -78,7 +81,10 @@ void terminateHandler()
     std::ostringstream ss;
     ss << boost::stacktrace::stacktrace();
 
-    LogFatal(g_log, "std::terminate() called from\n%s", ss.str().c_str());
+    if (g_log)
+        LogFatal(g_log, "std::terminate() called from\n%s", ss.str().c_str());
+    else
+        std::cerr << "std::terminate() called from\n" << ss.str();
 
     std::abort();
 }
@@ -89,11 +95,55 @@ void signalHandler(int signo)
     g_exitCondition.set();
 }
 
+void restart(int argc, char* argv[])
+{
+#if ER_WINDOWS
+    char exeFile[MAX_PATH];
+    ::GetModuleFileNameA(0, exeFile, _countof(exeFile));
+    std::string command(exeFile);
+    for (int i = 1; i < argc; ++i)
+    {
+        command.append(" ");
+        command.append(argv[i]);
+    }
+    char temp[32767];
+    if (command.length() >= _countof(temp))
+        return;
+    
+    std::strcpy(temp, command.c_str());
+    STARTUPINFOA si = {};
+    si.cb = sizeof(si);
+    PROCESS_INFORMATION pi = {};
+    if (::CreateProcessA(
+        nullptr,
+        temp,
+        nullptr,
+        nullptr,
+        FALSE,
+        0,
+        nullptr,
+        nullptr,
+        &si,
+        &pi
+        ))
+    {
+        ::CloseHandle(pi.hProcess);
+        ::CloseHandle(pi.hThread);
+    }
+
+#elif ER_POSIX
+#endif
+}
+
 } // namespace {}
 
 
 int main(int argc, char* argv[])
 {
+#if ER_WINDOWS
+    ::SetConsoleOutputCP(CP_UTF8);
+#endif
+
 #if ER_LINUX && !ER_DEBUG
     if (::geteuid() != 0)
     {
@@ -135,21 +185,21 @@ int main(int argc, char* argv[])
 
 #if ER_LINUX 
     #if !ER_DEBUG
-        Er::Private::Logger logger(logLevel, "/var/log/erebus-server.log");
+        auto logger = std::make_unique< Er::Private::Logger>(logLevel, "/var/log/erebus-server.log");
     #else
         std::string home(std::getenv("HOME"));
         home.append("/erebus-server.log");
-        Er::Private::Logger logger(logLevel, home.c_str());
+        auto logger = std::make_unique< Er::Private::Logger>(logLevel, home.c_str());
     #endif
 #else
-    Er::Private::Logger logger(logLevel, "erebus-server.log");
+    auto logger = std::make_unique< Er::Private::Logger>(logLevel, "erebus-server.log");
 #endif
 
-    if (!logger.exclusive())
+    if (!logger->exclusive())
         return EXIT_FAILURE;
 
-    g_log = &logger;
-    logger.unmute();
+    g_log = logger.get();
+    logger->unmute();
 
     std::set_terminate(terminateHandler);
 
@@ -161,7 +211,7 @@ int main(int argc, char* argv[])
             bindAddr = vm["address"].as<std::string>();
         }
 
-        logger.write(Er::Log::Level::Info, "Binding to address %s", bindAddr.c_str());
+        logger->write(Er::Log::Level::Info, "Binding to address %s", bindAddr.c_str());
 
         ::signal(SIGINT, signalHandler);
         ::signal(SIGTERM, signalHandler);
@@ -170,10 +220,27 @@ int main(int argc, char* argv[])
         ::signal(SIGHUP, signalHandler);
 #endif
 
+        Er::Private::ServerParams params(bindAddr, g_log, &g_exitCondition, &g_restartRequired);
+        auto server = Er::Private::startServer(&params);
+
         g_exitCondition.wait();
+        server->stop();
+        
         if (g_signalReceived)
         {
-            logger.write(Er::Log::Level::Warning, "Exiting due to signal %d", *g_signalReceived);
+            logger->write(Er::Log::Level::Warning, "Exiting due to signal %d", *g_signalReceived);
+        }
+        else if (!g_restartRequired)
+        {
+            logger->write(Er::Log::Level::Warning, "Shutting down...");
+        }
+        else
+        {
+            logger->write(Er::Log::Level::Warning, "Restarting...");
+            g_log = nullptr;
+            // force logger destruction to unlock the logfile
+            logger.reset();
+            restart(argc, argv);
         }
 
         Er::finalize();

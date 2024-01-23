@@ -13,6 +13,10 @@ int main(int argc, char** argv)
     _CrtSetDbgFlag(tmpFlag);
 #endif
 
+#if ER_WINDOWS
+    ::SetConsoleOutputCP(CP_UTF8);
+#endif
+
     ::testing::InitGoogleTest(&argc, argv);
 
     Er::initialize();

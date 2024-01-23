@@ -1,0 +1,19 @@
+set(GENERATED_SOURCES
+    ../../protocol/erebus.grpc.pb.h
+    ../../protocol/erebus.pb.h
+    ../../protocol/erebus.grpc.pb.cc
+    ../../protocol/erebus.pb.cc
+)
+
+add_library(${EREBUS_SRVLIB} SHARED
+    ../../include/erebus-srv/erebus-srv.hxx
+    erebus-srv.cxx
+    ${GENERATED_SOURCES}
+)
+
+
+add_compile_definitions(EREBUSSRV_EXPORTS=1)
+
+target_compile_features(${EREBUS_SRVLIB} PUBLIC ${ER_CXX_FEATURES})
+
+target_link_libraries(${EREBUS_SRVLIB} PUBLIC ${EREBUS_LIB} PRIVATE gRPC::grpc++ gRPC::grpc++_reflection gRPC::gpr gRPC::grpc gRPC::grpc++ protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)

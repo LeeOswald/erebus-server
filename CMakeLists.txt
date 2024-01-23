@@ -93,11 +93,16 @@ find_package(gRPC CONFIG REQUIRED)
 
 # component names
 set(EREBUS_LIB erebus-rtl)
+set(EREBUS_SRVLIB erebus-srv)
+set(EREBUS_CLTLIB erebus-clt)
 set(EREBUS_SERVER erebus-server)
 set(EREBUS_CTL erebus-ctl)
 
 # components
 add_subdirectory(3rd_party/googletest)
 add_subdirectory(src/erebus)
+add_subdirectory(src/erebus-srv)
+add_subdirectory(src/erebus-clt)
 add_subdirectory(src/erebus-server)
+add_subdirectory(src/erebus-ctl)
 add_subdirectory(tests)

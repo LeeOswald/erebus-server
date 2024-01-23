@@ -11,9 +11,20 @@ namespace Er
 namespace Private
 {
 
+class LogRotator
+    : public Er::Log::LogBase
+{
+public:
+    ~LogRotator() {}
+    explicit LogRotator(Er::Log::Level level, const char* fileName);
+
+private:
+    const int kKeep = 3;
+};
+
 
 class Logger final
-    : public Er::Log::LogBase
+    : public LogRotator
 {
 public:
     ~Logger();

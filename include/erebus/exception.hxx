@@ -10,7 +10,7 @@ namespace Er
 {
 
 //
-// EREBUS_EXPORT is nexessary here for typeid() to be able to find 
+// EREBUS_EXPORT is necessary here for typeid() to be able to find 
 // exception instance type across modules
 //
 
