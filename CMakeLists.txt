@@ -88,7 +88,9 @@ if(WIN32)
 endif()
 
 # require gRPC & protobuf
-find_package(utf8_range REQUIRED)
+if(NOT MSVC)
+    find_package(utf8_range REQUIRED)
+endif()
 find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
