@@ -5,7 +5,9 @@ if(ER_POSIX)
     )
 elseif(ER_WINDOWS)
     set(PLATFORM_FILES
+        ../../include/erebus/util/utf16.hxx
         ../../include/erebus/util/win32error.hxx
+        util/utf16_win32.cxx
         util/win32error_win32.cxx
     )
 endif()

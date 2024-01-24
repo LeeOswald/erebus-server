@@ -19,6 +19,10 @@
     #include <sys/stat.h>
 #endif
 
+#if ER_WINDOWS
+    #include <erebus/util/utf16.hxx>
+#endif
+
 namespace
 {
 
@@ -106,15 +110,17 @@ void restart(int argc, char* argv[], char* env[])
         command.append(" ");
         command.append(argv[i]);
     }
-    char temp[32767];
-    if (command.length() >= _countof(temp))
+    auto wcommand = Er::Util::utf8ToUtf16(command);
+
+    wchar_t temp[32767];
+    if (wcommand.length() >= _countof(temp))
         return;
     
-    std::strcpy(temp, command.c_str());
-    STARTUPINFOA si = {};
+    std::wcscpy(temp, wcommand.c_str());
+    STARTUPINFOW si = {};
     si.cb = sizeof(si);
     PROCESS_INFORMATION pi = {};
-    if (::CreateProcessA(
+    if (::CreateProcessW(
         nullptr,
         temp,
         nullptr,

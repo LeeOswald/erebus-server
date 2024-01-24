@@ -13,6 +13,7 @@
 #endif
 
 #if ER_WINDOWS
+    #include <erebus/util/utf16.hxx>
     #include <erebus/util/win32error.hxx>
 #endif
 
@@ -68,7 +69,7 @@ Logger::Logger(Er::Log::Level level, const char* fileName)
 #if ER_POSIX
     , m_file(::open(fileName, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH))
 #elif ER_WINDOWS
-    , m_file(::CreateFileA(fileName, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0))
+    , m_file(::CreateFileW(Er::Util::utf8ToUtf16(fileName).c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0))
 #endif
 {
 #if ER_POSIX

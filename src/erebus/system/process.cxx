@@ -5,6 +5,11 @@
     #include <sys/stat.h>
 #endif
 
+#if ER_WINDOWS
+    #include <erebus/util/utf16.hxx>
+#endif
+
+
 namespace Er
 {
 
@@ -26,9 +31,9 @@ EREBUS_EXPORT Pid id() noexcept
 EREBUS_EXPORT std::string exe()
 {
 #if ER_WINDOWS
-    char exeFile[MAX_PATH];
-    ::GetModuleFileNameA(0, exeFile, _countof(exeFile));
-    return std::string(exeFile);
+    wchar_t exeFile[MAX_PATH];
+    ::GetModuleFileNameW(0, exeFile, _countof(exeFile));
+    return Util::utf16To8bit(CP_UTF8, exeFile);
 #elif ER_POSIX
     
     struct stat sb = { 0 };

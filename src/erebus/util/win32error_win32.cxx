@@ -1,4 +1,5 @@
 #include <erebus/util/autoptr.hxx>
+#include <erebus/util/utf16.hxx>
 #include <erebus/util/win32error.hxx>
 
 namespace Er
@@ -27,31 +28,31 @@ EREBUS_EXPORT std::string win32ErrorToString(DWORD r, HMODULE module)
     if (r == 0)
         return std::string();
 
-    AutoPtr<char, HeapDeleter<char>> buffer;
-    auto cch = ::FormatMessageA(
+    AutoPtr<wchar_t, HeapDeleter<wchar_t>> buffer;
+    auto cch = ::FormatMessageW(
         (module ? FORMAT_MESSAGE_FROM_HMODULE : FORMAT_MESSAGE_FROM_SYSTEM) | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
         module,
         r,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
-        reinterpret_cast<char*>(buffer.writeable()),
+        reinterpret_cast<wchar_t*>(buffer.writeable()),
         0,
         nullptr
     );
 
-    std::string s;
+    std::wstring s;
 
     if (cch > 0)
     {
-        s = std::string(buffer.get(), cch);
+        s = std::wstring(buffer.get(), cch);
 
         // Windows appends \r\n to error messages for some reason
-        while (s.size() && (s[s.size() - 1] == '\n' || s[s.size() - 1] == '\r'))
+        while (s.size() && (s[s.size() - 1] == L'\n' || s[s.size() - 1] == L'\r'))
         {
             s.erase(s.size() - 1);
         }
     }
 
-    return s;
+    return utf16To8bit(CP_UTF8, s.data(), s.length());
 }
 
     
