@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/time.hxx>
+#include <erebus/system/time.hxx>
 #include <erebus/util/condition.hxx>
 
 #include <functional>
@@ -31,7 +31,7 @@ enum class Level
 struct Record
 {
     Level level = Level::Info;
-    Time time;
+    System::Time time;
     uintptr_t pid  = 0;
     uintptr_t tid = 0;
     std::string message;
@@ -39,7 +39,7 @@ struct Record
     Record() noexcept = default;
 
     template <typename MessageT>
-    explicit Record(Level level, const Time& time, uintptr_t pid, uintptr_t tid, MessageT&& message)
+    explicit Record(Level level, const System::Time& time, uintptr_t pid, uintptr_t tid, MessageT&& message)
         : level(level)
         , time(time)
         , pid(pid)

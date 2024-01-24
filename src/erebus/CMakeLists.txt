@@ -21,7 +21,8 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/sourcelocation.hxx
     ../../include/erebus/stringliteral.hxx
     ../../include/erebus/syncstream.hxx
-    ../../include/erebus/time.hxx
+    ../../include/erebus/system/process.hxx
+    ../../include/erebus/system/time.hxx
     ../../include/erebus/util/autoptr.hxx
     ../../include/erebus/util/condition.hxx
     ../../include/erebus/util/crc32.hxx
@@ -32,7 +33,8 @@ add_library(${EREBUS_LIB} SHARED
     init.cxx
     knownprops.cxx
     log.cxx
-    time.cxx
+    system/process.cxx
+    system/time.cxx
     util/condition.cxx
     util/exceptionutil.cxx
     util/format.cxx

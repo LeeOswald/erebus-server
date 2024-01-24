@@ -1,4 +1,5 @@
 #include <erebus/knownprops.hxx>
+#include <erebus/system/process.hxx>
 #include <erebus/util/condition.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus-srv/erebus-srv.hxx>
@@ -8,6 +9,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -95,7 +97,7 @@ void signalHandler(int signo)
     g_exitCondition.set();
 }
 
-void restart(int argc, char* argv[])
+void restart(int argc, char* argv[], char* env[])
 {
 #if ER_WINDOWS
     char exeFile[MAX_PATH];
@@ -132,13 +134,36 @@ void restart(int argc, char* argv[])
     }
 
 #elif ER_POSIX
+    auto pid = ::fork();
+
+    if (pid < 0)
+        ::exit(EXIT_FAILURE);
+
+    if (pid > 0)
+        ::exit(EXIT_SUCCESS);
+
+    auto exe = Er::System::CurrentProcess::exe();
+    std::vector<std::string> argStrings;
+    std::vector<char*> argPtrs;
+    //argStrings.emplace_back(std::move(exe));
+    //argPtrs.push_back(const_cast<char*>(argStrings.back().data()));
+
+    for (auto i = 1; i < argc; ++i)
+    {
+        argStrings.emplace_back(argv[i]);
+        argPtrs.push_back(const_cast<char*>(argStrings.back().data()));
+    }
+
+    argPtrs.push_back(nullptr);
+    
+    ::execve(exe.c_str(), argPtrs.data(), env);
 #endif
 }
 
 } // namespace {}
 
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[], char* env[])
 {
 #if ER_WINDOWS
     ::SetConsoleOutputCP(CP_UTF8);
@@ -240,7 +265,7 @@ int main(int argc, char* argv[])
             g_log = nullptr;
             // force logger destruction to unlock the logfile
             logger.reset();
-            restart(argc, argv);
+            restart(argc, argv, env);
         }
 
         Er::finalize();

@@ -3,7 +3,7 @@
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
 #include <erebus/syncstream.hxx>
-#include <erebus/time.hxx>
+#include <erebus/system/time.hxx>
 
 #if ER_POSIX
     #include <fcntl.h>

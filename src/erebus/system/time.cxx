@@ -1,9 +1,12 @@
-#include <erebus/time.hxx>
+#include <erebus/system/time.hxx>
 
 #include <ctime>
 #include <time.h>
 
 namespace Er
+{
+
+namespace System
 {
 
 Time Time::local() noexcept
@@ -68,5 +71,7 @@ Time Time::gmt() noexcept
 #endif
 }
 
+
+} // namespace System {}
 
 } // namespace Er {}

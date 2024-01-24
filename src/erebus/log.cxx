@@ -1,5 +1,5 @@
 #include <erebus/log.hxx>
-
+#include <erebus/system/process.hxx>
 
 
 namespace Er
@@ -151,17 +151,16 @@ bool LogBase::write(Level l, std::string_view s) noexcept
     if (l < m_level)
         return false;
 
+    auto pid = System::CurrentProcess::id();
 #if ER_POSIX
-    auto pid = static_cast<uintptr_t>(::getpid());
     auto tid = static_cast<uintptr_t>(::gettid());
 #elif ER_WINDOWS
-    auto pid = static_cast<uintptr_t>(::GetCurrentProcessId());
     auto tid = static_cast<uintptr_t>(::GetCurrentThreadId());
 #endif
 
     try
     {
-        auto record = std::make_shared<Record>(l, Time::local(), pid, tid, s);
+        auto record = std::make_shared<Record>(l, System::Time::local(), pid, tid, s);
         return write(record);
     }
     catch (...)
