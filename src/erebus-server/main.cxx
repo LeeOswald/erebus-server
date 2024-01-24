@@ -100,9 +100,7 @@ void signalHandler(int signo)
 void restart(int argc, char* argv[], char* env[])
 {
 #if ER_WINDOWS
-    char exeFile[MAX_PATH];
-    ::GetModuleFileNameA(0, exeFile, _countof(exeFile));
-    std::string command(exeFile);
+    std::string command = Er::System::CurrentProcess::exe();
     for (int i = 1; i < argc; ++i)
     {
         command.append(" ");
@@ -134,29 +132,9 @@ void restart(int argc, char* argv[], char* env[])
     }
 
 #elif ER_POSIX
-    auto pid = ::fork();
-
-    if (pid < 0)
-        ::exit(EXIT_FAILURE);
-
-    if (pid > 0)
-        ::exit(EXIT_SUCCESS);
-
     auto exe = Er::System::CurrentProcess::exe();
-    std::vector<std::string> argStrings;
-    std::vector<char*> argPtrs;
-    //argStrings.emplace_back(std::move(exe));
-    //argPtrs.push_back(const_cast<char*>(argStrings.back().data()));
 
-    for (auto i = 1; i < argc; ++i)
-    {
-        argStrings.emplace_back(argv[i]);
-        argPtrs.push_back(const_cast<char*>(argStrings.back().data()));
-    }
-
-    argPtrs.push_back(nullptr);
-    
-    ::execve(exe.c_str(), argPtrs.data(), env);
+    ::execve(exe.c_str(), argv, env);
 #endif
 }
 
