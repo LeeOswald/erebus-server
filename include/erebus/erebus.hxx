@@ -20,6 +20,21 @@ namespace Er
 EREBUS_EXPORT void initialize();
 EREBUS_EXPORT void finalize();
 
+class Scope
+    : public boost::noncopyable
+{
+public:
+    ~Scope()
+    {
+        finalize();
+    }
+
+    Scope()
+    {
+        initialize();
+    }
+};
+
 
 enum class CallbackResult
 {

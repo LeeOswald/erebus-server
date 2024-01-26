@@ -22,16 +22,19 @@ namespace Er
 namespace Private
 {
 
-struct ServerParams
+namespace Server
+{
+
+struct Params
 {
     std::string address;
     Er::Log::ILog* log = nullptr;
     Er::Util::Condition* exitCondition = nullptr;
     bool* needRestart = nullptr;
 
-    ServerParams() noexcept = default;
+    Params() noexcept = default;
 
-    explicit ServerParams(
+    explicit Params(
         std::string_view address,
         Er::Log::ILog* log,
         Er::Util::Condition* exitCondition,
@@ -44,22 +47,43 @@ struct ServerParams
     {
     }
 
-    ServerParams(const ServerParams&) = default;
-    ServerParams& operator=(const ServerParams&) = default;
+    Params(const Params&) = default;
+    Params& operator=(const Params&) = default;
 };
 
 
-struct IErebusSrv
+struct IServer
 {
     virtual void stop() = 0;
     virtual void wait() = 0;
 
-    virtual ~IErebusSrv() {}
+    virtual ~IServer() {}
 };
 
 
-std::shared_ptr<IErebusSrv> EREBUSSRV_EXPORT startServer(const ServerParams* params);
+EREBUSSRV_EXPORT void initialize();
+EREBUSSRV_EXPORT void finalize();
 
+class Scope
+    : public boost::noncopyable
+{
+public:
+    ~Scope()
+    {
+        finalize();
+    }
+
+    Scope()
+    {
+        initialize();
+    }
+};
+
+
+std::shared_ptr<IServer> EREBUSSRV_EXPORT start(const Params* params);
+
+
+} // namespace Server {}
 
 } // namespace Private {}
     

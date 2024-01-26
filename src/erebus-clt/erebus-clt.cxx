@@ -5,6 +5,8 @@
 
 #include <protocol/erebus.grpc.pb.h>
 
+#include <atomic>
+
 namespace Er
 {
 
@@ -88,14 +90,26 @@ private:
 } // namespace {}
 
 
+static std::atomic<long> g_initialized = 0;
+
 EREBUSCLT_EXPORT void initialize()
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<::Er::Client::Props::ResultCode>>());
+    if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
+    {
+        registerProperty(std::make_shared<PropertyInfoWrapper<::Er::Client::Props::ResultCode>>());
+
+        ::grpc_init();
+    }
 }
 
 EREBUSCLT_EXPORT void finalize()
 {
-    unregisterProperty(lookupProperty(ER_PROPID_("erebus.ResultCode")));
+    if (g_initialized.fetch_sub(1, std::memory_order_acq_rel) == 1)
+    {
+        ::grpc_shutdown();
+
+        unregisterProperty(lookupProperty(ER_PROPID_("erebus.ResultCode")));
+    }
 }
 
 EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const std::string& address)

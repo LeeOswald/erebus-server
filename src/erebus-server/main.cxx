@@ -188,7 +188,7 @@ int main(int argc, char* argv[], char* env[])
         daemonize();
 #endif
 
-    Er::initialize();
+    Er::Scope er;
 
     Er::Log::Level logLevel = vm.count("verbose") ? Er::Log::Level::Debug : Er::Log::Level::Info;
 
@@ -229,8 +229,10 @@ int main(int argc, char* argv[], char* env[])
         ::signal(SIGHUP, signalHandler);
 #endif
 
-        Er::Private::ServerParams params(bindAddr, g_log, &g_exitCondition, &g_restartRequired);
-        auto server = Er::Private::startServer(&params);
+        Er::Private::Server::Scope ss;
+
+        Er::Private::Server::Params params(bindAddr, g_log, &g_exitCondition, &g_restartRequired);
+        auto server = Er::Private::Server::start(&params);
 
         g_exitCondition.wait();
         server->stop();
@@ -252,7 +254,6 @@ int main(int argc, char* argv[], char* env[])
             restart(argc, argv, env);
         }
 
-        Er::finalize();
     }
     catch (Er::Exception& e)
     {

@@ -9,6 +9,8 @@
 
 #include <protocol/erebus.grpc.pb.h>
 
+#include <atomic>
+
 
 namespace Er
 {
@@ -16,11 +18,14 @@ namespace Er
 namespace Private
 {
 
+namespace Server
+{
+
 namespace
 {
 
 class ErebusSrv final
-    : public IErebusSrv
+    : public IServer
     , public erebus::Erebus::Service
 {
 public:
@@ -28,7 +33,7 @@ public:
     {
     }
 
-    explicit ErebusSrv(const ServerParams* params)
+    explicit ErebusSrv(const Params* params)
         : m_params(*params)
     {
         grpc::ServerBuilder builder;
@@ -83,7 +88,7 @@ public:
     }
     
 private:
-    ServerParams m_params;
+    Params m_params;
     std::unique_ptr<grpc::Server> m_server;
 };
 
@@ -91,15 +96,35 @@ private:
 } // namespace {}
 
 
-std::shared_ptr<IErebusSrv> EREBUSSRV_EXPORT startServer(const ServerParams* params)
-{
-    grpc::EnableDefaultHealthCheckService(true);
-    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+static std::atomic<long> g_initialized = 0;
 
+EREBUSSRV_EXPORT void initialize()
+{
+    if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
+    {
+        ::grpc_init();
+
+        grpc::EnableDefaultHealthCheckService(true);
+        grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+    }
+}
+
+EREBUSSRV_EXPORT void finalize()
+{
+    if (g_initialized.fetch_sub(1, std::memory_order_acq_rel) == 1)
+    {
+        ::grpc_shutdown();
+    }
+}
+
+std::shared_ptr<IServer> EREBUSSRV_EXPORT start(const Params* params)
+{
     auto result = std::make_shared<ErebusSrv>(params);
 
     return result;
 }
+
+} // namespace Server {}
 
 } // namespace Private {}
 

@@ -19,11 +19,9 @@ int main(int argc, char** argv)
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    Er::initialize();
+    Er::Scope er;
 
     auto ret = RUN_ALL_TESTS();
-
-    Er::finalize();
 
     return ret;
 }

@@ -110,6 +110,21 @@ struct IStub
 EREBUSCLT_EXPORT void initialize();
 EREBUSCLT_EXPORT void finalize();
 
+class Scope
+    : public boost::noncopyable
+{
+public:
+    ~Scope()
+    {
+        finalize();
+    }
+
+    Scope()
+    {
+        initialize();
+    }
+};
+
 EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const std::string& address);
 
 } // namespace Client {}

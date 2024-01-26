@@ -85,8 +85,8 @@ int main(int argc, char* argv[])
             addr = vm["address"].as<std::string>();
         }
 
-        Er::initialize();
-        Er::Client::initialize();
+        Er::Scope er;
+        Er::Client::Scope cs;
 
         ErCtl::Log console(verbose ? Er::Log::Level::Debug : Er::Log::Level::Info);
 
@@ -94,8 +94,6 @@ int main(int argc, char* argv[])
 
         run(&console, std::move(addr), std::move(cmd));
         
-        Er::Client::finalize();
-        Er::finalize();
     }
     catch (std::exception& e)
     {
