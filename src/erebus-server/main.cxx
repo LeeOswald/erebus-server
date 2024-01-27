@@ -194,14 +194,14 @@ int main(int argc, char* argv[], char* env[])
 
 #if ER_LINUX 
     #if !ER_DEBUG
-        auto logger = std::make_unique< Er::Private::Logger>(logLevel, "/var/log/erebus-server.log");
+        auto logger = std::make_unique<Er::Private::Logger>(logLevel, "/var/log/erebus-server.log");
     #else
         std::string home(std::getenv("HOME"));
         home.append("/erebus-server.log");
-        auto logger = std::make_unique< Er::Private::Logger>(logLevel, home.c_str());
+        auto logger = std::make_unique<Er::Private::Logger>(logLevel, home.c_str());
     #endif
 #else
-    auto logger = std::make_unique< Er::Private::Logger>(logLevel, "erebus-server.log");
+    auto logger = std::make_unique<Er::Private::Logger>(logLevel, "erebus-server.log");
 #endif
 
     if (!logger->exclusive())
