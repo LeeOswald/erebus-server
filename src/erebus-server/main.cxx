@@ -32,56 +32,6 @@ bool g_restartRequired = false;
 std::optional<int> g_signalReceived;
 
 
-#if ER_POSIX
-void daemonize() noexcept
-{
-    // Fork the process and have the parent exit. If the process was started
-    // from a shell, this returns control to the user. Forking a new process is
-    // also a prerequisite for the subsequent call to setsid().
-    auto pid = ::fork();
-
-    if (pid < 0)
-        ::exit(EXIT_FAILURE);
-
-    if (pid > 0)
-        ::exit(EXIT_SUCCESS);
-
-    // Make the process a new session leader. This detaches it from the terminal.
-    if (::setsid() < 0)
-        ::exit(EXIT_FAILURE);
-
-    // Close the standard streams. This decouples the daemon from the terminal that started it.
-    auto null = ::open("/dev/null", O_RDWR);
-    ::dup2(null, STDIN_FILENO);
-    ::dup2(null, STDOUT_FILENO);
-    ::dup2(null, STDERR_FILENO);
-    ::close(null);
-
-    // A process inherits its working directory from its parent. This could be
-    // on a mounted filesystem, which means that the running daemon would
-    // prevent this filesystem from being unmounted. Changing to the root
-    // directory avoids this problem.
-    ::chdir("/");
-
-    ::signal(SIGCHLD, SIG_IGN);
-    ::signal(SIGHUP, SIG_IGN);
-
-    // A second fork ensures the process cannot acquire a controlling terminal.
-    pid = ::fork();
-
-    if (pid < 0)
-        ::exit(EXIT_FAILURE);
-
-    if (pid > 0)
-        ::exit(EXIT_SUCCESS);
-
-    // The file mode creation mask is also inherited from the parent process.
-    // We don't want to restrict the permissions on files created by the
-    // daemon, so the mask is cleared.
-    ::umask(0);
-}
-#endif
-
 void terminateHandler()
 {
     std::ostringstream ss;
@@ -185,7 +135,7 @@ int main(int argc, char* argv[], char* env[])
 
 #if ER_POSIX
     if (vm.count("daemon"))
-        daemonize();
+        Er::System::CurrentProcess::daemonize();
 #endif
 
     Er::Scope er;
