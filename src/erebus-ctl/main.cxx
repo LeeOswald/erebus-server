@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
         options.add_options()
             ("help,h", "display this message")
             ("verbose,v", "display debug output")
-            ("address,a", po::value<std::string>(), "server address:port")
+            ("endpoint,e", po::value<std::string>(), "server endpoint")
             ("command,c", po::value<std::string>(), "execute command")
         ;
 
@@ -71,19 +71,14 @@ int main(int argc, char* argv[])
         po::store(po::parse_command_line(argc, argv, options), vm);
         po::notify(vm);
 
-        if (vm.count("help") || !vm.count("command"))
+        if (vm.contains("help") || !vm.contains("command") || !vm.contains("endpoint"))
         {
             std::cerr << options << "\n";
             return EXIT_SUCCESS;
         }
 
-        bool verbose = (vm.count("verbose") > 0);
-
-        std::string addr("127.0.0.1:6665");
-        if (vm.count("address"))
-        {
-            addr = vm["address"].as<std::string>();
-        }
+        bool verbose = vm.contains("verbose");
+        auto ep = vm["endpoint"].as<std::string>();
 
         Er::Scope er;
         Er::Client::Scope cs;
@@ -92,7 +87,7 @@ int main(int argc, char* argv[])
 
         auto cmd = vm["command"].as<std::string>();
 
-        run(&console, std::move(addr), std::move(cmd));
+        run(&console, std::move(ep), std::move(cmd));
         
     }
     catch (std::exception& e)

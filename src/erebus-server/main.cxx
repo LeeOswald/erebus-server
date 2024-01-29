@@ -7,6 +7,7 @@
 
 #include "logger.hxx"
 
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -111,48 +112,57 @@ int main(int argc, char* argv[], char* env[])
     }
 #endif
 
+    std::string logFile;
+    std::string cfgFile;
+    std::vector<std::string> endpoints;
 
     namespace po = boost::program_options;
     po::options_description options("Command line options");
     options.add_options()
         ("help,h", "display this message")
         ("verbose,v", "display debug output")
+        ("logfile,l", po::value<std::string>(&logFile)->default_value("erebus-server.log"), "log file path")
+        ("config,c", po::value<std::string>(&cfgFile)->default_value("erebus-server.cfg"), "configuration file path")
 #if ER_POSIX
         ("daemon,d", "run as a daemon")
 #endif
-        ("address,a", po::value<std::string>(), "server bind address:port")
+        ("endpoint,e", po::value<decltype(endpoints)>(&endpoints), "server endpoint")
     ;
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, options), vm);
     po::notify(vm);
 
-    if (vm.count("help"))
+    std::ifstream cfg(cfgFile, std::ifstream::in);
+    if (cfg.good())
+    {
+        po::store(po::parse_config_file(cfg, options), vm);
+        cfg.close();
+        po::notify(vm);        
+    }
+    
+
+    if (vm.contains("help"))
     {
         std::cerr << options << "\n";
         return EXIT_SUCCESS;
     }
 
+    if (endpoints.empty())
+    {
+        std::cerr << "No server endpoints specified.\n";
+        return EXIT_FAILURE;
+    }
+
 #if ER_POSIX
-    if (vm.count("daemon"))
+    if (vm.contains("daemon"))
         Er::System::CurrentProcess::daemonize();
 #endif
 
     Er::Scope er;
 
-    Er::Log::Level logLevel = vm.count("verbose") ? Er::Log::Level::Debug : Er::Log::Level::Info;
-
-#if ER_LINUX 
-    #if !ER_DEBUG
-        auto logger = std::make_unique<Er::Private::Logger>(logLevel, "/var/log/erebus-server.log");
-    #else
-        std::string home(std::getenv("HOME"));
-        home.append("/erebus-server.log");
-        auto logger = std::make_unique<Er::Private::Logger>(logLevel, home.c_str());
-    #endif
-#else
-    auto logger = std::make_unique<Er::Private::Logger>(logLevel, "erebus-server.log");
-#endif
+    Er::Log::Level logLevel = vm.contains("verbose") ? Er::Log::Level::Debug : Er::Log::Level::Info;
+    auto logger = std::make_unique<Er::Private::Logger>(logLevel, logFile.c_str());
 
     if (!logger->exclusive())
         return EXIT_FAILURE;
@@ -164,14 +174,7 @@ int main(int argc, char* argv[], char* env[])
 
     try
     {
-        std::string bindAddr("127.0.0.1:6665");
-        if (vm.count("address"))
-        {
-            bindAddr = vm["address"].as<std::string>();
-        }
-
-        logger->write(Er::Log::Level::Info, "Binding to address %s", bindAddr.c_str());
-
+        
         ::signal(SIGINT, signalHandler);
         ::signal(SIGTERM, signalHandler);
 #if ER_POSIX
@@ -181,11 +184,39 @@ int main(int argc, char* argv[], char* env[])
 
         Er::Private::Server::Scope ss;
 
-        Er::Private::Server::Params params(bindAddr, g_log, &g_exitCondition, &g_restartRequired);
-        auto server = Er::Private::Server::start(&params);
+        std::vector<std::shared_ptr<Er::Private::Server::IServer>> servers;
+        servers.reserve(endpoints.size());
+        for (auto ep: endpoints)
+        {
+            logger->write(Er::Log::Level::Info, "Creating a server instance at [%s]", ep.c_str());
+
+            try
+            {
+                Er::Private::Server::Params params(ep, g_log, &g_exitCondition, &g_restartRequired);
+                auto server = Er::Private::Server::start(&params);
+                servers.push_back(server);
+            }
+            catch (Er::Exception& e)
+            {
+                Er::Util::logException(g_log, Er::Log::Level::Error, e);
+            }
+            catch (std::exception& e)
+            {
+                Er::Util::logException(g_log, Er::Log::Level::Error, e);
+            }
+        }
+
+        if (servers.empty())
+            throw Er::Exception(ER_HERE(), "Could not create any server instances");
+
+        logger->write(Er::Log::Level::Info, "Waiting for client connections...");
 
         g_exitCondition.wait();
-        server->stop();
+
+        for (auto srv: servers)
+        {
+            srv->stop();
+        }
         
         if (g_signalReceived)
         {
