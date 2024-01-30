@@ -22,7 +22,7 @@ LogBase::~LogBase()
 LogBase::LogBase(Level level, size_t maxQueue) noexcept
     : m_level(level)
     , m_maxQueue(maxQueue)
-    , m_event(true)
+    , m_event(Er::Util::Condition::Reset::Auto)
     , m_worker([this]() { run(); })
 {
 }

@@ -28,7 +28,7 @@ namespace
 {
 
 Er::Log::ILog* g_log = nullptr;
-Er::Util::Condition g_exitCondition(false);
+Er::Util::Condition g_exitCondition(Er::Util::Condition::Reset::Manual);
 bool g_restartRequired = false;
 std::optional<int> g_signalReceived;
 
@@ -142,7 +142,7 @@ int main(int argc, char* argv[], char* env[])
     }
     
 
-    if (vm.contains("help"))
+    if (vm.count("help"))
     {
         std::cerr << options << "\n";
         return EXIT_SUCCESS;
@@ -155,13 +155,13 @@ int main(int argc, char* argv[], char* env[])
     }
 
 #if ER_POSIX
-    if (vm.contains("daemon"))
+    if (vm.count("daemon"))
         Er::System::CurrentProcess::daemonize();
 #endif
 
     Er::Scope er;
 
-    Er::Log::Level logLevel = vm.contains("verbose") ? Er::Log::Level::Debug : Er::Log::Level::Info;
+    Er::Log::Level logLevel = vm.count("verbose") ? Er::Log::Level::Debug : Er::Log::Level::Info;
     auto logger = std::make_unique<Er::Private::Logger>(logLevel, logFile.c_str());
 
     if (!logger->exclusive())

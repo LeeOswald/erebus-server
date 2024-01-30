@@ -71,13 +71,13 @@ int main(int argc, char* argv[])
         po::store(po::parse_command_line(argc, argv, options), vm);
         po::notify(vm);
 
-        if (vm.contains("help") || !vm.contains("command") || !vm.contains("endpoint"))
+        if (vm.count("help") || !vm.count("command") || !vm.count("endpoint"))
         {
             std::cerr << options << "\n";
             return EXIT_SUCCESS;
         }
 
-        bool verbose = vm.contains("verbose");
+        bool verbose = vm.count("verbose");
         auto ep = vm["endpoint"].as<std::string>();
 
         Er::Scope er;

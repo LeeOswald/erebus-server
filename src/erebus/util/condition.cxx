@@ -6,9 +6,9 @@ namespace Er
 namespace Util
 {    
 
-Condition::Condition(bool autoReset, bool initiallySignaled)
+Condition::Condition(Reset reset, bool initiallySignaled)
     : m_signaled(initiallySignaled)
-    , m_autoReset(autoReset)
+    , m_autoReset(reset == Reset::Auto)
 {
 }
 

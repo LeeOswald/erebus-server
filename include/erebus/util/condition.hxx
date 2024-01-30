@@ -20,7 +20,13 @@ class EREBUS_EXPORT Condition final
     : public boost::noncopyable
 {
 public:
-    explicit Condition(bool autoReset, bool initiallySignaled = false);
+    enum class Reset
+    {
+        Auto,
+        Manual
+    };
+
+    explicit Condition(Reset reset, bool initiallySignaled = false);
 
     void set() noexcept;
     void reset() noexcept;
