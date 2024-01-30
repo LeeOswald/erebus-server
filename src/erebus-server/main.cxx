@@ -1,3 +1,7 @@
+#include <boost/process.hpp>
+#include <boost/program_options.hpp>
+#include <boost/stacktrace.hpp>
+
 #include <erebus/knownprops.hxx>
 #include <erebus/system/process.hxx>
 #include <erebus/util/condition.hxx>
@@ -12,17 +16,12 @@
 #include <sstream>
 #include <vector>
 
-#include <boost/program_options.hpp>
-#include <boost/stacktrace.hpp>
 
 #if ER_POSIX
     #include <fcntl.h>
     #include <sys/stat.h>
 #endif
 
-#if ER_WINDOWS
-    #include <erebus/util/utf16.hxx>
-#endif
 
 namespace
 {
@@ -54,45 +53,15 @@ void signalHandler(int signo)
 
 void restart(int argc, char* argv[], char* env[])
 {
-#if ER_WINDOWS
-    std::string command = Er::System::CurrentProcess::exe();
+    std::vector<std::string> args;
+    args.reserve(argc);
+    args.push_back(Er::System::CurrentProcess::exe());
     for (int i = 1; i < argc; ++i)
     {
-        command.append(" ");
-        command.append(argv[i]);
-    }
-    auto wcommand = Er::Util::utf8ToUtf16(command);
-
-    wchar_t temp[32767];
-    if (wcommand.length() >= _countof(temp))
-        return;
-    
-    std::wcscpy(temp, wcommand.c_str());
-    STARTUPINFOW si = {};
-    si.cb = sizeof(si);
-    PROCESS_INFORMATION pi = {};
-    if (::CreateProcessW(
-        nullptr,
-        temp,
-        nullptr,
-        nullptr,
-        FALSE,
-        0,
-        nullptr,
-        nullptr,
-        &si,
-        &pi
-        ))
-    {
-        ::CloseHandle(pi.hProcess);
-        ::CloseHandle(pi.hThread);
+        args.push_back(std::string(argv[i]));
     }
 
-#elif ER_POSIX
-    auto exe = Er::System::CurrentProcess::exe();
-
-    ::execve(exe.c_str(), argv, env);
-#endif
+    boost::process::spawn(std::move(args));
 }
 
 } // namespace {}

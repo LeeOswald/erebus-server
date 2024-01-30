@@ -62,7 +62,7 @@ if(ER_LINUX)
 endif()
 
 # require Boost
-find_package(Boost REQUIRED COMPONENTS system program_options)
+find_package(Boost REQUIRED COMPONENTS filesystem system program_options)
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})

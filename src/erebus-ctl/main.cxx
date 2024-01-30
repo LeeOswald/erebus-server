@@ -18,11 +18,15 @@ void version(Er::Log::ILog* log, Er::Client::IStub* client)
 void exit(Er::Log::ILog* log, Er::Client::IStub* client)
 {
     client->exit(false);
+
+    log->write(Er::Log::Level::Info, "Server shutdown requested");
 }
 
 void restart(Er::Log::ILog* log, Er::Client::IStub* client)
 {
     client->exit(true);
+
+    log->write(Er::Log::Level::Info, "Server restart requested");
 }
 
 void run(Er::Log::ILog* log, std::string&& address, std::string&& command)
