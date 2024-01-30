@@ -125,7 +125,31 @@ public:
     }
 };
 
-EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const std::string& address);
+
+struct Params
+{
+    std::string endpoint;
+    std::string root;
+    std::string certificate;
+    std::string key;
+
+    Params() noexcept = default;
+
+    explicit Params(
+        std::string_view endpoint,
+        std::string_view root,
+        std::string_view certificate,
+        std::string_view key
+    )
+        : endpoint(endpoint)
+        , root(root)
+        , certificate(certificate)
+        , key(key)
+    {
+    }
+};
+
+EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const Params& params);
 
 } // namespace Client {}
     

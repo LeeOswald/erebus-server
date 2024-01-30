@@ -1,12 +1,27 @@
 #include "log.hxx"
 
 #include <erebus/util/exceptionutil.hxx>
+#include <erebus/util/format.hxx>
 #include <erebus-clt/erebus-clt.hxx>
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include <boost/program_options.hpp>
 
+
+std::string loadFile(const std::string& path)
+{
+    std::ifstream file(path);
+    if (!file.is_open())
+        throw Er::Exception(ER_HERE(), Er::Util::format("Failed to open [%s]", path.c_str()));
+
+    std::stringstream ss;
+    ss << file.rdbuf();
+
+    return ss.str();
+}
 
 void version(Er::Log::ILog* log, Er::Client::IStub* client)
 {
@@ -29,11 +44,11 @@ void restart(Er::Log::ILog* log, Er::Client::IStub* client)
     log->write(Er::Log::Level::Info, "Server restart requested");
 }
 
-void run(Er::Log::ILog* log, std::string&& address, std::string&& command)
+void run(Er::Log::ILog* log, const Er::Client::Params& params, std::string&& command)
 {
     try
     {
-        auto client = Er::Client::create(address);
+        auto client = Er::Client::create(params);
 
         if (command == "version")
             version(log, client.get());
@@ -60,6 +75,10 @@ int main(int argc, char* argv[])
     ::SetConsoleOutputCP(CP_UTF8);
 #endif
 
+    std::string rootFile;
+    std::string certFile;
+    std::string keyFile;
+
     try
     {
         namespace po = boost::program_options;
@@ -69,6 +88,9 @@ int main(int argc, char* argv[])
             ("verbose,v", "display debug output")
             ("endpoint,e", po::value<std::string>(), "server endpoint")
             ("command,c", po::value<std::string>(), "execute command")
+            ("root,r", po::value<std::string>(&rootFile), "root certificate file path")
+            ("certificate,s", po::value<std::string>(&certFile), "certificate file path")
+            ("key,k", po::value<std::string>(&keyFile), "private key file path")
         ;
 
         po::variables_map vm;
@@ -89,9 +111,20 @@ int main(int argc, char* argv[])
 
         ErCtl::Log console(verbose ? Er::Log::Level::Debug : Er::Log::Level::Info);
 
+        std::string root;
+        std::string certificate;
+        std::string key;
+        if (!rootFile.empty())
+            root = loadFile(rootFile);
+        if (!certFile.empty())
+            certificate = loadFile(certFile);
+        if (!keyFile.empty())
+            key = loadFile(keyFile);
+
         auto cmd = vm["command"].as<std::string>();
 
-        run(&console, std::move(ep), std::move(cmd));
+        Er::Client::Params params(ep, root, certificate, key);
+        run(&console, params, std::move(cmd));
         
     }
     catch (std::exception& e)

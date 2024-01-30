@@ -6,6 +6,7 @@
 #include <erebus/system/process.hxx>
 #include <erebus/util/condition.hxx>
 #include <erebus/util/exceptionutil.hxx>
+#include <erebus/util/format.hxx>
 #include <erebus-srv/erebus-srv.hxx>
 
 
@@ -31,6 +32,17 @@ Er::Util::Condition g_exitCondition(Er::Util::Condition::Reset::Manual);
 bool g_restartRequired = false;
 std::optional<int> g_signalReceived;
 
+std::string loadFile(const std::string& path)
+{
+    std::ifstream file(path);
+    if (!file.is_open())
+        throw Er::Exception(ER_HERE(), Er::Util::format("Failed to open [%s]", path.c_str()));
+
+    std::stringstream ss;
+    ss << file.rdbuf();
+
+    return ss.str();
+}
 
 void terminateHandler()
 {
@@ -84,6 +96,9 @@ int main(int argc, char* argv[], char* env[])
     std::string logFile;
     std::string cfgFile;
     std::vector<std::string> endpoints;
+    std::string rootFile;
+    std::string certFile;
+    std::string keyFile;
 
     namespace po = boost::program_options;
     po::options_description options("Command line options");
@@ -96,6 +111,9 @@ int main(int argc, char* argv[], char* env[])
         ("daemon,d", "run as a daemon")
 #endif
         ("endpoint,e", po::value<decltype(endpoints)>(&endpoints), "server endpoint")
+        ("root,r", po::value<std::string>(&rootFile), "root certificate file path")
+        ("certificate,s", po::value<std::string>(&certFile), "certificate file path")
+        ("key,k", po::value<std::string>(&keyFile), "private key file path")
     ;
 
     po::variables_map vm;
@@ -151,6 +169,19 @@ int main(int argc, char* argv[], char* env[])
         ::signal(SIGHUP, signalHandler);
 #endif
 
+        std::string root;
+        std::string certificate;
+        std::string key;
+
+        if (!rootFile.empty())
+            root = loadFile(rootFile);
+
+        if (!certFile.empty())
+            certificate = loadFile(certFile);
+
+        if (!keyFile.empty())
+            key = loadFile(keyFile);
+
         Er::Private::Server::Scope ss;
 
         std::vector<std::shared_ptr<Er::Private::Server::IServer>> servers;
@@ -161,7 +192,7 @@ int main(int argc, char* argv[], char* env[])
 
             try
             {
-                Er::Private::Server::Params params(ep, g_log, &g_exitCondition, &g_restartRequired);
+                Er::Private::Server::Params params(ep, g_log, &g_exitCondition, &g_restartRequired, root, certificate, key);
                 auto server = Er::Private::Server::start(&params);
                 servers.push_back(server);
             }

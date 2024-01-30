@@ -36,10 +36,23 @@ public:
     explicit ErebusSrv(const Params* params)
         : m_params(*params)
     {
+        auto local = params->endpoint.starts_with("unix:");
         grpc::ServerBuilder builder;
-        
-        // listen on the given address without any authentication mechanism
-        builder.AddListeningPort(params->address, grpc::InsecureServerCredentials());
+
+        if (!local && !params->certificate.empty())
+        {
+            grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { params->key, params->certificate };
+            grpc::SslServerCredentialsOptions sslOps(GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY);
+            sslOps.pem_root_certs = params->root;
+            sslOps.pem_key_cert_pairs.push_back(keycert);
+
+            builder.AddListeningPort(params->endpoint, grpc::SslServerCredentials(sslOps));
+        }
+        else
+        {
+            // listen on the given address without any authentication mechanism
+            builder.AddListeningPort(params->endpoint, grpc::InsecureServerCredentials());
+        }
         
         // register "service" as the instance through which we'll communicate with
         // clients. In this case it corresponds to an *synchronous* service

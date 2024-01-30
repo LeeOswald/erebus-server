@@ -27,28 +27,34 @@ namespace Server
 
 struct Params
 {
-    std::string address;
+    std::string endpoint;
     Er::Log::ILog* log = nullptr;
     Er::Util::Condition* exitCondition = nullptr;
     bool* needRestart = nullptr;
+    std::string root;
+    std::string certificate;
+    std::string key;
 
     Params() noexcept = default;
 
     explicit Params(
-        std::string_view address,
+        std::string_view endpoint,
         Er::Log::ILog* log,
         Er::Util::Condition* exitCondition,
-        bool* needRestart
+        bool* needRestart,
+        std::string_view root,
+        std::string_view certificate,
+        std::string_view key
     )
-        : address(address)
+        : endpoint(endpoint)
         , log(log)
         , exitCondition(exitCondition)
         , needRestart(needRestart)
+        , root(root)
+        , certificate(certificate)
+        , key(key)
     {
     }
-
-    Params(const Params&) = default;
-    Params& operator=(const Params&) = default;
 };
 
 

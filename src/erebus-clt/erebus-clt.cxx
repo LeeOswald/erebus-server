@@ -112,10 +112,24 @@ EREBUSCLT_EXPORT void finalize()
     }
 }
 
-EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const std::string& address)
+EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const Params& params)
 {
-    auto channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    return std::make_shared<Stub>(channel);
+    bool local = params.endpoint.starts_with("unix:");
+    if (!local && !params.certificate.empty())
+    {
+        grpc::SslCredentialsOptions opts;
+        opts.pem_root_certs = params.root;
+        opts.pem_cert_chain = params.certificate;
+        opts.pem_private_key = params.key;
+
+        auto channel = grpc::CreateChannel(params.endpoint, grpc::SslCredentials(opts));
+        return std::make_shared<Stub>(channel);
+    }
+    else
+    {
+        auto channel = grpc::CreateChannel(params.endpoint, grpc::InsecureChannelCredentials());
+        return std::make_shared<Stub>(channel);
+    }
 }
 
 } // namespace Client {}
