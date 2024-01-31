@@ -42,7 +42,7 @@ public:
         if (!local && !params->certificate.empty())
         {
             grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { params->key, params->certificate };
-            grpc::SslServerCredentialsOptions sslOps(GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY);
+            grpc::SslServerCredentialsOptions sslOps;
             sslOps.pem_root_certs = params->root;
             sslOps.pem_key_cert_pairs.push_back(keycert);
 
