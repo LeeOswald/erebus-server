@@ -76,8 +76,6 @@ int main(int argc, char* argv[])
 #endif
 
     std::string rootFile;
-    std::string certFile;
-    std::string keyFile;
 
     try
     {
@@ -87,10 +85,9 @@ int main(int argc, char* argv[])
             ("help,h", "display this message")
             ("verbose,v", "display debug output")
             ("endpoint,e", po::value<std::string>(), "server endpoint")
+            ("ssl,s", "enable SSL")
             ("command,c", po::value<std::string>(), "execute command")
             ("root,r", po::value<std::string>(&rootFile), "root certificate file path")
-            ("certificate,s", po::value<std::string>(&certFile), "certificate file path")
-            ("key,k", po::value<std::string>(&keyFile), "private key file path")
         ;
 
         po::variables_map vm;
@@ -111,19 +108,15 @@ int main(int argc, char* argv[])
 
         ErCtl::Log console(verbose ? Er::Log::Level::Debug : Er::Log::Level::Info);
 
+        bool ssl = (vm.count("ssl") > 0);
         std::string root;
-        std::string certificate;
-        std::string key;
+        
         if (!rootFile.empty())
             root = loadFile(rootFile);
-        if (!certFile.empty())
-            certificate = loadFile(certFile);
-        if (!keyFile.empty())
-            key = loadFile(keyFile);
-
+        
         auto cmd = vm["command"].as<std::string>();
 
-        Er::Client::Params params(ep, root, certificate, key);
+        Er::Client::Params params(ep, ssl, root);
         run(&console, params, std::move(cmd));
         
     }

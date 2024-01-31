@@ -129,22 +129,19 @@ public:
 struct Params
 {
     std::string endpoint;
-    std::string root;
-    std::string certificate;
-    std::string key;
+    bool ssl;
+    std::string rootCA;
 
     Params() noexcept = default;
 
     explicit Params(
         std::string_view endpoint,
-        std::string_view root,
-        std::string_view certificate,
-        std::string_view key
+        bool ssl,
+        std::string_view rootCA
     )
         : endpoint(endpoint)
-        , root(root)
-        , certificate(certificate)
-        , key(key)
+        , ssl(ssl)
+        , rootCA(rootCA)
     {
     }
 };
