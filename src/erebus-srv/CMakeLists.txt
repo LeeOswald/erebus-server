@@ -7,6 +7,7 @@ set(GENERATED_SOURCES
 
 add_library(${EREBUS_SRVLIB} SHARED
     ../../include/erebus-srv/erebus-srv.hxx
+    ../../include/erebus-srv/userdb.hxx
     erebus-srv.cxx
     ${GENERATED_SOURCES}
 )

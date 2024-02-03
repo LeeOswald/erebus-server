@@ -31,6 +31,8 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/util/exceptionutil.hxx
     ../../include/erebus/util/format.hxx
     ../../include/erebus/util/generichandle.hxx
+    ../../include/erebus/util/random.hxx
+    ../../include/erebus/util/sha256.hxx
     exception.cxx
     init.cxx
     knownprops.cxx
@@ -40,6 +42,7 @@ add_library(${EREBUS_LIB} SHARED
     util/condition.cxx
     util/exceptionutil.cxx
     util/format.cxx
+    util/sha256.cxx
     ${PLATFORM_FILES}
 )
 

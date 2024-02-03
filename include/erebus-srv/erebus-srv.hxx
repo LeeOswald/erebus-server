@@ -25,15 +25,19 @@ namespace Private
 namespace Server
 {
 
+struct IUserDb;
+
 struct Params
 {
     std::string endpoint;
     Er::Log::ILog* log = nullptr;
     Er::Util::Condition* exitCondition = nullptr;
     bool* needRestart = nullptr;
+    bool ssl = false;
     std::string root;
     std::string certificate;
     std::string key;
+    IUserDb* userDb = nullptr;
 
     Params() noexcept = default;
 
@@ -42,17 +46,21 @@ struct Params
         Er::Log::ILog* log,
         Er::Util::Condition* exitCondition,
         bool* needRestart,
+        bool ssl,
         std::string_view root,
         std::string_view certificate,
-        std::string_view key
+        std::string_view key,
+        IUserDb* userDb
     )
         : endpoint(endpoint)
         , log(log)
         , exitCondition(exitCondition)
         , needRestart(needRestart)
+        , ssl(ssl)
         , root(root)
         , certificate(certificate)
         , key(key)
+        , userDb(userDb)
     {
     }
 };

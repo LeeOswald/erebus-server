@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
 
@@ -23,41 +24,15 @@ std::string loadFile(const std::string& path)
     return ss.str();
 }
 
-void version(Er::Log::ILog* log, Er::Client::IStub* client)
-{
-    auto ver = client->version();
-
-    log->write(Er::Log::Level::Info, "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
-}
-
-void exit(Er::Log::ILog* log, Er::Client::IStub* client)
-{
-    client->exit(false);
-
-    log->write(Er::Log::Level::Info, "Server shutdown requested");
-}
-
-void restart(Er::Log::ILog* log, Er::Client::IStub* client)
-{
-    client->exit(true);
-
-    log->write(Er::Log::Level::Info, "Server restart requested");
-}
-
-void run(Er::Log::ILog* log, const Er::Client::Params& params, std::string&& command)
+void version(Er::Log::ILog* log, const Er::Client::Params& params)
 {
     try
     {
         auto client = Er::Client::create(params);
 
-        if (command == "version")
-            version(log, client.get());
-        else if (command == "exit")
-            exit(log, client.get());
-        else if (command == "restart")
-            restart(log, client.get());
-        else
-            log->write(Er::Log::Level::Error, "Unsupported command [%s]", command.c_str());
+        auto ver = client->version();
+
+        log->write(Er::Log::Level::Info, "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
     }
     catch (Er::Exception& e)
     {
@@ -69,6 +44,67 @@ void run(Er::Log::ILog* log, const Er::Client::Params& params, std::string&& com
     }
 }
 
+void addUser(Er::Log::ILog* log, const Er::Client::Params& params, std::string_view name, std::string_view password)
+{
+    try
+    {
+        auto client = Er::Client::create(params);
+
+        client->addUser(name, password);
+
+        log->write(Er::Log::Level::Info, "Successfully created a new user");
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+void exit(Er::Log::ILog* log, const Er::Client::Params& params)
+{
+    try
+    {
+        auto client = Er::Client::create(params);
+
+        client->exit(false);
+
+        log->write(Er::Log::Level::Info, "Server shutdown requested");
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+void restart(Er::Log::ILog* log, const Er::Client::Params& params)
+{
+    try
+    {
+        auto client = Er::Client::create(params);
+
+        client->exit(true);
+
+        log->write(Er::Log::Level::Info, "Server restart requested");
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+
 int main(int argc, char* argv[])
 {
 #if ER_WINDOWS
@@ -76,32 +112,45 @@ int main(int argc, char* argv[])
 #endif
 
     std::string rootFile;
+    std::string user;
+    std::string password;
 
     try
     {
         namespace po = boost::program_options;
         po::options_description options("Command line options");
         options.add_options()
-            ("help,h", "display this message")
+            ("help,?", "display this message")
             ("verbose,v", "display debug output")
-            ("endpoint,e", po::value<std::string>(), "server endpoint")
-            ("ssl,s", "enable SSL")
-            ("command,c", po::value<std::string>(), "execute command")
-            ("root,r", po::value<std::string>(&rootFile), "root certificate file path")
+            ("endpoint", po::value<std::string>(), "server endpoint")
+            ("ssl", "enable SSL")
+            ("root", po::value<std::string>(&rootFile), "root certificate file path")
+            ("user", po::value<std::string>(&user), "user name")
+            ("pwd", po::value<std::string>(&password), "user password")
+            ("version", "display server version")
+            ("exit", "shutdown server")
+            ("restart", "restart server")
+            ("adduser", po::value<std::string>(), "add user (name:password)")
         ;
 
         po::variables_map vm;
         po::store(po::parse_command_line(argc, argv, options), vm);
         po::notify(vm);
 
-        if (vm.count("help") || !vm.count("command") || !vm.count("endpoint"))
+        if (vm.count("help"))
         {
-            std::cerr << options << "\n";
+            std::cout << options << "\n";
             return EXIT_SUCCESS;
         }
 
-        bool verbose = vm.count("verbose");
+        if (!vm.count("endpoint"))
+        {
+            std::cerr << "Server endpoint address expected\n";
+            return EXIT_FAILURE;
+        }
         auto ep = vm["endpoint"].as<std::string>();
+
+        bool verbose = (vm.count("verbose") > 0);
 
         Er::Scope er;
         Er::Client::Scope cs;
@@ -114,10 +163,33 @@ int main(int argc, char* argv[])
         if (!rootFile.empty())
             root = loadFile(rootFile);
         
-        auto cmd = vm["command"].as<std::string>();
+        Er::Client::Params params(ep, ssl, root, user, password);
+        
+        if (vm.count("version"))
+        {
+            version(&console, params);
+        }
+        else if (vm.count("exit"))
+        {
+            exit(&console, params);
+        }
+        else if (vm.count("restart"))
+        {
+            restart(&console, params);
+        }
+        else if (vm.count("adduser"))
+        {
+            auto namePwd = vm["adduser"].as<std::string>();
+            std::vector<std::string> parts;
+            boost::split(parts, namePwd, boost::is_any_of(":"));
+            if (parts.size() != 2)
+            {
+                std::cerr << "Expected <user>:<password> pair specified for \"adduser\" command\n";
+                return EXIT_FAILURE;
+            }
 
-        Er::Client::Params params(ep, ssl, root);
-        run(&console, params, std::move(cmd));
+            addUser(&console, params, parts[0], parts[1]);
+        }
         
     }
     catch (std::exception& e)

@@ -29,8 +29,7 @@ else()
     endif()
 endif()
 
-if(MSVC)
-else()
+if(NOT MSVC)
     add_link_options(-rdynamic) # enable stack capture
 endif()
 

@@ -2,6 +2,8 @@ add_executable(${EREBUS_SERVER}
     logger.cxx
     logger.hxx
     main.cxx
+    users.cxx
+    users.hxx
 )
 
 

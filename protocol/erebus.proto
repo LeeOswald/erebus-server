@@ -9,8 +9,12 @@ package erebus;
 
 
 service Erebus {
-  rpc Exit (ExitRequest) returns (GenericReply) {}
-  rpc Version(Void) returns (ServerVersionReply) {}
+  rpc Init(InitialRequest) returns(InitialReply) {}
+  rpc Authorize(AuthRequest) returns(AuthReply) {}
+  rpc AddUser(AddUserRequest) returns(GenericReply) {}
+  rpc RemoveUser(RemoveUserRequest) returns(GenericReply) {}
+  rpc Exit(ExitRequest) returns(GenericReply) {}
+  rpc Version(Void) returns(ServerVersionReply) {}
 }
 
 message Void {
@@ -18,6 +22,35 @@ message Void {
 
 message GenericReply {
   ResultCode code = 1;  
+}
+
+message InitialRequest {
+  string user = 1;
+}
+
+message InitialReply {
+  GenericReply header = 1;
+  string salt = 2;  
+}
+
+message AuthRequest {
+  string user = 1;
+  string pwd = 2;
+}
+
+message AuthReply {
+  GenericReply header = 1;
+  string ticket = 3;
+}
+
+message AddUserRequest {
+  string name = 1;
+  string salt = 2;
+  string pwd = 3;
+}
+
+message RemoveUserRequest {
+  string name = 1;
 }
 
 message ServerVersionReply {
@@ -34,5 +67,20 @@ message ExitRequest {
 enum ResultCode {
   Success = 0;
   Failure = 1;
+  Cancelled = 2;
+  InvalidArgument = 3;
+  DeadlineExceeded = 4;
+  NotFound = 5;
+  AlreadyExists = 6;
+  PermissionDenied = 7;
+  Unauthenticated = 8;
+  ResourceExhausted = 9;
+  FailedPrecondition = 10;
+  Aborted = 11;
+  OutOfRange = 12;
+  Unimplemented = 13;
+  Internal = 14;
+  Unavailable = 15;
+  DataLoss = 16;
 }
 

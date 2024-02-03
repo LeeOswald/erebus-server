@@ -100,6 +100,7 @@ struct Version
 
 struct IStub
 {
+    virtual void addUser(std::string_view name, std::string_view password) = 0;
     virtual void exit(bool restart) = 0;
     virtual Version version() = 0;
 
@@ -131,17 +132,23 @@ struct Params
     std::string endpoint;
     bool ssl;
     std::string rootCA;
+    std::string user;
+    std::string password;
 
     Params() noexcept = default;
 
     explicit Params(
         std::string_view endpoint,
         bool ssl,
-        std::string_view rootCA
+        std::string_view rootCA,
+        std::string_view user,
+        std::string_view password
     )
         : endpoint(endpoint)
         , ssl(ssl)
         , rootCA(rootCA)
+        , user(user)
+        , password(password)
     {
     }
 };
