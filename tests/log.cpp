@@ -5,6 +5,8 @@
 #include <mutex>
 #include <thread>
 
+namespace
+{
 
 class Logger
     : public Er::Log::LogBase
@@ -33,6 +35,8 @@ private:
     std::mutex m_mutex;
     std::queue<std::shared_ptr<Er::Log::Record>> m_queue;
 };
+
+} // namespace {}
 
 
 TEST(Er_LogBase, simple)

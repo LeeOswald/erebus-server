@@ -21,6 +21,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/platform.hxx
     ../../include/erebus/property.hxx
     ../../include/erebus/sourcelocation.hxx
+    ../../include/erebus/stacktrace.hxx
     ../../include/erebus/stringliteral.hxx
     ../../include/erebus/syncstream.hxx
     ../../include/erebus/system/process.hxx
@@ -37,6 +38,7 @@ add_library(${EREBUS_LIB} SHARED
     init.cxx
     knownprops.cxx
     log.cxx
+    stacktrace.cxx
     system/process.cxx
     system/time.cxx
     util/condition.cxx

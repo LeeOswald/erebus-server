@@ -2,12 +2,31 @@
 
 #include <erebus/property.hxx>
 #include <erebus/sourcelocation.hxx>
+#include <erebus/stacktrace.hxx>
 #include <erebus/util/crc32.hxx>
 
-#include <boost/stacktrace.hpp>
 
 namespace Er
 {
+
+namespace ExceptionProps
+{
+
+namespace Private
+{
+
+void registerAll();
+
+} // namespace Private {}
+
+
+using DecodedError = PropertyInfo<std::string, ER_PROPID("decoded_error"), "Error message", PropertyFormatter<std::string>>;
+using PosixErrorCode = PropertyInfo<int32_t, ER_PROPID("posix_error_code"), "POSIX error code", PropertyFormatter<int32_t>>;
+using Win32ErrorCode = PropertyInfo<uint32_t, ER_PROPID("win32_error_code"), "WIN32 error code", PropertyFormatter<uint32_t>>;
+
+
+} // ExceptionProps {}
+
 
 //
 // EREBUS_EXPORT is necessary here for typeid() to be able to find 
@@ -18,19 +37,46 @@ class EREBUS_EXPORT Exception
     : public std::exception
 {
 public:
+    struct Location final
+    {
+        std::optional<SourceLocation> source;
+        std::optional<StackTrace> stack;
+        std::optional<DecodedStackTrace> decoded;
+
+        Location() noexcept = default;
+
+        Location(SourceLocation&& source) noexcept
+            : source(std::move(source))
+        {}
+
+        Location(SourceLocation&& source, StackTrace&& stack) noexcept
+            : source(std::move(source))
+            , stack(std::move(stack))
+        {
+        }
+
+        Location(SourceLocation&& source, DecodedStackTrace&& decoded) noexcept
+            : source(std::move(source))
+            , decoded(std::move(decoded))
+        {
+        }
+    };
+
     Exception() = default;
 
     template <typename MessageT>
-    explicit Exception(SourceLocation source, MessageT&& message)
-        : m_source(source)
-        , m_context(std::make_shared<Context>(std::forward<MessageT>(message)))
-    {}
+    explicit Exception(Location&& location, MessageT&& message)
+        : m_context(std::make_shared<Context>(std::forward<MessageT>(message)))
+    {
+        m_context->setLocation(std::move(location));
+    }
 
     template <typename MessageT, typename PropT, typename... ExceptionProps>
-    explicit Exception(SourceLocation source, MessageT&& message, PropT&& prop, ExceptionProps&&... props)
-        : m_source(source)
-        , m_context(std::make_shared<Context>(std::forward<MessageT>(message), std::forward<PropT>(prop), std::forward<ExceptionProps>(props)...))
-    {}
+    explicit Exception(Location&& location, MessageT&& message, PropT&& prop, ExceptionProps&&... props)
+        : m_context(std::make_shared<Context>(std::forward<MessageT>(message), std::forward<PropT>(prop), std::forward<ExceptionProps>(props)...))
+    {
+        m_context->setLocation(std::move(location));
+    }
 
     const char* what() const noexcept override
     {
@@ -39,15 +85,17 @@ public:
         return "Unknown exception";
     }
 
-    const SourceLocation& source() const noexcept
-    {
-        return m_source;
-    }
-
     const std::string* message() const noexcept
     {
         if (m_context)
             return &m_context->message;
+        return nullptr;
+    }
+
+    const Location* location() const noexcept
+    {
+        if (m_context)
+            return &m_context->location;
         return nullptr;
     }
 
@@ -95,10 +143,11 @@ public:
     }
 
 private:
-    struct Context
+    struct Context final
     {
         std::string message;
         std::vector<Property> properties;
+        Location location;
 
         template <typename MessageT>
         Context(MessageT&& message)
@@ -110,6 +159,11 @@ private:
             : Context(std::forward<MessageT>(message), std::forward<ExceptionProps>(props)...)
         {
             addProp(std::forward<PropT>(prop));
+        }
+
+        void setLocation(Location&& location)
+        {
+            this->location = location;
         }
 
         template <typename ValueT>
@@ -125,32 +179,16 @@ private:
         }
     };
 
-    SourceLocation m_source;
     std::shared_ptr<Context> m_context;
 };
 
 
-namespace ExceptionProps
-{
-
-namespace Private
-{
-
-void registerAll();
-
-} // namespace Private {}
-
-
-using DecodedError = PropertyInfo<std::string, ER_PROPID("decoded_error"), "Error message", PropertyFormatter<std::string>>;
-using PosixErrorCode = PropertyInfo<int, ER_PROPID("posix_error_code"), "POSIX error code", PropertyFormatter<int>>;
-using Win32ErrorCode = PropertyInfo<uint32_t, ER_PROPID("win32_error_code"), "WIN32 error code", PropertyFormatter<uint32_t>>;
-
-
-} // ExceptionProps {}
-
-
 } // namespace Er {}
 
+
+#define ER_HERE() ::Er::Exception::Location(::Er::SourceLocation::current(), ::Er::StackTrace())
+#define ER_HERE2(skip) ::Er::Exception::Location(::Er::SourceLocation::current(), ::Er::StackTrace(skip, static_cast<std::size_t>(-1)))
+#define ER_SOURCE() ::Er::Exception::Location(::Er::SourceLocation::current())
 
 
 

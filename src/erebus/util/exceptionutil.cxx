@@ -13,15 +13,23 @@ namespace Util
 namespace
 {
 
+constexpr size_t kIndentSize = 4;
+
 void formatException(const Er::Exception& e, std::ostringstream& out, int level);
 
 
 void formatException(const std::exception& e, std::ostringstream& out, int level)
 {
-    if (level > 0)
-        out << '\n' << std::string(level * 3, ' ');
+    std::string indent(level * kIndentSize, ' ');
 
-    out << e.what();
+    if (level > 0)
+        out << '\n' << indent << "------------------------------------------------\n";
+
+    auto message = e.what();
+    if (!message || !*message)
+        out << indent << "Unknown exception";
+    else
+        out << indent << e.what();
 
     try
     {
@@ -42,28 +50,55 @@ void formatException(const std::exception& e, std::ostringstream& out, int level
 
 void formatException(const Er::Exception& e, std::ostringstream& out, int level)
 {
-    std::string indent(level * 3, ' ');
+    std::string indent(level * kIndentSize, ' ');
+    std::string smallIndent(level * kIndentSize / 2, ' ');
 
     if (level > 0)
-        out << '\n' << indent;
+        out << '\n' << indent << "------------------------------------------------\n";
 
     auto message = e.message();
     if (message)
     {
-        out << *message;
+        out << indent << *message;
     }
     else
     {
-        out << e.what();
+        out << indent << e.what();
     }
 
-    out << "\n" << indent << " File: " << e.source().source.file_name();
-    out << "\n" << indent << " Line: " << e.source().source.line();
-
-    if (!e.source().stack.empty())
+    auto location = e.location();
+    if (location)
     {
-        out << "\n" << indent << " Stack:\n";
-        out << e.source().stack;
+        if (location->source)
+        {
+            out << "\n" << indent << smallIndent << "File: " << location->source->file_name();
+            out << "\n" << indent << smallIndent << "Line: " << location->source->line();
+        }
+
+        DecodedStackTrace ds;
+        const DecodedStackTrace* stack = nullptr;
+        if (location->decoded)
+        {
+            stack = &(*location->decoded);
+        }
+        else if (location->stack)
+        {
+            ds = decodeStackTrace(*location->stack);
+            stack = &ds;
+        }
+
+        if (stack && !stack->empty())
+        {
+            out << "\n" << indent <<  smallIndent << "Call Stack:";
+            for (auto& frame : *stack)
+            {
+                out << "\n" << indent << smallIndent << " ";
+                if (!frame.empty())
+                    out << frame;
+                else
+                    out << "???";
+            }
+        }
     }
 
     auto properties = e.properties();
@@ -71,7 +106,7 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
     {
         for (auto& prop: *properties)
         {
-            out << "\n " << indent;
+            out << "\n" << indent << smallIndent;
 
             auto pi = lookupProperty(prop.id);
             if (pi)
@@ -81,7 +116,7 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
             }
             else
             {
-                out << Util::format(" 0x%08x: ???", prop.id);
+                out << Util::format("0x%08x: ???", prop.id);
             }
         }
     }
@@ -103,43 +138,43 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
     }
 }
 
+std::string formatException(const std::exception& e) noexcept
+{
+    try
+    {
+        std::ostringstream out;
+
+        formatException(e, out, 0);
+
+        return out.str();
+    }
+    catch (...)
+    {
+    }
+
+    return std::string();
+}
+
+std::string formatException(const Er::Exception& e) noexcept
+{
+    try
+    {
+        std::ostringstream out;
+
+        formatException(e, out, 0);
+
+        return out.str();
+    }
+    catch (...)
+    {
+
+    }
+
+    return std::string();
+}
+
 } // namespace {}
 
-
-EREBUS_EXPORT std::string formatException(const std::exception& e) noexcept
-{
-    try
-    {
-        std::ostringstream out;
-
-        formatException(e, out, 0);
-
-        return out.str();
-    }
-    catch (...)
-    {
-    }
-
-    return std::string();
-}
-
-EREBUS_EXPORT std::string formatException(const Er::Exception& e) noexcept
-{
-    try
-    {
-        std::ostringstream out;
-
-        formatException(e, out, 0);
-
-        return out.str();
-    }
-    catch (...)
-    {
-
-    }
-
-    return std::string();
-}
 
 EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const std::exception& e) noexcept
 {
@@ -149,7 +184,7 @@ EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const std::exc
     if (level >= log->level())
     {
         auto s = formatException(e);
-        log->write(level, "\n%s", s.c_str());
+        log->write(level, "%s", s.c_str());
     }
 }
 
@@ -161,7 +196,7 @@ EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const Er::Exce
     if (level >= log->level())
     {
         auto s = formatException(e);
-        log->write(level, "\n%s", s.c_str());
+        log->write(level, "%s", s.c_str());
     }
 }
 

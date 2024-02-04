@@ -4,6 +4,29 @@
 #include <erebus/knownprops.hxx>
 #include <erebus/util/exceptionutil.hxx>
 
+namespace
+{
+
+class Logger
+    : public Er::Log::LogBase
+{
+public:
+    explicit Logger(Er::Log::Level level)
+        : Er::Log::LogBase(level, 65536)
+    {
+        addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
+        unmute();
+    }
+
+private:
+    void delegate(std::shared_ptr<Er::Log::Record> r)
+    {
+        std::cout << r->message << "\n";
+    }
+};
+
+} // namespace {}
+
 
 TEST(Er_Exception, simple)
 {
@@ -72,6 +95,8 @@ TEST(Er_Exception, known_props)
 
 TEST(Er_Exception, format1)
 {
+    Logger log(Er::Log::Level::Debug);
+
     try
     {
         try
@@ -92,13 +117,14 @@ TEST(Er_Exception, format1)
     }
     catch (std::exception& e)
     {
-        auto s = Er::Util::formatException(e);
-        std::cout << s << "\n";
+        Er::Util::logException(&log, Er::Log::Level::Info, e);
     }
 }
 
 TEST(Er_Exception, format2)
 {
+    Logger log(Er::Log::Level::Debug);
+
     try
     {
         try
@@ -121,7 +147,6 @@ TEST(Er_Exception, format2)
     }
     catch (std::exception& e)
     {
-        auto s = Er::Util::formatException(e);
-        std::cout << s << "\n";
+        Er::Util::logException(&log, Er::Log::Level::Info, e);
     }
 }
