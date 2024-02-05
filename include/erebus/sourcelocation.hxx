@@ -33,7 +33,7 @@ struct SourceLocation
 {
     SourceLocation() noexcept = default;
     
-    constexpr SourceLocation(const SourceLocationImpl& source) noexcept
+    SourceLocation(const SourceLocationImpl& source) noexcept
         : m_file(source.file_name())
         , m_line(source.line())
     {
@@ -47,7 +47,7 @@ struct SourceLocation
     {
     }
 
-    constexpr const char* file() const noexcept
+    const char* file() const noexcept
     {
         if (!m_savedFile.empty())
             return m_savedFile.c_str();
