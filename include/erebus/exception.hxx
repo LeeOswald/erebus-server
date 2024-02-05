@@ -45,8 +45,9 @@ public:
 
         Location() noexcept = default;
 
-        Location(SourceLocation&& source) noexcept
-            : source(std::move(source))
+        template <typename SourceLocationT>
+        Location(SourceLocationT&& source) noexcept
+            : source(std::forward<SourceLocationT>(source))
         {}
 
         Location(SourceLocation&& source, StackTrace&& stack) noexcept
@@ -186,9 +187,9 @@ private:
 } // namespace Er {}
 
 
-#define ER_HERE() ::Er::Exception::Location(::Er::SourceLocation::current(), ::Er::StackTrace())
-#define ER_HERE2(skip) ::Er::Exception::Location(::Er::SourceLocation::current(), ::Er::StackTrace(skip, static_cast<std::size_t>(-1)))
-#define ER_SOURCE() ::Er::Exception::Location(::Er::SourceLocation::current())
+#define ER_HERE() ::Er::Exception::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace())
+#define ER_HERE2(skip) ::Er::Exception::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace(skip, static_cast<std::size_t>(-1)))
+#define ER_SOURCE() ::Er::Exception::Location(::Er::SourceLocationImpl::current())
 
 
 

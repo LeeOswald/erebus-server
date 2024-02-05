@@ -2,7 +2,7 @@
 
 #include <erebus/erebus.hxx>
 #include <erebus/exception.hxx>
-
+#include <erebus/log.hxx>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     #ifdef EREBUSCLT_EXPORTS
@@ -52,20 +52,20 @@ inline StreamT& operator<<(StreamT& stream, ResultCode code)
     case ResultCode::Success: stream << "Success"; break;
     case ResultCode::Failure: stream << "Failure"; break;
     case ResultCode::Cancelled: stream << "Cancelled"; break;
-    case ResultCode::InvalidArgument: stream << "InvalidArgument"; break;
-    case ResultCode::DeadlineExceeded: stream << "DeadlineExceeded"; break;
-    case ResultCode::NotFound: stream << "NotFound"; break;
-    case ResultCode::AlreadyExists: stream << "AlreadyExists"; break;
-    case ResultCode::PermissionDenied: stream << "PermissionDenied"; break;
+    case ResultCode::InvalidArgument: stream << "Invalid argument"; break;
+    case ResultCode::DeadlineExceeded: stream << "Deadline exceeded"; break;
+    case ResultCode::NotFound: stream << "Not found"; break;
+    case ResultCode::AlreadyExists: stream << "Already exists"; break;
+    case ResultCode::PermissionDenied: stream << "Permission denied"; break;
     case ResultCode::Unauthenticated: stream << "Unauthenticated"; break;
-    case ResultCode::ResourceExhausted: stream << "ResourceExhausted"; break;
-    case ResultCode::FailedPrecondition: stream << "FailedPrecondition"; break;
+    case ResultCode::ResourceExhausted: stream << "Resource exhausted"; break;
+    case ResultCode::FailedPrecondition: stream << "Failed precondition"; break;
     case ResultCode::Aborted: stream << "Aborted"; break;
-    case ResultCode::OutOfRange: stream << "OutOfRange"; break;
+    case ResultCode::OutOfRange: stream << "Out of range"; break;
     case ResultCode::Unimplemented: stream << "Unimplemented"; break;
     case ResultCode::Internal: stream << "Internal"; break;
     case ResultCode::Unavailable: stream << "Unavailable"; break;
-    case ResultCode::DataLoss: stream << "DataLoss"; break;
+    case ResultCode::DataLoss: stream << "Data loss"; break;
     default: stream << "???"; break;
     }
     return stream;
@@ -101,6 +101,7 @@ struct Version
 struct IStub
 {
     virtual void addUser(std::string_view name, std::string_view password) = 0;
+    virtual void removeUser(std::string_view name) = 0;
     virtual void exit(bool restart) = 0;
     virtual Version version() = 0;
 
@@ -129,6 +130,7 @@ public:
 
 struct Params
 {
+    Log::ILog* log = nullptr;
     std::string endpoint;
     bool ssl;
     std::string rootCA;
@@ -138,13 +140,15 @@ struct Params
     Params() noexcept = default;
 
     explicit Params(
+        Log::ILog* log,
         std::string_view endpoint,
         bool ssl,
         std::string_view rootCA,
         std::string_view user,
         std::string_view password
     )
-        : endpoint(endpoint)
+        : log(log)
+        , endpoint(endpoint)
         , ssl(ssl)
         , rootCA(rootCA)
         , user(user)

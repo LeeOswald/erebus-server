@@ -52,7 +52,27 @@ void addUser(Er::Log::ILog* log, const Er::Client::Params& params, std::string_v
 
         client->addUser(name, password);
 
-        log->write(Er::Log::Level::Info, "Successfully created a new user");
+        Er::Log::Info(log) << "User " << name << " created successfully";
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, std::string_view name)
+{
+    try
+    {
+        auto client = Er::Client::create(params);
+
+        client->removeUser(name);
+
+        Er::Log::Info(log) << "User " << name << " deleted successfully";
     }
     catch (Er::Exception& e)
     {
@@ -130,7 +150,8 @@ int main(int argc, char* argv[])
             ("version", "display server version")
             ("exit", "shutdown server")
             ("restart", "restart server")
-            ("adduser", po::value<std::string>(), "add user (name:password)")
+            ("adduser", po::value<std::string>(), "add user <name>:<password>")
+            ("rmuser", po::value<std::string>(), "delete user <name>")
         ;
 
         po::variables_map vm;
@@ -163,7 +184,7 @@ int main(int argc, char* argv[])
         if (!rootFile.empty())
             root = loadFile(rootFile);
         
-        Er::Client::Params params(ep, ssl, root, user, password);
+        Er::Client::Params params(&console, ep, ssl, root, user, password);
         
         if (vm.count("version"))
         {
@@ -189,6 +210,11 @@ int main(int argc, char* argv[])
             }
 
             addUser(&console, params, parts[0], parts[1]);
+        }
+        else if (vm.count("rmuser"))
+        {
+            auto name = vm["rmuser"].as<std::string>();
+            rmUser(&console, params, name);
         }
         
     }

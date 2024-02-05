@@ -1,6 +1,7 @@
 #include "erebus-version.h"
 
 #include <erebus/exception.hxx>
+#include <erebus/knownprops.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus/util/random.hxx>
 #include <erebus-srv/erebus-srv.hxx>
@@ -52,7 +53,8 @@ public:
         auto dispatchValue = std::string(dispatch->second.data(), dispatch->second.length());
         if (
             (dispatchValue == "/erebus.Erebus/Authorize") ||
-            (dispatchValue == "/erebus.Erebus/Init")
+            (dispatchValue == "/erebus.Erebus/Init") ||
+            (dispatchValue == "/erebus.Erebus/Version")
             )
         {
             return grpc::Status::OK;
@@ -79,8 +81,8 @@ public:
 
         // once verified, mark as consumed and store user for later retrieval
         consumedMetadata->insert(std::make_pair("ticket", ticketValue));     // required
-        //context->AddProperty("user", m_tokens[tokenValue]);           // optional
-        //context->SetPeerIdentityPropertyName("user");                 // optional
+        context->AddProperty("user", it->second);           // optional
+        context->SetPeerIdentityPropertyName("user");                 // optional
 
         return grpc::Status::OK;
     }
@@ -158,7 +160,7 @@ public:
         if (!u)
         {
             Er::Log::Warning(m_params.log) << "Trying to log in an unknown user " << user;
-            response->mutable_header()->set_code(erebus::NotFound);
+            response->mutable_header()->set_code(erebus::Unauthenticated);
         }
         else
         {
@@ -176,7 +178,7 @@ public:
         if (!u)
         {
             Er::Log::Warning(m_params.log) << "Trying to log in an unknown user " << user;
-            response->mutable_header()->set_code(erebus::NotFound);
+            response->mutable_header()->set_code(erebus::Unauthenticated);
         }
         else
         {
@@ -202,6 +204,9 @@ public:
 
     grpc::Status AddUser(::grpc::ServerContext* context, const ::erebus::AddUserRequest* request, ::erebus::GenericReply* response) override
     {
+        if (!context->auth_context()->IsPeerAuthenticated())
+            return grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated");
+
         try
         {
             auto& name = request->name();
@@ -214,10 +219,40 @@ public:
         catch (Er::Exception& e)
         {
             response->set_code(erebus::Failure);
+            marshalException(response, e);
         }
         catch (std::exception& e)
         {
             response->set_code(erebus::Failure);
+            marshalException(response, e);
+        }
+
+        return grpc::Status::OK;
+    }
+
+    grpc::Status RemoveUser(::grpc::ServerContext* context, const ::erebus::RemoveUserRequest* request, ::erebus::GenericReply* response) override
+    {
+        if (!context->auth_context()->IsPeerAuthenticated())
+            return grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated");
+
+        try
+        {
+            auto& name = request->name();
+            m_params.userDb->remove(name);
+            m_params.userDb->save();
+
+            response->set_code(erebus::Success);
+            Er::Log::Info(m_params.log) << "Deleted user " << name;
+        }
+        catch (Er::Exception& e)
+        {
+            response->set_code(erebus::Failure);
+            marshalException(response, e);
+        }
+        catch (std::exception& e)
+        {
+            response->set_code(erebus::Failure);
+            marshalException(response, e);
         }
 
         return grpc::Status::OK;
@@ -225,6 +260,9 @@ public:
 
     grpc::Status Exit(grpc::ServerContext* context, const erebus::ExitRequest* request, erebus::GenericReply* response) override
     {
+        if (!context->auth_context()->IsPeerAuthenticated())
+            return grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated");
+
         *m_params.needRestart = request->restart();
 
         if (*m_params.needRestart)
@@ -249,15 +287,111 @@ public:
     }
     
 private:
-    void getContextUserMapping(grpc::ServerContext* context, std::string& username)
+    std::string getContextUserMapping(grpc::ServerContext* context) const
     {
-        username = context->auth_context()->GetPeerIdentity()[0].data();
+        return context->auth_context()->GetPeerIdentity()[0].data();
     }
 
     std::string makeTicket() const
     {
         Er::Util::Random r;
         return r.generate(kTicketLength, kTicketChars);
+    }
+
+    void marshalException(erebus::GenericReply* reply, const std::exception& e)
+    {
+        auto what = e.what();
+        if (!what || !*what)
+            what = "Unknown exception";
+
+        auto exception = reply->mutable_exception();
+        *exception->mutable_message() = std::string_view(what);
+    }
+
+    void marshalException(erebus::GenericReply* reply, const Er::Exception& e)
+    {
+        std::string_view what;
+        auto msg = e.message();
+        if (msg)
+            what = *msg;
+        else
+            what = "Unknown exception";
+
+        auto exception = reply->mutable_exception();
+        *exception->mutable_message() = what;
+
+        auto location = e.location();
+        if (location)
+        {
+            if (location->source)
+            {
+                exception->mutable_source()->set_file(location->source->file());
+                exception->mutable_source()->set_line(location->source->line());
+            }
+
+            DecodedStackTrace ds;
+            const DecodedStackTrace* stack = nullptr;
+            if (location->decoded)
+            {
+                stack = &(*location->decoded);
+            }
+            else if (location->stack)
+            {
+                ds = decodeStackTrace(*location->stack);
+                stack = &ds;
+            }
+
+            if (stack && !stack->empty())
+            {
+                auto mutableStack = exception->mutable_stack();
+                for (auto& frame : *stack)
+                {
+                    if (!frame.empty())
+                        mutableStack->add_frames(frame.c_str());
+                    else
+                        mutableStack->add_frames("???");
+                }
+            }
+        }
+
+        auto properties = e.properties();
+        if (properties && !properties->empty())
+        {
+            auto mutableProps = exception->mutable_props();
+            mutableProps->Reserve(properties->size());
+
+            for (auto& property: *properties)
+            {
+                auto mutableProp = mutableProps->Add();
+                mutableProp->set_id(property.id);
+
+                auto info = property.info;
+                if (!info)
+                {
+                    info = Er::lookupProperty(property.id).get();
+                    assert(info);
+                }
+
+                auto& type = info->type();
+                if (type == typeid(bool))
+                    mutableProp->set_v_bool(std::any_cast<bool>(property.value));
+                else if (type == typeid(int32_t))
+                    mutableProp->set_v_int32(std::any_cast<int32_t>(property.value));
+                else if (type == typeid(uint32_t))
+                    mutableProp->set_v_uint32(std::any_cast<uint32_t>(property.value));
+                else if (type == typeid(int64_t))
+                    mutableProp->set_v_int64(std::any_cast<int64_t>(property.value));
+                else if (type == typeid(uint64_t))
+                    mutableProp->set_v_uint64(std::any_cast<uint64_t>(property.value));
+                if (type == typeid(double))
+                    mutableProp->set_v_double(std::any_cast<double>(property.value));
+                if (type == typeid(std::string))
+                    mutableProp->set_v_string(std::any_cast<std::string>(property.value));
+                else
+                    assert(!"unsupported property type");
+            }
+            
+        }
     }
 
     const size_t kTicketLength = 64;
