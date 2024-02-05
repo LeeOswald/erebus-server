@@ -98,10 +98,22 @@ struct Version
     {}
 };
 
+
+struct UserInfo
+{
+    std::string name;
+
+    UserInfo() noexcept = default;
+    explicit UserInfo(std::string_view name)
+        : name(name)
+    {}
+};
+
 struct IStub
 {
     virtual void addUser(std::string_view name, std::string_view password) = 0;
     virtual void removeUser(std::string_view name) = 0;
+    virtual std::vector<UserInfo> listUsers() = 0;
     virtual void exit(bool restart) = 0;
     virtual Version version() = 0;
 

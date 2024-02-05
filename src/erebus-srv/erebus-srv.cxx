@@ -258,6 +258,41 @@ public:
         return grpc::Status::OK;
     }
 
+    grpc::Status ListUsers(::grpc::ServerContext* context, const ::erebus::Void* request, ::erebus::ListUsersReply* response) override
+    {
+        if (!context->auth_context()->IsPeerAuthenticated())
+            return grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated");
+
+        try
+        {
+            auto list = m_params.userDb->enumerate();
+            assert(!list.empty());
+
+            auto users = response->mutable_users();
+            users->Reserve(list.size());
+
+            for (auto& user : list)
+            {
+                auto u = users->Add();
+                u->set_name(user.name);
+            }
+            
+            response->mutable_header()->set_code(erebus::Success);
+        }
+        catch (Er::Exception& e)
+        {
+            response->mutable_header()->set_code(erebus::Failure);
+            marshalException(response->mutable_header(), e);
+        }
+        catch (std::exception& e)
+        {
+            response->mutable_header()->set_code(erebus::Failure);
+            marshalException(response->mutable_header(), e);
+        }
+
+        return grpc::Status::OK;
+    }
+
     grpc::Status Exit(grpc::ServerContext* context, const erebus::ExitRequest* request, erebus::GenericReply* response) override
     {
         if (!context->auth_context()->IsPeerAuthenticated())

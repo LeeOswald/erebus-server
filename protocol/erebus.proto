@@ -12,6 +12,7 @@ service Erebus {
   rpc Init(InitialRequest) returns(InitialReply) {}
   rpc Authorize(AuthRequest) returns(AuthReply) {}
   rpc AddUser(AddUserRequest) returns(GenericReply) {}
+  rpc ListUsers(Void) returns(ListUsersReply) {}
   rpc RemoveUser(RemoveUserRequest) returns(GenericReply) {}
   rpc Exit(ExitRequest) returns(GenericReply) {}
   rpc Version(Void) returns(ServerVersionReply) {}
@@ -52,6 +53,15 @@ message AddUserRequest {
 
 message RemoveUserRequest {
   string name = 1;
+}
+
+message UserInfo {
+  string name = 1;
+}
+
+message ListUsersReply {
+  GenericReply header = 1;
+  repeated UserInfo users = 2;
 }
 
 message ServerVersionReply {

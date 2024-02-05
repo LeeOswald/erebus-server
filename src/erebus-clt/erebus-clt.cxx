@@ -91,6 +91,32 @@ public:
         throwIfFailed(status, &reply);
     }
 
+    std::vector<UserInfo> listUsers() override
+    {
+        erebus::Void request;
+
+        erebus::ListUsersReply reply;
+        grpc::ClientContext context;
+        makeClientContext(context);
+
+        grpc::Status status = m_stub->ListUsers(&context, request, &reply);
+        throwIfFailed(status, &reply.header());
+
+        std::vector<UserInfo> v;
+        auto userCount = reply.users_size();
+        if (userCount)
+        {
+            v.reserve(userCount);
+            for (int i = 0; i < userCount; ++i)
+            {
+                auto& u = reply.users(i);
+                v.emplace_back(u.name());
+            }
+        }
+
+        return v;
+    }
+
     void exit(bool restart) override
     {
         erebus::ExitRequest request;

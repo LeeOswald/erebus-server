@@ -84,6 +84,29 @@ void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, std::string_vi
     }
 }
 
+void listUsers(Er::Log::ILog* log, const Er::Client::Params& params)
+{
+    try
+    {
+        auto client = Er::Client::create(params);
+
+        auto users = client->listUsers();
+
+        for (auto& u : users)
+        {
+            log->write(Er::Log::Level::Info, "Found user: %s", u.name.c_str());
+        }
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
 void exit(Er::Log::ILog* log, const Er::Client::Params& params)
 {
     try
@@ -152,6 +175,7 @@ int main(int argc, char* argv[])
             ("restart", "restart server")
             ("adduser", po::value<std::string>(), "add user <name>:<password>")
             ("rmuser", po::value<std::string>(), "delete user <name>")
+            ("listusers", "list existing users")
         ;
 
         po::variables_map vm;
@@ -215,6 +239,10 @@ int main(int argc, char* argv[])
         {
             auto name = vm["rmuser"].as<std::string>();
             rmUser(&console, params, name);
+        }
+        else if (vm.count("listusers"))
+        {
+            listUsers(&console, params);
         }
         
     }
