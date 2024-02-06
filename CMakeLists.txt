@@ -115,13 +115,11 @@ set(GRPC_LIBS
     gRPC::grpc++_reflection 
     gRPC::gpr 
     gRPC::grpc 
-    gRPC::grpc++ 
     protobuf::libprotoc 
     protobuf::libprotobuf 
-    protobuf::libprotobuf-lite 
 )
 
-
+# protobuf generated stuff
 add_library(${EREBUS_PROTOLIB} STATIC
     ${ER_PROTO_SRC}
     ${ER_PROTO_HDR}
