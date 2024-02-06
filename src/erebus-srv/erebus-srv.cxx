@@ -11,7 +11,7 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
-#include <protocol/erebus.grpc.pb.h>
+#include <erebus/erebus.grpc.pb.h>
 
 #include <atomic>
 #include <mutex>

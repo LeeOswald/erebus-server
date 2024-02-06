@@ -52,7 +52,71 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/erebus-version.h.in erebus-version.h)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-include_directories(${PROJECT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party ${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(
+    ${PROJECT_BINARY_DIR} 
+    ${CMAKE_CURRENT_SOURCE_DIR} 
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/protocol
+)
+
+# Generated from .proto
+get_filename_component(ER_PROTO "./protocol/erebus.proto" ABSOLUTE)
+get_filename_component(ER_PROTO_PATH "${ER_PROTO}" DIRECTORY)
+
+set(ER_PROTO_SRC "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.pb.cc")
+set(ER_PROTO_HDR "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.pb.h")
+set(ER_GRPC_SRC "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.grpc.pb.cc")
+set(ER_GRPC_HDR "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.grpc.pb.h")
+
+if(ER_WINDOWS)
+    set(GRPC_PLUGIN "${gRPC_DIR}/../../tools/grpc/grpc_cpp_plugin.exe")
+else()
+    set(GRPC_PLUGIN "${gRPC_DIR}/../../tools/grpc/grpc_cpp_plugin")
+endif()
+
+add_custom_command(
+    OUTPUT "${ER_PROTO_SRC}" "${ER_PROTO_HDR}" "${ER_GRPC_SRC}" "${ER_GRPC_HDR}"
+    COMMAND protoc
+    ARGS --grpc_out "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/"
+        --cpp_out "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/"
+        -I "${ER_PROTO_PATH}"
+        --plugin=protoc-gen-grpc="${GRPC_PLUGIN}"
+        "${ER_PROTO}"
+    DEPENDS "${ER_PROTO}"
+)
+
+set(EREBUS_PROTOLIB erebus-proto)
+
+add_library(${EREBUS_PROTOLIB}
+    ${ER_PROTO_SRC}
+    ${ER_PROTO_HDR}
+    ${ER_GRPC_SRC}
+    ${ER_GRPC_HDR}
+)
+
+# fix poorly linked gRPC dependencies on linux
+if(NOT MSVC)
+    set(GRPC_DEPS
+        absl::flags 
+        absl::flags_parse 
+        absl::log absl::log_internal_check_op 
+        utf8_range::utf8_validity
+    )
+endif()
+
+
+target_link_libraries(${EREBUS_PROTOLIB} PUBLIC
+    gRPC::grpc++ 
+    gRPC::grpc++_reflection 
+    gRPC::gpr 
+    gRPC::grpc 
+    gRPC::grpc++ 
+    protobuf::libprotoc 
+    protobuf::libprotobuf 
+    protobuf::libprotobuf-lite 
+    ${GRPC_DEPS}
+)
 
 if(ER_LINUX)
     # require pthreads

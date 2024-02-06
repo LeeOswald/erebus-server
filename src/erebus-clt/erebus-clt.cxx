@@ -6,7 +6,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include <protocol/erebus.grpc.pb.h>
+#include <erebus/erebus.grpc.pb.h>
 
 #include <atomic>
 #include <sstream>
