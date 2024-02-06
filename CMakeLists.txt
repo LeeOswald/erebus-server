@@ -29,6 +29,8 @@ else()
     endif()
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 if(NOT MSVC)
     add_link_options(-rdynamic) # enable stack capture
 endif()
@@ -48,6 +50,16 @@ elseif(UNIX AND NOT APPLE)
 else()
     message(FATAL_ERROR "Unsupported OS")
 endif()
+
+
+# require gRPC & protobuf
+if(NOT MSVC)
+    find_package(utf8_range REQUIRED)
+endif()
+find_package(Protobuf REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
+
+include_directories(${Protobuf_INCLUDE_DIRS})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/erebus-version.h.in erebus-version.h)
 
@@ -72,7 +84,7 @@ set(ER_GRPC_HDR "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.grpc.pb.h")
 if(ER_WINDOWS)
     set(GRPC_PLUGIN "${gRPC_DIR}/../../tools/grpc/grpc_cpp_plugin.exe")
 else()
-    set(GRPC_PLUGIN "${gRPC_DIR}/../../tools/grpc/grpc_cpp_plugin")
+    set(GRPC_PLUGIN "${gRPC_DIR}/../../../bin/grpc_cpp_plugin")
 endif()
 
 add_custom_command(
@@ -88,13 +100,6 @@ add_custom_command(
 
 set(EREBUS_PROTOLIB erebus-proto)
 
-add_library(${EREBUS_PROTOLIB}
-    ${ER_PROTO_SRC}
-    ${ER_PROTO_HDR}
-    ${ER_GRPC_SRC}
-    ${ER_GRPC_HDR}
-)
-
 # fix poorly linked gRPC dependencies on linux
 if(NOT MSVC)
     set(GRPC_DEPS
@@ -105,8 +110,7 @@ if(NOT MSVC)
     )
 endif()
 
-
-target_link_libraries(${EREBUS_PROTOLIB} PUBLIC
+set(GRPC_LIBS
     gRPC::grpc++ 
     gRPC::grpc++_reflection 
     gRPC::gpr 
@@ -115,8 +119,17 @@ target_link_libraries(${EREBUS_PROTOLIB} PUBLIC
     protobuf::libprotoc 
     protobuf::libprotobuf 
     protobuf::libprotobuf-lite 
-    ${GRPC_DEPS}
 )
+
+
+add_library(${EREBUS_PROTOLIB} STATIC
+    ${ER_PROTO_SRC}
+    ${ER_PROTO_HDR}
+    ${ER_GRPC_SRC}
+    ${ER_GRPC_HDR}
+)
+
+target_link_libraries(${EREBUS_PROTOLIB} ${GRPC_DEPS} ${GRPC_LIBS})
 
 if(ER_LINUX)
     # require pthreads
@@ -150,12 +163,6 @@ if(WIN32)
     add_definitions(-D_WIN32_WINNT=0x0601)
 endif()
 
-# require gRPC & protobuf
-if(NOT MSVC)
-    find_package(utf8_range REQUIRED)
-endif()
-find_package(Protobuf REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
 
 # component names
 set(EREBUS_LIB erebus-rtl)
