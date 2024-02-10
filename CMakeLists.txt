@@ -72,31 +72,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/protocol
 )
 
-# Generated from .proto
-get_filename_component(ER_PROTO "./protocol/erebus.proto" ABSOLUTE)
-get_filename_component(ER_PROTO_PATH "${ER_PROTO}" DIRECTORY)
-
-set(ER_PROTO_SRC "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.pb.cc")
-set(ER_PROTO_HDR "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.pb.h")
-set(ER_GRPC_SRC "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.grpc.pb.cc")
-set(ER_GRPC_HDR "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/erebus.grpc.pb.h")
-
-if(ER_WINDOWS)
-    set(GRPC_PLUGIN "${gRPC_DIR}/../../tools/grpc/grpc_cpp_plugin.exe")
-else()
-    set(GRPC_PLUGIN "${gRPC_DIR}/../../../bin/grpc_cpp_plugin")
-endif()
-
-add_custom_command(
-    OUTPUT "${ER_PROTO_SRC}" "${ER_PROTO_HDR}" "${ER_GRPC_SRC}" "${ER_GRPC_HDR}"
-    COMMAND protoc
-    ARGS --grpc_out "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/"
-        --cpp_out "${CMAKE_CURRENT_SOURCE_DIR}/protocol/erebus/"
-        -I "${ER_PROTO_PATH}"
-        --plugin=protoc-gen-grpc="${GRPC_PLUGIN}"
-        "${ER_PROTO}"
-    DEPENDS "${ER_PROTO}"
-)
 
 set(EREBUS_PROTOLIB erebus-proto)
 
@@ -119,15 +94,6 @@ set(GRPC_LIBS
     protobuf::libprotobuf 
 )
 
-# protobuf generated stuff
-add_library(${EREBUS_PROTOLIB} STATIC
-    ${ER_PROTO_SRC}
-    ${ER_PROTO_HDR}
-    ${ER_GRPC_SRC}
-    ${ER_GRPC_HDR}
-)
-
-target_link_libraries(${EREBUS_PROTOLIB} ${GRPC_DEPS} ${GRPC_LIBS})
 
 if(ER_LINUX)
     # require pthreads
@@ -170,6 +136,7 @@ set(EREBUS_SERVER erebus-server)
 set(EREBUS_CTL erebus-ctl)
 
 # components
+add_subdirectory(protocol)
 add_subdirectory(3rd_party/googletest)
 add_subdirectory(src/erebus)
 add_subdirectory(src/erebus-srv)

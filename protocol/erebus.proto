@@ -1,9 +1,6 @@
 syntax = "proto3";
 
-option java_multiple_files = true;
-option java_package = "com.leeoswald.erebus";
-option java_outer_classname = "ErebusProto";
-option objc_class_prefix = "Er";
+import public "common.proto";
 
 package erebus;
 
@@ -19,13 +16,6 @@ service Erebus {
   rpc Version(Void) returns(ServerVersionReply) {}
 }
 
-message Void {
-}
-
-message GenericReply {
-  ResultCode code = 1;
-  optional Exception exception = 2;  
-}
 
 message InitialRequest {
   string user = 1;
@@ -76,52 +66,4 @@ message ExitRequest {
   bool restart = 1;
 }
 
-enum ResultCode {
-  Success = 0;
-  Failure = 1;
-  Cancelled = 2;
-  InvalidArgument = 3;
-  DeadlineExceeded = 4;
-  NotFound = 5;
-  AlreadyExists = 6;
-  PermissionDenied = 7;
-  Unauthenticated = 8;
-  ResourceExhausted = 9;
-  FailedPrecondition = 10;
-  Aborted = 11;
-  OutOfRange = 12;
-  Unimplemented = 13;
-  Internal = 14;
-  Unavailable = 15;
-  DataLoss = 16;
-}
-
-message Property {
-  uint32 id = 1;
-  oneof value {
-    int32 v_int32 = 2;
-    uint32 v_uint32 = 3;
-    int64 v_int64 = 4;
-    uint64 v_uint64 = 5;
-    double v_double = 6;
-    bool v_bool = 7;
-    string v_string = 8;
-  }
-}
-
-message SourceLocation {
-  uint32 line = 1;
-  string file = 2;
-}
-
-message DecodedStack {
-  repeated string frames = 1;
-}
-
-message Exception {
-  optional SourceLocation source = 1;
-  optional DecodedStack stack = 2;
-  optional string message = 3;
-  repeated Property props = 4;
-}
 
