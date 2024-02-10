@@ -1,18 +1,6 @@
 #include "erebus-version.h"
 
-#include <erebus/exception.hxx>
-#include <erebus/knownprops.hxx>
-#include <erebus/util/random.hxx>
-#include <erebus-srv/auth.hxx>
-#include <erebus-srv/erebus-srv.hxx>
-#include <erebus-srv/rpc.hxx>
-#include <erebus-srv/userdb.hxx>
-
-#include <erebus/erebus.grpc.pb.h>
-
-#include <condition_variable>
-#include <mutex>
-#include <thread>
+#include <erebus-srv/svcbase.hxx>
 
 namespace Er
 {
@@ -29,87 +17,31 @@ namespace
 
 class ErebusService final
     : public Er::Server::Private::IServer
+    , public ServiceBase
 {
 public:
     ~ErebusService() 
     {
-        m_stop = true;
-        m_incoming.notify_one();
-
-        m_server->Shutdown();
-        m_queue->Shutdown();
-
-        // drain the CQ
-        void* ignoredTag = nullptr;
-        bool ignoredOk = false;
-        while (m_queue->Next(&ignoredTag, &ignoredOk)) 
-        {
-        }
-
-        if (m_receiverWorker->joinable())
-            m_receiverWorker->join();
-
-        if (m_processorWorker->joinable())
-            m_processorWorker->join();
-
         m_params.log->write(Log::Level::Debug, "ErebusService %p destroyed", this);
     }
 
     explicit ErebusService(const Params* params)
-        : m_params(*params)
-        , m_local(params->endpoint.starts_with("unix:"))
-        , m_authProcessor(std::make_shared<AuthMetadataProcessor>(params->log))
+        : ServiceBase(params)
     {
         m_authProcessor->addNoAuthMethod("/erebus.Erebus/Init");
         m_authProcessor->addNoAuthMethod("/erebus.Erebus/Authorize");
-
-        grpc::ServerBuilder builder;
-
-        if (!m_local && params->ssl)
-        {
-            grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { params->key, params->certificate };
-            grpc::SslServerCredentialsOptions sslOps;
-            sslOps.pem_root_certs = params->root;
-            sslOps.pem_key_cert_pairs.push_back(keycert);
-            auto creds = grpc::SslServerCredentials(sslOps);
-            creds->SetAuthMetadataProcessor(m_authProcessor);
-            builder.AddListeningPort(params->endpoint, creds);
-        }
-        else
-        {
-            // listen on the given address without any authentication mechanism
-            builder.AddListeningPort(params->endpoint, grpc::InsecureServerCredentials());
-        }
-
-        // register "service" as the instance through which we'll communicate with
-        // clients. In this case it corresponds to an *synchronous* service
-        builder.RegisterService(&m_service);
-        m_queue = builder.AddCompletionQueue();
-
-        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 1 * 60 * 1000);
-        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 20 * 1000);
-        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
-        builder.AddChannelArgument(GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, 10 * 1000);
-        builder.AddChannelArgument(GRPC_ARG_HTTP2_MAX_PING_STRIKES, 5);
-
-        // finally assemble the server
-        auto server = builder.BuildAndStart();
-        if (!server)
-            throw Er::Exception(ER_HERE(), "Failed to start the server");
-
-        m_server.swap(server);
-
-        m_receiverWorker.reset(new std::thread([this]() { handleRpcs(); }));
-        m_processorWorker.reset(new std::thread([this]() { processRpcs(); }));
 
         m_params.log->write(Log::Level::Debug, "ErebusService %p created", this);
     }
 
 private:
-    void handleRpcs()
+    grpc::Service* service() override
     {
-        Er::Log::Debug(m_params.log) << "RPC handler thread started";
+        return &m_service;
+    }
 
+    void createRpcs() override
+    {
         createDisconnectRpc();
         createVersionRpc();
         createInitRpc();
@@ -118,66 +50,17 @@ private:
         createRemoveUserRpc();
         createListUsersRpc();
         createExitRpc();
-
-        Er::Server::Rpc::TagInfo tagInfo;
-        while (!m_stop)
-        {
-            // Block waiting to read the next event from the completion queue. The
-            // event is uniquely identified by its tag, which in this case is the
-            // memory address of a CallData instance.
-            // The return value of Next should always be checked. This return value
-            // tells us whether there is any kind of event or cq_ is shutting down.
-            if (!m_queue->Next((void**)&tagInfo.tagProcessor, &tagInfo.ok))
-            {
-                if (!m_stop)
-                {
-                    m_params.log->write(Er::Log::Level::Warning, "No more tags in completion queue");
-                    break;
-                }
-            }
-
-            {
-                std::lock_guard l(m_mutex);
-                m_incomingTags.push_back(tagInfo);
-            }
-
-            m_incoming.notify_one();
-        }
-
-        Er::Log::Debug(m_params.log) << "RPC handler thread exited";
     }
 
-    void processRpcs()
+    bool checkAuth(Er::Server::Rpc::RpcBase& rpc)
     {
-        Er::Log::Debug(m_params.log) << "RPC processor thread started";
-
-        while (!m_stop)
+        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
         {
-            std::unique_lock l(m_mutex);
-
-            m_incoming.wait(l, [this]() { return m_stop || !m_incomingTags.empty(); });
-
-            if (m_stop)
-                break;
-
-            auto tags = std::move(m_incomingTags);
-            l.unlock();
-
-            while (!tags.empty())
-            {
-                auto tagInfo = tags.front();
-                tags.pop_front();
-                (*(tagInfo.tagProcessor))(tagInfo.ok);
-
-            }
+            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+            return false;
         }
 
-        Er::Log::Debug(m_params.log) << "RPC processor thread exited";
-    }
-
-    static void genericDone(Er::Server::Rpc::RpcBase& rpc, bool rpcCancelled)
-    {
-        delete (&rpc);
+        return true;
     }
 
     void createVersionRpc()
@@ -196,11 +79,8 @@ private:
 
     void processVersionRpc(Er::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
     {
-        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
-        {
-            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+        if (!checkAuth(rpc))
             return;
-        }
 
         auto request = static_cast<const erebus::Void*>(message);
 
@@ -229,11 +109,8 @@ private:
 
     void processDisconnectRpc(Er::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
     {
-        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
-        {
-            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+        if (!checkAuth(rpc))
             return;
-        }
 
         auto tickets = rpc.getServerContext().auth_context()->FindPropertyValues("ticket");
 
@@ -350,11 +227,8 @@ private:
         auto request = static_cast<const erebus::AddUserRequest*>(message);
         erebus::GenericReply response;
 
-        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
-        {
-            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+        if (!checkAuth(rpc))
             return;
-        }
 
         try
         {
@@ -398,11 +272,8 @@ private:
         auto request = static_cast<const erebus::RemoveUserRequest*>(message);
         erebus::GenericReply response;
 
-        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
-        {
-            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+        if (!checkAuth(rpc))
             return;
-        }
 
         try
         {
@@ -446,11 +317,8 @@ private:
         auto request = static_cast<const erebus::Void*>(message);
         erebus::ListUsersReply response;
 
-        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
-        {
-            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+        if (!checkAuth(rpc))
             return;
-        }
 
         try
         {
@@ -501,11 +369,8 @@ private:
         auto request = static_cast<const erebus::ExitRequest*>(message);
         erebus::GenericReply response;
 
-        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
-        {
-            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+        if (!checkAuth(rpc))
             return;
-        }
 
         *m_params.needRestart = request->restart();
 
@@ -523,129 +388,7 @@ private:
         m_params.exitCondition->set();
     }
 
-    std::string getContextUserMapping(grpc::ServerContext* context) const
-    {
-        return context->auth_context()->GetPeerIdentity()[0].data();
-    }
-
-    std::string makeTicket() const
-    {
-        Er::Util::Random r;
-        return r.generate(kTicketLength, kTicketChars);
-    }
-
-    void marshalException(erebus::GenericReply* reply, const std::exception& e)
-    {
-        auto what = e.what();
-        if (!what || !*what)
-            what = "Unknown exception";
-
-        auto exception = reply->mutable_exception();
-        *exception->mutable_message() = std::string_view(what);
-    }
-
-    void marshalException(erebus::GenericReply* reply, const Er::Exception& e)
-    {
-        std::string_view what;
-        auto msg = e.message();
-        if (msg)
-            what = *msg;
-        else
-            what = "Unknown exception";
-
-        auto exception = reply->mutable_exception();
-        *exception->mutable_message() = what;
-
-        auto location = e.location();
-        if (location)
-        {
-            if (location->source)
-            {
-                exception->mutable_source()->set_file(location->source->file());
-                exception->mutable_source()->set_line(location->source->line());
-            }
-
-            DecodedStackTrace ds;
-            const DecodedStackTrace* stack = nullptr;
-            if (location->decoded)
-            {
-                stack = &(*location->decoded);
-            }
-            else if (location->stack)
-            {
-                ds = decodeStackTrace(*location->stack);
-                stack = &ds;
-            }
-
-            if (stack && !stack->empty())
-            {
-                auto mutableStack = exception->mutable_stack();
-                for (auto& frame : *stack)
-                {
-                    if (!frame.empty())
-                        mutableStack->add_frames(frame.c_str());
-                    else
-                        mutableStack->add_frames("???");
-                }
-            }
-        }
-
-        auto properties = e.properties();
-        if (properties && !properties->empty())
-        {
-            auto mutableProps = exception->mutable_props();
-            mutableProps->Reserve(properties->size());
-
-            for (auto& property : *properties)
-            {
-                auto mutableProp = mutableProps->Add();
-                mutableProp->set_id(property.id);
-
-                auto info = property.info;
-                if (!info)
-                {
-                    info = Er::lookupProperty(property.id).get();
-                    assert(info);
-                }
-
-                auto& type = info->type();
-                if (type == typeid(bool))
-                    mutableProp->set_v_bool(std::any_cast<bool>(property.value));
-                else if (type == typeid(int32_t))
-                    mutableProp->set_v_int32(std::any_cast<int32_t>(property.value));
-                else if (type == typeid(uint32_t))
-                    mutableProp->set_v_uint32(std::any_cast<uint32_t>(property.value));
-                else if (type == typeid(int64_t))
-                    mutableProp->set_v_int64(std::any_cast<int64_t>(property.value));
-                else if (type == typeid(uint64_t))
-                    mutableProp->set_v_uint64(std::any_cast<uint64_t>(property.value));
-                if (type == typeid(double))
-                    mutableProp->set_v_double(std::any_cast<double>(property.value));
-                if (type == typeid(std::string))
-                    mutableProp->set_v_string(std::any_cast<std::string>(property.value));
-                else
-                    assert(!"unsupported property type");
-            }
-
-        }
-    }
-
-
-    const size_t kTicketLength = 64;
-    const std::string_view kTicketChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
-
-    bool m_stop = false;
-    Params m_params;
-    bool m_local;
-    std::shared_ptr<AuthMetadataProcessor> m_authProcessor;
-    std::unique_ptr<grpc::ServerCompletionQueue> m_queue;
     erebus::Erebus::AsyncService m_service;
-    std::unique_ptr<grpc::Server> m_server;
-    std::mutex m_mutex;
-    std::condition_variable m_incoming;
-    Er::Server::Rpc::TagList m_incomingTags;
-    std::unique_ptr<std::thread> m_receiverWorker;
-    std::unique_ptr<std::thread> m_processorWorker;
 };
 
 
@@ -655,7 +398,7 @@ private:
 std::shared_ptr<IServer> EREBUSSRV_EXPORT create(const Params* params)
 {
     auto result = std::make_shared<ErebusService>(params);
-
+    result->start();
     return result;
 }
 
