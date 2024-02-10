@@ -51,6 +51,11 @@ class Stub final
     , public boost::noncopyable
 {
 public:
+    ~Stub()
+    {
+        disconnect();
+    }
+
     explicit Stub(std::shared_ptr<grpc::Channel> channel, const Params& params)
         : m_stub(erebus::Erebus::NewStub(channel))
         , m_params(params)
@@ -145,6 +150,20 @@ public:
     }
 
 private:
+    void disconnect()
+    {
+        if (!m_stub)
+            return;
+
+        erebus::Void request;
+
+        erebus::Void reply;
+        grpc::ClientContext context;
+        makeClientContext(context);
+
+        grpc::Status status = m_stub->Disconnect(&context, request, &reply);
+    }
+
     void checkAuth()
     {
         if (!m_params.ssl || m_autorized)
@@ -390,18 +409,24 @@ EREBUSCLT_EXPORT void finalize()
 EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const Params& params)
 {
     bool local = params.endpoint.starts_with("unix:");
+    
+    grpc::ChannelArguments args;
+    args.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, 20 * 1000);
+    args.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 10 * 1000);
+    args.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
+
     if (!local && params.ssl)
     {
         grpc::SslCredentialsOptions opts;
         opts.pem_root_certs = params.rootCA;
 
         auto channelCreds = grpc::SslCredentials(opts);
-        auto channel = grpc::CreateChannel(params.endpoint, channelCreds);
+        auto channel = grpc::CreateCustomChannel(params.endpoint, channelCreds, args);
         return std::make_shared<Stub>(channel, params);
     }
     else
     {
-        auto channel = grpc::CreateChannel(params.endpoint, grpc::InsecureChannelCredentials());
+        auto channel = grpc::CreateCustomChannel(params.endpoint, grpc::InsecureChannelCredentials(), args);
         return std::make_shared<Stub>(channel, params);
     }
 }

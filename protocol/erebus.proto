@@ -11,6 +11,7 @@ package erebus;
 service Erebus {
   rpc Init(InitialRequest) returns(InitialReply) {}
   rpc Authorize(AuthRequest) returns(AuthReply) {}
+  rpc Disconnect(Void) returns(Void) {}
   rpc AddUser(AddUserRequest) returns(GenericReply) {}
   rpc ListUsers(Void) returns(ListUsersReply) {}
   rpc RemoveUser(RemoveUserRequest) returns(GenericReply) {}

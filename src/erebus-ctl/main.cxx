@@ -7,10 +7,21 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
+
+namespace
+{
+
+std::optional<int> g_signalReceived;
+
+void signalHandler(int signo)
+{
+    g_signalReceived = signo;
+}
 
 std::string loadFile(const std::string& path)
 {
@@ -24,15 +35,39 @@ std::string loadFile(const std::string& path)
     return ss.str();
 }
 
-void version(Er::Log::ILog* log, const Er::Client::Params& params)
+void version(Er::Client::IStub* client, Er::Log::ILog* log)
+{
+    try
+    {
+        auto ver = client->version();
+
+        log->write(Er::Log::Level::Info, "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+void version(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
 {
     try
     {
         auto client = Er::Client::create(params);
 
-        auto ver = client->version();
+        while (!g_signalReceived)
+        {
+            version(client.get(), log);
 
-        log->write(Er::Log::Level::Info, "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
+            if (interval <= 0)
+                break;
+
+            std::this_thread::sleep_for(std::chrono::seconds(interval));
+        }
     }
     catch (Er::Exception& e)
     {
@@ -147,6 +182,8 @@ void restart(Er::Log::ILog* log, const Er::Client::Params& params)
     }
 }
 
+} // namespace {}
+
 
 int main(int argc, char* argv[])
 {
@@ -154,8 +191,16 @@ int main(int argc, char* argv[])
     ::SetConsoleOutputCP(CP_UTF8);
 #endif
 
+    ::signal(SIGINT, signalHandler);
+    ::signal(SIGTERM, signalHandler);
+#if ER_POSIX
+    ::signal(SIGPIPE, signalHandler);
+    ::signal(SIGHUP, signalHandler);
+#endif
+
     std::string rootFile;
     std::string creds;
+    int interval = 0;
 
     try
     {
@@ -174,6 +219,7 @@ int main(int argc, char* argv[])
             ("adduser", po::value<std::string>(), "add user <name>:<password>")
             ("rmuser", po::value<std::string>(), "delete user <name>")
             ("listusers", "list existing users")
+            ("loop", po::value<int>(&interval), "repeat the request with an interval")
         ;
 
         po::variables_map vm;
@@ -226,7 +272,7 @@ int main(int argc, char* argv[])
         
         if (vm.count("version"))
         {
-            version(&console, params);
+            version(&console, params, interval);
         }
         else if (vm.count("exit"))
         {
@@ -259,6 +305,10 @@ int main(int argc, char* argv[])
             listUsers(&console, params);
         }
         
+        if (g_signalReceived)
+        {
+            std::cerr << "Exiting due to signal " << *g_signalReceived << "\n";
+        }
     }
     catch (std::exception& e)
     {

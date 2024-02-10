@@ -19,9 +19,15 @@ class AuthMetadataProcessor
     : public grpc::AuthMetadataProcessor
 {
 public:
+    ~AuthMetadataProcessor()
+    {
+        m_log->write(Log::Level::Debug, "AuthMetadataProcessor %p destroyed", this);
+    }
+
     explicit AuthMetadataProcessor(Er::Log::ILog* log)
         : m_log(log)
     {
+        m_log->write(Log::Level::Debug, "AuthMetadataProcessor %p created", this);
     }
 
     grpc::Status Process(const InputMetadata& authMetadata, grpc::AuthContext* context, OutputMetadata* consumedMetadata, OutputMetadata* responseMetadata) override
@@ -40,6 +46,7 @@ public:
         auto dispatchValue = std::string(dispatch->second.data(), dispatch->second.length());
         if (std::find(m_noAuthMethods.begin(), m_noAuthMethods.end(), dispatchValue) != m_noAuthMethods.end())
         {
+            m_log->write(Log::Level::Debug, "No auth required for [%s]", dispatchValue.c_str());
             return grpc::Status::OK;
         }
 
@@ -60,8 +67,11 @@ public:
             return grpc::Status(grpc::StatusCode::UNAUTHENTICATED, "Invalid Ticket");
         }
 
+        m_log->write(Log::Level::Debug, "Found ticket [%s] -> [%s]", ticketValue.c_str(), it->second.c_str());
+
         // once verified, mark as consumed and store user for later retrieval
         consumedMetadata->insert(std::make_pair("ticket", ticketValue));     // required
+        context->AddProperty("ticket", ticketValue);
         context->AddProperty("user", it->second);           // optional
         context->SetPeerIdentityPropertyName("user");                 // optional
 
@@ -70,8 +80,25 @@ public:
 
     void addTicket(const std::string& user, const std::string& ticket)
     {
+        m_log->write(Log::Level::Debug, "Added ticket [%s] -> [%s]", ticket.c_str(), user.c_str());
+
         std::lock_guard l(m_mutex);
         m_tickets.insert({ ticket, user });
+    }
+
+    void removeTicket(const std::string& ticket)
+    {
+        std::lock_guard l(m_mutex);
+        auto it = m_tickets.find(ticket);
+        if (it == m_tickets.end())
+        {
+            m_log->write(Log::Level::Warning, "Ticket [%s] not found", ticket.c_str());
+        }
+        else
+        {
+            m_tickets.erase(it);
+            m_log->write(Log::Level::Debug, "Ticket [%s] removed", ticket.c_str());
+        }
     }
 
     void addNoAuthMethod(std::string_view path)

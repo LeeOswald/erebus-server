@@ -51,6 +51,8 @@ public:
 
         if (m_processorWorker->joinable())
             m_processorWorker->join();
+
+        m_params.log->write(Log::Level::Debug, "ErebusService %p destroyed", this);
     }
 
     explicit ErebusService(const Params* params)
@@ -60,7 +62,6 @@ public:
     {
         m_authProcessor->addNoAuthMethod("/erebus.Erebus/Init");
         m_authProcessor->addNoAuthMethod("/erebus.Erebus/Authorize");
-        m_authProcessor->addNoAuthMethod("/erebus.Erebus/Version");
 
         grpc::ServerBuilder builder;
 
@@ -85,6 +86,12 @@ public:
         builder.RegisterService(&m_service);
         m_queue = builder.AddCompletionQueue();
 
+        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 1 * 60 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 20 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
+        builder.AddChannelArgument(GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, 10 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_HTTP2_MAX_PING_STRIKES, 5);
+
         // finally assemble the server
         auto server = builder.BuildAndStart();
         if (!server)
@@ -94,6 +101,8 @@ public:
 
         m_receiverWorker.reset(new std::thread([this]() { handleRpcs(); }));
         m_processorWorker.reset(new std::thread([this]() { processRpcs(); }));
+
+        m_params.log->write(Log::Level::Debug, "ErebusService %p created", this);
     }
 
 private:
@@ -101,6 +110,7 @@ private:
     {
         Er::Log::Debug(m_params.log) << "RPC handler thread started";
 
+        createDisconnectRpc();
         createVersionRpc();
         createInitRpc();
         createAuthorizeRpc();
@@ -186,6 +196,12 @@ private:
 
     void processVersionRpc(Er::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
     {
+        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
+        {
+            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+            return;
+        }
+
         auto request = static_cast<const erebus::Void*>(message);
 
         erebus::ServerVersionReply response;
@@ -195,6 +211,41 @@ private:
         response.set_patch(ER_VERSION_PATCH);
 
         rpc.sendResponse(&response);
+    }
+
+    void createDisconnectRpc()
+    {
+        Er::Server::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::Void, erebus::Void> rpcHandlers;
+
+        rpcHandlers.createRpc = std::bind(&ErebusService::createDisconnectRpc, this);
+
+        rpcHandlers.processIncomingRequest = [this](Er::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processDisconnectRpc(rpc, message); };
+        rpcHandlers.done = &genericDone;
+
+        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestDisconnect;
+
+        new Er::Server::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::Void, erebus::Void>(&m_service, m_queue.get(), rpcHandlers);
+    }
+
+    void processDisconnectRpc(Er::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    {
+        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
+        {
+            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+            return;
+        }
+
+        auto tickets = rpc.getServerContext().auth_context()->FindPropertyValues("ticket");
+
+        auto request = static_cast<const erebus::Void*>(message);
+
+        erebus::ServerVersionReply response;
+        response.mutable_header()->set_code(erebus::Success);
+     
+        rpc.sendResponse(&response);
+
+        if (!tickets.empty())
+            m_authProcessor->removeTicket(tickets.front().data());
     }
 
     void createInitRpc()
@@ -300,7 +351,10 @@ private:
         erebus::GenericReply response;
 
         if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
+        {
             rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+            return;
+        }
 
         try
         {
@@ -345,7 +399,10 @@ private:
         erebus::GenericReply response;
 
         if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
+        {
             rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+            return;
+        }
 
         try
         {
@@ -390,7 +447,10 @@ private:
         erebus::ListUsersReply response;
 
         if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
+        {
             rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+            return;
+        }
 
         try
         {
@@ -442,7 +502,10 @@ private:
         erebus::GenericReply response;
 
         if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
+        {
             rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
+            return;
+        }
 
         *m_params.needRestart = request->restart();
 
