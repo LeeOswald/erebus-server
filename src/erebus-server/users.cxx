@@ -81,11 +81,11 @@ UserDb::UserDb(const std::string& path)
 
         std::string strHash(hash.GetString(), hash.GetStringLength());
 
-        m_users.insert({ strName, Server::User(strName, strSalt, strHash) });
+        m_users.insert({ strName, Er::Server::Private::User(strName, strSalt, strHash) });
     }
 }
 
-void UserDb::add(const Server::User& u)
+void UserDb::add(const Er::Server::Private::User& u)
 {
     std::lock_guard l(m_mutex);
 
@@ -109,9 +109,9 @@ void UserDb::remove(const std::string& name)
     m_dirty = true;
 }
 
-std::vector<Server::User> UserDb::enumerate() const
+std::vector<Er::Server::Private::User> UserDb::enumerate() const
 {
-    std::vector<Server::User> result;
+    std::vector<Er::Server::Private::User> result;
 
     std::lock_guard l(m_mutex);
 
@@ -124,7 +124,7 @@ std::vector<Server::User> UserDb::enumerate() const
     return result;
 }
 
-std::optional<Server::User> UserDb::lookup(const std::string& name) const
+std::optional<Er::Server::Private::User> UserDb::lookup(const std::string& name) const
 {
     std::lock_guard l(m_mutex);
 

@@ -10,10 +10,10 @@ namespace Log
 
 LogBase::~LogBase()
 {
-    flush();
+    _flush();
 
     m_stop = true;
-    m_event.set();
+    m_event.notify_one();
 
     if (m_worker.joinable())
         m_worker.join();
@@ -22,7 +22,6 @@ LogBase::~LogBase()
 LogBase::LogBase(Level level, size_t maxQueue) noexcept
     : m_level(level)
     , m_maxQueue(maxQueue)
-    , m_event(Er::Util::Condition::Reset::Auto)
     , m_worker([this]() { run(); })
 {
 }
@@ -63,9 +62,11 @@ void LogBase::run() noexcept
     {
         while (!m_stop)
         {
-            m_event.wait();
+            std::unique_lock l(m_mutex);
 
-            flush();
+            m_event.wait(l, [this]() { return m_stop || !m_queue.empty(); });
+
+            _flush();
         }
     }
     catch (...)
@@ -126,22 +127,26 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
     if (!r)
         return true;
     
-    std::lock_guard g(m_mutex);
-
-    try
     {
-        m_queue.push(r);
-    }
-    catch (...)
-    {
-        return false;
-    }
-    
-    // drop the older events to avoid the queue overflow
-    while (m_queue.size() > m_maxQueue)
-        m_queue.pop();
+        std::lock_guard g(m_mutex);
 
-    m_event.set();
+        try
+        {
+            m_queue.push(r);
+        }
+        catch (...)
+        {
+            return false;
+        }
+
+        // drop the older events to avoid the queue overflow
+        while (m_queue.size() > m_maxQueue)
+            m_queue.pop();
+
+    }
+
+    // do this outside the lock
+    m_event.notify_one();
 
     return true;
 }

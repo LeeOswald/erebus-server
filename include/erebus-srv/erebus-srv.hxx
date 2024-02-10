@@ -18,12 +18,13 @@
 
 namespace Er
 {
-    
-namespace Private
-{
 
 namespace Server
 {
+
+namespace Private
+{
+
 
 struct IUserDb;
 
@@ -68,14 +69,25 @@ struct Params
 
 struct IServer
 {
-    virtual void stop() = 0;
-    virtual void wait() = 0;
-
     virtual ~IServer() {}
 };
 
 
-EREBUSSRV_EXPORT void initialize();
+struct LibParams
+{
+    Er::Log::ILog* log = nullptr;
+    Er::Log::Level level = Log::Level::Debug;
+
+    constexpr explicit LibParams() noexcept = default;
+
+    constexpr explicit LibParams(Er::Log::ILog* log, Er::Log::Level level) noexcept
+        : log(log)
+        , level(level)
+    {
+    }
+};
+
+EREBUSSRV_EXPORT void initialize(const LibParams& params);
 EREBUSSRV_EXPORT void finalize();
 
 class Scope
@@ -87,18 +99,17 @@ public:
         finalize();
     }
 
-    Scope()
+    Scope(const LibParams& params)
     {
-        initialize();
+        initialize(params);
     }
 };
 
 
-std::shared_ptr<IServer> EREBUSSRV_EXPORT start(const Params* params);
-
-
-} // namespace Server {}
+std::shared_ptr<IServer> EREBUSSRV_EXPORT create(const Params* params);
 
 } // namespace Private {}
+
+} // namespace Server {}
     
 } // namespace Er {}

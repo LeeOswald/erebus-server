@@ -1,8 +1,8 @@
 #pragma once
 
 #include <erebus/system/time.hxx>
-#include <erebus/util/condition.hxx>
 
+#include <condition_variable>
 #include <functional>
 #include <iomanip>
 #include <mutex>
@@ -95,7 +95,7 @@ private:
     std::mutex m_mutex;
     std::unordered_map<std::string, Delegate> m_delegates;
     std::queue<std::shared_ptr<Record>> m_queue;
-    Util::Condition m_event;
+    std::condition_variable m_event;
     bool m_stop = false;
     std::thread m_worker;
     bool m_mute = true;

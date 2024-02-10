@@ -120,8 +120,21 @@ struct IStub
     virtual ~IStub() {}
 };
 
+struct LibParams
+{
+    Er::Log::ILog* log = nullptr;
+    Er::Log::Level level = Log::Level::Debug;
 
-EREBUSCLT_EXPORT void initialize();
+    constexpr explicit LibParams() noexcept = default;
+
+    constexpr explicit LibParams(Er::Log::ILog* log, Er::Log::Level level) noexcept
+        : log(log)
+        , level(level)
+    {
+    }
+};
+
+EREBUSCLT_EXPORT void initialize(const LibParams& params);
 EREBUSCLT_EXPORT void finalize();
 
 class Scope
@@ -133,9 +146,9 @@ public:
         finalize();
     }
 
-    Scope()
+    Scope(const LibParams& params)
     {
-        initialize();
+        initialize(params);
     }
 };
 

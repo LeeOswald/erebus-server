@@ -8,10 +8,10 @@
 namespace Er
 {
 
-namespace Private
+namespace Server
 {
 
-namespace Server
+namespace Private
 {
 
 struct User
@@ -41,8 +41,8 @@ protected:
 };
 
 
-} // namespace Server {}
-
 } // namespace Private {}
+
+} // namespace Server {}
 
 } // namespace Er {}

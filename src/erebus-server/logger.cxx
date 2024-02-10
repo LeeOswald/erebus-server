@@ -4,6 +4,7 @@
 #include <erebus/knownprops.hxx>
 #include <erebus/syncstream.hxx>
 #include <erebus/system/time.hxx>
+#include <erebus/util/utf16.hxx>
 
 #if ER_POSIX
     #include <fcntl.h>
@@ -139,6 +140,10 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
     std::string message = std::string(prefix);
     message.append(r->message);
     message.append("\n");
+
+#if ER_WINDOWS && ER_DEBUG
+    ::OutputDebugStringW(Er::Util::utf8ToUtf16(message).c_str());
+#endif
 
     bool fileValid = false;
 #if ER_POSIX

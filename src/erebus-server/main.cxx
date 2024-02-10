@@ -19,12 +19,6 @@
 #include <vector>
 
 
-#if ER_POSIX
-    #include <fcntl.h>
-    #include <sys/stat.h>
-#endif
-
-
 namespace
 {
 
@@ -225,18 +219,19 @@ int main(int argc, char* argv[], char* env[])
 
         Er::Private::UserDb userDb(userdbFile);
 
-        Er::Private::Server::Scope ss;
+        Er::Server::Private::LibParams srvLibParams(g_log, g_log->level());
+        Er::Server::Private::Scope ss(srvLibParams);
 
-        std::vector<std::shared_ptr<Er::Private::Server::IServer>> servers;
+        std::vector<std::shared_ptr<Er::Server::Private::IServer>> servers;
         servers.reserve(endpoints.size());
-        for (auto ep: endpoints)
+        for (auto& ep: endpoints)
         {
             logger->write(Er::Log::Level::Info, "Creating a server instance at [%s]", ep.c_str());
 
             try
             {
-                Er::Private::Server::Params params(ep, g_log, &g_exitCondition, &g_restartRequired, (ssl > 0), root, certificate, key, &userDb);
-                auto server = Er::Private::Server::start(&params);
+                Er::Server::Private::Params params(ep, g_log, &g_exitCondition, &g_restartRequired, (ssl > 0), root, certificate, key, &userDb);
+                auto server = Er::Server::Private::create(&params);
                 servers.push_back(server);
             }
             catch (Er::Exception& e)
@@ -256,10 +251,8 @@ int main(int argc, char* argv[], char* env[])
 
         g_exitCondition.wait();
 
-        for (auto srv: servers)
-        {
-            srv->stop();
-        }
+        logger->write(Er::Log::Level::Info, "Stopping server instances...");
+        servers.clear();
         
         if (g_signalReceived)
         {
