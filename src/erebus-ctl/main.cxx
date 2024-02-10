@@ -155,8 +155,7 @@ int main(int argc, char* argv[])
 #endif
 
     std::string rootFile;
-    std::string user;
-    std::string password;
+    std::string creds;
 
     try
     {
@@ -168,8 +167,7 @@ int main(int argc, char* argv[])
             ("endpoint", po::value<std::string>(), "server endpoint")
             ("ssl", "enable SSL")
             ("root", po::value<std::string>(&rootFile), "root certificate file path")
-            ("user", po::value<std::string>(&user), "user name")
-            ("pwd", po::value<std::string>(&password), "user password")
+            ("user", po::value<std::string>(&creds), "user <name>:<password>")
             ("version", "display server version")
             ("exit", "shutdown server")
             ("restart", "restart server")
@@ -207,6 +205,22 @@ int main(int argc, char* argv[])
         
         if (!rootFile.empty())
             root = loadFile(rootFile);
+
+        std::string user;
+        std::string password;
+        if (vm.count("user"))
+        {
+            std::vector<std::string> parts;
+            boost::split(parts, creds, boost::is_any_of(":"));
+            if (parts.size() != 2)
+            {
+                std::cerr << "Expected <user>:<password> pair specified for \"user\" arg\n";
+                return EXIT_FAILURE;
+            }
+
+            user = std::move(parts[0]);
+            password = std::move(parts[1]);
+        }
         
         Er::Client::Params params(&console, ep, ssl, root, user, password);
         
