@@ -137,16 +137,16 @@ struct LibParams
 EREBUSCLT_EXPORT void initialize(const LibParams& params);
 EREBUSCLT_EXPORT void finalize();
 
-class Scope
+class LibScope
     : public boost::noncopyable
 {
 public:
-    ~Scope()
+    ~LibScope()
     {
         finalize();
     }
 
-    Scope(const LibParams& params)
+    LibScope(const LibParams& params)
     {
         initialize(params);
     }

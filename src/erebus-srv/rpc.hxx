@@ -15,6 +15,9 @@ namespace Er
 namespace Server
 {
 
+namespace Private
+{
+
 namespace Rpc
 {
 
@@ -450,6 +453,8 @@ private:
 
 
 } // namespace Rpc {}
+
+} // namespace Private {}
 
 } // namespace Server {}
 

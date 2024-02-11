@@ -1,12 +1,4 @@
-#include "erebus-version.h"
-
-#include <erebus/exception.hxx>
-#include <erebus/knownprops.hxx>
-#include <erebus/util/format.hxx>
-#include <erebus/util/random.hxx>
-#include <erebus-srv/auth.hxx>
 #include <erebus-srv/erebus-srv.hxx>
-#include <erebus-srv/userdb.hxx>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>

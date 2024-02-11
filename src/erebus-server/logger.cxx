@@ -4,6 +4,7 @@
 #include <erebus/knownprops.hxx>
 #include <erebus/syncstream.hxx>
 #include <erebus/system/time.hxx>
+#include <erebus/util/format.hxx>
 #include <erebus/util/utf16.hxx>
 
 #if ER_POSIX
@@ -82,7 +83,6 @@ Logger::Logger(Er::Log::Level level, const char* fileName)
     {
         if (errno == EWOULDBLOCK)
         {
-            m_exclusive = false;
             Er::osyncstream(std::cerr) << "Server is already running\n";
         }
         else
@@ -96,7 +96,6 @@ Logger::Logger(Er::Log::Level level, const char* fileName)
         auto e = ::GetLastError();
         if (e == ERROR_SHARING_VIOLATION)
         {
-            m_exclusive = false;
             Er::osyncstream(std::cerr) << "Server is already running\n";
         }
         else
@@ -180,10 +179,6 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
     }
 }
 
-bool Logger::exclusive() const noexcept
-{
-    return m_exclusive;
-}
 
 } // namespace Private {}
 

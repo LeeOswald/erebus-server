@@ -6,7 +6,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include <rapidjson/prettywriter.h>
 
 #include <fstream>
 
@@ -113,7 +113,7 @@ std::vector<Er::Server::Private::User> UserDb::enumerate() const
 {
     std::vector<Er::Server::Private::User> result;
 
-    std::lock_guard l(m_mutex);
+    std::shared_lock l(m_mutex);
 
     result.reserve(m_users.size());
     for (auto& u : m_users)
@@ -126,7 +126,7 @@ std::vector<Er::Server::Private::User> UserDb::enumerate() const
 
 std::optional<Er::Server::Private::User> UserDb::lookup(const std::string& name) const
 {
-    std::lock_guard l(m_mutex);
+    std::shared_lock l(m_mutex);
 
     auto it = m_users.find(name);
     if (it == m_users.end())
@@ -137,6 +137,8 @@ std::optional<Er::Server::Private::User> UserDb::lookup(const std::string& name)
 
 void UserDb::save()
 {
+    std::shared_lock l(m_mutex);
+
     if (!m_dirty)
         return;
 
@@ -145,10 +147,8 @@ void UserDb::save()
         throw Er::Exception(ER_HERE(), Util::format("Failed to overwrite user DB file [%s]", m_path.c_str()));
 
     rapidjson::StringBuffer sb;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
     writer.StartArray();
-
-    std::lock_guard l(m_mutex);
 
     for (auto& u : m_users)
     {

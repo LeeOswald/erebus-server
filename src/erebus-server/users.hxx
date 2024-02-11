@@ -1,8 +1,8 @@
 #pragma once
 
-#include <erebus-srv/userdb.hxx>
+#include <erebus-srv/erebus-srv.hxx>
 
-#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 
 namespace Er
@@ -28,7 +28,7 @@ public:
 
 private:
     std::string m_path;
-    mutable std::mutex m_mutex;
+    mutable std::shared_mutex m_mutex;
     std::unordered_map<std::string, Er::Server::Private::User> m_users;
     bool m_dirty = false;
 };

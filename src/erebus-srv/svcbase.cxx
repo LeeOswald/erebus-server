@@ -1,4 +1,4 @@
-#include <erebus-srv/svcbase.hxx>
+#include "svcbase.hxx"
 
 namespace Er
 {
@@ -87,7 +87,7 @@ void ServiceBase::handleRpcs()
 
     createRpcs();
 
-    Er::Server::Rpc::TagInfo tagInfo;
+    Er::Server::Private::Rpc::TagInfo tagInfo;
     while (!m_stop)
     {
         // Block waiting to read the next event from the completion queue. The
@@ -143,7 +143,7 @@ void ServiceBase::processRpcs()
     Er::Log::Debug(m_params.log) << "RPC processor thread exited";
 }
 
-void ServiceBase::genericDone(Er::Server::Rpc::RpcBase& rpc, bool rpcCancelled)
+void ServiceBase::genericDone(Er::Server::Private::Rpc::RpcBase& rpc, bool rpcCancelled)
 {
     delete (&rpc);
 }

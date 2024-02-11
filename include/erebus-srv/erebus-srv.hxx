@@ -5,6 +5,7 @@
 #include <erebus/util/condition.hxx>
 
 
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     #ifdef EREBUSSRV_EXPORTS
         #define EREBUSSRV_EXPORT __declspec(dllexport)
@@ -25,8 +26,32 @@ namespace Server
 namespace Private
 {
 
+struct User
+{
+    std::string name;
+    std::string pwdSalt;
+    std::string pwdHash;
 
-struct IUserDb;
+    explicit User(std::string_view name, std::string_view pwdSalt, std::string_view pwdHash)
+        : name(name)
+        , pwdSalt(pwdSalt)
+        , pwdHash(pwdHash)
+    {}
+};
+
+
+struct IUserDb
+{
+    virtual void add(const User& u) = 0;
+    virtual void remove(const std::string& name) = 0;
+    virtual std::vector<User> enumerate() const = 0;
+    virtual std::optional<User> lookup(const std::string& name) const = 0;
+    virtual void save() = 0;
+
+protected:
+    virtual ~IUserDb() {}
+};
+
 
 struct Params
 {
@@ -90,16 +115,16 @@ struct LibParams
 EREBUSSRV_EXPORT void initialize(const LibParams& params);
 EREBUSSRV_EXPORT void finalize();
 
-class Scope
+class LibScope
     : public boost::noncopyable
 {
 public:
-    ~Scope()
+    ~LibScope()
     {
         finalize();
     }
 
-    Scope(const LibParams& params)
+    LibScope(const LibParams& params)
     {
         initialize(params);
     }

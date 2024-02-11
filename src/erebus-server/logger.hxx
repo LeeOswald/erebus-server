@@ -30,7 +30,10 @@ public:
     ~Logger();
     explicit Logger(Er::Log::Level level, const char* fileName);
 
-    bool exclusive() const noexcept;
+    bool valid() const noexcept
+    {
+        return m_file.valid();
+    }
 
 private:
 #if ER_POSIX
@@ -58,7 +61,6 @@ private:
     void delegate(std::shared_ptr<Er::Log::Record> r);
 
     File m_file;
-    bool m_exclusive = true;
 };
 
 

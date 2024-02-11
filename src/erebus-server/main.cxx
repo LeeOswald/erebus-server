@@ -178,12 +178,11 @@ int main(int argc, char* argv[], char* env[])
         Er::System::CurrentProcess::daemonize();
 #endif
 
-    Er::Scope er;
+    Er::LibScope er;
 
     Er::Log::Level logLevel = (verbose > 0) ? Er::Log::Level::Debug : Er::Log::Level::Info;
     auto logger = std::make_unique<Er::Private::Logger>(logLevel, logFile.c_str());
-
-    if (!logger->exclusive())
+    if (!logger->valid())
         return EXIT_FAILURE;
 
     g_log = logger.get();
@@ -220,7 +219,7 @@ int main(int argc, char* argv[], char* env[])
         Er::Private::UserDb userDb(userdbFile);
 
         Er::Server::Private::LibParams srvLibParams(g_log, g_log->level());
-        Er::Server::Private::Scope ss(srvLibParams);
+        Er::Server::Private::LibScope ss(srvLibParams);
 
         std::vector<std::shared_ptr<Er::Server::Private::IServer>> servers;
         servers.reserve(endpoints.size());

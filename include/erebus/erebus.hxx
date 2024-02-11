@@ -20,16 +20,16 @@ namespace Er
 EREBUS_EXPORT void initialize();
 EREBUS_EXPORT void finalize();
 
-class Scope
+class LibScope
     : public boost::noncopyable
 {
 public:
-    ~Scope()
+    ~LibScope()
     {
         finalize();
     }
 
-    Scope()
+    LibScope()
     {
         initialize();
     }

@@ -5,7 +5,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -13,6 +13,9 @@ namespace Er
 {
 
 namespace Server
+{
+
+namespace Private
 {
 
 class AuthMetadataProcessor
@@ -32,7 +35,7 @@ public:
 
     grpc::Status Process(const InputMetadata& authMetadata, grpc::AuthContext* context, OutputMetadata* consumedMetadata, OutputMetadata* responseMetadata) override
     {
-        std::lock_guard l(m_mutex);
+        std::shared_lock l(m_mutex);
 
         // determine intercepted method
         auto dispatch = authMetadata.find(":path");
@@ -109,11 +112,12 @@ public:
 
 private:
     Er::Log::ILog* m_log;
-    std::mutex m_mutex;
+    std::shared_mutex m_mutex;
     std::vector<std::string> m_noAuthMethods;
     std::unordered_map<std::string, std::string> m_tickets; // ticket -> user
 };
 
+} // namespace Private {}
 
 } // namespace Server {}
 
