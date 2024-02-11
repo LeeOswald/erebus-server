@@ -1,6 +1,11 @@
 #include "erebus-version.h"
 #include "svcbase.hxx"
 
+#include <erebus/util/format.hxx>
+
+#include <shared_mutex>
+#include <unordered_map>
+
 namespace Er
 {
 
@@ -16,6 +21,7 @@ namespace
 
 class ErebusService final
     : public Er::Server::Private::IServer
+    , public Er::Server::IServiceContainer
     , public ServiceBase
 {
 public:
@@ -31,6 +37,41 @@ public:
         m_authProcessor->addNoAuthMethod("/erebus.Erebus/Authorize");
 
         m_params.log->write(Log::Level::Debug, "ErebusService %p created", this);
+    }
+
+    IServiceContainer* serviceContainer() override
+    {
+        return this;
+    }
+
+    void registerService(const std::string& request, IService* service) override
+    {
+        std::lock_guard l(m_servicesLock);
+
+        auto it = m_services.find(request);
+        if (it != m_services.end())
+            throw Er::Exception(ER_HERE(), Er::Util::format("Service for [%s] is already registered", request.c_str()));
+
+        m_services.insert({ request, service });
+        
+        LogInfo(m_params.log, "Registered service %p for [%s]", service, request.c_str());
+    }
+
+    void unregisterService(IService* service) override
+    {
+        std::lock_guard l(m_servicesLock);
+        
+        for (auto it = m_services.begin(); it != m_services.end(); ++it)
+        {
+            if (it->second == service)
+            {
+                LogInfo(m_params.log, "Unregistered service %p for [%s]", service, it->first.c_str());
+                m_services.erase(it);
+                return;
+            }
+        }
+
+        LogError(m_params.log, "Service %p is not registered", service);
     }
 
 private:
@@ -49,6 +90,8 @@ private:
         createRemoveUserRpc();
         createListUsersRpc();
         createExitRpc();
+        createGenericRpc();
+        createGenericStream();
     }
 
     bool checkAuth(Er::Server::Private::Rpc::RpcBase& rpc)
@@ -387,7 +430,160 @@ private:
         m_params.exitCondition->set();
     }
 
+    void createGenericRpc()
+    {
+        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
+
+        rpcHandlers.createRpc = std::bind(&ErebusService::createGenericRpc, this);
+
+        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processGenericRpc(rpc, message); };
+        rpcHandlers.done = &genericDone;
+
+        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestGenericRpc;
+
+        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, m_queue.get(), rpcHandlers);
+    }
+
+    void processGenericRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    {
+        auto request = static_cast<const erebus::ServiceRequest*>(message);
+        erebus::ServiceReply response;
+
+        if (!checkAuth(rpc))
+            return;
+
+        auto& id = request->request();
+
+        std::shared_lock l(m_servicesLock);
+        
+        auto it = m_services.find(id);
+        if (it == m_services.end())
+        {
+            m_params.log->write(Er::Log::Level::Error, "No handlers for [%s]", id.c_str());
+            rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
+            return;
+        }
+
+        auto service = it->second;
+
+        try
+        {
+            auto args = unmarshalArgs(request);
+            auto result = service->request(id, args);
+            marshalReplyProps(result, &response);
+
+            response.mutable_header()->set_code(erebus::Success);
+        }
+        catch (Er::Exception& e)
+        {
+            response.mutable_header()->set_code(erebus::Failure);
+            marshalException(response.mutable_header(), e);
+        }
+        catch (std::exception& e)
+        {
+            response.mutable_header()->set_code(erebus::Failure);
+            marshalException(response.mutable_header(), e);
+        }
+        
+        rpc.sendResponse(&response);
+    }
+
+    void createGenericStream()
+    {
+        Er::Server::Private::Rpc::ServerStreamingRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
+
+        rpcHandlers.createRpc = std::bind(&ErebusService::createGenericStream, this);
+
+        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processGenericStream(rpc, message); };
+        rpcHandlers.done = &genericDone;
+
+        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestGenericStream;
+
+        new Er::Server::Private::Rpc::ServerStreamingRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, m_queue.get(), rpcHandlers);
+    }
+
+    void processGenericStream(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    {
+        auto request = static_cast<const erebus::ServiceRequest*>(message);
+        erebus::ServiceReply response;
+
+        if (!checkAuth(rpc))
+            return;
+
+            auto& id = request->request();
+
+        std::shared_lock l(m_servicesLock);
+        
+        auto it = m_services.find(id);
+        if (it == m_services.end())
+        {
+            m_params.log->write(Er::Log::Level::Error, "No handlers for [%s]", id.c_str());
+            rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
+            return;
+        }
+
+        auto service = it->second;
+
+        try
+        {
+            auto args = unmarshalArgs(request);
+            auto streamId = service->beginStream(id, args);
+            bool stop = false;
+            do
+            {
+                try
+                {
+                    auto item = service->next(streamId);
+                    if (item.empty())
+                    {
+                        stop = true;
+                    }
+                    else
+                    {
+                        marshalReplyProps(item, &response);
+                    }
+                }
+                catch (Er::Exception& e)
+                {
+                    response.mutable_header()->set_code(erebus::Failure);
+                    marshalException(response.mutable_header(), e);
+                    stop = true;
+                }
+                catch (std::exception& e)
+                {
+                    response.mutable_header()->set_code(erebus::Failure);
+                    marshalException(response.mutable_header(), e);
+                    stop = true;
+                }
+
+                response.mutable_header()->set_code(erebus::Success);
+                rpc.sendResponse(&response);
+
+            } while (!stop);
+            
+            service->endStream(streamId);
+        }
+        catch (Er::Exception& e)
+        {
+            response.mutable_header()->set_code(erebus::Failure);
+            marshalException(response.mutable_header(), e);
+            rpc.sendResponse(&response);
+        }
+        catch (std::exception& e)
+        {
+            response.mutable_header()->set_code(erebus::Failure);
+            marshalException(response.mutable_header(), e);
+            rpc.sendResponse(&response);
+        }
+        
+        // end of stream
+        rpc.sendResponse(nullptr);
+    }
+
+
     erebus::Erebus::AsyncService m_service;
+    std::shared_mutex m_servicesLock;
+    std::unordered_map<std::string, IService*> m_services;
 };
 
 

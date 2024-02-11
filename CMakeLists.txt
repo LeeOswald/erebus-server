@@ -95,7 +95,7 @@ set(GRPC_LIBS
 )
 
 
-if(ER_LINUX)
+if(ER_POSIX)
     # require pthreads
     find_package(Threads REQUIRED)
     set(PLATFORM_LIBRARIES Threads::Threads)
@@ -130,6 +130,7 @@ endif()
 
 # component names
 set(EREBUS_LIB erebus-rtl)
+set(EREBUS_PROCESSMGR processmgr)
 set(EREBUS_SRVLIB erebus-srv)
 set(EREBUS_CLTLIB erebus-clt)
 set(EREBUS_SERVER erebus-server)
@@ -139,6 +140,9 @@ set(EREBUS_CTL erebus-ctl)
 add_subdirectory(protocol)
 add_subdirectory(3rd_party/googletest)
 add_subdirectory(src/erebus)
+if(ER_LINUX)
+    add_subdirectory(src/erebus-processmgr)
+endif()
 add_subdirectory(src/erebus-srv)
 add_subdirectory(src/erebus-clt)
 add_subdirectory(src/erebus-server)

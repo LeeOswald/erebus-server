@@ -45,8 +45,11 @@ protected:
     std::string getContextUserMapping(grpc::ServerContext* context) const;
     std::string makeTicket() const;
 
-    void marshalException(erebus::GenericReply* reply, const std::exception& e);
-    void marshalException(erebus::GenericReply* reply, const Er::Exception& e);
+    static void marshalException(erebus::GenericReply* reply, const std::exception& e);
+    static void marshalException(erebus::GenericReply* reply, const Er::Exception& e);
+
+    static Er::PropertyBag unmarshalArgs(const erebus::ServiceRequest* request);
+    static void marshalReplyProps(const Er::PropertyBag& props, erebus::ServiceReply* reply);
 
     const size_t kTicketLength = 64;
     const std::string_view kTicketChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";

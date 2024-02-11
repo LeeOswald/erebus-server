@@ -66,6 +66,9 @@ EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi)
 
 EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi)
 {
+    if (!pi)
+        return;
+        
     std::lock_guard l(s_registry->mutex);
 
     auto it1 = s_registry->propsById.find(pi->id());

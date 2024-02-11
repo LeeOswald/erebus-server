@@ -2,6 +2,7 @@
 
 #include <erebus/erebus.hxx>
 #include <erebus/log.hxx>
+#include <erebus/property.hxx>
 #include <erebus/util/condition.hxx>
 
 
@@ -22,6 +23,31 @@ namespace Er
 
 namespace Server
 {
+
+
+struct IService
+{
+    using StreamId = uint32_t;
+
+    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0; 
+    virtual StreamId beginStream(std::string_view request, const Er::PropertyBag& args) = 0;
+    virtual void endStream(StreamId id) = 0;
+    virtual Er::PropertyBag next(StreamId id) = 0;
+
+protected:
+    virtual ~IService() {}
+};
+
+
+struct IServiceContainer
+{
+    virtual void registerService(const std::string& request, IService* service) = 0;
+    virtual void unregisterService(IService* service) = 0;
+
+protected:
+    virtual ~IServiceContainer() {}
+};
+
 
 namespace Private
 {
@@ -92,12 +118,6 @@ struct Params
 };
 
 
-struct IServer
-{
-    virtual ~IServer() {}
-};
-
-
 struct LibParams
 {
     Er::Log::ILog* log = nullptr;
@@ -130,6 +150,13 @@ public:
     }
 };
 
+
+struct IServer
+{
+    virtual ~IServer() {}
+
+    virtual IServiceContainer* serviceContainer() = 0;
+};
 
 std::shared_ptr<IServer> EREBUSSRV_EXPORT create(const Params* params);
 

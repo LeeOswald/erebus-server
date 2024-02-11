@@ -14,6 +14,8 @@ service Erebus {
   rpc RemoveUser(RemoveUserRequest) returns(GenericReply) {}
   rpc Exit(ExitRequest) returns(GenericReply) {}
   rpc Version(Void) returns(ServerVersionReply) {}
+  rpc GenericRpc(ServiceRequest) returns(ServiceReply) {}
+  rpc GenericStream(ServiceRequest) returns(stream ServiceReply) {}
 }
 
 
@@ -66,4 +68,12 @@ message ExitRequest {
   bool restart = 1;
 }
 
+message ServiceRequest {
+  string request = 1;
+  repeated Property args = 2;
+}
 
+message ServiceReply {
+  GenericReply header = 1;
+  repeated Property props = 2;
+}

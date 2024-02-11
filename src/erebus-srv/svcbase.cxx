@@ -1,5 +1,7 @@
 #include "svcbase.hxx"
 
+#include <erebus/util/format.hxx>
+
 namespace Er
 {
 
@@ -255,6 +257,84 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
     }
 }
 
+Er::PropertyBag ServiceBase::unmarshalArgs(const erebus::ServiceRequest* request)
+{
+    Er::PropertyBag bag;
+
+    int count = request->args_size();
+    for (int i = 0; i < count; ++i)
+    {
+        auto& arg = request->args(i);
+
+        auto id = arg.id();
+        auto info = Er::lookupProperty(id);
+        if (!info)
+        {
+            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08x", id));
+        }
+        else
+        {
+            auto& type = info->type();
+            if (type == typeid(bool))
+                bag.insert({ PropId(id), Property(id, arg.v_bool()) });
+            else if (type == typeid(int32_t))
+                bag.insert({ PropId(id), Property(id, arg.v_int32()) });
+            else if (type == typeid(uint32_t))
+                bag.insert({ PropId(id), Property(id, arg.v_uint32()) });
+            else if (type == typeid(int64_t))
+                bag.insert({ PropId(id), Property(id, arg.v_int64()) });
+            else if (type == typeid(uint64_t))
+                bag.insert({ PropId(id), Property(id, arg.v_uint64()) });
+            else if (type == typeid(double))
+                bag.insert({ PropId(id), Property(id, arg.v_double()) });
+            else if (type == typeid(std::string))
+                bag.insert({ PropId(id), Property(id, arg.v_string()) });
+            else
+                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
+        }
+    }
+
+    return bag;
+}
+
+void ServiceBase::marshalReplyProps(const Er::PropertyBag& props, erebus::ServiceReply* reply)
+{
+    if (props.empty())
+        return;
+
+    auto out = reply->mutable_props();
+    for (auto& prop: props)
+    {
+        auto mutableProp = out->Add();
+        mutableProp->set_id(prop.second.id);
+
+        auto info = prop.second.info;
+        if (!info)
+        {
+            info = Er::lookupProperty(prop.second.id).get();
+            if (!info)
+                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08d", prop.second.id));
+        }
+
+        auto& type = info->type();
+        if (type == typeid(bool))
+            mutableProp->set_v_bool(std::any_cast<bool>(prop.second.value));
+        else if (type == typeid(int32_t))
+            mutableProp->set_v_int32(std::any_cast<int32_t>(prop.second.value));
+        else if (type == typeid(uint32_t))
+            mutableProp->set_v_uint32(std::any_cast<uint32_t>(prop.second.value));
+        else if (type == typeid(int64_t))
+            mutableProp->set_v_int64(std::any_cast<int64_t>(prop.second.value));
+        else if (type == typeid(uint64_t))
+            mutableProp->set_v_uint64(std::any_cast<uint64_t>(prop.second.value));
+        if (type == typeid(double))
+            mutableProp->set_v_double(std::any_cast<double>(prop.second.value));
+        if (type == typeid(std::string))
+            mutableProp->set_v_string(std::any_cast<std::string>(prop.second.value));
+        else
+            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
+    }
+}
 
 } // namespace Private {}
 

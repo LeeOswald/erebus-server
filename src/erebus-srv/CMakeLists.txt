@@ -1,6 +1,7 @@
 
 add_library(${EREBUS_SRVLIB} SHARED
     ../../include/erebus-srv/erebus-srv.hxx
+    ../../include/erebus-srv/plugin.hxx
     auth.hxx
     rpc.hxx
     svcbase.hxx

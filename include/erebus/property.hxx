@@ -6,7 +6,7 @@
 #include <any>
 #include <ostream>
 #include <typeinfo>
-#include <vector>
+#include <unordered_map>
 
 
 namespace Er
@@ -185,6 +185,8 @@ struct PropertyInfoWrapper
     }
 };
 
+
+using PropertyBag = std::unordered_map<PropId, Property>;
 
 } // namespace Er {}
 
