@@ -46,24 +46,24 @@ private:
 };
 
 
-class Stub final
-    : public Er::Client::IStub
+class ClientImpl final
+    : public Er::Client::IClient
     , public boost::noncopyable
 {
 public:
-    ~Stub()
+    ~ClientImpl()
     {
         disconnect();
     }
 
-    explicit Stub(std::shared_ptr<grpc::Channel> channel, const Params& params)
+    explicit ClientImpl(std::shared_ptr<grpc::Channel> channel, const Params& params)
         : m_stub(erebus::Erebus::NewStub(channel))
         , m_params(params)
     {
         checkAuth();
     }
 
-    void addUser(std::string_view name, std::string_view password) override
+    void addUser(const std::string& name, const std::string& password) override
     {
         auto salt = makeSalt();
         Er::Util::Sha256 sha;
@@ -71,7 +71,7 @@ public:
         sha.update(password);
 
         erebus::AddUserRequest request;
-        request.set_name(std::string(name));
+        request.set_name(name);
         request.set_salt(salt);
         request.set_pwd(sha.str(sha.digest()));
 
@@ -83,10 +83,10 @@ public:
         throwIfFailed(status, &reply);
     }
 
-    void removeUser(std::string_view name) override
+    void removeUser(const std::string& name) override
     {
         erebus::RemoveUserRequest request;
-        request.set_name(std::string(name));
+        request.set_name(name);
 
         erebus::GenericReply reply;
         grpc::ClientContext context;
@@ -147,6 +147,81 @@ public:
         throwIfFailed(status, &reply.header());
 
         return Version(reply.major(), reply.minor(), reply.patch());
+    }
+
+    Er::PropertyBag request(const std::string& req, const Er::PropertyBag& args) override
+    {
+        erebus::ServiceRequest request;
+        request.set_request(req);
+
+        // marshal properties
+        for (auto& arg: args)
+        {
+            auto a = request.add_args();
+            a->set_id(arg.second.id);
+            auto info = arg.second.info;
+            assert(info);
+            auto& type = info->type();
+            if (type == typeid(bool))
+                a->set_v_bool(std::any_cast<bool>(arg.second.value));
+            else if (type == typeid(int32_t))
+                a->set_v_int32(std::any_cast<int32_t>(arg.second.value));
+            else if (type == typeid(uint32_t))
+                a->set_v_uint32(std::any_cast<uint32_t>(arg.second.value));
+            else if (type == typeid(int64_t))
+                a->set_v_int64(std::any_cast<int64_t>(arg.second.value));
+            else if (type == typeid(uint64_t))
+                a->set_v_uint64(std::any_cast<uint64_t>(arg.second.value));
+            else if (type == typeid(double))
+                a->set_v_double(std::any_cast<double>(arg.second.value));
+            else if (type == typeid(std::string))
+                a->set_v_string(std::any_cast<std::string>(arg.second.value));
+            else
+                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
+        }
+
+        erebus::ServiceReply reply;
+        grpc::ClientContext context;
+        makeClientContext(context);
+
+        grpc::Status status = m_stub->GenericRpc(&context, request, &reply);
+        throwIfFailed(status, &reply.header());
+
+        // unmarshal properties
+        Er::PropertyBag bag;
+        int count = reply.props_size();
+        for (int i = 0; i < count; ++i)
+        {
+            auto& prop = reply.props(i);
+            auto id = prop.id();
+            auto info = Er::lookupProperty(id);
+            if (!info)
+            {
+                m_params.log->write(Er::Log::Level::Error, "Unsupported property 0x%08x", id);
+            }
+            else
+            {
+                auto& type = info->type();
+                if (type == typeid(bool))
+                    bag.insert({ id, Er::Property(id, prop.v_bool()) });
+                else if (type == typeid(int32_t))
+                    bag.insert({ id, Er::Property(id, prop.v_int32()) });
+                else if (type == typeid(uint32_t))
+                    bag.insert({ id, Er::Property(id, prop.v_uint32()) });
+                else if (type == typeid(int64_t))
+                    bag.insert({ id, Er::Property(id, prop.v_int64()) });
+                else if (type == typeid(uint64_t))
+                    bag.insert({ id, Er::Property(id, prop.v_uint64()) });
+                else if (type == typeid(double))
+                    bag.insert({ id, Er::Property(id, prop.v_double()) });
+                else if (type == typeid(std::string))
+                    bag.insert({ id, Er::Property(id, prop.v_string()) });
+                else
+                    m_params.log->write(Er::Log::Level::Error, "Unsupported property type %s", type.name());
+            }
+        }
+
+        return bag;
     }
 
 private:
@@ -306,40 +381,38 @@ private:
             Er::Exception unmarshaledException(std::move(location), std::move(message));
 
             auto propCount = exception.props_size();
-            if (propCount)
+            
+            for (int i = 0; i < propCount; ++i)
             {
-                for (int i = 0; i < propCount; ++i)
+                auto& prop = exception.props(i);
+                auto id = prop.id();
+                auto info = Er::lookupProperty(id);
+                if (!info)
                 {
-                    auto& prop = exception.props(i);
-                    auto id = prop.id();
-                    auto info = Er::lookupProperty(id);
-                    if (!info)
-                    {
-                        m_params.log->write(Er::Log::Level::Error, "Unsupported exception property 0x%08x", id);
-                    }
+                    m_params.log->write(Er::Log::Level::Error, "Unsupported exception property 0x%08x", id);
+                }
+                else
+                {
+                    auto& type = info->type();
+                    if (type == typeid(bool))
+                        unmarshaledException.add(id, prop.v_bool());
+                    else if (type == typeid(int32_t))
+                        unmarshaledException.add(id, prop.v_int32());
+                    else if (type == typeid(uint32_t))
+                        unmarshaledException.add(id, prop.v_uint32());
+                    else if (type == typeid(int64_t))
+                        unmarshaledException.add(id, prop.v_int64());
+                    else if (type == typeid(uint64_t))
+                        unmarshaledException.add(id, prop.v_uint64());
+                    else if (type == typeid(double))
+                        unmarshaledException.add(id, prop.v_double());
+                    else if (type == typeid(std::string))
+                        unmarshaledException.add(id, prop.v_string());
                     else
-                    {
-                        auto& type = info->type();
-                        if (type == typeid(bool))
-                            unmarshaledException.add(id, prop.v_bool());
-                        else if (type == typeid(int32_t))
-                            unmarshaledException.add(id, prop.v_int32());
-                        else if (type == typeid(uint32_t))
-                            unmarshaledException.add(id, prop.v_uint32());
-                        else if (type == typeid(int64_t))
-                            unmarshaledException.add(id, prop.v_int64());
-                        else if (type == typeid(uint64_t))
-                            unmarshaledException.add(id, prop.v_uint64());
-                        else if (type == typeid(double))
-                            unmarshaledException.add(id, prop.v_double());
-                        else if (type == typeid(std::string))
-                            unmarshaledException.add(id, prop.v_string());
-                        else
-                            m_params.log->write(Er::Log::Level::Error, "Unsupported exception property type %s", type.name());
-                    }
+                        m_params.log->write(Er::Log::Level::Error, "Unsupported exception property type %s", type.name());
                 }
             }
-
+            
             throw unmarshaledException;
         }
     }
@@ -406,7 +479,7 @@ EREBUSCLT_EXPORT void finalize()
     }
 }
 
-EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const Params& params)
+EREBUSCLT_EXPORT std::shared_ptr<IClient> create(const Params& params)
 {
     bool local = params.endpoint.starts_with("unix:");
     
@@ -422,12 +495,12 @@ EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const Params& params)
 
         auto channelCreds = grpc::SslCredentials(opts);
         auto channel = grpc::CreateCustomChannel(params.endpoint, channelCreds, args);
-        return std::make_shared<Stub>(channel, params);
+        return std::make_shared<ClientImpl>(channel, params);
     }
     else
     {
         auto channel = grpc::CreateCustomChannel(params.endpoint, grpc::InsecureChannelCredentials(), args);
-        return std::make_shared<Stub>(channel, params);
+        return std::make_shared<ClientImpl>(channel, params);
     }
 }
 

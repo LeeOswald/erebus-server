@@ -27,10 +27,11 @@ private:
     struct PluginInfo
     {
         std::string path;
-        std::shared_ptr<Er::Server::IPlugin> ref;
-        boost::dll::shared_library dll;
         Er::Log::ILog* log = nullptr;
-
+        // note the member order: 'ref' must be released before 'dll' gets uloaded
+        boost::dll::shared_library dll;
+        std::shared_ptr<Er::Server::IPlugin> ref;
+        
         ~PluginInfo()
         {
             if (dll.is_loaded())

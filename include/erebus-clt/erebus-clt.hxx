@@ -1,8 +1,8 @@
 #pragma once
 
-#include <erebus/erebus.hxx>
 #include <erebus/exception.hxx>
 #include <erebus/log.hxx>
+#include <erebus/property.hxx>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     #ifdef EREBUSCLT_EXPORTS
@@ -109,15 +109,16 @@ struct UserInfo
     {}
 };
 
-struct IStub
+struct IClient
 {
-    virtual void addUser(std::string_view name, std::string_view password) = 0;
-    virtual void removeUser(std::string_view name) = 0;
+    virtual void addUser(const std::string& name, const std::string& password) = 0;
+    virtual void removeUser(const std::string& name) = 0;
     virtual std::vector<UserInfo> listUsers() = 0;
     virtual void exit(bool restart) = 0;
     virtual Version version() = 0;
+    virtual Er::PropertyBag request(const std::string& request, const Er::PropertyBag& args) = 0;
 
-    virtual ~IStub() {}
+    virtual ~IClient() {}
 };
 
 struct LibParams
@@ -182,7 +183,7 @@ struct Params
     }
 };
 
-EREBUSCLT_EXPORT std::shared_ptr<IStub> create(const Params& params);
+EREBUSCLT_EXPORT std::shared_ptr<IClient> create(const Params& params);
 
 } // namespace Client {}
     

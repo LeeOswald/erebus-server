@@ -29,8 +29,8 @@ struct IService
 {
     using StreamId = uint32_t;
 
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0; 
-    virtual StreamId beginStream(std::string_view request, const Er::PropertyBag& args) = 0;
+    virtual Er::PropertyBag request(const std::string& request, const Er::PropertyBag& args) = 0; 
+    virtual StreamId beginStream(const std::string& request, const Er::PropertyBag& args) = 0;
     virtual void endStream(StreamId id) = 0;
     virtual Er::PropertyBag next(StreamId id) = 0;
 

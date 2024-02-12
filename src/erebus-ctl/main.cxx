@@ -3,6 +3,7 @@
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus-clt/erebus-clt.hxx>
+#include <erebus-processmgr/processprops.hxx>
 
 #include <fstream>
 #include <iostream>
@@ -35,7 +36,7 @@ std::string loadFile(const std::string& path)
     return ss.str();
 }
 
-void version(Er::Client::IStub* client, Er::Log::ILog* log)
+void version(Er::Client::IClient* client, Er::Log::ILog* log)
 {
     try
     {
@@ -79,7 +80,7 @@ void version(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
     }
 }
 
-void addUser(Er::Log::ILog* log, const Er::Client::Params& params, std::string_view name, std::string_view password)
+void addUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::string& name, const std::string& password)
 {
     try
     {
@@ -99,7 +100,7 @@ void addUser(Er::Log::ILog* log, const Er::Client::Params& params, std::string_v
     }
 }
 
-void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, std::string_view name)
+void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::string& name)
 {
     try
     {
@@ -182,6 +183,96 @@ void restart(Er::Log::ILog* log, const Er::Client::Params& params)
     }
 }
 
+void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
+{
+    try
+    {
+        Er::PropertyBag req;
+        req.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, uint64_t(pid)) });
+        auto info = client->request(Er::ProcessRequests::ProcessDetails, req);
+        auto it = info.find(Er::ProcessProps::Valid::Id::value);
+        if (it == info.end())
+        {
+            log->write(Er::Log::Level::Error, "No data for PID %d", pid);
+        }
+        else
+        {
+            auto valid = std::any_cast<bool>(it->second.value);
+            if (!valid)
+            {   
+                it = info.find(Er::ProcessProps::Error::Id::value);
+                if (it != info.end())
+                    log->write(Er::Log::Level::Error, "Invalid stat for PID %d", pid);
+                else
+                    log->write(Er::Log::Level::Error, "Invalid stat for PID %d: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
+            }
+            else
+            {
+                log->write(Er::Log::Level::Info, "Dumping process %d", pid);
+                for (auto it = info.begin(); it != info.end(); ++it)
+                {
+                    if (
+                        (it->second.id != Er::ProcessProps::Valid::Id::value) &&
+                        (it->second.id != Er::ProcessProps::Error::Id::value)
+                    )
+                    {
+                        auto propInfo = it->second.info;
+                        if (!propInfo)
+                            propInfo = Er::lookupProperty(it->second.id).get();
+
+                        if (!propInfo)
+                        {
+                            log->write(Er::Log::Level::Warning, "0x%08x: ???", it->second.id);
+                        }
+                        else
+                        {
+                            std::ostringstream ss;
+                            propInfo->format(it->second, ss);
+
+                            log->write(Er::Log::Level::Info, "%s: %s", propInfo->name(), ss.str().c_str());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+void dumpProcess(Er::Log::ILog* log, const Er::Client::Params& params, int pid, int interval)
+{
+    try
+    {
+        auto client = Er::Client::create(params);
+
+        while (!g_signalReceived)
+        {
+            dumpProcess(client.get(), log, pid);
+
+            if (interval <= 0)
+                break;
+
+            std::this_thread::sleep_for(std::chrono::seconds(interval));
+        }
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+
 } // namespace {}
 
 
@@ -220,6 +311,7 @@ int main(int argc, char* argv[])
             ("rmuser", po::value<std::string>(), "delete user <name>")
             ("listusers", "list existing users")
             ("loop", po::value<int>(&interval), "repeat the request with an interval")
+            ("process", po::value<int>(), "view process info for PID")
         ;
 
         po::variables_map vm;
@@ -303,6 +395,11 @@ int main(int argc, char* argv[])
         else if (vm.count("listusers"))
         {
             listUsers(&console, params);
+        }
+        else if (vm.count("process"))
+        {
+            auto pid = vm["process"].as<int>();
+            dumpProcess(&console, params, pid, interval);
         }
         
         if (g_signalReceived)

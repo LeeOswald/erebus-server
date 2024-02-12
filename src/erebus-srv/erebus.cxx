@@ -54,24 +54,29 @@ public:
 
         m_services.insert({ request, service });
         
-        LogInfo(m_params.log, "Registered service %p for [%s]", service, request.c_str());
+        LogInfo(m_params.log, "ErebusService %p: Registered service %p for [%s]", this, service, request.c_str());
     }
 
     void unregisterService(IService* service) override
     {
         std::lock_guard l(m_servicesLock);
         
-        for (auto it = m_services.begin(); it != m_services.end(); ++it)
+        for (auto it = m_services.begin(); it != m_services.end();)
         {
             if (it->second == service)
             {
-                LogInfo(m_params.log, "Unregistered service %p for [%s]", service, it->first.c_str());
+                LogInfo(m_params.log, "ErebusService %p: Unregistered service %p for [%s]", this, service, it->first.c_str());
+                auto next = std::next(it);
                 m_services.erase(it);
-                return;
+                it = next;
+            }
+            else
+            {
+                ++it;
             }
         }
 
-        LogError(m_params.log, "Service %p is not registered", service);
+        LogError(m_params.log, "ErebusService %p: Service %p is not registered", this, service);
     }
 
 private:
@@ -459,7 +464,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, "No handlers for [%s]", id.c_str());
+            m_params.log->write(Er::Log::Level::Error, "ErebusService %p: No handlers for [%s]", this, id.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -517,7 +522,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, "No handlers for [%s]", id.c_str());
+            m_params.log->write(Er::Log::Level::Error, "ErebusService %p: No handlers for [%s]", this, id.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }

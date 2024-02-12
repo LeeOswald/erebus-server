@@ -7,6 +7,14 @@
 namespace Er
 {
 
+namespace ProcessRequests
+{
+
+static const std::string ListProcesses = "ListProcesses";
+static const std::string ProcessDetails = "ProcessDetails";
+
+} // namespace ProcessRequests {}
+
 namespace ProcessProps
 {
 
