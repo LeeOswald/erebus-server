@@ -11,6 +11,7 @@
 #include <erebus-srv/erebus-srv.hxx>
 
 #include "logger.hxx"
+#include "pluginmgr.hxx"
 #include "users.hxx"
 
 #include <fstream>
@@ -135,6 +136,7 @@ int main(int argc, char* argv[], char* env[])
     std::string certFile;
     std::string keyFile;
     std::string userdbFile;
+    std::vector<std::string> plugins;
 
     try
     {
@@ -148,6 +150,7 @@ int main(int argc, char* argv[], char* env[])
             ("certificate", po::value<std::string>(&certFile), "certificate file path")
             ("key", po::value<std::string>(&keyFile), "private key file path")
             ("userdb", po::value<std::string>(&userdbFile), "user DB file path")
+            ("plugin", po::value<decltype(endpoints)>(&plugins), "plugin path")
             ;
 
         po::store(po::parse_config_file(cfg, cfgOpts), vm);
@@ -221,6 +224,7 @@ int main(int argc, char* argv[], char* env[])
         Er::Server::Private::LibParams srvLibParams(g_log, g_log->level());
         Er::Server::Private::LibScope ss(srvLibParams);
 
+        // create endpoints
         std::vector<std::shared_ptr<Er::Server::Private::IServer>> servers;
         servers.reserve(endpoints.size());
         for (auto& ep: endpoints)
@@ -246,10 +250,37 @@ int main(int argc, char* argv[], char* env[])
         if (servers.empty())
             throw Er::Exception(ER_HERE(), "Could not create any server instances");
 
+        // load plugins
+        Er::Server::PluginParams pluginParams;
+        pluginParams.log = g_log;
+        for (auto& srv: servers)
+        {
+            pluginParams.containers.push_back(srv->serviceContainer());
+        }
+
+        Er::Private::PluginMgr pluginMgr(pluginParams);
+        for (auto& path: plugins)
+        {
+            try
+            {
+                pluginMgr.load(path);
+            }
+            catch (Er::Exception& e)
+            {
+                Er::Util::logException(g_log, Er::Log::Level::Error, e);
+            }
+            catch (std::exception& e)
+            {
+                Er::Util::logException(g_log, Er::Log::Level::Error, e);
+            }
+        }
+
+        // now just sit around and wait
         logger->write(Er::Log::Level::Info, "Waiting for client connections...");
 
         g_exitCondition.wait();
 
+        // cleanup
         logger->write(Er::Log::Level::Info, "Stopping server instances...");
         servers.clear();
         

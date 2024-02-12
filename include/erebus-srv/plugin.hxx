@@ -3,6 +3,7 @@
 #include <erebus/log.hxx>
 #include <erebus-srv/erebus-srv.hxx>
 
+#include <vector>
 
 namespace Er
 {
@@ -16,14 +17,7 @@ struct IServiceContainer;
 struct PluginParams
 {
     Er::Log::ILog* log = nullptr;
-    IServiceContainer* container = nullptr;
-
-    constexpr PluginParams() noexcept = default;
-
-    constexpr PluginParams(Er::Log::ILog* log, IServiceContainer* container) noexcept
-        : log(log)
-        , container(container)
-    {}
+    std::vector<IServiceContainer*> containers;
 };
 
 
@@ -33,7 +27,8 @@ struct IPlugin
 };
 
 
-typedef std::shared_ptr<IPlugin> (*CreatePluginFn)(const PluginParams&);
+// the only symbol any plugin must export
+typedef std::shared_ptr<IPlugin> (*createPlugin)(const PluginParams&);
 
 
 

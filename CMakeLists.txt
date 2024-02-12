@@ -29,7 +29,10 @@ else()
     endif()
 endif()
 
+# -fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# -fvisibility=hidden
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 if(NOT MSVC)
     add_link_options(-rdynamic) # enable stack capture

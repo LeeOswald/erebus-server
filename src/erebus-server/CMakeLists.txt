@@ -2,6 +2,8 @@ add_executable(${EREBUS_SERVER}
     logger.cxx
     logger.hxx
     main.cxx
+    pluginmgr.cxx
+    pluginmgr.hxx
     users.cxx
     users.hxx
 )
