@@ -27,8 +27,9 @@ struct IPlugin
 };
 
 
-// the only symbol any plugin must export
-typedef std::shared_ptr<IPlugin> (*createPlugin)(const PluginParams&);
+// the only symbols any plugin must export
+typedef IPlugin* (createPlugin)(const PluginParams&);
+typedef void (disposePlugin)(IPlugin*);
 
 
 

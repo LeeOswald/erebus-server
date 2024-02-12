@@ -20,7 +20,7 @@ PluginMgr::PluginMgr(const Er::Server::PluginParams& params)
 {
 }
 
-std::shared_ptr<Er::Server::IPlugin> PluginMgr::load(const std::string& path)
+Er::Server::IPlugin* PluginMgr::load(const std::string& path)
 {
     auto info = std::make_shared<PluginInfo>(path, m_params.log);
     
@@ -36,7 +36,15 @@ std::shared_ptr<Er::Server::IPlugin> PluginMgr::load(const std::string& path)
         throw Er::Exception(ER_HERE(), Er::Util::format("No createPlugin symbol found in [%s]", path.c_str()));
     }
 
-    auto entry = info->dll.get<std::shared_ptr<Er::Server::IPlugin>(const Er::Server::PluginParams&)>("createPlugin");
+    if (!info->dll.has("disposePlugin"))
+    {
+        throw Er::Exception(ER_HERE(), Er::Util::format("No disposePlugin symbol found in [%s]", path.c_str()));
+    }
+
+    info->disposeFn = info->dll.get<Er::Server::disposePlugin>("disposePlugin");
+    assert(info->disposeFn);
+
+    auto entry = info->dll.get<Er::Server::createPlugin>("createPlugin");
     assert(entry);
     info->ref = entry(m_params);
     if (!info->ref)

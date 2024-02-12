@@ -66,9 +66,14 @@ std::atomic<long> ProcessMgrPlugin::g_instances = 0;
 extern "C"
 {
 
-ER_PROCESSMGR_EXPORT std::shared_ptr<Er::Server::IPlugin> createPlugin(const Er::Server::PluginParams& params)
+ER_PROCESSMGR_EXPORT Er::Server::IPlugin* createPlugin(const Er::Server::PluginParams& params)
 {
-    return std::make_shared<Er::ProcessMgrPlugin>(params);
+    return new Er::ProcessMgrPlugin(params);
+}
+
+ER_PROCESSMGR_EXPORT void disposePlugin(Er::Server::IPlugin* plugin)
+{
+    delete plugin;
 }
 
 } // extern "C" {}

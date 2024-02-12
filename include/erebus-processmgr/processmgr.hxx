@@ -17,7 +17,8 @@
 extern "C"
 {
 
-ER_PROCESSMGR_EXPORT std::shared_ptr<Er::Server::IPlugin> createPlugin(const Er::Server::PluginParams& params);
+ER_PROCESSMGR_EXPORT Er::Server::IPlugin* createPlugin(const Er::Server::PluginParams& params);
+ER_PROCESSMGR_EXPORT void disposePlugin(Er::Server::IPlugin* plugin);
 
 } // extern "C" {}
 

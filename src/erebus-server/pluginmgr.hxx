@@ -21,19 +21,22 @@ public:
     ~PluginMgr();
     explicit PluginMgr(const Er::Server::PluginParams& params);
 
-    std::shared_ptr<Er::Server::IPlugin> load(const std::string& path);
+    Er::Server::IPlugin* load(const std::string& path);
 
 private:
     struct PluginInfo
     {
         std::string path;
         Er::Log::ILog* log = nullptr;
-        // note the member order: 'ref' must be released before 'dll' gets uloaded
         boost::dll::shared_library dll;
-        std::shared_ptr<Er::Server::IPlugin> ref;
+        Er::Server::IPlugin* ref = nullptr;
+        Er::Server::disposePlugin* disposeFn = nullptr;
         
         ~PluginInfo()
         {
+            if (disposeFn)
+                disposeFn(ref);
+                
             if (dll.is_loaded())
                 log->write(Er::Log::Level::Info, "Unloading plugin [%s]", path.c_str());
         }
