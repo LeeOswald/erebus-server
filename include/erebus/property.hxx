@@ -16,12 +16,11 @@ using PropId = uint32_t;
 constexpr PropId InvalidPropId = PropId(-1);
 
 
-template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT, typename BaseT = ValueT>
+template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
 class PropertyInfo final
 {
 public:
     using ValueType = ValueT;
-    using BaseType = BaseT;
     using Id = std::integral_constant<PropId, PrId>;
     using Formatter = FormatterT;
 
@@ -35,11 +34,6 @@ public:
     static constexpr const std::type_info& type() noexcept
     {
         return typeid(ValueT);
-    }
-
-    static constexpr const std::type_info& base() noexcept
-    {
-        return typeid(BaseT);
     }
 
     static constexpr PropId id() noexcept
@@ -132,7 +126,6 @@ struct IPropertyInfo
     using Ptr = std::shared_ptr<IPropertyInfo>;
 
     virtual const std::type_info& type() const = 0;
-    virtual const std::type_info& base() const = 0;
     virtual PropId id() const = 0;
     virtual const char* idstr() const = 0;
     virtual const char* name() const = 0;
@@ -153,11 +146,6 @@ struct PropertyInfoWrapper
     const std::type_info& type() const override
     {
         return PropertyInfo::type();
-    }
-
-    const std::type_info& base() const override
-    {
-        return PropertyInfo::base();
     }
 
     PropId id() const override
