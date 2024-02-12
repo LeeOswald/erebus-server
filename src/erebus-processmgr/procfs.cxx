@@ -53,6 +53,8 @@ std::string ProcFs::root()
 
 Stat ProcFs::readStat(uintptr_t pid) noexcept
 {
+    assert(pid != KernelPid);
+
     Stat result;
     result.pid = pid; // Stat::pid is always valid
 
@@ -293,6 +295,9 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
 
 std::string ProcFs::readComm(uintptr_t pid) noexcept
 {
+    if (pid == KernelPid)
+        return std::string();
+
     try
     {
         auto path = root();
@@ -315,6 +320,9 @@ std::string ProcFs::readComm(uintptr_t pid) noexcept
 
 std::string ProcFs::readExePath(uintptr_t pid) noexcept
 {
+    if (pid == KernelPid)
+        return std::string();
+
     try
     {
         auto path = root();
@@ -393,6 +401,12 @@ std::string ProcFs::readCmdLine(uintptr_t pid) noexcept
 
                     cmdLine.append(std::move(a));
                 }
+            }
+
+            // trim right
+            while (cmdLine.size() && std::isspace(cmdLine[cmdLine.size() - 1]))
+            {
+                cmdLine.erase(cmdLine.size() - 1);
             }
 
             return cmdLine;

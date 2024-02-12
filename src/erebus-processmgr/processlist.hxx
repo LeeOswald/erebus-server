@@ -26,6 +26,7 @@ public:
 private:
     Er::PropertyBag processDetails(const Er::PropertyBag& args);
     Er::PropertyBag processDetails(uint64_t pid);
+    Er::PropertyBag kernelDetails();
 
     Er::Log::ILog* m_log;
     Er::ProcFs::ProcFs m_procFs;

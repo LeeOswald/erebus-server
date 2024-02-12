@@ -56,6 +56,9 @@ Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args)
 
     auto pid = std::any_cast<Er::ProcessProps::Pid::ValueType>(it->second.value);
 
+    if (pid == ProcFs::KernelPid)
+        return kernelDetails();
+        
     return processDetails(pid);
 }
 
@@ -92,6 +95,21 @@ Er::PropertyBag ProcessList::processDetails(uint64_t pid)
         if (!exe.empty())
             bag.insert({ Er::ProcessProps::Exe::Id::value, Er::Property(Er::ProcessProps::Exe::Id::value, std::move(exe)) });
     }
+
+    return bag;
+}
+
+Er::PropertyBag ProcessList::kernelDetails()
+{
+    Er::PropertyBag bag;
+
+    bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, true) });
+    bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, ProcFs::KernelPid) });
+    
+    auto cmdLine = m_procFs.readCmdLine(ProcFs::KernelPid);
+    if (!cmdLine.empty())
+        bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });
+
 
     return bag;
 }
