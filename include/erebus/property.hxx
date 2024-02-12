@@ -84,22 +84,19 @@ struct Property
 {
     Property() = default;
 
-    Property(PropId id, std::any&& value, IPropertyInfo* info = nullptr) noexcept
+    Property(PropId id, std::any&& value) noexcept
         : id(id)
         , value(std::move(value))
-        , info(info)
     {}
 
     template <typename ValueT>
-    Property(PropId id, ValueT&& value, IPropertyInfo* info = nullptr) noexcept
+    Property(PropId id, ValueT&& value) noexcept
         : id(id)
         , value(std::forward<ValueT>(value))
-        , info(info)
     {}
 
     PropId id = InvalidPropId;
     std::any value;
-    IPropertyInfo* info = nullptr;
 };
 
 

@@ -216,10 +216,7 @@ void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
                         (it->second.id != Er::ProcessProps::Error::Id::value)
                     )
                     {
-                        auto propInfo = it->second.info;
-                        if (!propInfo)
-                            propInfo = Er::lookupProperty(it->second.id).get();
-
+                        auto propInfo = Er::lookupProperty(it->second.id).get();
                         if (!propInfo)
                         {
                             log->write(Er::Log::Level::Warning, "0x%08x: ???", it->second.id);

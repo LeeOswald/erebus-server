@@ -64,7 +64,7 @@ EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi)
     }
 }
 
-EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi)
+EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi) noexcept
 {
     if (!pi)
         return;
@@ -84,7 +84,7 @@ EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi)
     }
 }
 
-EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id)
+EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id) noexcept
 {
     std::lock_guard l(s_registry->mutex);
 
@@ -95,7 +95,7 @@ EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id)
     return it->second;
 }
 
-EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id)
+EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id) noexcept
 {
     std::lock_guard l(s_registry->mutex);
 

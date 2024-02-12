@@ -228,13 +228,9 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
             auto mutableProp = mutableProps->Add();
             mutableProp->set_id(property.id);
 
-            auto info = property.info;
-            if (!info)
-            {
-                info = Er::lookupProperty(property.id).get();
-                assert(info);
-            }
-
+            auto info = Er::getPropertyInfo(property);
+            assert(info);
+            
             auto& type = info->type();
             if (type == typeid(bool))
                 mutableProp->set_v_bool(std::any_cast<bool>(property.value));
@@ -308,13 +304,9 @@ void ServiceBase::marshalReplyProps(const Er::PropertyBag& props, erebus::Servic
         auto mutableProp = out->Add();
         mutableProp->set_id(prop.second.id);
 
-        auto info = prop.second.info;
+        auto info = Er::getPropertyInfo(prop.second);
         if (!info)
-        {
-            info = Er::lookupProperty(prop.second.id).get();
-            if (!info)
-                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08d", prop.second.id));
-        }
+            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08d", prop.second.id));
 
         auto& type = info->type();
         if (type == typeid(bool))
