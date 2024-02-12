@@ -219,14 +219,14 @@ void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
                         auto propInfo = Er::lookupProperty(it->second.id).get();
                         if (!propInfo)
                         {
-                            log->write(Er::Log::Level::Warning, "0x%08x: ???", it->second.id);
+                            log->write(Er::Log::Level::Warning, "   0x%08x: ???", it->second.id);
                         }
                         else
                         {
                             std::ostringstream ss;
                             propInfo->format(it->second, ss);
 
-                            log->write(Er::Log::Level::Info, "%s: %s", propInfo->name(), ss.str().c_str());
+                            log->write(Er::Log::Level::Info, "   %s: %s", propInfo->name(), ss.str().c_str());
                         }
                     }
                 }

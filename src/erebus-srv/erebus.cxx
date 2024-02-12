@@ -1,6 +1,7 @@
 #include "erebus-version.h"
 #include "svcbase.hxx"
 
+#include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/format.hxx>
 
 #include <shared_mutex>
@@ -288,11 +289,13 @@ private:
         }
         catch (Er::Exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.set_code(erebus::Failure);
             marshalException(&response, e);
         }
         catch (std::exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.set_code(erebus::Failure);
             marshalException(&response, e);
         }
@@ -333,11 +336,13 @@ private:
         }
         catch (Er::Exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.set_code(erebus::Failure);
             marshalException(&response, e);
         }
         catch (std::exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.set_code(erebus::Failure);
             marshalException(&response, e);
         }
@@ -385,11 +390,13 @@ private:
         }
         catch (Er::Exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
         }
         catch (std::exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
         }
@@ -481,11 +488,13 @@ private:
         }
         catch (Er::Exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
         }
         catch (std::exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
         }
@@ -550,12 +559,14 @@ private:
                 }
                 catch (Er::Exception& e)
                 {
+                    Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
                     response.mutable_header()->set_code(erebus::Failure);
                     marshalException(response.mutable_header(), e);
                     stop = true;
                 }
                 catch (std::exception& e)
                 {
+                    Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
                     response.mutable_header()->set_code(erebus::Failure);
                     marshalException(response.mutable_header(), e);
                     stop = true;
@@ -570,12 +581,14 @@ private:
         }
         catch (Er::Exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
             rpc.sendResponse(&response);
         }
         catch (std::exception& e)
         {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
             response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
             rpc.sendResponse(&response);
