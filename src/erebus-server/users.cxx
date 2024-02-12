@@ -1,6 +1,7 @@
 #include "users.hxx"
 
 #include <erebus/exception.hxx>
+#include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
 
 #include <rapidjson/document.h>
@@ -23,13 +24,7 @@ UserDb::~UserDb()
 UserDb::UserDb(const std::string& path)
     : m_path(path)
 {
-    std::ifstream f(path);
-    if (!f.is_open())
-        return;
-
-    std::stringstream ss;
-    ss << f.rdbuf();
-    auto buffer = ss.str();
+    auto buffer = Er::Util::loadFile(path);
 
     rapidjson::Document doc;
     doc.ParseInsitu(buffer.data());

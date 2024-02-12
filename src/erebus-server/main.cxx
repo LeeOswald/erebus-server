@@ -6,17 +6,17 @@
 #include <erebus/system/process.hxx>
 #include <erebus/util/condition.hxx>
 #include <erebus/util/exceptionutil.hxx>
+#include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus/util/sha256.hxx>
 #include <erebus-srv/erebus-srv.hxx>
 
+#include "config.hxx"
 #include "logger.hxx"
 #include "pluginmgr.hxx"
 #include "users.hxx"
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <vector>
 
 
@@ -28,17 +28,6 @@ Er::Util::Condition g_exitCondition(Er::Util::Condition::Reset::Manual);
 bool g_restartRequired = false;
 std::optional<int> g_signalReceived;
 
-std::string loadFile(const std::string& path)
-{
-    std::ifstream file(path);
-    if (!file.is_open())
-        throw Er::Exception(ER_HERE(), Er::Util::format("Failed to open [%s]", path.c_str()));
-
-    std::stringstream ss;
-    ss << file.rdbuf();
-
-    return ss.str();
-}
 
 void terminateHandler()
 {
@@ -89,6 +78,7 @@ int main(int argc, char* argv[], char* env[])
     }
 #endif
 
+    // parse command line
     std::string cfgFile;
 
     namespace po = boost::program_options;
@@ -121,56 +111,25 @@ int main(int argc, char* argv[], char* env[])
         return EXIT_FAILURE;
     }
 
-    std::ifstream cfg(cfgFile, std::ifstream::in);
-    if (!cfg.good())
-    {
-        std::cerr << "Failed to load configuration from " << cfgFile << "\n";
-        return EXIT_FAILURE;
-    }
-
-    std::string logFile;
-    int verbose = 0;
-    int ssl = 0;
-    std::vector<std::string> endpoints;
-    std::string rootFile;
-    std::string certFile;
-    std::string keyFile;
-    std::string userdbFile;
-    std::vector<std::string> plugins;
-
+    // parse config file
+    Er::Private::ServerConfig cfg;
     try
     {
-        po::options_description cfgOpts("Config options");
-        cfgOpts.add_options()
-            ("verbose", po::value<int>(&verbose), "display debug output")
-            ("ssl", po::value<int>(&ssl), "enable SSL")
-            ("logfile", po::value<std::string>(&logFile)->default_value("erebus-server.log"), "log file path")
-            ("endpoint", po::value<decltype(endpoints)>(&endpoints), "server endpoint")
-            ("root", po::value<std::string>(&rootFile), "root certificate file path")
-            ("certificate", po::value<std::string>(&certFile), "certificate file path")
-            ("key", po::value<std::string>(&keyFile), "private key file path")
-            ("userdb", po::value<std::string>(&userdbFile), "user DB file path")
-            ("plugin", po::value<decltype(endpoints)>(&plugins), "plugin path")
-            ;
-
-        po::store(po::parse_config_file(cfg, cfgOpts), vm);
-        cfg.close();
-        po::notify(vm);
-
+        cfg = Er::Private::loadConfig(cfgFile);
     }
     catch (std::exception& e)
     {
-        std::cerr << "Failed to parse the config file: " << e.what() << "\n";
+        std::cerr << "Failed to load the configuration: " << e.what() << "\n";
         return EXIT_FAILURE;
     }
-    
-    if (userdbFile.empty())
+        
+    if (cfg.userDb.empty())
     {
         std::cerr << "User DB path expected\n";
         return EXIT_FAILURE;
     }
 
-    if (endpoints.empty())
+    if (cfg.endpoints.empty())
     {
         std::cerr << "No server endpoints specified.\n";
         return EXIT_FAILURE;
@@ -183,8 +142,8 @@ int main(int argc, char* argv[], char* env[])
 
     Er::LibScope er;
 
-    Er::Log::Level logLevel = (verbose > 0) ? Er::Log::Level::Debug : Er::Log::Level::Info;
-    auto logger = std::make_unique<Er::Private::Logger>(logLevel, logFile.c_str());
+    Er::Log::Level logLevel = (cfg.verbose > 0) ? Er::Log::Level::Debug : Er::Log::Level::Info;
+    auto logger = std::make_unique<Er::Private::Logger>(logLevel, cfg.logfile.c_str());
     if (!logger->valid())
         return EXIT_FAILURE;
 
@@ -207,33 +166,30 @@ int main(int argc, char* argv[], char* env[])
         std::string certificate;
         std::string key;
 
-        if (ssl > 0)
-        {
-            if (!rootFile.empty())
-                root = loadFile(rootFile);
+        if (!cfg.rootCA.empty())
+            root = Er::Util::loadFile(cfg.rootCA);
 
-            if (!certFile.empty())
-                certificate = loadFile(certFile);
+        if (!cfg.certificate.empty())
+            certificate = Er::Util::loadFile(cfg.certificate);
 
-            if (!keyFile.empty())
-                key = loadFile(keyFile);
-        }
-
-        Er::Private::UserDb userDb(userdbFile);
+        if (!cfg.privateKey.empty())
+            key = Er::Util::loadFile(cfg.privateKey);
+    
+        Er::Private::UserDb userDb(cfg.userDb);
 
         Er::Server::Private::LibParams srvLibParams(g_log, g_log->level());
         Er::Server::Private::LibScope ss(srvLibParams);
 
         // create endpoints
         std::vector<std::shared_ptr<Er::Server::Private::IServer>> servers;
-        servers.reserve(endpoints.size());
-        for (auto& ep: endpoints)
+        servers.reserve(cfg.endpoints.size());
+        for (auto& ep: cfg.endpoints)
         {
-            logger->write(Er::Log::Level::Info, "Creating a server instance at [%s]", ep.c_str());
+            logger->write(Er::Log::Level::Info, "Creating a server instance at [%s]", ep.endpoint.c_str());
 
             try
             {
-                Er::Server::Private::Params params(ep, g_log, &g_exitCondition, &g_restartRequired, (ssl > 0), root, certificate, key, &userDb);
+                Er::Server::Private::Params params(ep.endpoint, g_log, &g_exitCondition, &g_restartRequired, ep.ssl, root, certificate, key, &userDb);
                 auto server = Er::Server::Private::create(&params);
                 servers.push_back(server);
             }
@@ -259,7 +215,7 @@ int main(int argc, char* argv[], char* env[])
         }
 
         Er::Private::PluginMgr pluginMgr(pluginParams);
-        for (auto& path: plugins)
+        for (auto& path: cfg.plugins)
         {
             try
             {

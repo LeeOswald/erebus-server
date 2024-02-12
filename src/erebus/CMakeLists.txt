@@ -30,6 +30,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/util/condition.hxx
     ../../include/erebus/util/crc32.hxx
     ../../include/erebus/util/exceptionutil.hxx
+    ../../include/erebus/util/file.hxx
     ../../include/erebus/util/format.hxx
     ../../include/erebus/util/generichandle.hxx
     ../../include/erebus/util/random.hxx
@@ -43,6 +44,7 @@ add_library(${EREBUS_LIB} SHARED
     system/time.cxx
     util/condition.cxx
     util/exceptionutil.cxx
+    util/file.cxx
     util/format.cxx
     util/sha256.cxx
     ${PLATFORM_FILES}

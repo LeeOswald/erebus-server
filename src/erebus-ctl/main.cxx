@@ -1,13 +1,12 @@
 #include "log.hxx"
 
 #include <erebus/util/exceptionutil.hxx>
+#include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus-clt/erebus-clt.hxx>
 #include <erebus-processmgr/processprops.hxx>
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <thread>
 
 #include <boost/algorithm/string.hpp>
@@ -22,18 +21,6 @@ std::optional<int> g_signalReceived;
 void signalHandler(int signo)
 {
     g_signalReceived = signo;
-}
-
-std::string loadFile(const std::string& path)
-{
-    std::ifstream file(path);
-    if (!file.is_open())
-        throw Er::Exception(ER_HERE(), Er::Util::format("Failed to open [%s]", path.c_str()));
-
-    std::stringstream ss;
-    ss << file.rdbuf();
-
-    return ss.str();
 }
 
 void version(Er::Client::IClient* client, Er::Log::ILog* log)
@@ -339,7 +326,7 @@ int main(int argc, char* argv[])
         std::string root;
         
         if (!rootFile.empty())
-            root = loadFile(rootFile);
+            root = Er::Util::loadFile(rootFile);
 
         std::string user;
         std::string password;
