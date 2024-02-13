@@ -519,8 +519,7 @@ private:
     void processGenericStream(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
     {
         auto request = static_cast<const erebus::ServiceRequest*>(message);
-        erebus::ServiceReply response;
-
+        
         if (!checkAuth(rpc))
             return;
 
@@ -545,6 +544,7 @@ private:
             bool stop = false;
             do
             {
+                erebus::ServiceReply response;
                 try
                 {
                     auto item = service->next(streamId);
@@ -582,6 +582,7 @@ private:
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
+            erebus::ServiceReply response;
             response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
             rpc.sendResponse(&response);
@@ -589,6 +590,7 @@ private:
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
+            erebus::ServiceReply response;
             response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
             rpc.sendResponse(&response);
