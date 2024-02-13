@@ -33,19 +33,41 @@ Er::PropertyBag ProcessList::request(const std::string& request, const Er::Prope
 
 ProcessList::StreamId ProcessList::beginStream(const std::string& request, const Er::PropertyBag& args)
 {
-    return 0;
+    if (request == Er::ProcessRequests::ListProcesses)
+        return beginProcessStream(args);
+
+    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", request.c_str()));
 }
 
 void ProcessList::endStream(StreamId id)
 {
+    {
+        std::lock_guard l(m_mutex);
+        auto it = m_streams.find(id);
+        if (it == m_streams.end())
+            throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
 
+        m_streams.erase(it);
+        m_log->write(Er::Log::Level::Info, "Ended stream %d", id);    
+    }
+
+    dropStaleStreams();
 }
 
 Er::PropertyBag ProcessList::next(StreamId id)
 {
-    Er::PropertyBag bag;
+    std::shared_lock l(m_mutex);
+    auto it = m_streams.find(id);
+    if (it == m_streams.end())
+        throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
 
-    return bag;
+    it->second->touched = std::chrono::steady_clock::now();
+
+    if (it->second->type == StreamType::ProcessList)
+        return nextProcess(static_cast<ProcessListStream*>(it->second.get()));
+
+    assert(!"Unknown stream type");
+    return Er::PropertyBag();
 }
 
 Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args)
@@ -110,6 +132,58 @@ Er::PropertyBag ProcessList::kernelDetails()
     if (!cmdLine.empty())
         bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });
 
+
+    return bag;
+}
+
+void ProcessList::dropStaleStreams() noexcept
+{
+    auto now = std::chrono::steady_clock::now();
+
+    std::lock_guard l(m_mutex);
+    for (auto it = m_streams.begin(); it != m_streams.end();)
+    {
+        auto d = std::chrono::duration_cast<std::chrono::seconds>(now - it->second->touched);
+        if (d.count() > kStreamTimeoutSeconds)
+        {
+            auto next = std::next(it);
+            m_log->write(Er::Log::Level::Warning, "Dropping stale stream %d", it->first);
+            m_streams.erase(it);
+            it = next;
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& args)
+{
+    auto pids = m_procFs.enumeratePids();
+
+    std::lock_guard l(m_mutex);
+
+    auto streamId = m_nextStreamId++;
+
+    auto stream = std::make_unique<ProcessListStream>(streamId, std::move(pids));
+    m_streams.insert({ streamId, std::move(stream) });
+
+    m_log->write(Er::Log::Level::Info, "Started process stream %d", streamId);    
+
+    return streamId;
+}
+
+Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
+{
+    if (stream->next >= stream->pids.size())
+        return Er::PropertyBag(); // end of stream
+
+    auto bag = processDetails(stream->pids[stream->next]);
+
+    Er::Log::Debug(m_log) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
+
+    ++stream->next;
 
     return bag;
 }

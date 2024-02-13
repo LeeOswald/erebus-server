@@ -4,6 +4,8 @@
 #include <erebus/log.hxx>
 #include <erebus/property.hxx>
 
+#include <vector>
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     #ifdef EREBUSCLT_EXPORTS
         #define EREBUSCLT_EXPORT __declspec(dllexport)
@@ -117,6 +119,7 @@ struct IClient
     virtual void exit(bool restart) = 0;
     virtual Version version() = 0;
     virtual Er::PropertyBag request(const std::string& request, const Er::PropertyBag& args) = 0;
+    virtual std::vector<Er::PropertyBag> requestStream(const std::string& request, const Er::PropertyBag& args) = 0;
 
     virtual ~IClient() {}
 };

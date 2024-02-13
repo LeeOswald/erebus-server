@@ -37,15 +37,6 @@ using TagList = std::list<TagInfo>;
 class RpcBase
 {
 public:
-    enum AsyncOpType
-    {
-        ASYNC_OP_TYPE_INVALID,
-        ASYNC_OP_TYPE_QUEUED_REQUEST,
-        ASYNC_OP_TYPE_READ,
-        ASYNC_OP_TYPE_WRITE,
-        ASYNC_OP_TYPE_FINISH
-    };
-
     virtual ~RpcBase()
     {
     };
@@ -86,6 +77,15 @@ public:
     virtual void done() = 0;
 
 protected:
+    enum class AsyncOpType
+    {
+        Invalid,
+        RequestQueued,
+        Read,
+        Write,
+        Finish
+    };
+
     virtual bool sendResponseImpl(const google::protobuf::Message* response) = 0;
     virtual bool finishWithErrorImpl(const grpc::Status& error) = 0;
 
@@ -95,10 +95,10 @@ protected:
 
         switch (opType)
         {
-        case ASYNC_OP_TYPE_READ:
+        case AsyncOpType::Read:
             m_asyncReadInProgress = true;
             break;
-        case ASYNC_OP_TYPE_WRITE:
+        case AsyncOpType::Write:
             m_asyncWriteInProgress = true;
         default:
             break;
@@ -112,10 +112,10 @@ protected:
 
         switch (opType)
         {
-        case ASYNC_OP_TYPE_READ:
+        case AsyncOpType::Read:
             m_asyncReadInProgress = false;
             break;
-        case ASYNC_OP_TYPE_WRITE:
+        case AsyncOpType::Write:
             m_asyncWriteInProgress = false;
         default:
             break;
@@ -236,7 +236,7 @@ public:
         m_serverContext.AsyncNotifyWhenDone(&m_onDone);
 
         // finally, issue the async request needed by gRPC to start handling this rpc.
-        asyncOpStarted(RpcBase::ASYNC_OP_TYPE_QUEUED_REQUEST);
+        asyncOpStarted(RpcBase::AsyncOpType::RequestQueued);
         m_handlers.requestRpc(m_service, &m_serverContext, &m_request, &m_responder, m_cq, m_cq, &m_onRead);
     }
 
@@ -251,7 +251,7 @@ private:
 
         m_response = *response;
 
-        asyncOpStarted(RpcBase::ASYNC_OP_TYPE_FINISH);
+        asyncOpStarted(RpcBase::AsyncOpType::Finish);
         m_responder.Finish(m_response, grpc::Status::OK, &m_onFinish);
 
         return true;
@@ -259,7 +259,7 @@ private:
 
     bool finishWithErrorImpl(const grpc::Status& error) override
     {
-        asyncOpStarted(RpcBase::ASYNC_OP_TYPE_FINISH);
+        asyncOpStarted(RpcBase::AsyncOpType::Finish);
         m_responder.FinishWithError(error, &m_onFinish);
 
         return true;
@@ -270,7 +270,7 @@ private:
         // A request has come on the service which can now be handled. Create a new rpc of this type to allow the server to handle next request.
         m_handlers.createRpc(m_service, m_cq);
 
-        if (asyncOpFinished(RpcBase::ASYNC_OP_TYPE_QUEUED_REQUEST))
+        if (asyncOpFinished(RpcBase::AsyncOpType::RequestQueued))
         {
             if (ok)
             {
@@ -286,7 +286,7 @@ private:
 
     void onFinish(bool ok)
     {
-        asyncOpFinished(RpcBase::ASYNC_OP_TYPE_FINISH);
+        asyncOpFinished(RpcBase::AsyncOpType::Finish);
     }
 
     void done() override
@@ -334,7 +334,7 @@ public:
         m_serverContext.AsyncNotifyWhenDone(&m_onDone);
 
         // finally, issue the async request needed by gRPC to start handling this rpc.
-        asyncOpStarted(RpcBase::ASYNC_OP_TYPE_QUEUED_REQUEST);
+        asyncOpStarted(RpcBase::AsyncOpType::RequestQueued);
         m_handlers.requestRpc(m_service, &m_serverContext, &m_request, &m_responder, m_cq, m_cq, &m_onRead);
     }
 
@@ -370,7 +370,7 @@ private:
 
     bool finishWithErrorImpl(const grpc::Status& error) override
     {
-        asyncOpStarted(RpcBase::ASYNC_OP_TYPE_FINISH);
+        asyncOpStarted(RpcBase::AsyncOpType::Finish);
         m_responder.Finish(error, &m_onFinish);
 
         return true;
@@ -378,13 +378,13 @@ private:
 
     void doSendResponse()
     {
-        asyncOpStarted(RpcBase::ASYNC_OP_TYPE_WRITE);
+        asyncOpStarted(RpcBase::AsyncOpType::Write);
         m_responder.Write(m_responseQueue.front(), &m_onWrite);
     }
 
     void doFinish()
     {
-        asyncOpStarted(RpcBase::ASYNC_OP_TYPE_FINISH);
+        asyncOpStarted(RpcBase::AsyncOpType::Finish);
         m_responder.Finish(grpc::Status::OK, &m_onFinish);
     }
 
@@ -392,7 +392,7 @@ private:
     {
         m_handlers.createRpc(m_service, m_cq);
 
-        if (asyncOpFinished(RpcBase::ASYNC_OP_TYPE_QUEUED_REQUEST))
+        if (asyncOpFinished(RpcBase::AsyncOpType::RequestQueued))
         {
             if (ok)
             {
@@ -403,7 +403,7 @@ private:
 
     void onWrite(bool ok)
     {
-        if (asyncOpFinished(RpcBase::ASYNC_OP_TYPE_WRITE))
+        if (asyncOpFinished(RpcBase::AsyncOpType::Write))
         {
             // Get rid of the message that just finished.
             m_responseQueue.pop_front();
@@ -424,7 +424,7 @@ private:
 
     void onFinish(bool ok)
     {
-        asyncOpFinished(RpcBase::ASYNC_OP_TYPE_FINISH);
+        asyncOpFinished(RpcBase::AsyncOpType::Finish);
     }
 
     void done() override

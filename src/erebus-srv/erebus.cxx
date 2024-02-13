@@ -524,7 +524,7 @@ private:
         if (!checkAuth(rpc))
             return;
 
-            auto& id = request->request();
+        auto& id = request->request();
 
         std::shared_lock l(m_servicesLock);
         

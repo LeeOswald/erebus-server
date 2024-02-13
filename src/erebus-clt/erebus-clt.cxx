@@ -225,6 +225,87 @@ public:
         return bag;
     }
 
+    std::vector<Er::PropertyBag> requestStream(const std::string& req, const Er::PropertyBag& args) override
+    {
+        erebus::ServiceRequest request;
+        request.set_request(req);
+
+        // marshal properties
+        for (auto& arg: args)
+        {
+            auto a = request.add_args();
+            a->set_id(arg.second.id);
+            auto info = Er::getPropertyInfo(arg.second);
+            assert(info);
+            auto& type = info->type();
+            if (type == typeid(bool))
+                a->set_v_bool(std::any_cast<bool>(arg.second.value));
+            else if (type == typeid(int32_t))
+                a->set_v_int32(std::any_cast<int32_t>(arg.second.value));
+            else if (type == typeid(uint32_t))
+                a->set_v_uint32(std::any_cast<uint32_t>(arg.second.value));
+            else if (type == typeid(int64_t))
+                a->set_v_int64(std::any_cast<int64_t>(arg.second.value));
+            else if (type == typeid(uint64_t))
+                a->set_v_uint64(std::any_cast<uint64_t>(arg.second.value));
+            else if (type == typeid(double))
+                a->set_v_double(std::any_cast<double>(arg.second.value));
+            else if (type == typeid(std::string))
+                a->set_v_string(std::any_cast<std::string>(arg.second.value));
+            else
+                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
+        }
+
+        grpc::ClientContext context;
+        makeClientContext(context);
+        std::shared_ptr<grpc::ClientReader<erebus::ServiceReply>> stream(m_stub->GenericStream(&context, request));
+        
+        std::vector<Er::PropertyBag> out;
+        erebus::ServiceReply reply;
+        while (stream->Read(&reply))
+        {
+            throwIfFailed(grpc::Status::OK, &reply.header());
+
+            // unmarshal properties
+            Er::PropertyBag bag;
+            int count = reply.props_size();
+            for (int i = 0; i < count; ++i)
+            {
+                auto& prop = reply.props(i);
+                auto id = prop.id();
+                auto info = Er::lookupProperty(id);
+                if (!info)
+                {
+                    m_params.log->write(Er::Log::Level::Error, "Unsupported property 0x%08x", id);
+                }
+                else
+                {
+                    auto& type = info->type();
+                    if (type == typeid(bool))
+                        bag.insert({ id, Er::Property(id, prop.v_bool()) });
+                    else if (type == typeid(int32_t))
+                        bag.insert({ id, Er::Property(id, prop.v_int32()) });
+                    else if (type == typeid(uint32_t))
+                        bag.insert({ id, Er::Property(id, prop.v_uint32()) });
+                    else if (type == typeid(int64_t))
+                        bag.insert({ id, Er::Property(id, prop.v_int64()) });
+                    else if (type == typeid(uint64_t))
+                        bag.insert({ id, Er::Property(id, prop.v_uint64()) });
+                    else if (type == typeid(double))
+                        bag.insert({ id, Er::Property(id, prop.v_double()) });
+                    else if (type == typeid(std::string))
+                        bag.insert({ id, Er::Property(id, prop.v_string()) });
+                    else
+                        m_params.log->write(Er::Log::Level::Error, "Unsupported property type %s", type.name());
+                }
+            }
+
+            out.push_back(std::move(bag));
+        }
+
+        return out;
+    }
+
 private:
     void disconnect()
     {
