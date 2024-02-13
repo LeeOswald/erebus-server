@@ -300,7 +300,8 @@ public:
                 }
             }
 
-            out.push_back(std::move(bag));
+            if (!bag.empty())
+                out.push_back(std::move(bag));
         }
 
         return out;

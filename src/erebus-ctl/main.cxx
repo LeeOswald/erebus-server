@@ -170,6 +170,61 @@ void restart(Er::Log::ILog* log, const Er::Client::Params& params)
     }
 }
 
+void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
+{
+    auto it = info.find(Er::ProcessProps::Pid::Id::value);
+    if (it == info.end())
+    {
+        log->write(Er::Log::Level::Error, "<invalid process>");
+        return;
+    }
+
+    auto pid = std::any_cast<uint64_t>(it->second.value);
+
+    it = info.find(Er::ProcessProps::Valid::Id::value);
+    if (it == info.end())
+    {
+        log->write(Er::Log::Level::Error, "No data for PID %zu", pid);
+    }
+    else
+    {
+        auto valid = std::any_cast<bool>(it->second.value);
+        if (!valid)
+        {
+            it = info.find(Er::ProcessProps::Error::Id::value);
+            if (it != info.end())
+                log->write(Er::Log::Level::Error, "Invalid stat for PID %zu", pid);
+            else
+                log->write(Er::Log::Level::Error, "Invalid stat for PID %zu: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
+        }
+        else
+        {
+            log->write(Er::Log::Level::Info, "Dumping process %zu", pid);
+            for (auto it = info.begin(); it != info.end(); ++it)
+            {
+                if (
+                    (it->second.id != Er::ProcessProps::Valid::Id::value) &&
+                    (it->second.id != Er::ProcessProps::Error::Id::value)
+                    )
+                {
+                    auto propInfo = Er::lookupProperty(it->second.id).get();
+                    if (!propInfo)
+                    {
+                        log->write(Er::Log::Level::Warning, "   0x%08x: ???", it->second.id);
+                    }
+                    else
+                    {
+                        std::ostringstream ss;
+                        propInfo->format(it->second, ss);
+
+                        log->write(Er::Log::Level::Info, "   %s: %s", propInfo->name(), ss.str().c_str());
+                    }
+                }
+            }
+        }
+    }
+}
+
 void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
 {
     try
@@ -177,48 +232,7 @@ void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
         Er::PropertyBag req;
         req.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, uint64_t(pid)) });
         auto info = client->request(Er::ProcessRequests::ProcessDetails, req);
-        auto it = info.find(Er::ProcessProps::Valid::Id::value);
-        if (it == info.end())
-        {
-            log->write(Er::Log::Level::Error, "No data for PID %d", pid);
-        }
-        else
-        {
-            auto valid = std::any_cast<bool>(it->second.value);
-            if (!valid)
-            {   
-                it = info.find(Er::ProcessProps::Error::Id::value);
-                if (it != info.end())
-                    log->write(Er::Log::Level::Error, "Invalid stat for PID %d", pid);
-                else
-                    log->write(Er::Log::Level::Error, "Invalid stat for PID %d: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
-            }
-            else
-            {
-                log->write(Er::Log::Level::Info, "Dumping process %d", pid);
-                for (auto it = info.begin(); it != info.end(); ++it)
-                {
-                    if (
-                        (it->second.id != Er::ProcessProps::Valid::Id::value) &&
-                        (it->second.id != Er::ProcessProps::Error::Id::value)
-                    )
-                    {
-                        auto propInfo = Er::lookupProperty(it->second.id).get();
-                        if (!propInfo)
-                        {
-                            log->write(Er::Log::Level::Warning, "   0x%08x: ???", it->second.id);
-                        }
-                        else
-                        {
-                            std::ostringstream ss;
-                            propInfo->format(it->second, ss);
-
-                            log->write(Er::Log::Level::Info, "   %s: %s", propInfo->name(), ss.str().c_str());
-                        }
-                    }
-                }
-            }
-        }
+        dumpProcess(info, log);
     }
     catch (Er::Exception& e)
     {
@@ -239,6 +253,53 @@ void dumpProcess(Er::Log::ILog* log, const Er::Client::Params& params, int pid, 
         while (!g_signalReceived)
         {
             dumpProcess(client.get(), log, pid);
+
+            if (interval <= 0)
+                break;
+
+            std::this_thread::sleep_for(std::chrono::seconds(interval));
+        }
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+void dumpProcesses(Er::Client::IClient* client, Er::Log::ILog* log)
+{
+    try
+    {
+        Er::PropertyBag req;
+        auto list = client->requestStream(Er::ProcessRequests::ListProcesses, req);
+        for (auto& process : list)
+        {
+            dumpProcess(process, log);
+        }
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+void dumpProcesses(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
+{
+    try
+    {
+        auto client = Er::Client::create(params);
+
+        while (!g_signalReceived)
+        {
+            dumpProcesses(client.get(), log);
 
             if (interval <= 0)
                 break;
@@ -296,6 +357,7 @@ int main(int argc, char* argv[])
             ("listusers", "list existing users")
             ("loop", po::value<int>(&interval), "repeat the request with an interval")
             ("process", po::value<int>(), "view process info for PID")
+            ("processes", "view process list")
         ;
 
         po::variables_map vm;
@@ -384,6 +446,10 @@ int main(int argc, char* argv[])
         {
             auto pid = vm["process"].as<int>();
             dumpProcess(&console, params, pid, interval);
+        }
+        else if (vm.count("processes"))
+        {
+            dumpProcesses(&console, params, interval);
         }
         
         if (g_signalReceived)
