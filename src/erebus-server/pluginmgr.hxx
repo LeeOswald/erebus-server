@@ -25,6 +25,7 @@ public:
 
 private:
     struct PluginInfo
+        : public boost::noncopyable
     {
         std::string path;
         Er::Log::ILog* log = nullptr;

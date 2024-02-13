@@ -1,1 +1,1 @@
-- use JSON for config file
+- validate JSONs (https://habr.com/ru/articles/276305/)
