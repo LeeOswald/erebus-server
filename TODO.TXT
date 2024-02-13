@@ -1,1 +1,1 @@
-- validate JSONs (https://habr.com/ru/articles/276305/)
+- implement JSON to C++ objects mapping

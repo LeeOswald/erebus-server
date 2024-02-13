@@ -4,18 +4,101 @@
 #include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
 
-#include <rapidjson/document.h>
+#include <valijson/adapters/rapidjson_adapter.hpp>
+#include <valijson/utils/rapidjson_utils.hpp>
+#include <valijson/schema.hpp>
+#include <valijson/schema_parser.hpp>
+#include <valijson/validation_results.hpp>
+#include <valijson/validator.hpp>
 #include <rapidjson/error/en.h>
-#include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 
 #include <fstream>
+#include <sstream>
 
 namespace Er
 {
 
 namespace Private
 {
+
+namespace
+{
+
+static const std::string_view kSchema =
+R"(
+{
+    "comment": "JSON Schema for user DB",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "salt": {
+                "type": "string"
+            },
+            "hash": {
+                "type": "string"
+            }
+        },
+        "required": ["name", "salt", "hash"]
+    }
+}
+)";
+
+rapidjson::Document loadAndValidate(const std::string& path)
+{
+    rapidjson::Document schemaDocument;
+    schemaDocument.Parse(kSchema.data(), kSchema.length());
+    assert(!schemaDocument.HasParseError());
+
+    valijson::Schema schema;
+    valijson::SchemaParser parser;
+    valijson::adapters::RapidJsonAdapter schemaDocumentAdapter(schemaDocument);
+    parser.populateSchema(schemaDocumentAdapter, schema);
+
+    rapidjson::Document targetDocument;
+    if (!valijson::utils::loadDocument(path, targetDocument))
+        throw Er::Exception(ER_HERE(), Util::format("Failed to load user DB from [%s]", path.c_str()));
+
+    valijson::Validator validator(valijson::Validator::kStrongTypes);
+    valijson::ValidationResults results;
+    valijson::adapters::RapidJsonAdapter targetDocumentAdapter(targetDocument);
+    if (!validator.validate(schema, targetDocumentAdapter, &results))
+    {
+        std::ostringstream ss;
+
+        valijson::ValidationResults::Error error;
+        unsigned int errorNum = 1;
+        while (results.popError(error))
+        {
+            std::string context;
+            for (auto itr = error.context.begin(); itr != error.context.end(); itr++)
+            {
+                context += *itr;
+            }
+
+            if (errorNum > 1)
+                ss << "; ";
+
+            ss << "Error #" << errorNum << ": [";
+            ss << "context: " << context << ", ";
+            ss << "description: " << error.description << "]";
+
+            ++errorNum;
+        }
+
+        throw Er::Exception(ER_HERE(), Er::Util::format("Failed to validate user DB: %s", ss.str().c_str()));
+    }
+
+    return targetDocument;
+}
+
+} // namespace {}
+
 
 UserDb::~UserDb()
 {
@@ -24,56 +107,25 @@ UserDb::~UserDb()
 UserDb::UserDb(const std::string& path)
     : m_path(path)
 {
-    auto buffer = Er::Util::loadFile(path);
-
-    rapidjson::Document doc;
-    doc.ParseInsitu(buffer.data());
-    if (doc.HasParseError())
-    {
-        auto err = doc.GetParseError();
-        throw Er::Exception(ER_HERE(), Util::format("Failed to parse user DB: [%s] at %zu", rapidjson::GetParseError_En(err), doc.GetErrorOffset()));
-    }
-
-    if (!doc.IsArray())
-        throw Er::Exception(ER_HERE(), "User DB is not a JSON array");
+    auto doc = loadAndValidate(path);
 
     for (size_t index = 0; index < doc.Size(); ++index)
     {
         auto& entry = doc[index];
-        if (!entry.IsObject())
-            throw Er::Exception(ER_HERE(), Util::format("User DB entry #%zu is not an object", index));
 
-        // user name
-        if (!entry.HasMember("name"))
-            throw Er::Exception(ER_HERE(), Util::format("User DB entry #%zu contains no user name", index));
-
+        // name
         auto& name = entry["name"];
-        if (!name.IsString())
-            throw Er::Exception(ER_HERE(), Util::format("User DB entry #%zu contains no valid user name", index));
-
         std::string strName(name.GetString(), name.GetStringLength());
         auto existing = m_users.find(strName);
         if (existing != m_users.end())
             throw Er::Exception(ER_HERE(), Util::format("User DB contains a duplicate user [%s]", strName.c_str()));
 
         // salt
-        if (!entry.HasMember("salt"))
-            throw Er::Exception(ER_HERE(), Util::format("User DB contains no salt for user [%s]", strName.c_str()));
-
         auto& salt = entry["salt"];
-        if (!salt.IsString())
-            throw Er::Exception(ER_HERE(), Util::format("User DB contains no valid salt for user [%s]", strName.c_str()));
-
         std::string strSalt(salt.GetString(), salt.GetStringLength());
 
         // password hash
-        if (!entry.HasMember("hash"))
-            throw Er::Exception(ER_HERE(), Util::format("User DB contains no hash for user [%s]", strName.c_str()));
-
         auto& hash = entry["hash"];
-        if (!hash.IsString())
-            throw Er::Exception(ER_HERE(), Util::format("User DB contains no valid hash for user [%s]", strName.c_str()));
-
         std::string strHash(hash.GetString(), hash.GetStringLength());
 
         m_users.insert({ strName, Er::Server::Private::User(strName, strSalt, strHash) });
