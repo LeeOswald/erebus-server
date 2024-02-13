@@ -97,15 +97,31 @@ set(GRPC_LIBS
     protobuf::libprotobuf 
 )
 
-
-if(ER_POSIX)
-    # require pthreads
-    find_package(Threads REQUIRED)
-    set(PLATFORM_LIBRARIES Threads::Threads)
+# require Boost
+if(MSVC)
+    find_package(Boost REQUIRED COMPONENTS filesystem system program_options)
+else()
+    find_package(Boost REQUIRED COMPONENTS 
+        filesystem 
+        stacktrace_basic
+        stacktrace_backtrace
+        stacktrace_addr2line
+        stacktrace_noop 
+        system 
+        program_options
+    )
 endif()
 
-# require Boost
-find_package(Boost REQUIRED COMPONENTS filesystem system program_options)
+if(NOT MSVC)
+    set(PLATFORM_LIBS
+        ${Boost_STACKTRACE_BASIC_LIBRARY}
+        ${Boost_STACKTRACE_BACKTRACE_LIBRARY}
+        ${Boost_STACKTRACE_ADDR2LINE_LIBRARY}
+        ${Boost_STACKTRACE_NOOP_LIBRARY}
+        pthread
+        dl
+    )
+endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})

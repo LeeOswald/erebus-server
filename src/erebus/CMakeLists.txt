@@ -54,3 +54,5 @@ add_library(${EREBUS_LIB} SHARED
 add_compile_definitions(EREBUS_EXPORTS=1)
 
 target_compile_features(${EREBUS_LIB} PUBLIC ${ER_CXX_FEATURES})
+
+target_link_libraries(${EREBUS_LIB} PRIVATE  ${PLATFORM_LIBS})
