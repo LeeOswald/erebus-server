@@ -10,7 +10,7 @@
     namespace Er
     {
         class osyncstream final
-            : public boost::noncopyable
+            : public Er::NonCopyable
         {
         public:
             ~osyncstream()

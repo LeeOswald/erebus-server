@@ -142,7 +142,7 @@ EREBUSCLT_EXPORT void initialize(const LibParams& params);
 EREBUSCLT_EXPORT void finalize();
 
 class LibScope
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     ~LibScope()

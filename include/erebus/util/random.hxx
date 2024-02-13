@@ -13,7 +13,7 @@ namespace Util
 {
 
 class Random final
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     Random() noexcept

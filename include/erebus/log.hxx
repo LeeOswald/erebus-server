@@ -68,7 +68,7 @@ protected:
 
 class EREBUS_EXPORT LogBase
     : public ILog
-    , public boost::noncopyable
+    , public Er::NonCopyable
 {
 public:
     ~LogBase();
@@ -103,7 +103,7 @@ private:
 
 
 class LogWrapperBase
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     ~LogWrapperBase()

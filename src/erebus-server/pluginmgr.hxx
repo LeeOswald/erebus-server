@@ -15,7 +15,7 @@ namespace Private
 
 
 class PluginMgr final
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     ~PluginMgr();
@@ -25,7 +25,7 @@ public:
 
 private:
     struct PluginInfo
-        : public boost::noncopyable
+        : public Er::NonCopyable
     {
         std::string path;
         Er::Log::ILog* log = nullptr;

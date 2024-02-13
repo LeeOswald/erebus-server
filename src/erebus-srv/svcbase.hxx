@@ -25,7 +25,7 @@ namespace Private
 
 
 class EREBUSSRV_EXPORT ServiceBase
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     ~ServiceBase();

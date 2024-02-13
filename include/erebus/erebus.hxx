@@ -2,6 +2,7 @@
 
 #include <erebus/platform.hxx>
 
+#include <erebus/noncopyable.hxx>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     #ifdef EREBUS_EXPORTS
@@ -21,7 +22,7 @@ EREBUS_EXPORT void initialize();
 EREBUS_EXPORT void finalize();
 
 class LibScope
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     ~LibScope()

@@ -17,7 +17,7 @@ namespace Util
 //
 
 class EREBUS_EXPORT Condition final
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     enum class Reset

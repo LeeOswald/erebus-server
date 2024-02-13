@@ -18,6 +18,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/exception.hxx
     ../../include/erebus/knownprops.hxx
     ../../include/erebus/log.hxx
+    ../../include/erebus/noncopyable.hxx
     ../../include/erebus/platform.hxx
     ../../include/erebus/property.hxx
     ../../include/erebus/sourcelocation.hxx

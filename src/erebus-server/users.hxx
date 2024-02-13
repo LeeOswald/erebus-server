@@ -14,7 +14,7 @@ namespace Private
 
 class UserDb final
     : public Er::Server::Private::IUserDb
-    , public boost::noncopyable
+    , public Er::NonCopyable
 {
 public:
     ~UserDb();

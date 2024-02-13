@@ -136,7 +136,7 @@ EREBUSSRV_EXPORT void initialize(const LibParams& params);
 EREBUSSRV_EXPORT void finalize();
 
 class LibScope
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     ~LibScope()

@@ -25,8 +25,6 @@
 // often-used platform headers
 
 
-#include <boost/noncopyable.hpp>
-
 #if ER_LINUX
     #ifndef _GNU_SOURCE
         #define _GNU_SOURCE

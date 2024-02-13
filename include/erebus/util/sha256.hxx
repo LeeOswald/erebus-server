@@ -12,7 +12,7 @@ namespace Util
     
 
 class EREBUS_EXPORT Sha256 final 
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     using Hash = std::array<uint8_t, 32>;

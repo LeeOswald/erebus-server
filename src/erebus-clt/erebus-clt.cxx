@@ -49,7 +49,7 @@ private:
 
 class ClientImpl final
     : public Er::Client::IClient
-    , public boost::noncopyable
+    , public Er::NonCopyable
 {
 public:
     ~ClientImpl()
