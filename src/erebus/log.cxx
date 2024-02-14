@@ -10,8 +10,6 @@ namespace Log
 
 LogBase::~LogBase()
 {
-    _flush();
-
     m_stop = true;
     m_event.notify_one();
 
