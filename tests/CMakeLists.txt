@@ -6,8 +6,10 @@ add_executable(
     ${TARGET}
     common.hpp
     exception.cpp
+    flags.cpp
     log.cpp
     main.cpp
+    stringutil.cpp
 )
 
 target_link_libraries(${TARGET} gtest_main ${EREBUS_LIB})

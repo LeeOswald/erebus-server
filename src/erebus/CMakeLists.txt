@@ -16,6 +16,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/empty.hxx
     ../../include/erebus/erebus.hxx
     ../../include/erebus/exception.hxx
+    ../../include/erebus/flags.hxx
     ../../include/erebus/knownprops.hxx
     ../../include/erebus/log.hxx
     ../../include/erebus/noncopyable.hxx
@@ -36,6 +37,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/util/generichandle.hxx
     ../../include/erebus/util/random.hxx
     ../../include/erebus/util/sha256.hxx
+    ../../include/erebus/util/stringutil.hxx
     exception.cxx
     init.cxx
     knownprops.cxx
