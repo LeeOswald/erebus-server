@@ -162,6 +162,9 @@ public:
             a->set_id(arg.second.id);
             auto info = Er::getPropertyInfo(arg.second);
             assert(info);
+            if (!info)
+                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08x", arg.second.id));
+
             auto& type = info->type();
             if (type == typeid(bool))
                 a->set_v_bool(std::any_cast<bool>(arg.second.value));
@@ -235,8 +238,12 @@ public:
         {
             auto a = request.add_args();
             a->set_id(arg.second.id);
+            
             auto info = Er::getPropertyInfo(arg.second);
             assert(info);
+            if (!info)
+                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08x", arg.second.id));
+
             auto& type = info->type();
             if (type == typeid(bool))
                 a->set_v_bool(std::any_cast<bool>(arg.second.value));

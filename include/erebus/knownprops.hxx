@@ -22,9 +22,27 @@ EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id) noexcept;
 
 inline IPropertyInfo* getPropertyInfo(const Property& prop) noexcept
 {
+    if (prop.info)
+        return prop.info;
+
     auto info = lookupProperty(prop.id);
-    assert(info);
+    if (!info)
+        return nullptr;
+    
     return info.get();
+}
+
+inline IPropertyInfo* cachePropertyInfo(Property& prop) noexcept
+{
+    if (prop.info)
+        return prop.info;
+
+    auto info = lookupProperty(prop.id);
+    if (!info)
+        return nullptr;
+
+    prop.info = info.get();
+    return prop.info;
 }
 
 } // namespace Er {}

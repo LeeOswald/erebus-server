@@ -230,6 +230,8 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
 
             auto info = Er::getPropertyInfo(property);
             assert(info);
+            if (!info)
+                continue;
             
             auto& type = info->type();
             if (type == typeid(bool))
