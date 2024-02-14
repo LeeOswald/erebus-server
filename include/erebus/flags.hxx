@@ -8,11 +8,25 @@
 namespace Er
 {
 
-template <std::size_t N>
-class FlagsBase
+namespace __
+{
+
+class FlagsTag
 {
 public:
     using Flag = std::size_t;
+
+    constexpr FlagsTag() noexcept = default;
+};
+
+} // namespace __ {}
+
+
+template <std::size_t N>
+class FlagsBase
+    : public __::FlagsTag
+{
+public:
     static constexpr std::size_t Size = N;
 
     constexpr FlagsBase() noexcept = default;
@@ -110,7 +124,29 @@ private:
 };
 
 
+namespace __
+{
+
 template <class UserFlagsT>
+concept HasSizeMember =
+    requires(UserFlagsT f)
+{
+    { f.Size } -> std::convertible_to<std::size_t>;
+};
+
+template <class UserFlagsT>
+concept HasFlagType = std::same_as<typename UserFlagsT::Flag, __::FlagsTag::Flag>;
+
+template <class UserFlagsT>
+concept DerivedFromFlagsBase = std::derived_from<UserFlagsT, __::FlagsTag>;
+
+template <class UserFlagsT>
+concept UserFlags = HasFlagType<UserFlagsT> && HasSizeMember<UserFlagsT> && DerivedFromFlagsBase<UserFlagsT>;
+
+} // namespace __ {}
+
+
+template <__::UserFlags UserFlagsT>
 class Flags final
     : public UserFlagsT
 {
