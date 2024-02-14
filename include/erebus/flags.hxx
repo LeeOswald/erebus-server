@@ -128,20 +128,14 @@ namespace __
 {
 
 template <class UserFlagsT>
-concept HasSizeMember =
+concept UserFlags =
+    std::same_as<typename UserFlagsT::Flag, __::FlagsTag::Flag> &&
+    std::derived_from<UserFlagsT, __::FlagsTag> &&
     requires(UserFlagsT f)
-{
-    { f.Size } -> std::convertible_to<std::size_t>;
-};
-
-template <class UserFlagsT>
-concept HasFlagType = std::same_as<typename UserFlagsT::Flag, __::FlagsTag::Flag>;
-
-template <class UserFlagsT>
-concept DerivedFromFlagsBase = std::derived_from<UserFlagsT, __::FlagsTag>;
-
-template <class UserFlagsT>
-concept UserFlags = HasFlagType<UserFlagsT> && HasSizeMember<UserFlagsT> && DerivedFromFlagsBase<UserFlagsT>;
+    {
+        { f.Size } -> std::convertible_to<std::size_t>;
+        typename UserFlagsT::Flag;
+    };
 
 } // namespace __ {}
 
@@ -154,6 +148,7 @@ public:
     using Flag = typename UserFlagsT::Flag;
     static constexpr std::size_t Size = UserFlagsT::Size;
 
+    static_assert(Size > 0);
     static_assert(std::is_base_of_v<FlagsBase<Size>, UserFlagsT>);
 
     constexpr Flags() noexcept = default;
