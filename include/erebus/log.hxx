@@ -60,6 +60,7 @@ struct ILog
     virtual bool write(Level l, const char* format, ...) noexcept = 0;
     virtual bool write(Level l, std::string_view s) noexcept = 0;
     virtual bool write(std::shared_ptr<Record> r) noexcept = 0;
+    virtual void flush() noexcept = 0;
 
 protected:
     virtual ~ILog() {}
@@ -69,6 +70,10 @@ protected:
 struct ILogControl
 {
     virtual void setLevel(Level l) noexcept = 0;
+    virtual void addDelegate(std::string_view id, Delegate d) noexcept = 0;
+    virtual void removeDelegate(std::string_view id) noexcept = 0;
+    virtual void mute() noexcept = 0;
+    virtual void unmute() noexcept = 0;
 
 protected:
     virtual ~ILogControl() {}
@@ -84,20 +89,19 @@ public:
     ~LogBase();
     explicit LogBase(Level level, size_t maxQueue = std::numeric_limits<size_t>::max()) noexcept;
 
-    void addDelegate(std::string_view id, Delegate d) noexcept;
-    void removeDelegate(std::string_view id) noexcept;
-    void mute() noexcept;
-    void unmute() noexcept;
-
     Level level() const noexcept override;
     bool writev(Level l, const char* format, va_list args) noexcept override;
     bool write(Level l, const char* format, ...) noexcept override;
     bool write(Level l, std::string_view s) noexcept override;
     bool write(std::shared_ptr<Record> r) noexcept override;
-    void flush() noexcept;
+    void flush() noexcept override;
 
     void setLevel(Level l) noexcept override;
-
+    void addDelegate(std::string_view id, Delegate d) noexcept override;
+    void removeDelegate(std::string_view id) noexcept override;
+    void mute() noexcept override;
+    void unmute() noexcept override;
+        
 private:
     void _flush() noexcept;
     void run() noexcept;
