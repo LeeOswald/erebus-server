@@ -66,8 +66,18 @@ protected:
 };
 
 
+struct ILogControl
+{
+    virtual void setLevel(Level l) noexcept = 0;
+
+protected:
+    virtual ~ILogControl() {}
+};
+
+
 class EREBUS_EXPORT LogBase
     : public ILog
+    , public ILogControl
     , public Er::NonCopyable
 {
 public:
@@ -85,6 +95,8 @@ public:
     bool write(Level l, std::string_view s) noexcept override;
     bool write(std::shared_ptr<Record> r) noexcept override;
     void flush() noexcept;
+
+    void setLevel(Level l) noexcept override;
 
 private:
     void _flush() noexcept;

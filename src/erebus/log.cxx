@@ -214,6 +214,10 @@ bool LogBase::write(Level l, const char* format, ...) noexcept
     return b;
 }
 
+void LogBase::setLevel(Level l) noexcept
+{
+    m_level = l;
+}
 
 } // namespace Log {}   
     
