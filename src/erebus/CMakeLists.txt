@@ -1,15 +1,30 @@
 if(ER_POSIX)
     set(PLATFORM_FILES
         ../../include/erebus/util/posixerror.hxx
+        system/user_linux.cxx
         util/posixerror_posix.cxx
     )
 elseif(ER_WINDOWS)
     set(PLATFORM_FILES
         ../../include/erebus/util/utf16.hxx
         ../../include/erebus/util/win32error.hxx
+        system/user_win32.cxx
         util/utf16_win32.cxx
         util/win32error_win32.cxx
     )
+endif()
+
+if(ER_LINUX)
+    set(PLATFORM_LIBS
+        ${Boost_STACKTRACE_BASIC_LIBRARY}
+        ${Boost_STACKTRACE_BACKTRACE_LIBRARY}
+        ${Boost_STACKTRACE_ADDR2LINE_LIBRARY}
+        ${Boost_STACKTRACE_NOOP_LIBRARY}
+        pthread
+        dl
+    )
+elseif(ER_WINDOWS)
+    set(PLATFORM_LIBS secur32)
 endif()
 
 add_library(${EREBUS_LIB} SHARED
@@ -28,6 +43,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/syncstream.hxx
     ../../include/erebus/system/process.hxx
     ../../include/erebus/system/time.hxx
+    ../../include/erebus/system/user.hxx
     ../../include/erebus/util/autoptr.hxx
     ../../include/erebus/util/condition.hxx
     ../../include/erebus/util/crc32.hxx

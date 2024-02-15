@@ -112,16 +112,6 @@ else()
     )
 endif()
 
-if(NOT MSVC)
-    set(PLATFORM_LIBS
-        ${Boost_STACKTRACE_BASIC_LIBRARY}
-        ${Boost_STACKTRACE_BACKTRACE_LIBRARY}
-        ${Boost_STACKTRACE_ADDR2LINE_LIBRARY}
-        ${Boost_STACKTRACE_NOOP_LIBRARY}
-        pthread
-        dl
-    )
-endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})

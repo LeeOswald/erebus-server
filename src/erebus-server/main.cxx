@@ -4,6 +4,7 @@
 
 #include <erebus/knownprops.hxx>
 #include <erebus/system/process.hxx>
+#include <erebus/system/user.hxx>
 #include <erebus/util/condition.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
@@ -71,7 +72,7 @@ int main(int argc, char* argv[], char* env[])
 #endif
 
 #if ER_LINUX && !ER_DEBUG
-    if (::geteuid() != 0)
+    if (!Er::System::CurrentUser::root())
     {
         std::cerr << "Root privileges required\n";
         return EXIT_FAILURE;
@@ -161,6 +162,8 @@ int main(int argc, char* argv[], char* env[])
         ::signal(SIGPIPE, signalHandler);
         ::signal(SIGHUP, signalHandler);
 #endif
+
+        logger->write(Er::Log::Level::Info, "Starting as user %s", Er::System::CurrentUser::name().c_str());
 
         std::string root;
         std::string certificate;
