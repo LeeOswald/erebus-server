@@ -138,43 +138,43 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
     }
 }
 
-std::string formatException(const std::exception& e) noexcept
-{
-    try
-    {
-        std::ostringstream out;
-
-        formatException(e, out, 0);
-
-        return out.str();
-    }
-    catch (...)
-    {
-    }
-
-    return std::string();
-}
-
-std::string formatException(const Er::Exception& e) noexcept
-{
-    try
-    {
-        std::ostringstream out;
-
-        formatException(e, out, 0);
-
-        return out.str();
-    }
-    catch (...)
-    {
-
-    }
-
-    return std::string();
-}
-
 } // namespace {}
 
+
+EREBUS_EXPORT std::string formatException(const std::exception& e) noexcept
+{
+    try
+    {
+        std::ostringstream out;
+
+        formatException(e, out, 0);
+
+        return out.str();
+    }
+    catch (...)
+    {
+    }
+
+    return std::string();
+}
+
+EREBUS_EXPORT std::string formatException(const Er::Exception& e) noexcept
+{
+    try
+    {
+        std::ostringstream out;
+
+        formatException(e, out, 0);
+
+        return out.str();
+    }
+    catch (...)
+    {
+
+    }
+
+    return std::string();
+}
 
 EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const std::exception& e) noexcept
 {
