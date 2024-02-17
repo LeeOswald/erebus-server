@@ -171,11 +171,6 @@ struct CharTraitsIgnoreCase<wchar_t>
     }
 };
 
-
-template <typename CharT>
-using StringViewIgnoreCase = std::basic_string_view<CharT, CharTraitsIgnoreCase<CharT>>;
-
-
     
 } // namespace Util {}
     

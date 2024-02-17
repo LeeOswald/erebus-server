@@ -116,7 +116,16 @@ public:
     template <class CharT = char, class TraitsT = std::char_traits<CharT>, class AllocatorT = std::allocator<CharT>>
     std::basic_string<CharT, TraitsT, AllocatorT> to_string() const
     {
-        return m_bits.to_string<CharT, TraitsT, AllocatorT>();
+        std::basic_string<CharT, TraitsT, AllocatorT> out;
+        out.reserve(N);
+        
+        for (auto i = N; i > 0; --i)
+        {
+            auto bit = m_bits[i - 1];
+            out.push_back(static_cast<CharT>(bit ? '1' : '0'));
+        }
+
+        return out;
     }
 
 private:

@@ -201,9 +201,9 @@ TEST(string_trim, wchar_string)
 
 TEST(CharTraitsIgnoreCase, char_string)
 {
-    Er::Util::StringViewIgnoreCase s1("sample string");
-    Er::Util::StringViewIgnoreCase s2("SAMPLE STRING");
-    Er::Util::StringViewIgnoreCase s3("wrong string");
+    std::basic_string_view<char, Er::Util::CharTraitsIgnoreCase<char>> s1("sample string");
+    std::basic_string_view<char, Er::Util::CharTraitsIgnoreCase<char>> s2("SAMPLE STRING");
+    std::basic_string_view<char, Er::Util::CharTraitsIgnoreCase<char>> s3("wrong string");
 
     EXPECT_TRUE(s1 == s2);
     EXPECT_FALSE(s1 == s3);
@@ -214,9 +214,9 @@ TEST(CharTraitsIgnoreCase, char_string)
 
 TEST(CharTraitsIgnoreCase, wchar_string)
 {
-    Er::Util::StringViewIgnoreCase s1(L"sample string");
-    Er::Util::StringViewIgnoreCase s2(L"SAMPLE STRING");
-    Er::Util::StringViewIgnoreCase s3(L"wrong string");
+    std::basic_string_view<wchar_t, Er::Util::CharTraitsIgnoreCase<wchar_t>> s1(L"sample string");
+    std::basic_string_view<wchar_t, Er::Util::CharTraitsIgnoreCase<wchar_t>> s2(L"SAMPLE STRING");
+    std::basic_string_view<wchar_t, Er::Util::CharTraitsIgnoreCase<wchar_t>> s3(L"wrong string");
 
     EXPECT_TRUE(s1 == s2);
     EXPECT_FALSE(s1 == s3);

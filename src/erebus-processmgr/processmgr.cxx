@@ -14,7 +14,7 @@ namespace
 
 class ProcessMgrPlugin final
     : public Er::Server::IPlugin
-    , public boost::noncopyable
+    , public Er::NonCopyable
 {
 public:
     ~ProcessMgrPlugin()

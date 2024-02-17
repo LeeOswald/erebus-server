@@ -16,7 +16,7 @@ namespace Private
 
 class ProcessList final
     : public Er::Server::IService
-    , public boost::noncopyable
+    , public Er::NonCopyable
 {
 public:
     ~ProcessList();
@@ -34,7 +34,7 @@ private:
     };
 
     struct Stream
-        : public boost::noncopyable
+        : public Er::NonCopyable
     {
         std::chrono::steady_clock::time_point touched = std::chrono::steady_clock::now();
         StreamType type;

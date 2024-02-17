@@ -79,7 +79,7 @@ struct Stat
 
 
 class ER_PROCESSMGR_EXPORT ProcFs final
-    : public boost::noncopyable
+    : public Er::NonCopyable
 {
 public:
     explicit ProcFs(Er::Log::ILog* log);
