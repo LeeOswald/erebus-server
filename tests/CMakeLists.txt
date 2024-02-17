@@ -10,6 +10,7 @@ add_executable(
     log.cpp
     main.cpp
     stringutil.cpp
+    tree.cpp
 )
 
 target_link_libraries(${TARGET} gtest_main ${EREBUS_LIB})

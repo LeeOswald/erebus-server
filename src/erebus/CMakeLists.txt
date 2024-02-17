@@ -37,6 +37,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/noncopyable.hxx
     ../../include/erebus/platform.hxx
     ../../include/erebus/property.hxx
+    ../../include/erebus/ptrutils.hxx
     ../../include/erebus/sourcelocation.hxx
     ../../include/erebus/stacktrace.hxx
     ../../include/erebus/stringliteral.hxx
@@ -44,6 +45,8 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/system/process.hxx
     ../../include/erebus/system/time.hxx
     ../../include/erebus/system/user.hxx
+    ../../include/erebus/trackable.hxx
+    ../../include/erebus/tree.hxx
     ../../include/erebus/util/autoptr.hxx
     ../../include/erebus/util/condition.hxx
     ../../include/erebus/util/crc32.hxx
