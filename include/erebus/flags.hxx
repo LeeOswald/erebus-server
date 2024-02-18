@@ -8,28 +8,30 @@
 namespace Er
 {
 
-namespace __
-{
-
-class FlagsTag
-{
-public:
-    using Flag = std::size_t;
-
-    constexpr FlagsTag() noexcept = default;
-};
-
-} // namespace __ {}
-
 
 template <std::size_t N>
 class FlagsBase
-    : public __::FlagsTag
 {
 public:
+    struct FromBitsT {};
+    static constexpr FromBitsT FromBits;
+
+    using Flag = std::size_t;
     static constexpr std::size_t Size = N;
 
     constexpr FlagsBase() noexcept = default;
+
+    explicit FlagsBase(std::uint32_t representation, FromBitsT) noexcept
+        : m_bits(representation)
+    {
+        static_assert(Size >= 32);
+    }
+
+    explicit FlagsBase(std::uint64_t representation, FromBitsT) noexcept
+        : m_bits(representation)
+    {
+        static_assert(Size >= 64);
+    }
 
     FlagsBase(std::initializer_list<Flag> initializers) noexcept
         : m_bits()
@@ -38,8 +40,8 @@ public:
             set(f);
     }
 
-    template <typename StringT>
-    FlagsBase(const StringT& representation) noexcept
+    template <typename CharT, typename TraitsT>
+    explicit FlagsBase(std::basic_string_view<CharT, TraitsT> representation) noexcept
         : m_bits()
     {
         if (representation.empty())
@@ -52,7 +54,7 @@ public:
         do
         {
             --index;
-            if (representation[SrcSize - index - 1] == static_cast<typename StringT::value_type>('1'))
+            if (representation[SrcSize - index - 1] == static_cast<CharT>('1'))
             {
                 set(index);
             }
@@ -62,12 +64,14 @@ public:
 
     FlagsBase& set(Flag f, bool value = true) noexcept
     {
+        assert(f < Size);
         m_bits.set(f, value);
         return *this;
     }
 
     FlagsBase& reset(Flag f) noexcept
     {
+        assert(f < Size);
         set(f, false);
         return *this;
     }
@@ -80,6 +84,7 @@ public:
 
     bool operator[](Flag f) const noexcept
     {
+        assert(f < Size);
         return m_bits[f];
     }
 
@@ -128,6 +133,18 @@ public:
         return out;
     }
 
+    template <typename T>
+    std::enable_if_t<(std::is_same_v<T, std::uint32_t> && (N <= 32)), std::uint32_t> pack() const noexcept
+    {
+        return static_cast<std::uint32_t>(m_bits.to_ulong());
+    }
+
+    template <typename T>
+    std::enable_if_t<(std::is_same_v<T, std::uint64_t> && (N <= 64)), std::uint64_t> pack() const noexcept
+    {
+        return static_cast<std::uint64_t>(m_bits.to_ullong());
+    }
+
 private:
     std::bitset<N> m_bits;
 };
@@ -138,12 +155,9 @@ namespace __
 
 template <class UserFlagsT>
 concept UserFlags =
-    std::same_as<typename UserFlagsT::Flag, __::FlagsTag::Flag> &&
-    std::derived_from<UserFlagsT, __::FlagsTag> &&
     requires(UserFlagsT f)
     {
-        { f.Size } -> std::convertible_to<std::size_t>;
-        typename UserFlagsT::Flag;
+        { UserFlagsT::FlagsCount } -> std::convertible_to<std::size_t>;
     };
 
 } // namespace __ {}
@@ -151,26 +165,39 @@ concept UserFlags =
 
 template <__::UserFlags UserFlagsT>
 class Flags final
-    : public UserFlagsT
+    : public FlagsBase<UserFlagsT::FlagsCount>
+    , public UserFlagsT
 {
 public:
-    using Flag = typename UserFlagsT::Flag;
-    static constexpr std::size_t Size = UserFlagsT::Size;
+    using Base = FlagsBase<UserFlagsT::FlagsCount>;
+    using Flag = typename Base::Flag;
+    static constexpr std::size_t Size = UserFlagsT::FlagsCount;
 
     static_assert(Size > 0);
-    static_assert(std::is_base_of_v<FlagsBase<Size>, UserFlagsT>);
 
     constexpr Flags() noexcept = default;
 
     Flags(std::initializer_list<Flag> initializers) noexcept
-        : UserFlagsT(initializers)
+        : Base(initializers)
     {
     }
 
-    template <typename StringT>
-    Flags(const StringT& representation) noexcept
-        : UserFlagsT(representation)
+    template <typename CharT, typename TraitsT>
+    explicit Flags(std::basic_string_view<CharT, TraitsT> representation) noexcept
+        : Base(representation)
     {
+    }
+
+    explicit Flags(std::uint32_t representation, typename Base::FromBitsT f) noexcept
+        : Base(representation, f)
+    {
+        static_assert(Size >= 32);
+    }
+
+    explicit Flags(std::uint64_t representation, typename Base::FromBitsT f) noexcept
+        : Base(representation, f)
+    {
+        static_assert(Size >= 64);
     }
 };
 
