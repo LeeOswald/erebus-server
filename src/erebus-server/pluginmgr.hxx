@@ -39,7 +39,7 @@ private:
                 disposeFn(ref);
                 
             if (dll.is_loaded())
-                log->write(Er::Log::Level::Info, "Unloading plugin [%s]", path.c_str());
+                log->write(Er::Log::Level::Info, LogNowhere(), "Unloading plugin [%s]", path.c_str());
         }
 
         explicit PluginInfo(const std::string& path, Er::Log::ILog* log)

@@ -24,13 +24,13 @@ class AuthMetadataProcessor
 public:
     ~AuthMetadataProcessor()
     {
-        m_log->write(Log::Level::Debug, "AuthMetadataProcessor %p destroyed", this);
+        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "~AuthMetadataProcessor()");
     }
 
     explicit AuthMetadataProcessor(Er::Log::ILog* log)
         : m_log(log)
     {
-        m_log->write(Log::Level::Debug, "AuthMetadataProcessor %p created", this);
+        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "AuthMetadataProcessor()");
     }
 
     grpc::Status Process(const InputMetadata& authMetadata, grpc::AuthContext* context, OutputMetadata* consumedMetadata, OutputMetadata* responseMetadata) override
@@ -41,7 +41,7 @@ public:
         auto dispatch = authMetadata.find(":path");
         if (dispatch == authMetadata.end())
         {
-            m_log->write(Er::Log::Level::Error, "No method path in metadata");
+            LogError(m_log, LogInstance("AuthMetadataProcessor"), "No method path in metadata");
             return grpc::Status(grpc::StatusCode::INTERNAL, "Internal Error");
         }
 
@@ -49,7 +49,7 @@ public:
         auto dispatchValue = std::string(dispatch->second.data(), dispatch->second.length());
         if (std::find(m_noAuthMethods.begin(), m_noAuthMethods.end(), dispatchValue) != m_noAuthMethods.end())
         {
-            m_log->write(Log::Level::Debug, "No auth required for [%s]", dispatchValue.c_str());
+            LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "No auth required for [%s]", dispatchValue.c_str());
             return grpc::Status::OK;
         }
 
@@ -57,7 +57,7 @@ public:
         auto ticket = authMetadata.find("ticket");
         if (ticket == authMetadata.end())
         {
-            m_log->write(Er::Log::Level::Error, "No ticket in metadata");
+            LogError(m_log, LogInstance("AuthMetadataProcessor"), "No ticket in metadata");
             return grpc::Status(grpc::StatusCode::UNAUTHENTICATED, "Missing Ticket");
         }
 
@@ -66,11 +66,11 @@ public:
         auto it = m_tickets.find(ticketValue);
         if (it == m_tickets.end())
         {
-            m_log->write(Er::Log::Level::Error, "Invalid ticket");
+            LogError(m_log, LogInstance("AuthMetadataProcessor"), "Invalid ticket");
             return grpc::Status(grpc::StatusCode::UNAUTHENTICATED, "Invalid Ticket");
         }
 
-        m_log->write(Log::Level::Debug, "Found ticket [%s] -> [%s]", ticketValue.c_str(), it->second.c_str());
+        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Found ticket [%s] -> [%s]", ticketValue.c_str(), it->second.c_str());
 
         // once verified, mark as consumed and store user for later retrieval
         consumedMetadata->insert(std::make_pair("ticket", ticketValue));     // required
@@ -83,7 +83,7 @@ public:
 
     void addTicket(const std::string& user, const std::string& ticket)
     {
-        m_log->write(Log::Level::Debug, "Added ticket [%s] -> [%s]", ticket.c_str(), user.c_str());
+        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Added ticket [%s] -> [%s]", ticket.c_str(), user.c_str());
 
         std::lock_guard l(m_mutex);
         m_tickets.insert({ ticket, user });
@@ -95,12 +95,12 @@ public:
         auto it = m_tickets.find(ticket);
         if (it == m_tickets.end())
         {
-            m_log->write(Log::Level::Warning, "Ticket [%s] not found", ticket.c_str());
+            LogWarning(m_log, LogInstance("AuthMetadataProcessor"), "Ticket [%s] not found", ticket.c_str());
         }
         else
         {
             m_tickets.erase(it);
-            m_log->write(Log::Level::Debug, "Ticket [%s] removed", ticket.c_str());
+            LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Ticket [%s] removed", ticket.c_str());
         }
     }
 

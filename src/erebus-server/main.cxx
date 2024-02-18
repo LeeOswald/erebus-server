@@ -36,7 +36,7 @@ void terminateHandler()
     ss << boost::stacktrace::stacktrace();
 
     if (g_log)
-        LogFatal(g_log, "std::terminate() called from\n%s", ss.str().c_str());
+        LogFatal(g_log, LogNowhere(), "std::terminate() called from\n%s", ss.str().c_str());
     else
         std::cerr << "std::terminate() called from\n" << ss.str();
 
@@ -163,7 +163,7 @@ int main(int argc, char* argv[], char* env[])
         ::signal(SIGHUP, signalHandler);
 #endif
 
-        logger->write(Er::Log::Level::Info, "Starting as user %s", Er::System::CurrentUser::name().c_str());
+        logger->write(Er::Log::Level::Info, LogNowhere(), "Starting as user %s", Er::System::CurrentUser::name().c_str());
 
         std::string root;
         std::string certificate;
@@ -188,7 +188,7 @@ int main(int argc, char* argv[], char* env[])
         servers.reserve(cfg.endpoints.size());
         for (auto& ep: cfg.endpoints)
         {
-            logger->write(Er::Log::Level::Info, "Creating a server instance at [%s]", ep.endpoint.c_str());
+            logger->write(Er::Log::Level::Info, LogNowhere(), "Creating a server instance at [%s]", ep.endpoint.c_str());
 
             try
             {
@@ -235,25 +235,25 @@ int main(int argc, char* argv[], char* env[])
         }
 
         // now just sit around and wait
-        logger->write(Er::Log::Level::Info, "Waiting for client connections...");
+        logger->write(Er::Log::Level::Info, LogNowhere(), "Waiting for client connections...");
 
         g_exitCondition.wait();
 
         // cleanup
-        logger->write(Er::Log::Level::Info, "Stopping server instances...");
+        logger->write(Er::Log::Level::Info, LogNowhere(), "Stopping server instances...");
         servers.clear();
         
         if (g_signalReceived)
         {
-            logger->write(Er::Log::Level::Warning, "Exiting due to signal %d", *g_signalReceived);
+            logger->write(Er::Log::Level::Warning, LogNowhere(), "Exiting due to signal %d", *g_signalReceived);
         }
         else if (!g_restartRequired)
         {
-            logger->write(Er::Log::Level::Warning, "Shutting down...");
+            logger->write(Er::Log::Level::Warning, LogNowhere(), "Shutting down...");
         }
         else
         {
-            logger->write(Er::Log::Level::Warning, "Restarting...");
+            logger->write(Er::Log::Level::Warning, LogNowhere(), "Restarting...");
             g_log = nullptr;
             // force logger destruction to unlock the logfile
             logger.reset();

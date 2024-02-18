@@ -28,22 +28,37 @@ enum class Level
 };
 
 
+struct Location
+{
+    const char* component = nullptr;
+    const void* instance = nullptr;
+
+    constexpr explicit Location(const char* component = nullptr, const void* instance = nullptr) noexcept
+        : component(component)
+        , instance(instance)
+    {
+    }
+};
+
+
 struct Record
 {
     Level level = Level::Info;
     System::Time time;
     uintptr_t pid  = 0;
     uintptr_t tid = 0;
+    Location location;
     std::string message;
 
     Record() noexcept = default;
 
     template <typename MessageT>
-    explicit Record(Level level, const System::Time& time, uintptr_t pid, uintptr_t tid, MessageT&& message)
+    explicit Record(Level level, const System::Time& time, uintptr_t pid, uintptr_t tid, const Location& location, MessageT&& message)
         : level(level)
         , time(time)
         , pid(pid)
         , tid(tid)
+        , location(location)
         , message(std::forward<MessageT>(message))
     {
     }
@@ -56,9 +71,9 @@ using Delegate = std::function<void(std::shared_ptr<Record>)>;
 struct ILog
 {
     virtual Level level() const noexcept = 0;
-    virtual bool writev(Level l, const char* format, va_list args) noexcept = 0;
-    virtual bool write(Level l, const char* format, ...) noexcept = 0;
-    virtual bool write(Level l, std::string_view s) noexcept = 0;
+    virtual bool writev(Level l, const Location& location, const char* format, va_list args) noexcept = 0;
+    virtual bool write(Level l, const Location& location, const char* format, ...) noexcept = 0;
+    virtual bool write(Level l, const Location& location, std::string_view s) noexcept = 0;
     virtual bool write(std::shared_ptr<Record> r) noexcept = 0;
     virtual void flush() noexcept = 0;
 
@@ -90,9 +105,9 @@ public:
     explicit LogBase(Level level, size_t maxQueue = std::numeric_limits<size_t>::max()) noexcept;
 
     Level level() const noexcept override;
-    bool writev(Level l, const char* format, va_list args) noexcept override;
-    bool write(Level l, const char* format, ...) noexcept override;
-    bool write(Level l, std::string_view s) noexcept override;
+    bool writev(Level l, const Location& location, const char* format, va_list args) noexcept override;
+    bool write(Level l, const Location& location, const char* format, ...) noexcept override;
+    bool write(Level l, const Location& location, std::string_view s) noexcept override;
     bool write(std::shared_ptr<Record> r) noexcept override;
     void flush() noexcept override;
 
@@ -127,7 +142,7 @@ public:
         flush();
     }
 
-    explicit LogWrapperBase(ILog* log, Level level) noexcept
+    explicit LogWrapperBase(ILog* log, Level level, const Location& location) noexcept
         : m_log(log)
         , m_level(level)
     {
@@ -137,7 +152,7 @@ public:
     {
         try
         {
-            m_log->write(m_level, std::string_view(m_stream.str()));
+            m_log->write(m_level, m_location, std::string_view(m_stream.str()));
             m_stream = std::ostringstream();
         }
         catch (...)
@@ -161,6 +176,7 @@ public:
 private:
     ILog* m_log;
     Level m_level;
+    Location m_location;
     std::ostringstream m_stream;
 };
 
@@ -169,8 +185,8 @@ class Debug final
     : public LogWrapperBase
 {
 public:
-    explicit Debug(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Debug)
+    explicit Debug(ILog* log, const Location& location = Location()) noexcept
+        : LogWrapperBase(log, Level::Debug, location)
     {}
 };
 
@@ -178,8 +194,8 @@ class Info final
     : public LogWrapperBase
 {
 public:
-    explicit Info(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Info)
+    explicit Info(ILog* log, const Location& location = Location()) noexcept
+        : LogWrapperBase(log, Level::Info, location)
     {}
 };
 
@@ -187,8 +203,8 @@ class Warning final
     : public LogWrapperBase
 {
 public:
-    explicit Warning(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Warning)
+    explicit Warning(ILog* log, const Location& location = Location()) noexcept
+        : LogWrapperBase(log, Level::Warning, location)
     {}
 };
 
@@ -196,8 +212,8 @@ class Error final
     : public LogWrapperBase
 {
 public:
-    explicit Error(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Error)
+    explicit Error(ILog* log, const Location& location = Location()) noexcept
+        : LogWrapperBase(log, Level::Error, location)
     {}
 };
 
@@ -205,8 +221,8 @@ class Fatal final
     : public LogWrapperBase
 {
 public:
-    explicit Fatal(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Fatal)
+    explicit Fatal(ILog* log, const Location& location = Location()) noexcept
+        : LogWrapperBase(log, Level::Fatal, location)
     {}
 };
 
@@ -217,18 +233,21 @@ public:
 
 
 #define LogDebug(log, ...) \
-    (log->level() <= Er::Log::Level::Debug) && log->write(Er::Log::Level::Debug, __VA_ARGS__)
+    (log->level() <= ::Er::Log::Level::Debug) && log->write(::Er::Log::Level::Debug, __VA_ARGS__)
 
 #define LogInfo(log, ...) \
-    (log->level() <= Er::Log::Level::Info) && log->write(Er::Log::Level::Info, __VA_ARGS__)
+    (log->level() <= ::Er::Log::Level::Info) && log->write(::Er::Log::Level::Info, __VA_ARGS__)
 
 #define LogWarning(log, ...) \
-    (log->level() <= Er::Log::Level::Warning) && log->write(Er::Log::Level::Warning, __VA_ARGS__)
+    (log->level() <= ::Er::Log::Level::Warning) && log->write(::Er::Log::Level::Warning, __VA_ARGS__)
 
 #define LogError(log, ...) \
-    (log->level() <= Er::Log::Level::Error) && log->write(Er::Log::Level::Error, __VA_ARGS__)
+    (log->level() <= ::Er::Log::Level::Error) && log->write(::Er::Log::Level::Error, __VA_ARGS__)
 
 #define LogFatal(log, ...) \
-    (log->level() <= Er::Log::Level::Fatal) && log->write(Er::Log::Level::Fatal, __VA_ARGS__)
+    (log->level() <= ::Er::Log::Level::Fatal) && log->write(::Er::Log::Level::Fatal, __VA_ARGS__)
 
 
+#define  LogNowhere() ::Er::Log::Location()
+#define LogComponent(component) ::Er::Log::Location(component)
+#define LogInstance(component) ::Er::Log::Location(component, this)

@@ -28,7 +28,7 @@ class ErebusService final
 public:
     ~ErebusService() 
     {
-        m_params.log->write(Log::Level::Debug, "ErebusService %p destroyed", this);
+        LogDebug(m_params.log, LogInstance("ErebusService"), "~ErebusService()");
     }
 
     explicit ErebusService(const Params* params)
@@ -37,7 +37,7 @@ public:
         m_authProcessor->addNoAuthMethod("/erebus.Erebus/Init");
         m_authProcessor->addNoAuthMethod("/erebus.Erebus/Authorize");
 
-        m_params.log->write(Log::Level::Debug, "ErebusService %p created", this);
+        LogDebug(m_params.log, LogInstance("ErebusService"), "ErebusService()");
     }
 
     IServiceContainer* serviceContainer() override
@@ -55,7 +55,7 @@ public:
 
         m_services.insert({ request, service });
         
-        LogInfo(m_params.log, "ErebusService %p: Registered service %p for [%s]", this, service, request.c_str());
+        LogInfo(m_params.log, LogInstance("ErebusService"), "Registered service %p for [%s]", service, request.c_str());
     }
 
     void unregisterService(IService* service) override
@@ -66,7 +66,8 @@ public:
         {
             if (it->second == service)
             {
-                LogInfo(m_params.log, "ErebusService %p: Unregistered service %p for [%s]", this, service, it->first.c_str());
+                LogInfo(m_params.log, LogInstance("ErebusService"), "Unregistered service %p", service);
+
                 auto next = std::next(it);
                 m_services.erase(it);
                 it = next;
@@ -77,7 +78,7 @@ public:
             }
         }
 
-        LogError(m_params.log, "ErebusService %p: Service %p is not registered", this, service);
+        LogError(m_params.log, LogInstance("ErebusService"), "Service % p is not registered", service);
     }
 
 private:
@@ -196,7 +197,7 @@ private:
         auto u = m_params.userDb->lookup(user);
         if (!u)
         {
-            Er::Log::Warning(m_params.log) << "Trying to log in an unknown user " << user;
+            Er::Log::Warning(m_params.log, LogInstance("ErebusService")) << "Trying to log in an unknown user " << user;
             response.mutable_header()->set_code(erebus::Unauthenticated);
         }
         else
@@ -231,19 +232,19 @@ private:
         auto u = m_params.userDb->lookup(user);
         if (!u)
         {
-            Er::Log::Warning(m_params.log) << "Trying to log in an unknown user " << user;
+            Er::Log::Warning(m_params.log, LogInstance("ErebusService")) << "Trying to log in an unknown user " << user;
             response.mutable_header()->set_code(erebus::Unauthenticated);
         }
         else
         {
             if (request->pwd() != u->pwdHash)
             {
-                Er::Log::Warning(m_params.log) << "Failed to log in user " << user;
+                Er::Log::Warning(m_params.log, LogInstance("ErebusService")) << "Failed to log in user " << user;
                 response.mutable_header()->set_code(erebus::Unauthenticated);
             }
             else
             {
-                Er::Log::Info(m_params.log) << "Logged in user " << user;
+                Er::Log::Info(m_params.log, LogInstance("ErebusService")) << "Logged in user " << user;
                 response.mutable_header()->set_code(erebus::Success);
 
                 auto ticket = makeTicket();
@@ -285,7 +286,7 @@ private:
             m_params.userDb->save();
 
             response.set_code(erebus::Success);
-            Er::Log::Info(m_params.log) << "Created user " << name;
+            Er::Log::Info(m_params.log, LogInstance("ErebusService")) << "Created user " << name;
         }
         catch (Er::Exception& e)
         {
@@ -332,7 +333,7 @@ private:
             m_params.userDb->save();
 
             response.set_code(erebus::Success);
-            Er::Log::Info(m_params.log) << "Deleted user " << name;
+            Er::Log::Info(m_params.log, LogInstance("ErebusService")) << "Deleted user " << name;
         }
         catch (Er::Exception& e)
         {
@@ -429,9 +430,9 @@ private:
         *m_params.needRestart = request->restart();
 
         if (*m_params.needRestart)
-            Er::Log::Warning(m_params.log) << "Server restart requested by " << rpc.getServerContext().peer();
+            Er::Log::Warning(m_params.log, LogInstance("ErebusService")) << "Server restart requested by " << rpc.getServerContext().peer();
         else
-            Er::Log::Warning(m_params.log) << "Server shutdown requested by " << rpc.getServerContext().peer();
+            Er::Log::Warning(m_params.log, LogInstance("ErebusService")) << "Server shutdown requested by " << rpc.getServerContext().peer();
 
         response.set_code(erebus::ResultCode::Success);
         
@@ -471,7 +472,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, "ErebusService %p: No handlers for [%s]", this, id.c_str());
+            m_params.log->write(Er::Log::Level::Error, LogInstance("ErebusService"), "No handlers for [%s]", id.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -530,7 +531,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, "ErebusService %p: No handlers for [%s]", this, id.c_str());
+            m_params.log->write(Er::Log::Level::Error, LogInstance("ErebusService"), "No handlers for [%s]", id.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }

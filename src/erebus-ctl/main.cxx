@@ -29,7 +29,7 @@ void version(Er::Client::IClient* client, Er::Log::ILog* log)
     {
         auto ver = client->version();
 
-        log->write(Er::Log::Level::Info, "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
+        log->write(Er::Log::Level::Info, LogNowhere(), "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
     }
     catch (Er::Exception& e)
     {
@@ -75,7 +75,7 @@ void addUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::st
 
         client->addUser(name, password);
 
-        Er::Log::Info(log) << "User " << name << " created successfully";
+        Er::Log::Info(log, LogNowhere()) << "User " << name << " created successfully";
     }
     catch (Er::Exception& e)
     {
@@ -95,7 +95,7 @@ void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::str
 
         client->removeUser(name);
 
-        Er::Log::Info(log) << "User " << name << " deleted successfully";
+        Er::Log::Info(log, LogNowhere()) << "User " << name << " deleted successfully";
     }
     catch (Er::Exception& e)
     {
@@ -117,7 +117,7 @@ void listUsers(Er::Log::ILog* log, const Er::Client::Params& params)
 
         for (auto& u : users)
         {
-            log->write(Er::Log::Level::Info, "Found user: %s", u.name.c_str());
+            log->write(Er::Log::Level::Info, LogNowhere(), "Found user: %s", u.name.c_str());
         }
     }
     catch (Er::Exception& e)
@@ -138,7 +138,7 @@ void exit(Er::Log::ILog* log, const Er::Client::Params& params)
 
         client->exit(false);
 
-        log->write(Er::Log::Level::Info, "Server shutdown requested");
+        log->write(Er::Log::Level::Info, LogNowhere(), "Server shutdown requested");
     }
     catch (Er::Exception& e)
     {
@@ -158,7 +158,7 @@ void restart(Er::Log::ILog* log, const Er::Client::Params& params)
 
         client->exit(true);
 
-        log->write(Er::Log::Level::Info, "Server restart requested");
+        log->write(Er::Log::Level::Info, LogNowhere(), "Server restart requested");
     }
     catch (Er::Exception& e)
     {
@@ -175,7 +175,7 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
     auto it = info.find(Er::ProcessProps::Pid::Id::value);
     if (it == info.end())
     {
-        log->write(Er::Log::Level::Error, "<invalid process>");
+        log->write(Er::Log::Level::Error, LogNowhere(), "<invalid process>");
         return;
     }
 
@@ -184,7 +184,7 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
     it = info.find(Er::ProcessProps::Valid::Id::value);
     if (it == info.end())
     {
-        log->write(Er::Log::Level::Error, "No data for PID %zu", pid);
+        log->write(Er::Log::Level::Error, LogNowhere(), "No data for PID %zu", pid);
     }
     else
     {
@@ -193,13 +193,13 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
         {
             it = info.find(Er::ProcessProps::Error::Id::value);
             if (it != info.end())
-                log->write(Er::Log::Level::Error, "Invalid stat for PID %zu", pid);
+                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu", pid);
             else
-                log->write(Er::Log::Level::Error, "Invalid stat for PID %zu: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
+                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
         }
         else
         {
-            log->write(Er::Log::Level::Info, "Dumping process %zu", pid);
+            log->write(Er::Log::Level::Info, LogNowhere(), "Dumping process %zu", pid);
             for (auto it = info.begin(); it != info.end(); ++it)
             {
                 if (
@@ -210,14 +210,14 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
                     auto propInfo = Er::lookupProperty(it->second.id).get();
                     if (!propInfo)
                     {
-                        log->write(Er::Log::Level::Warning, "   0x%08x: ???", it->second.id);
+                        log->write(Er::Log::Level::Warning, LogNowhere(), "   0x%08x: ???", it->second.id);
                     }
                     else
                     {
                         std::ostringstream ss;
                         propInfo->format(it->second, ss);
 
-                        log->write(Er::Log::Level::Info, "   %s: %s", propInfo->name(), ss.str().c_str());
+                        log->write(Er::Log::Level::Info, LogNowhere(), "   %s: %s", propInfo->name(), ss.str().c_str());
                     }
                 }
             }

@@ -201,7 +201,7 @@ public:
             auto info = Er::lookupProperty(id);
             if (!info)
             {
-                m_params.log->write(Er::Log::Level::Error, "Unsupported property 0x%08x", id);
+                m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property 0x%08x", id);
             }
             else
             {
@@ -221,7 +221,7 @@ public:
                 else if (type == typeid(std::string))
                     bag.insert({ id, Er::Property(id, prop.v_string()) });
                 else
-                    m_params.log->write(Er::Log::Level::Error, "Unsupported property type %s", type.name());
+                    m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property type %s", type.name());
             }
         }
 
@@ -283,7 +283,7 @@ public:
                 auto info = Er::lookupProperty(id);
                 if (!info)
                 {
-                    m_params.log->write(Er::Log::Level::Error, "Unsupported property 0x%08x", id);
+                    m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property 0x%08x", id);
                 }
                 else
                 {
@@ -303,7 +303,7 @@ public:
                     else if (type == typeid(std::string))
                         bag.insert({ id, Er::Property(id, prop.v_string()) });
                     else
-                        m_params.log->write(Er::Log::Level::Error, "Unsupported property type %s", type.name());
+                        m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property type %s", type.name());
                 }
             }
 
@@ -479,7 +479,7 @@ private:
                 auto info = Er::lookupProperty(id);
                 if (!info)
                 {
-                    m_params.log->write(Er::Log::Level::Error, "Unsupported exception property 0x%08x", id);
+                    m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported exception property 0x%08x", id);
                 }
                 else
                 {
@@ -499,7 +499,7 @@ private:
                     else if (type == typeid(std::string))
                         unmarshaledException.add(id, prop.v_string());
                     else
-                        m_params.log->write(Er::Log::Level::Error, "Unsupported exception property type %s", type.name());
+                        m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported exception property type %s", type.name());
                 }
             }
             
@@ -531,7 +531,7 @@ void gprLogFunction(gpr_log_func_args* args)
         case GPR_LOG_SEVERITY_ERROR: level = Log::Level::Error; break;
         }
 
-        g_libParams.log->write(level, "[gRPC] %s", args->message);
+        g_libParams.log->write(level, LogComponent("gRPC"), "%s", args->message);
     }
 }
 
