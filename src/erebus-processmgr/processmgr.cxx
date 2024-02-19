@@ -73,7 +73,13 @@ ER_PROCESSMGR_EXPORT Er::Server::IPlugin* createPlugin(const Er::Server::PluginP
 
 ER_PROCESSMGR_EXPORT void disposePlugin(Er::Server::IPlugin* plugin)
 {
-    delete plugin;
+    assert(plugin);
+    if (!plugin)
+        return;
+
+    auto realPlugin = dynamic_cast<Er::ProcessMgrPlugin*>(plugin);
+    assert(realPlugin);
+    delete realPlugin;
 }
 
 } // extern "C" {}

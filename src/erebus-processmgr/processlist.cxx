@@ -13,14 +13,14 @@ namespace Private
 
 ProcessList::~ProcessList()
 {
-
+    LogDebug(m_log, LogInstance("ProcessList"), "~ProcessList()");
 }
 
 ProcessList::ProcessList(Er::Log::ILog* log)
     : m_log(log)
     , m_procFs(log)
 {
-
+    LogDebug(m_log, LogInstance("ProcessList"), "ProcessList()");
 }
 
 Er::PropertyBag ProcessList::request(const std::string& request, const Er::PropertyBag& args)
@@ -48,7 +48,7 @@ void ProcessList::endStream(StreamId id)
             throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
 
         m_streams.erase(it);
-        m_log->write(Er::Log::Level::Info, "Ended stream %d", id);    
+        LogDebug(m_log, LogInstance("ProcessList"), "Ended stream %d", id);    
     }
 
     dropStaleStreams();
@@ -147,7 +147,7 @@ void ProcessList::dropStaleStreams() noexcept
         if (d.count() > kStreamTimeoutSeconds)
         {
             auto next = std::next(it);
-            m_log->write(Er::Log::Level::Warning, "Dropping stale stream %d", it->first);
+            LogWarning(m_log, LogInstance("ProcessList"), "Dropping stale stream %d", it->first);
             m_streams.erase(it);
             it = next;
         }
@@ -169,7 +169,7 @@ ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& arg
     auto stream = std::make_unique<ProcessListStream>(streamId, std::move(pids));
     m_streams.insert({ streamId, std::move(stream) });
 
-    m_log->write(Er::Log::Level::Info, "Started process stream %d", streamId);    
+    LogDebug(m_log, LogInstance("ProcessList"), "Started process stream %d", streamId);
 
     return streamId;
 }
@@ -181,7 +181,7 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
 
     auto bag = processDetails(stream->pids[stream->next]);
 
-    Er::Log::Debug(m_log) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
+    Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
 
     ++stream->next;
 

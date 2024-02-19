@@ -14,7 +14,7 @@ class FlagsBase
 {
 public:
     struct FromBitsT {};
-    static constexpr FromBitsT FromBits;
+    static constexpr FromBitsT FromBits = FromBitsT();
 
     using Flag = std::size_t;
     static constexpr std::size_t Size = N;
