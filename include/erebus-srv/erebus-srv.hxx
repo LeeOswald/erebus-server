@@ -3,7 +3,7 @@
 #include <erebus/erebus.hxx>
 #include <erebus/log.hxx>
 #include <erebus/property.hxx>
-#include <erebus/util/condition.hxx>
+#include <erebus/condition.hxx>
 
 
 
@@ -83,7 +83,7 @@ struct Params
 {
     std::string endpoint;
     Er::Log::ILog* log = nullptr;
-    Er::Util::Condition* exitCondition = nullptr;
+    Er::Event* exitCondition = nullptr;
     bool* needRestart = nullptr;
     bool ssl = false;
     std::string root;
@@ -96,7 +96,7 @@ struct Params
     explicit Params(
         std::string_view endpoint,
         Er::Log::ILog* log,
-        Er::Util::Condition* exitCondition,
+        Er::Event* exitCondition,
         bool* needRestart,
         bool ssl,
         std::string_view root,

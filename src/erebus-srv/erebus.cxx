@@ -440,7 +440,7 @@ private:
         // give the gRPC a chance to send back a reply before we die
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-        m_params.exitCondition->set();
+        m_params.exitCondition->set(true);
     }
 
     void createGenericRpc()

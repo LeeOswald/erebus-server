@@ -1,8 +1,10 @@
 if(ER_POSIX)
     set(PLATFORM_FILES
         ../../include/erebus/util/posixerror.hxx
+        ../../include/erebus/util/signalhandler.hxx
         system/user_linux.cxx
         util/posixerror_posix.cxx
+        util/signalhandler_posix.cxx
     )
 elseif(ER_WINDOWS)
     set(PLATFORM_FILES
@@ -28,6 +30,7 @@ elseif(ER_WINDOWS)
 endif()
 
 add_library(${EREBUS_LIB} SHARED
+    ../../include/erebus/condition.hxx
     ../../include/erebus/empty.hxx
     ../../include/erebus/erebus.hxx
     ../../include/erebus/exception.hxx
@@ -48,7 +51,6 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/trackable.hxx
     ../../include/erebus/tree.hxx
     ../../include/erebus/util/autoptr.hxx
-    ../../include/erebus/util/condition.hxx
     ../../include/erebus/util/crc32.hxx
     ../../include/erebus/util/exceptionutil.hxx
     ../../include/erebus/util/file.hxx
@@ -64,7 +66,6 @@ add_library(${EREBUS_LIB} SHARED
     stacktrace.cxx
     system/process.cxx
     system/time.cxx
-    util/condition.cxx
     util/exceptionutil.cxx
     util/file.cxx
     util/format.cxx

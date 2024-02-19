@@ -2,14 +2,18 @@
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
 
+#include <erebus/condition.hxx>
 #include <erebus/knownprops.hxx>
 #include <erebus/system/process.hxx>
 #include <erebus/system/user.hxx>
-#include <erebus/util/condition.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus/util/sha256.hxx>
+#if ER_POSIX
+    #include <erebus/util/signalhandler.hxx>
+#endif
+
 #include <erebus-srv/erebus-srv.hxx>
 
 #include "config.hxx"
@@ -17,6 +21,7 @@
 #include "pluginmgr.hxx"
 #include "users.hxx"
 
+#include <future>
 #include <iostream>
 #include <vector>
 
@@ -25,7 +30,7 @@ namespace
 {
 
 Er::Log::ILog* g_log = nullptr;
-Er::Util::Condition g_exitCondition(Er::Util::Condition::Reset::Manual);
+Er::Event g_exitCondition(false);
 bool g_restartRequired = false;
 std::optional<int> g_signalReceived;
 
@@ -46,7 +51,7 @@ void terminateHandler()
 void signalHandler(int signo)
 {
     g_signalReceived = signo;
-    g_exitCondition.set();
+    g_exitCondition.setAndNotifyAll(true);
 }
 
 void restart(int argc, char* argv[], char* env[])
@@ -153,16 +158,24 @@ int main(int argc, char* argv[], char* env[])
 
     std::set_terminate(terminateHandler);
 
-    try
-    {
-        
-        ::signal(SIGINT, signalHandler);
-        ::signal(SIGTERM, signalHandler);
 #if ER_POSIX
-        ::signal(SIGPIPE, signalHandler);
-        ::signal(SIGHUP, signalHandler);
+    Er::Util::SignalHandler sh({SIGINT, SIGTERM, SIGPIPE, SIGHUP});
+    std::future<int> futureSigHandler =
+        // spawn a thread that handles signals
+        sh.asyncWaitHandler(
+            [](int signo)
+            {
+                signalHandler(signo);
+                return true;
+            }
+        );
+#else
+    ::signal(SIGINT, signalHandler);
+    ::signal(SIGTERM, signalHandler);
 #endif
 
+    try
+    {
         logger->write(Er::Log::Level::Info, LogNowhere(), "Starting as user %s", Er::System::CurrentUser::name().c_str());
 
         std::string root;
