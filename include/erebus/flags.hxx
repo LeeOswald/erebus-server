@@ -8,7 +8,7 @@
 namespace Er
 {
 
-using Flag = std::size_t;
+using Flag = unsigned;
 
 
 template <std::size_t N>
