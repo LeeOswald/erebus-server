@@ -129,16 +129,16 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
                     result.ppid = std::strtol(start + 1, &tmp, 10);
                     break;
                 case 4:
-                    result.pgrp = std::strtod(start + 1, &tmp);
+                    result.pgrp = std::strtoull(start + 1, &tmp, 10);
                     break;
                 case 5:
-                    result.session = std::strtod(start + 1, &tmp);
+                    result.session = std::strtoull(start + 1, &tmp, 10);
                     break;
                 case 6:
-                    result.tty_nr = std::strtod(start + 1, &tmp);
+                    result.tty_nr = std::strtol(start + 1, &tmp, 10);
                     break;
                 case 7:
-                    result.tpgid = std::strtod(start + 1, &tmp);
+                    result.tpgid = std::strtoull(start + 1, &tmp, 10);
                     break;
                 case 8:
                     result.flags = (unsigned)std::strtoul(start + 1, &tmp, 10);
@@ -228,10 +228,10 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
                     result.cnswap = std::strtoul(start + 1, &tmp, 10);
                     break;
                 case 37:
-                    result.exit_signal = std::strtod(start + 1, &tmp);
+                    result.exit_signal = std::strtol(start + 1, &tmp, 10);
                     break;
                 case 38:
-                    result.processor = std::strtod(start + 1, &tmp);
+                    result.processor = std::strtol(start + 1, &tmp, 10);
                     break;
                 case 39:
                     result.rt_priority = (unsigned)std::strtoul(start + 1, &tmp, 10);
@@ -270,7 +270,7 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
                     result.env_end = std::strtoul(start + 1, &tmp, 10);
                     break;
                 case 51:
-                    result.exit_code = std::strtod(start + 1, &tmp);
+                    result.exit_code = std::strtol(start + 1, &tmp, 10);
                     break;
                 }
             }
