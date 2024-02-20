@@ -8,6 +8,8 @@
 namespace Er
 {
 
+using Flag = std::size_t;
+
 
 template <std::size_t N>
 class FlagsBase
@@ -15,8 +17,7 @@ class FlagsBase
 public:
     struct FromBitsT {};
     static constexpr FromBitsT FromBits = FromBitsT();
-
-    using Flag = std::size_t;
+    
     static constexpr std::size_t Size = N;
 
     constexpr FlagsBase() noexcept = default;
@@ -170,9 +171,8 @@ class Flags final
 {
 public:
     using Base = FlagsBase<UserFlagsT::FlagsCount>;
-    using Flag = typename Base::Flag;
+    
     static constexpr std::size_t Size = UserFlagsT::FlagsCount;
-
     static_assert(Size > 0);
 
     constexpr Flags() noexcept = default;
