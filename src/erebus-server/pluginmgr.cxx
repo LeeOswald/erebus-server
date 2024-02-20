@@ -52,13 +52,21 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path)
         throw Er::Exception(ER_HERE(), Er::Util::format("createPlugin of [%s] returned NULL", path.c_str()));
     }
 
-    m_plugins.push_back(info);
+    {
+        std::lock_guard l(m_mutex);
+        m_plugins.push_back(info);
+    }
 
     m_params.log->write(Er::Log::Level::Info, LogNowhere(), "Loaded plugin [%s]", path.c_str());
 
     return info->ref;
 }
 
+void PluginMgr::unloadAll()
+{
+    std::lock_guard l(m_mutex);
+    m_plugins.clear();
+}
 
 } // namespace Private {}
 

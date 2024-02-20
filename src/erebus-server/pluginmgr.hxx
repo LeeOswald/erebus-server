@@ -2,6 +2,7 @@
 
 #include <erebus-srv/plugin.hxx>
 
+#include <mutex>
 #include <vector>
 
 #include <boost/dll.hpp>
@@ -22,6 +23,7 @@ public:
     explicit PluginMgr(const Er::Server::PluginParams& params);
 
     Er::Server::IPlugin* load(const std::string& path);
+    void unloadAll();
 
 private:
     struct PluginInfo
@@ -48,7 +50,8 @@ private:
         {}
     };
 
-    Er::Server::PluginParams m_params;
+    const Er::Server::PluginParams m_params;
+    std::mutex m_mutex;
     std::vector<std::shared_ptr<PluginInfo>> m_plugins;
 };
 

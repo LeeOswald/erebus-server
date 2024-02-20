@@ -141,23 +141,13 @@ int main(int argc, char* argv[], char* env[])
         return EXIT_FAILURE;
     }
 
+    // aren't we going to be a daemon?
 #if ER_POSIX
     if (vm.count("daemon"))
         Er::System::CurrentProcess::daemonize();
 #endif
 
-    Er::LibScope er;
-
-    Er::Log::Level logLevel = (cfg.verbose > 0) ? Er::Log::Level::Debug : Er::Log::Level::Info;
-    auto logger = std::make_unique<Er::Private::Logger>(logLevel, cfg.logfile.c_str());
-    if (!logger->valid())
-        return EXIT_FAILURE;
-
-    g_log = logger.get();
-    logger->unmute();
-
-    std::set_terminate(terminateHandler);
-
+    // setup signal handler
 #if ER_POSIX
     Er::Util::SignalHandler sh({SIGINT, SIGTERM, SIGPIPE, SIGHUP});
     std::future<int> futureSigHandler =
@@ -173,6 +163,19 @@ int main(int argc, char* argv[], char* env[])
     ::signal(SIGINT, signalHandler);
     ::signal(SIGTERM, signalHandler);
 #endif
+
+    // setup std::terminate() handler
+    std::set_terminate(terminateHandler);
+
+    Er::LibScope er;
+
+    Er::Log::Level logLevel = (cfg.verbose > 0) ? Er::Log::Level::Debug : Er::Log::Level::Info;
+    auto logger = std::make_unique<Er::Private::Logger>(logLevel, cfg.logfile.c_str());
+    if (!logger->valid())
+        return EXIT_FAILURE;
+
+    g_log = logger.get();
+    logger->unmute();
 
     try
     {
@@ -250,10 +253,14 @@ int main(int argc, char* argv[], char* env[])
         // now just sit around and wait
         logger->write(Er::Log::Level::Info, LogNowhere(), "Waiting for client connections...");
 
-        g_exitCondition.wait();
+        g_exitCondition.waitValue(true);
 
         // cleanup
         logger->write(Er::Log::Level::Info, LogNowhere(), "Stopping server instances...");
+        
+        // we must explicitly stop the server to make the listening endpoint addresses available again
+        // before we spawn a copy of us during the restart command 
+        pluginMgr.unloadAll();
         servers.clear();
         
         if (g_signalReceived)

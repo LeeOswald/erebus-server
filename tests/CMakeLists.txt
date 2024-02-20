@@ -12,6 +12,7 @@ enable_testing()
 add_executable(
     ${TARGET}
     common.hpp
+    condition.cpp
     exception.cpp
     flags.cpp
     log.cpp
