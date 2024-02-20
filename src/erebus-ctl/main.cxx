@@ -383,6 +383,8 @@ int main(int argc, char* argv[])
         Er::LibScope er;
         Er::Client::LibParams cltParams(&console, console.level());
         Er::Client::LibScope cs(cltParams);
+
+        Er::ProcessProps::Private::registerAll();
                 
         bool ssl = (vm.count("ssl") > 0);
         std::string root;

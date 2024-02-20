@@ -106,7 +106,7 @@ Er::PropertyBag ProcessList::processDetails(uint64_t pid)
         
         bag.insert({ Er::ProcessProps::Session::Id::value, Er::Property(Er::ProcessProps::Session::Id::value, stat.session) });
         bag.insert({ Er::ProcessProps::Ruid::Id::value, Er::Property(Er::ProcessProps::Ruid::Id::value, stat.ruid) });
-        bag.insert({ Er::ProcessProps::StatComm::Id::value, Er::Property(Er::ProcessProps::StatComm::Id::value, stat.comm) });
+        bag.insert({ Er::ProcessProps::StatComm::Id::value, Er::Property(Er::ProcessProps::StatComm::Id::value, std::move(stat.comm)) });
 
         auto comm = m_procFs.readComm(pid);
         if (!comm.empty())

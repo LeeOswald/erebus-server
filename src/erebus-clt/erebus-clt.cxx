@@ -3,7 +3,6 @@
 #include <erebus/util/random.hxx>
 #include <erebus/util/sha256.hxx>
 #include <erebus-clt/erebus-clt.hxx>
-#include <erebus-processmgr/processprops.hxx>
 
 #include <grpcpp/grpcpp.h>
 
@@ -545,7 +544,6 @@ EREBUSCLT_EXPORT void initialize(const LibParams& params)
         g_libParams = params;
         
         registerProperty(std::make_shared<PropertyInfoWrapper<::Er::Client::Props::ResultCode>>());
-        Er::ProcessProps::Private::registerAll();
 
         ::grpc_init();
 
@@ -566,7 +564,6 @@ EREBUSCLT_EXPORT void finalize()
         ::grpc_shutdown();
         g_libParams = LibParams();
 
-        Er::ProcessProps::Private::unregisterAll();
         unregisterProperty(lookupProperty(ER_PROPID_("erebus.ResultCode")));
     }
 }
