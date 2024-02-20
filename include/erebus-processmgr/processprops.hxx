@@ -60,7 +60,7 @@ struct PropIndices
     static constexpr Flag CmdLine = 7;
     static constexpr Flag Exe = 8;
 
-    static constexpr size_t FlagsCount = 8;
+    static constexpr size_t FlagsCount = 9;
 };
 
 
