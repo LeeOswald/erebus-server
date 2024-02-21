@@ -125,8 +125,15 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value
     void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
 };
 
-template <StringLiteral Format, bool Utc>
-struct UtcTimeFormatter
+
+enum class TimeZone
+{
+    Utc,
+    Local
+};
+
+template <StringLiteral Format, TimeZone Zone>
+struct TimeFormatter
 {
     static constexpr const char* format = fromStringLiteral<Format>();
 
@@ -134,7 +141,7 @@ struct UtcTimeFormatter
     {
         auto packed = std::any_cast<uint64_t>(v.value);
         Er::System::Time unpacked;
-        if constexpr (Utc)
+        if constexpr (Zone == TimeZone::Utc)
             unpacked = Er::System::Time::gmt(packed);
         else
             unpacked = Er::System::Time::local(packed);
