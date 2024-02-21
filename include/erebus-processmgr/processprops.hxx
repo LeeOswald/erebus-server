@@ -33,7 +33,7 @@ using Comm = PropertyInfo<std::string, ER_PROPID("process.comm"), "Program Name"
 using CmdLine = PropertyInfo<std::string, ER_PROPID("process.cmdline"), "Command Line", PropertyFormatter<std::string>>;
 using Exe = PropertyInfo<std::string, ER_PROPID("process.exe"), "Executable Name", PropertyFormatter<std::string>>;
 using StartTime = PropertyInfo<uint64_t, ER_PROPID("process.starttime"), "Start Time", UtcTimeFormatter<"%H:%M:%S %d/%b/%y", true>>;
-using State = PropertyInfo<char, ER_PROPID("process.state"), "State", PropertyFormatter<char>>;
+using State = PropertyInfo<std::string, ER_PROPID("process.state"), "State", PropertyFormatter<std::string>>;
 
 
 constexpr PropId IndexToProp[] =
