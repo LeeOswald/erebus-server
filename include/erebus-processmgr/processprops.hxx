@@ -32,6 +32,8 @@ using StatComm = PropertyInfo<std::string, ER_PROPID("process.stat_comm"), "Comm
 using Comm = PropertyInfo<std::string, ER_PROPID("process.comm"), "Program Name", PropertyFormatter<std::string>>;
 using CmdLine = PropertyInfo<std::string, ER_PROPID("process.cmdline"), "Command Line", PropertyFormatter<std::string>>;
 using Exe = PropertyInfo<std::string, ER_PROPID("process.exe"), "Executable Name", PropertyFormatter<std::string>>;
+using StartTime = PropertyInfo<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyFormatter<uint64_t>>;
+using State = PropertyInfo<char, ER_PROPID("process.state"), "State", PropertyFormatter<char>>;
 
 
 constexpr PropId IndexToProp[] =
@@ -45,6 +47,8 @@ constexpr PropId IndexToProp[] =
     /* 6*/ Comm::Id::value,
     /* 7*/ CmdLine::Id::value,
     /* 8*/ Exe::Id::value,
+    /* 9*/ StartTime::Id::value,
+    /*10*/ State::Id::value,
 };
 
 
@@ -59,8 +63,10 @@ struct PropIndices
     static constexpr Flag Comm = 6;
     static constexpr Flag CmdLine = 7;
     static constexpr Flag Exe = 8;
+    static constexpr Flag StartTime = 9;
+    static constexpr Flag State = 10;
 
-    static constexpr size_t FlagsCount = 9;
+    static constexpr size_t FlagsCount = 11;
 };
 
 

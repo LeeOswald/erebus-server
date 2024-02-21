@@ -40,6 +40,15 @@ Time Time::local() noexcept
 #endif
 }
 
+Time Time::local(uint64_t time) noexcept
+{
+    auto packed = static_cast<std::time_t>(time);
+    struct tm utcNow = {};
+    ::localtime_r(&packed, &utcNow);
+
+    return Time(utcNow.tm_year, utcNow.tm_mon, utcNow.tm_mday, utcNow.tm_hour, utcNow.tm_min, utcNow.tm_sec, 0);
+}
+
 Time Time::gmt() noexcept
 {
 #if ER_POSIX
@@ -69,6 +78,15 @@ Time Time::gmt() noexcept
 
     return Time(time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
 #endif
+}
+
+Time Time::gmt(uint64_t time) noexcept
+{
+    auto packed = static_cast<std::time_t>(time);
+    struct tm utcNow = {};
+    ::gmtime_r(&packed, &utcNow);
+
+    return Time(utcNow.tm_year, utcNow.tm_mon, utcNow.tm_mday, utcNow.tm_hour, utcNow.tm_min, utcNow.tm_sec, 0);
 }
 
 

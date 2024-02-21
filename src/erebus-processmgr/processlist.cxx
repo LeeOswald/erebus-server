@@ -107,6 +107,8 @@ Er::PropertyBag ProcessList::processDetails(uint64_t pid)
         bag.insert({ Er::ProcessProps::Session::Id::value, Er::Property(Er::ProcessProps::Session::Id::value, stat.session) });
         bag.insert({ Er::ProcessProps::Ruid::Id::value, Er::Property(Er::ProcessProps::Ruid::Id::value, stat.ruid) });
         bag.insert({ Er::ProcessProps::StatComm::Id::value, Er::Property(Er::ProcessProps::StatComm::Id::value, std::move(stat.comm)) });
+        bag.insert({ Er::ProcessProps::StartTime::Id::value, Er::Property(Er::ProcessProps::StartTime::Id::value, stat.startTime) });
+        bag.insert({ Er::ProcessProps::State::Id::value, Er::Property(Er::ProcessProps::State::Id::value, stat.state) });
 
         auto comm = m_procFs.readComm(pid);
         if (!comm.empty())
@@ -131,6 +133,9 @@ Er::PropertyBag ProcessList::kernelDetails()
     bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, true) });
     bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, ProcFs::KernelPid) });
     
+    auto bootTime = m_procFs.getBootTime();
+    bag.insert({ Er::ProcessProps::StartTime::Id::value, Er::Property(Er::ProcessProps::StartTime::Id::value, bootTime) });
+
     auto cmdLine = m_procFs.readCmdLine(ProcFs::KernelPid);
     if (!cmdLine.empty())
         bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });

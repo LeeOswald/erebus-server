@@ -40,7 +40,9 @@ struct EREBUS_EXPORT Time final
     constexpr Time(const Time&) noexcept = default;
     constexpr Time& operator=(const Time&) noexcept = default;
 
+    static Time local(uint64_t time) noexcept;
     static Time local() noexcept;
+    static Time gmt(uint64_t time) noexcept;
     static Time gmt() noexcept;
 };
 
