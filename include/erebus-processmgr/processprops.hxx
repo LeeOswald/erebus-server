@@ -32,7 +32,7 @@ using StatComm = PropertyInfo<std::string, ER_PROPID("process.stat_comm"), "Comm
 using Comm = PropertyInfo<std::string, ER_PROPID("process.comm"), "Program Name", PropertyFormatter<std::string>>;
 using CmdLine = PropertyInfo<std::string, ER_PROPID("process.cmdline"), "Command Line", PropertyFormatter<std::string>>;
 using Exe = PropertyInfo<std::string, ER_PROPID("process.exe"), "Executable Name", PropertyFormatter<std::string>>;
-using StartTime = PropertyInfo<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyFormatter<uint64_t>>;
+using StartTime = PropertyInfo<uint64_t, ER_PROPID("process.starttime"), "Start Time", UtcTimeFormatter<"%H:%M:%S %d/%b/%y", true>>;
 using State = PropertyInfo<char, ER_PROPID("process.state"), "State", PropertyFormatter<char>>;
 
 
@@ -91,6 +91,8 @@ inline void registerAll()
     registerProperty(std::make_shared<PropertyInfoWrapper<Comm>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<CmdLine>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<StartTime>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<State>>());
 }
 
 inline void unregisterAll()
@@ -108,6 +110,8 @@ inline void unregisterAll()
     unregisterProperty(lookupProperty(ProcessProps::Comm::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::CmdLine::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Exe::Id::value));
+    unregisterProperty(lookupProperty(ProcessProps::StartTime::Id::value));
+    unregisterProperty(lookupProperty(ProcessProps::State::Id::value));
 }
 
 } // namespace Private {}

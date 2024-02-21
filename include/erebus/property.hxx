@@ -1,9 +1,11 @@
 #pragma once
 
 #include <erebus/stringliteral.hxx>
+#include <erebus/system/time.hxx>
 #include <erebus/util/crc32.hxx>
 
 #include <any>
+#include <iomanip>
 #include <ostream>
 #include <typeinfo>
 #include <unordered_map>
@@ -123,6 +125,32 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value
     void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
 };
 
+template <StringLiteral Format, bool Utc>
+struct UtcTimeFormatter
+{
+    static constexpr const char* format = fromStringLiteral<Format>();
+
+    void operator()(const Property& v, std::ostream& s) 
+    {
+        auto packed = std::any_cast<uint64_t>(v.value);
+        Er::System::Time unpacked;
+        if constexpr (Utc)
+            unpacked = Er::System::Time::gmt(packed);
+        else
+            unpacked = Er::System::Time::local(packed);
+
+        struct tm t = {};
+        t.tm_year = unpacked.year;
+        t.tm_mon = unpacked.month;
+        t.tm_mday = unpacked.day;
+        t.tm_hour = unpacked.hour;
+        t.tm_min = unpacked.minute;
+        t.tm_sec = unpacked.second;
+
+        std::basic_ostringstream<char> ss;
+        ss << std::put_time(&t, format);
+    }
+};
 
 struct IPropertyInfo
 {

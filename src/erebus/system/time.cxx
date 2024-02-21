@@ -44,7 +44,11 @@ Time Time::local(uint64_t time) noexcept
 {
     auto packed = static_cast<std::time_t>(time);
     struct tm utcNow = {};
+#if ER_POSIX
     ::localtime_r(&packed, &utcNow);
+#elif ER_WINDOWS
+    ::localtime_s(&utcNow, &packed);
+#endif
 
     return Time(utcNow.tm_year, utcNow.tm_mon, utcNow.tm_mday, utcNow.tm_hour, utcNow.tm_min, utcNow.tm_sec, 0);
 }
@@ -84,7 +88,11 @@ Time Time::gmt(uint64_t time) noexcept
 {
     auto packed = static_cast<std::time_t>(time);
     struct tm utcNow = {};
+#if ER_POSIX
     ::gmtime_r(&packed, &utcNow);
+#elif ER_WINDOWS
+    ::gmtime_s(&utcNow, &packed);
+#endif
 
     return Time(utcNow.tm_year, utcNow.tm_mon, utcNow.tm_mday, utcNow.tm_hour, utcNow.tm_min, utcNow.tm_sec, 0);
 }
