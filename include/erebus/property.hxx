@@ -147,8 +147,7 @@ struct UtcTimeFormatter
         t.tm_min = unpacked.minute;
         t.tm_sec = unpacked.second;
 
-        std::basic_ostringstream<char> ss;
-        ss << std::put_time(&t, format);
+        s << std::put_time(&t, format);
     }
 };
 
