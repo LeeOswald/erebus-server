@@ -89,8 +89,11 @@ Er::PropertyBag ProcessList::processDetails(uint64_t pid)
     Er::PropertyBag bag;
 
     auto stat = m_procFs.readStat(pid);
+    assert(stat.pid != ProcFs::InvalidPid); // PID is always valid
+
     if (!stat.valid)
     {
+        bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, stat.pid) }); 
         bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, false) });
         bag.insert({ Er::ProcessProps::Error::Id::value, Er::Property(Er::ProcessProps::Error::Id::value, std::move(stat.error)) });
     }
