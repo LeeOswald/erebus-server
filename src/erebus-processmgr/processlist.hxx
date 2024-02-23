@@ -1,7 +1,9 @@
 #pragma once
 
 #include <erebus-processmgr/processmgr.hxx>
+#include <erebus-processmgr/processprops.hxx>
 #include <erebus-processmgr/procfs.hxx>
+
 
 #include <chrono>
 #include <shared_mutex>
@@ -49,18 +51,21 @@ private:
     struct ProcessListStream final
         : public Stream
     {
-        explicit ProcessListStream(StreamId id, std::vector<uint64_t>&& pids) noexcept
+        explicit ProcessListStream(StreamId id, Er::ProcessProps::PropMask required, std::vector<uint64_t>&& pids) noexcept
             : Stream(StreamType::ProcessList, id)
+            , required(required)
             , pids(std::move(pids))
         {}
 
+        Er::ProcessProps::PropMask required;
         std::vector<uint64_t> pids;
         size_t next = 0;
     };
 
-    Er::PropertyBag processDetails(const Er::PropertyBag& args);
-    Er::PropertyBag processDetails(uint64_t pid);
-    Er::PropertyBag kernelDetails();
+    static Er::ProcessProps::PropMask getPropMask(const Er::PropertyBag& args);
+    Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required);
+    Er::PropertyBag processDetails(uint64_t pid, Er::ProcessProps::PropMask required);
+    Er::PropertyBag kernelDetails(Er::ProcessProps::PropMask required);
 
     void dropStaleStreams() noexcept;
 

@@ -66,7 +66,7 @@ struct PropIndices
     static constexpr Flag StartTime = 9;
     static constexpr Flag State = 10;
 
-    static constexpr size_t FlagsCount = 11;
+    static constexpr size_t FlagsCount = 64;
 };
 
 
