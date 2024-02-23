@@ -76,7 +76,7 @@ Er::PropertyBag ProcessList::next(StreamId id)
 Er::ProcessProps::PropMask ProcessList::getPropMask(const Er::PropertyBag& args)
 {
     auto it = args.find(Er::ProcessProps::RequiredFields::Id::value);
-    if (it != args.end())
+    if (it == args.end())
     {
         // default mask - everything included
         return Er::ProcessProps::PropMask(0xffffffffffffffff, Er::ProcessProps::PropMask::FromBits);
