@@ -82,7 +82,7 @@ struct ResultCodeFormatter
 namespace Props
 {
 
-using ResultCode = PropertyInfo<ResultCode, ER_PROPID("erebus.ResultCode"), "Erebus error code", ResultCodeFormatter>;
+using ResultCode = PropertyValue<ResultCode, ER_PROPID("erebus.ResultCode"), "Erebus error code", PropertyComparator<Er::Client::ResultCode>, ResultCodeFormatter>;
 
 } // namespace Props {}
 

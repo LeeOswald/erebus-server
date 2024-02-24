@@ -45,4 +45,12 @@ inline IPropertyInfo* cachePropertyInfo(Property& prop) noexcept
     return prop.info;
 }
 
+inline void cachePropertyInfo(PropertyBag& bag) noexcept
+{
+    for (auto& prop: bag)
+    {
+        cachePropertyInfo(prop.second);
+    }
+}
+
 } // namespace Er {}

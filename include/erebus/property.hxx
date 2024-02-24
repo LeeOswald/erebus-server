@@ -18,20 +18,14 @@ using PropId = uint32_t;
 constexpr PropId InvalidPropId = PropId(-1);
 
 
-template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
-class PropertyInfo final
+template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT, class FormatterT>
+class PropertyInfo
 {
 public:
     using ValueType = ValueT;
     using Id = std::integral_constant<PropId, PrId>;
+    using Comparator = ComparatorT;
     using Formatter = FormatterT;
-
-    PropertyInfo() noexcept = default;
-
-    template <typename T>
-    explicit constexpr PropertyInfo(T&& value) noexcept
-        : m_value(std::forward<T>(value))
-    {}
 
     static constexpr const std::type_info& type() noexcept
     {
@@ -48,6 +42,31 @@ public:
         return fromStringLiteral<PrIdStr>();
     }
     
+    static constexpr const char* name() noexcept
+    {
+        return fromStringLiteral<PrName>();
+    }
+};
+
+
+template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT, class FormatterT>
+class PropertyValue final
+    : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
+{
+public:
+    using Base = PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>;
+    using ValueType = Base::ValueType;
+    using Id = Base::Id;
+    using Comparator = ComparatorT;
+    using Formatter = Base::Formatter;
+
+    PropertyValue() noexcept = default;
+
+    template <typename T>
+    explicit constexpr PropertyValue(T&& value) noexcept
+        : m_value(std::forward<T>(value))
+    {}
+
     constexpr ValueType&& value() && noexcept
     {
         return std::move(m_value);
@@ -56,17 +75,6 @@ public:
     constexpr ValueType& value() & noexcept
     {
         return m_value;
-    }
-
-    static constexpr const char* name() noexcept
-    {
-        return fromStringLiteral<PrName>();
-    }
-
-    void format(std::ostream& strem) const
-    {
-        Formatter f;
-        f(m_value, strem);
     }
 
 private:
@@ -96,6 +104,16 @@ struct Property
     PropId id = InvalidPropId;
     std::any value;
     IPropertyInfo* info = nullptr;
+};
+
+
+template <typename T, typename = void>
+struct PropertyComparator;
+
+template <std::equality_comparable T>
+struct PropertyComparator<T>
+{
+    bool operator()(const Property& a, const Property& b) { return std::any_cast<T>(a.value) == std::any_cast<T>(b.value); }
 };
 
 
@@ -162,11 +180,12 @@ struct IPropertyInfo
 {
     using Ptr = std::shared_ptr<IPropertyInfo>;
 
-    virtual const std::type_info& type() const = 0;
-    virtual PropId id() const = 0;
-    virtual const char* idstr() const = 0;
-    virtual const char* name() const = 0;
-    virtual void format(const Property& v, std::ostream& s) = 0;
+    virtual const std::type_info& type() const noexcept = 0;
+    virtual PropId id() const noexcept = 0;
+    virtual const char* idstr() const noexcept = 0;
+    virtual const char* name() const noexcept = 0;
+    virtual void format(const Property& v, std::ostream& s) const = 0;
+    virtual bool equal(const Property& a, const Property& b) const noexcept = 0;
 
 protected:
     virtual ~IPropertyInfo() {}
@@ -178,32 +197,39 @@ struct PropertyInfoWrapper
     : public IPropertyInfo
 {
     using PropertyInfo = PropertyInfoT;
+    using Comparator = typename PropertyInfo::Comparator;
     using Formatter = typename PropertyInfo::Formatter;
 
-    const std::type_info& type() const override
+    const std::type_info& type() const noexcept override
     {
         return PropertyInfo::type();
     }
 
-    PropId id() const override
+    PropId id() const noexcept override
     {
         return PropertyInfo::id();
     }
 
-    const char* idstr() const override
+    const char* idstr() const noexcept override
     {
         return PropertyInfo::idstr();
     }
 
-    const char* name() const override
+    const char* name() const noexcept override
     {
         return PropertyInfo::name();
     }
 
-    void format(const Property& v, std::ostream& s) override
+    void format(const Property& v, std::ostream& s) const override
     {
         Formatter f;
         f(v, s);
+    }
+
+    bool equal(const Property& a, const Property& b) const noexcept override
+    {
+        Comparator c;
+        return c(a, b);
     }
 };
 

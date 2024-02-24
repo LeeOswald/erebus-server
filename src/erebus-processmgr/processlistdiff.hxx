@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <unordered_map>
+#include <vector>
 
 namespace Er
 {
@@ -35,10 +36,20 @@ struct ProcessCollection
 };
 
 
+using PropertyRefs = std::vector<const Er::Property*>;
+
+struct ProcessCollectionDiff
+{
+    std::vector<uint64_t> removed;
+    std::vector<PropertyRefs> modified;
+};
+
 Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required);
 Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required);
 
 std::unique_ptr<ProcessCollection> gatherProcessCollection(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required);
+
+PropertyRefs diffProcessData(const Er::PropertyBag& prev, const Er::PropertyBag& curr);
 
 
 } // namespace Private {}

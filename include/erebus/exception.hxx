@@ -20,9 +20,9 @@ void registerAll();
 } // namespace Private {}
 
 
-using DecodedError = PropertyInfo<std::string, ER_PROPID("decoded_error"), "Error message", PropertyFormatter<std::string>>;
-using PosixErrorCode = PropertyInfo<int32_t, ER_PROPID("posix_error_code"), "POSIX error code", PropertyFormatter<int32_t>>;
-using Win32ErrorCode = PropertyInfo<uint32_t, ER_PROPID("win32_error_code"), "WIN32 error code", PropertyFormatter<uint32_t>>;
+using DecodedError = PropertyValue<std::string, ER_PROPID("decoded_error"), "Error message", PropertyComparator<std::string>, PropertyFormatter<std::string>>;
+using PosixErrorCode = PropertyValue<int32_t, ER_PROPID("posix_error_code"), "POSIX error code", PropertyComparator<int32_t>, PropertyFormatter<int32_t>>;
+using Win32ErrorCode = PropertyValue<uint32_t, ER_PROPID("win32_error_code"), "WIN32 error code", PropertyComparator<uint32_t>, PropertyFormatter<uint32_t>>;
 
 
 } // ExceptionProps {}

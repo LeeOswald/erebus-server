@@ -1,5 +1,7 @@
 #include "processlistdiff.hxx"
 
+#include <erebus/exception.hxx>
+#include <erebus/util/format.hxx>
 
 namespace Er
 {
@@ -101,13 +103,56 @@ std::unique_ptr<ProcessCollection> gatherProcessCollection(Er::ProcFs::ProcFs& s
     auto now = std::chrono::steady_clock::now();
 
     auto list = std::make_unique<ProcessCollection>();
+    
+    auto kernel = collectKernelDetails(source, required);
+    Er::cachePropertyInfo(kernel);
+
+    list->processes.insert({ Er::ProcFs::KernelPid, std::make_unique<ProcessData>(now, std::move(kernel)) });
 
     auto pids = source.enumeratePids();
-    
-    
+    for (auto pid: pids)
+    {
+        auto process = collectProcessDetails(source, pid, required);
+        Er::cachePropertyInfo(process);
+
+        list->processes.insert({ pid, std::make_unique<ProcessData>(now, std::move(process)) });
+    }    
 
     return list;
 }
+
+PropertyRefs diffProcessData(const Er::PropertyBag& prev, const Er::PropertyBag& curr)
+{
+    PropertyRefs diff;
+    diff.reserve(curr.size()); // do not track properties that have wanished
+
+    for (auto& prop: curr)
+    {
+        auto id = prop.first;
+        auto it = prev.find(id);
+        if (it == prev.end())
+        {
+            // the property has wanished O_o
+            diff.push_back(&prop.second);
+        }
+        else
+        {
+            // compare property values
+            auto pi = Er::getPropertyInfo(prop.second);
+            if (!pi)
+                throw Er::Exception(ER_HERE(), Er::Util::format("Unknown property #%08x", prop.first));
+
+            if (!pi->equal(it->second, prop.second))
+            {
+                diff.push_back(&prop.second);
+            }
+        }
+    }
+
+    return diff;
+}
+
+
 
 
 } // namespace Private {}

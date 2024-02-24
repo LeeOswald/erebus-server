@@ -20,21 +20,21 @@ static const std::string_view ProcessDetails = "ProcessDetails";
 namespace ProcessProps
 {
 
-using RequiredFields = PropertyInfo<uint64_t, ER_PROPID("process.fields"), "__Fields", PropertyFormatter<uint64_t>>;
-using Error = PropertyInfo<std::string, ER_PROPID("process.error"), "__Error", PropertyFormatter<std::string>>;
-using Valid = PropertyInfo<bool, ER_PROPID("process.valid"), "__Valid", PropertyFormatter<bool>>;
-using Pid = PropertyInfo<uint64_t, ER_PROPID("process.pid"), "PID", PropertyFormatter<uint64_t>>;
-using PPid = PropertyInfo<uint64_t, ER_PROPID("process.ppid"), "Parent PID", PropertyFormatter<uint64_t>>;
-using PGrp = PropertyInfo<uint64_t, ER_PROPID("process.pgrp"), "Process Group ID", PropertyFormatter<uint64_t>>;
-using Tpgid = PropertyInfo<uint64_t, ER_PROPID("process.tpgid"), "Process Group ID of the Terminal", PropertyFormatter<uint64_t>>;
-using Session = PropertyInfo<uint64_t, ER_PROPID("process.session"), "Session ID", PropertyFormatter<uint64_t>>;
-using Ruid = PropertyInfo<uint64_t, ER_PROPID("process.ruid"), "User ID", PropertyFormatter<uint64_t>>;
-using StatComm = PropertyInfo<std::string, ER_PROPID("process.stat_comm"), "Command Name", PropertyFormatter<std::string>>;
-using Comm = PropertyInfo<std::string, ER_PROPID("process.comm"), "Program Name", PropertyFormatter<std::string>>;
-using CmdLine = PropertyInfo<std::string, ER_PROPID("process.cmdline"), "Command Line", PropertyFormatter<std::string>>;
-using Exe = PropertyInfo<std::string, ER_PROPID("process.exe"), "Executable Name", PropertyFormatter<std::string>>;
-using StartTime = PropertyInfo<uint64_t, ER_PROPID("process.starttime"), "Start Time", TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
-using State = PropertyInfo<std::string, ER_PROPID("process.state"), "State", PropertyFormatter<std::string>>;
+using RequiredFields = PropertyValue<uint64_t, ER_PROPID("process.fields"), "__Fields", PropertyComparator<uint64_t>, PropertyFormatter<uint64_t>>;
+using Error = PropertyValue<std::string, ER_PROPID("process.error"), "__Error", PropertyComparator<std::string>, PropertyFormatter<std::string>>;
+using Valid = PropertyValue<bool, ER_PROPID("process.valid"), "__Valid", PropertyComparator<bool>, PropertyFormatter<bool>>;
+using Pid = PropertyValue<uint64_t, ER_PROPID("process.pid"), "PID", PropertyComparator<uint64_t>, PropertyFormatter<uint64_t>>;
+using PPid = PropertyValue<uint64_t, ER_PROPID("process.ppid"), "Parent PID", PropertyComparator<uint64_t>, PropertyFormatter<uint64_t>>;
+using PGrp = PropertyValue<uint64_t, ER_PROPID("process.pgrp"), "Process Group ID", PropertyComparator<uint64_t>, PropertyFormatter<uint64_t>>;
+using Tpgid = PropertyValue<uint64_t, ER_PROPID("process.tpgid"), "Process Group ID of the Terminal", PropertyComparator<uint64_t>, PropertyFormatter<uint64_t>>;
+using Session = PropertyValue<uint64_t, ER_PROPID("process.session"), "Session ID", PropertyComparator<uint64_t>, PropertyFormatter<uint64_t>>;
+using Ruid = PropertyValue<uint64_t, ER_PROPID("process.ruid"), "User ID", PropertyComparator<uint64_t>, PropertyFormatter<uint64_t>>;
+using StatComm = PropertyValue<std::string, ER_PROPID("process.stat_comm"), "Command Name", PropertyComparator<std::string>, PropertyFormatter<std::string>>;
+using Comm = PropertyValue<std::string, ER_PROPID("process.comm"), "Program Name", PropertyComparator<std::string>, PropertyFormatter<std::string>>;
+using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Command Line", PropertyComparator<std::string>, PropertyFormatter<std::string>>;
+using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable Name", PropertyComparator<std::string>, PropertyFormatter<std::string>>;
+using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
+using State = PropertyValue<std::string, ER_PROPID("process.state"), "State", PropertyComparator<std::string>, PropertyFormatter<std::string>>;
 
 
 constexpr PropId IndexToProp[] =
