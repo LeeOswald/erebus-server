@@ -42,6 +42,7 @@ public:
         for (auto container: m_params.containers)
         {
             container->registerService(Er::ProcessRequests::ListProcesses, m_processList.get());
+            container->registerService(Er::ProcessRequests::ListProcessesDiff, m_processList.get());
             container->registerService(Er::ProcessRequests::ProcessDetails, m_processList.get());
         }
 

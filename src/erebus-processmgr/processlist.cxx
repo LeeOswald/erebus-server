@@ -23,7 +23,50 @@ ProcessList::ProcessList(Er::Log::ILog* log)
     LogDebug(m_log, LogInstance("ProcessList"), "ProcessList()");
 }
 
-Er::PropertyBag ProcessList::request(const std::string& request, const Er::PropertyBag& args)
+ProcessList::SessionId ProcessList::allocateSession()
+{
+    std::unique_lock l(m_mutex);
+    auto id = m_nextSessionId++;
+
+    m_sessions.insert({ id, std::make_unique<Session>(id) });
+
+    LogDebug(m_log, LogInstance("ProcessList"), "Started session %d", id);
+
+    return id;
+}
+
+void ProcessList::deleteSession(SessionId id)
+{
+    std::unique_lock l(m_mutex);
+
+    auto it = m_sessions.find(id);
+    if (it == m_sessions.end())
+        throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent session %d", id));
+
+    m_sessions.erase(it);
+
+    dropStaleSessions();
+
+    LogDebug(m_log, LogInstance("ProcessList"), "Ended session %d", id);    
+}
+
+ProcessList::Session* ProcessList::getSesstion(std::optional<SessionId> id) noexcept
+{
+    if (!id)
+        return nullptr;
+
+    std::shared_lock l(m_mutex);
+
+    auto it = m_sessions.find(*id);
+    if (it == m_sessions.end())
+        return nullptr;
+
+    it->second->touched = std::chrono::steady_clock::now();
+
+    return it->second.get();
+}
+
+Er::PropertyBag ProcessList::request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
 {
     if (request == Er::ProcessRequests::ProcessDetails)
     {
@@ -31,18 +74,18 @@ Er::PropertyBag ProcessList::request(const std::string& request, const Er::Prope
         return processDetails(args, required);
     }
 
-    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", request.c_str()));
+    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-ProcessList::StreamId ProcessList::beginStream(const std::string& request, const Er::PropertyBag& args)
+ProcessList::StreamId ProcessList::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
 {
     if (request == Er::ProcessRequests::ListProcesses)
         return beginProcessStream(args);
 
-    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", request.c_str()));
+    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-void ProcessList::endStream(StreamId id)
+void ProcessList::endStream(StreamId id, std::optional<SessionId> sessionId)
 {
     std::unique_lock l(m_mutex);
 
@@ -57,7 +100,7 @@ void ProcessList::endStream(StreamId id)
     LogDebug(m_log, LogInstance("ProcessList"), "Ended stream %d", id);    
 }
 
-Er::PropertyBag ProcessList::next(StreamId id)
+Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionId)
 {
     std::shared_lock l(m_mutex);
     auto it = m_streams.find(id);
@@ -94,98 +137,9 @@ Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::Pro
 
     auto pid = std::any_cast<Er::ProcessProps::Pid::ValueType>(it->second.value);
     if (pid == ProcFs::KernelPid)
-        return kernelDetails(required);
+        return collectKernelDetails(m_procFs, required);
         
-    return processDetails(pid, required);
-}
-
-Er::PropertyBag ProcessList::processDetails(uint64_t pid, Er::ProcessProps::PropMask required)
-{
-    Er::PropertyBag bag;
-
-    auto stat = m_procFs.readStat(pid);
-    assert(stat.pid != ProcFs::InvalidPid); // PID is always valid
-
-    if (!stat.valid)
-    {
-        bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, stat.pid) }); 
-        bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, false) });
-        bag.insert({ Er::ProcessProps::Error::Id::value, Er::Property(Er::ProcessProps::Error::Id::value, std::move(stat.error)) });
-    }
-    else
-    {
-        bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, true) });
-        bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, stat.pid) });
-        bag.insert({ Er::ProcessProps::PPid::Id::value, Er::Property(Er::ProcessProps::PPid::Id::value, stat.ppid) });
-        
-        if (required[Er::ProcessProps::PropIndices::PGrp])
-            bag.insert({ Er::ProcessProps::PGrp::Id::value, Er::Property(Er::ProcessProps::PGrp::Id::value, stat.pgrp) });
-
-        if (required[Er::ProcessProps::PropIndices::Tpgid])
-            if (stat.tpgid != std::numeric_limits<uint64_t>::max())
-                bag.insert({ Er::ProcessProps::Tpgid::Id::value, Er::Property(Er::ProcessProps::Tpgid::Id::value, stat.tpgid) });
-        
-        if (required[Er::ProcessProps::PropIndices::Session])
-            bag.insert({ Er::ProcessProps::Session::Id::value, Er::Property(Er::ProcessProps::Session::Id::value, stat.session) });
-        
-        if (required[Er::ProcessProps::PropIndices::Ruid])
-            bag.insert({ Er::ProcessProps::Ruid::Id::value, Er::Property(Er::ProcessProps::Ruid::Id::value, stat.ruid) });
-        
-        if (required[Er::ProcessProps::PropIndices::StartTime])
-            bag.insert({ Er::ProcessProps::StartTime::Id::value, Er::Property(Er::ProcessProps::StartTime::Id::value, stat.startTime) });
-        
-        if (required[Er::ProcessProps::PropIndices::State])
-        {
-            std::string state({ stat.state });
-            bag.insert({ Er::ProcessProps::State::Id::value, Er::Property(Er::ProcessProps::State::Id::value, std::move(state)) });
-        }
-
-        if (required[Er::ProcessProps::PropIndices::Comm])
-        {
-            auto comm = m_procFs.readComm(pid);
-            if (!comm.empty())
-                bag.insert({ Er::ProcessProps::Comm::Id::value, Er::Property(Er::ProcessProps::Comm::Id::value, std::move(comm)) });
-        }
-
-        if (required[Er::ProcessProps::PropIndices::CmdLine])
-        {
-            auto cmdLine = m_procFs.readCmdLine(pid);
-            if (!cmdLine.empty())
-                bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });
-        }
-
-        if (required[Er::ProcessProps::PropIndices::Exe])
-        {
-            auto exe = m_procFs.readExePath(pid);
-            if (!exe.empty())
-                bag.insert({ Er::ProcessProps::Exe::Id::value, Er::Property(Er::ProcessProps::Exe::Id::value, std::move(exe)) });
-        }
-    }
-
-    return bag;
-}
-
-Er::PropertyBag ProcessList::kernelDetails(Er::ProcessProps::PropMask required)
-{
-    Er::PropertyBag bag;
-
-    bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, true) });
-    bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, ProcFs::KernelPid) });
-    
-    if (required[Er::ProcessProps::PropIndices::StartTime])
-    {
-        auto bootTime = m_procFs.getBootTime();
-        bag.insert({ Er::ProcessProps::StartTime::Id::value, Er::Property(Er::ProcessProps::StartTime::Id::value, bootTime) });
-    }
-
-    if (required[Er::ProcessProps::PropIndices::CmdLine])
-    {
-        auto cmdLine = m_procFs.readCmdLine(ProcFs::KernelPid);
-        if (!cmdLine.empty())
-            bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });
-    }
-
-    return bag;
+    return collectProcessDetails(m_procFs, pid, required);
 }
 
 void ProcessList::dropStaleStreams() noexcept
@@ -200,6 +154,27 @@ void ProcessList::dropStaleStreams() noexcept
             auto next = std::next(it);
             LogWarning(m_log, LogInstance("ProcessList"), "Dropping stale stream %d", it->first);
             m_streams.erase(it);
+            it = next;
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+void ProcessList::dropStaleSessions() noexcept
+{
+    auto now = std::chrono::steady_clock::now();
+
+    for (auto it = m_sessions.begin(); it != m_sessions.end();)
+    {
+        auto d = std::chrono::duration_cast<std::chrono::seconds>(now - it->second->touched);
+        if (d.count() > kSessionTimeoutSeconds)
+        {
+            auto next = std::next(it);
+            LogWarning(m_log, LogInstance("ProcessList"), "Dropping stale session %d", it->first);
+            m_sessions.erase(it);
             it = next;
         }
         else
@@ -232,7 +207,7 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
     if (stream->next >= stream->pids.size())
         return Er::PropertyBag(); // end of stream
 
-    auto bag = processDetails(stream->pids[stream->next], stream->required);
+    auto bag = collectProcessDetails(m_procFs, stream->pids[stream->next], stream->required);
 
     Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
 

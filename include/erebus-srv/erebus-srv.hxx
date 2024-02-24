@@ -27,12 +27,15 @@ namespace Server
 
 struct IService
 {
+    using SessionId = uint32_t;
     using StreamId = uint32_t;
-
-    virtual Er::PropertyBag request(const std::string& request, const Er::PropertyBag& args) = 0; 
-    virtual StreamId beginStream(const std::string& request, const Er::PropertyBag& args) = 0;
-    virtual void endStream(StreamId id) = 0;
-    virtual Er::PropertyBag next(StreamId id) = 0;
+    
+    virtual SessionId allocateSession() = 0;
+    virtual void deleteSession(SessionId id) = 0;
+    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) = 0; 
+    virtual StreamId beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) = 0;
+    virtual void endStream(StreamId id, std::optional<SessionId> sessionId) = 0;
+    virtual Er::PropertyBag next(StreamId id, std::optional<SessionId> sessionId) = 0;
 
 protected:
     virtual ~IService() {}
@@ -41,7 +44,7 @@ protected:
 
 struct IServiceContainer
 {
-    virtual void registerService(const std::string& request, IService* service) = 0;
+    virtual void registerService(std::string_view request, IService* service) = 0;
     virtual void unregisterService(IService* service) = 0;
 
 protected:

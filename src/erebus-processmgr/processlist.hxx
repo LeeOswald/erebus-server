@@ -4,6 +4,7 @@
 #include <erebus-processmgr/processprops.hxx>
 #include <erebus-processmgr/procfs.hxx>
 
+#include "processlistdiff.hxx"
 
 #include <chrono>
 #include <shared_mutex>
@@ -24,12 +25,27 @@ public:
     ~ProcessList();
     explicit ProcessList(Er::Log::ILog* log);
 
-    Er::PropertyBag request(const std::string& request, const Er::PropertyBag& args) override; 
-    StreamId beginStream(const std::string& request, const Er::PropertyBag& args) override;
-    void endStream(StreamId id) override;
-    Er::PropertyBag next(StreamId id) override;
+    SessionId allocateSession() override;
+    void deleteSession(SessionId id)  override;
+    Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override; 
+    StreamId beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override;
+    void endStream(StreamId id, std::optional<SessionId> sessionId) override;
+    Er::PropertyBag next(StreamId id, std::optional<SessionId> sessionId) override;
 
 private:
+    struct Session
+        : public Er::NonCopyable
+    {
+        std::chrono::steady_clock::time_point touched = std::chrono::steady_clock::now();
+        SessionId id;
+
+
+
+        explicit Session(SessionId id) noexcept
+            : id(id)
+        {}
+    };
+
     enum class StreamType
     {
         ProcessList
@@ -64,20 +80,24 @@ private:
 
     static Er::ProcessProps::PropMask getPropMask(const Er::PropertyBag& args);
     Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required);
-    Er::PropertyBag processDetails(uint64_t pid, Er::ProcessProps::PropMask required);
-    Er::PropertyBag kernelDetails(Er::ProcessProps::PropMask required);
+
+    Session* getSesstion(std::optional<SessionId> id) noexcept;
+    void dropStaleSessions() noexcept;
 
     void dropStaleStreams() noexcept;
 
     StreamId beginProcessStream(const Er::PropertyBag& args);
     Er::PropertyBag nextProcess(ProcessListStream* stream);
 
+    const unsigned kSessionTimeoutSeconds = 60 * 60;
     const unsigned kStreamTimeoutSeconds = 60;
 
     Er::Log::ILog* m_log;
     Er::ProcFs::ProcFs m_procFs;
     std::shared_mutex m_mutex;
+    SessionId m_nextSessionId = 0;
     StreamId m_nextStreamId = 0;
+    std::unordered_map<StreamId, std::unique_ptr<Session>> m_sessions;
     std::unordered_map<StreamId, std::unique_ptr<Stream>> m_streams;
 };
 

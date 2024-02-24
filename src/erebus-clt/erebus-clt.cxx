@@ -63,7 +63,7 @@ public:
         checkAuth();
     }
 
-    void addUser(const std::string& name, const std::string& password) override
+    void addUser(std::string_view name, std::string_view password) override
     {
         auto salt = makeSalt();
         Er::Util::Sha256 sha;
@@ -71,7 +71,7 @@ public:
         sha.update(password);
 
         erebus::AddUserRequest request;
-        request.set_name(name);
+        request.set_name(std::string(name));
         request.set_salt(salt);
         request.set_pwd(sha.str(sha.digest()));
 
@@ -83,10 +83,10 @@ public:
         throwIfFailed(status, &reply);
     }
 
-    void removeUser(const std::string& name) override
+    void removeUser(std::string_view name) override
     {
         erebus::RemoveUserRequest request;
-        request.set_name(name);
+        request.set_name(std::string(name));
 
         erebus::GenericReply reply;
         grpc::ClientContext context;
@@ -149,10 +149,10 @@ public:
         return Version(reply.major(), reply.minor(), reply.patch());
     }
 
-    Er::PropertyBag request(const std::string& req, const Er::PropertyBag& args) override
+    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args) override
     {
         erebus::ServiceRequest request;
-        request.set_request(req);
+        request.set_request(std::string(req));
 
         // marshal properties
         for (auto& arg: args)
@@ -227,10 +227,10 @@ public:
         return bag;
     }
 
-    std::vector<Er::PropertyBag> requestStream(const std::string& req, const Er::PropertyBag& args) override
+    std::vector<Er::PropertyBag> requestStream(std::string_view req, const Er::PropertyBag& args) override
     {
         erebus::ServiceRequest request;
-        request.set_request(req);
+        request.set_request(std::string(req));
 
         // marshal properties
         for (auto& arg: args)

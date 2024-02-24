@@ -11,8 +11,9 @@ namespace Er
 namespace ProcessRequests
 {
 
-static const std::string ListProcesses = "ListProcesses";
-static const std::string ProcessDetails = "ProcessDetails";
+static const std::string_view ListProcesses = "ListProcesses";
+static const std::string_view ListProcessesDiff = "ListProcessesDiff";
+static const std::string_view ProcessDetails = "ProcessDetails";
 
 } // namespace ProcessRequests {}
 

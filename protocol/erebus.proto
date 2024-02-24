@@ -14,6 +14,8 @@ service Erebus {
   rpc RemoveUser(RemoveUserRequest) returns(GenericReply) {}
   rpc Exit(ExitRequest) returns(GenericReply) {}
   rpc Version(Void) returns(ServerVersionReply) {}
+  rpc AllocateSession(AllocateSessionRequest) returns(AllocateSessionReply) {}
+  rpc DeleteSession(DeleteSessionRequest) returns(GenericReply) {}
   rpc GenericRpc(ServiceRequest) returns(ServiceReply) {}
   rpc GenericStream(ServiceRequest) returns(stream ServiceReply) {}
 }
@@ -68,12 +70,28 @@ message ExitRequest {
   bool restart = 1;
 }
 
+message AllocateSessionRequest {
+  string request = 1; // used as a request handler ID
+}
+
+message AllocateSessionReply {
+  GenericReply header = 1;
+  uint32 SessionId = 2;
+}
+
+message DeleteSessionRequest {
+  string request = 1; // used as a request handler ID
+  uint32 SessionId = 2;
+}
+
 message ServiceRequest {
   string request = 1;
-  repeated Property args = 2;
+  optional uint32 sessionId = 2;
+  repeated Property args = 3;
 }
 
 message ServiceReply {
   GenericReply header = 1;
-  repeated Property props = 2;
+  optional uint32 sessionId = 2;
+  repeated Property props = 3;
 }

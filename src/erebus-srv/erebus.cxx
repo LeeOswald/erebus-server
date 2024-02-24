@@ -45,17 +45,19 @@ public:
         return this;
     }
 
-    void registerService(const std::string& request, IService* service) override
+    void registerService(std::string_view request, IService* service) override
     {
         std::lock_guard l(m_servicesLock);
 
-        auto it = m_services.find(request);
+        std::string id(request);
+        auto it = m_services.find(id);
         if (it != m_services.end())
-            throw Er::Exception(ER_HERE(), Er::Util::format("Service for [%s] is already registered", request.c_str()));
+            throw Er::Exception(ER_HERE(), Er::Util::format("Service for [%s] is already registered", id.c_str()));
 
-        m_services.insert({ request, service });
         
-        LogInfo(m_params.log, LogInstance("ErebusService"), "Registered service %p for [%s]", service, request.c_str());
+        LogInfo(m_params.log, LogInstance("ErebusService"), "Registered service %p for [%s]", service, id.c_str());
+
+        m_services.insert({ std::move(id), service });
     }
 
     void unregisterService(IService* service) override
@@ -97,6 +99,8 @@ private:
         createRemoveUserRpc();
         createListUsersRpc();
         createExitRpc();
+        createAllocateSessionRpc();
+        createDeleteSessionRpc();
         createGenericRpc();
         createGenericStream();
     }
@@ -443,6 +447,123 @@ private:
         m_params.exitCondition->set(true);
     }
 
+    void createAllocateSessionRpc()
+    {
+        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::AllocateSessionRequest, erebus::AllocateSessionReply> rpcHandlers;
+
+        rpcHandlers.createRpc = std::bind(&ErebusService::createAllocateSessionRpc, this);
+
+        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processAllocateSessionRpc(rpc, message); };
+        rpcHandlers.done = &genericDone;
+
+        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestAllocateSession;
+
+        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::AllocateSessionRequest, erebus::AllocateSessionReply>(&m_service, m_queue.get(), rpcHandlers);
+    }
+
+    void processAllocateSessionRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    {
+        auto request = static_cast<const erebus::AllocateSessionRequest*>(message);
+        erebus::AllocateSessionReply response;
+
+        if (!checkAuth(rpc))
+            return;
+
+        std::shared_lock l(m_servicesLock);
+        
+        auto& serviceId = request->request();
+
+        auto it = m_services.find(serviceId);
+        if (it == m_services.end())
+        {
+            m_params.log->write(Er::Log::Level::Error, LogInstance("ErebusService"), "No handlers for [%s]", serviceId.c_str());
+            rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
+            return;
+        }
+
+        auto service = it->second;
+
+        try
+        {
+            auto sessionId = service->allocateSession();
+            response.set_sessionid(sessionId);
+            response.mutable_header()->set_code(erebus::Success);
+        }
+        catch (Er::Exception& e)
+        {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
+            response.mutable_header()->set_code(erebus::Failure);
+            marshalException(response.mutable_header(), e);
+        }
+        catch (std::exception& e)
+        {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
+            response.mutable_header()->set_code(erebus::Failure);
+            marshalException(response.mutable_header(), e);
+        }
+        
+        rpc.sendResponse(&response);
+    }
+
+    void createDeleteSessionRpc()
+    {
+        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::DeleteSessionRequest, erebus::GenericReply> rpcHandlers;
+
+        rpcHandlers.createRpc = std::bind(&ErebusService::createDeleteSessionRpc, this);
+
+        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processDeleteSessionRpc(rpc, message); };
+        rpcHandlers.done = &genericDone;
+
+        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestDeleteSession;
+
+        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::DeleteSessionRequest, erebus::GenericReply>(&m_service, m_queue.get(), rpcHandlers);
+    }
+
+    void processDeleteSessionRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    {
+        auto request = static_cast<const erebus::DeleteSessionRequest*>(message);
+        erebus::GenericReply response;
+
+        if (!checkAuth(rpc))
+            return;
+
+        std::shared_lock l(m_servicesLock);
+        
+        auto& serviceId = request->request();
+
+        auto it = m_services.find(serviceId);
+        if (it == m_services.end())
+        {
+            m_params.log->write(Er::Log::Level::Error, LogInstance("ErebusService"), "No handlers for [%s]", serviceId.c_str());
+            rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
+            return;
+        }
+
+        auto service = it->second;
+
+        try
+        {
+            auto sessionId = request->sessionid();
+            service->deleteSession(sessionId);
+            
+            response.set_code(erebus::Success);
+        }
+        catch (Er::Exception& e)
+        {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
+            response.set_code(erebus::Failure);
+            marshalException(&response, e);
+        }
+        catch (std::exception& e)
+        {
+            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
+            response.set_code(erebus::Failure);
+            marshalException(&response, e);
+        }
+        
+        rpc.sendResponse(&response);
+    }
+
     void createGenericRpc()
     {
         Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
@@ -466,6 +587,12 @@ private:
             return;
 
         auto& id = request->request();
+        std::optional<uint32_t> sessionId;
+        if (request->has_sessionid())
+            sessionId = request->sessionid();
+
+        if (sessionId)
+            response.set_sessionid(*sessionId);
 
         std::shared_lock l(m_servicesLock);
         
@@ -482,7 +609,7 @@ private:
         try
         {
             auto args = unmarshalArgs(request);
-            auto result = service->request(id, args);
+            auto result = service->request(id, args, sessionId);
             marshalReplyProps(result, &response);
 
             response.mutable_header()->set_code(erebus::Success);
@@ -525,6 +652,9 @@ private:
             return;
 
         auto& id = request->request();
+        std::optional<uint32_t> sessionId;
+        if (request->has_sessionid())
+            sessionId = request->sessionid();
 
         std::shared_lock l(m_servicesLock);
         
@@ -541,14 +671,17 @@ private:
         try
         {
             auto args = unmarshalArgs(request);
-            auto streamId = service->beginStream(id, args);
+            auto streamId = service->beginStream(id, args, sessionId);
             bool stop = false;
             do
             {
                 erebus::ServiceReply response;
+                if (sessionId)
+                        response.set_sessionid(*sessionId);
+
                 try
                 {
-                    auto item = service->next(streamId);
+                    auto item = service->next(streamId, sessionId);
                     if (item.empty())
                     {
                         stop = true;
@@ -578,7 +711,7 @@ private:
 
             } while (!stop);
             
-            service->endStream(streamId);
+            service->endStream(streamId, sessionId);
         }
         catch (Er::Exception& e)
         {

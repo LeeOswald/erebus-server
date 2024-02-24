@@ -4,6 +4,8 @@ add_library(${EREBUS_PROCESSMGR} SHARED
     ../../include/erebus-processmgr/procfs.hxx
     processlist.cxx
     processlist.hxx
+    processlistdiff.cxx
+    processlistdiff.hxx
     processmgr.cxx
     procfs.cxx
 )
