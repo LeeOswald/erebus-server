@@ -5,6 +5,7 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <chrono>
 #include <shared_mutex>
 #include <unordered_map>
 #include <vector>
@@ -70,12 +71,14 @@ public:
             return grpc::Status(grpc::StatusCode::UNAUTHENTICATED, "Invalid Ticket");
         }
 
-        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Found ticket [%s] -> [%s]", ticketValue.c_str(), it->second.c_str());
+        it->second.touched = std::chrono::steady_clock::now();
+
+        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Found ticket [%s] -> [%s]", ticketValue.c_str(), it->second.user.c_str());
 
         // once verified, mark as consumed and store user for later retrieval
         consumedMetadata->insert(std::make_pair("ticket", ticketValue));     // required
         context->AddProperty("ticket", ticketValue);
-        context->AddProperty("user", it->second);           // optional
+        context->AddProperty("user", it->second.user);           // optional
         context->SetPeerIdentityPropertyName("user");                 // optional
 
         return grpc::Status::OK;
@@ -85,13 +88,16 @@ public:
     {
         LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Added ticket [%s] -> [%s]", ticket.c_str(), user.c_str());
 
-        std::lock_guard l(m_mutex);
-        m_tickets.insert({ ticket, user });
+        std::unique_lock l(m_mutex);
+
+        dropStaleTickets();
+        m_tickets.insert({ ticket, Ticket(ticket, user) });
     }
 
     void removeTicket(const std::string& ticket)
     {
-        std::lock_guard l(m_mutex);
+        std::unique_lock l(m_mutex);
+        
         auto it = m_tickets.find(ticket);
         if (it == m_tickets.end())
         {
@@ -106,15 +112,50 @@ public:
 
     void addNoAuthMethod(std::string_view path)
     {
-        std::lock_guard l(m_mutex);
+        std::unique_lock l(m_mutex);
         m_noAuthMethods.emplace_back(path);
     }
 
 private:
+    struct Ticket
+    {
+        std::string ticket;
+        std::string user;
+        std::chrono::steady_clock::time_point touched = std::chrono::steady_clock::now();
+
+        explicit Ticket(const std::string& ticket, const std::string& user)
+            : ticket(ticket)
+            , user(user)
+        {}
+    };
+
+    static constexpr unsigned kTicketDurationSeconds = 1;//60 * 60; // 1 hr
+
+    void dropStaleTickets()
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        for (auto it = m_tickets.begin(); it != m_tickets.end();)
+        {
+            auto d = std::chrono::duration_cast<std::chrono::seconds>(now - it->second.touched);
+            if (d.count() > kTicketDurationSeconds)
+            {
+                auto next = std::next(it);
+                LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Stale ticket [%s] dropped", it->second.ticket.c_str());
+                m_tickets.erase(it);
+                it = next;
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
     Er::Log::ILog* m_log;
     std::shared_mutex m_mutex;
     std::vector<std::string> m_noAuthMethods;
-    std::unordered_map<std::string, std::string> m_tickets; // ticket -> user
+    std::unordered_map<std::string, Ticket> m_tickets; // ticket -> user
 };
 
 } // namespace Private {}

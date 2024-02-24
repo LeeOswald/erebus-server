@@ -44,17 +44,17 @@ ProcessList::StreamId ProcessList::beginStream(const std::string& request, const
 
 void ProcessList::endStream(StreamId id)
 {
-    {
-        std::lock_guard l(m_mutex);
-        auto it = m_streams.find(id);
-        if (it == m_streams.end())
-            throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
+    std::unique_lock l(m_mutex);
 
-        m_streams.erase(it);
-        LogDebug(m_log, LogInstance("ProcessList"), "Ended stream %d", id);    
-    }
+    auto it = m_streams.find(id);
+    if (it == m_streams.end())
+        throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
+
+    m_streams.erase(it);
 
     dropStaleStreams();
+
+    LogDebug(m_log, LogInstance("ProcessList"), "Ended stream %d", id);    
 }
 
 Er::PropertyBag ProcessList::next(StreamId id)
@@ -192,7 +192,6 @@ void ProcessList::dropStaleStreams() noexcept
 {
     auto now = std::chrono::steady_clock::now();
 
-    std::lock_guard l(m_mutex);
     for (auto it = m_streams.begin(); it != m_streams.end();)
     {
         auto d = std::chrono::duration_cast<std::chrono::seconds>(now - it->second->touched);
@@ -214,7 +213,7 @@ ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& arg
 {
     auto pids = m_procFs.enumeratePids();
 
-    std::lock_guard l(m_mutex);
+    std::unique_lock l(m_mutex);
 
     auto streamId = m_nextStreamId++;
 
