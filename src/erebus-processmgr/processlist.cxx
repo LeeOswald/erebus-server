@@ -288,7 +288,7 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
 
         auto added = stream->diff.added[stream->next];
         if (added->isNew)
-            bag.insert({ Er::ProcessProps::IsNew::Id::value, Er::Property(Er::ProcessProps::IsDeleted::Id::value, true) }); 
+            bag.insert({ Er::ProcessProps::IsNew::Id::value, Er::Property(Er::ProcessProps::IsNew::Id::value, true) }); 
 
         for (auto& prop: added->properties)
         {

@@ -150,6 +150,9 @@ public:
 
     void flush() noexcept
     {
+        if (m_level < m_log->level())
+            return;
+
         try
         {
             m_log->write(m_level, m_location, std::string_view(m_stream.str()));
@@ -163,6 +166,9 @@ public:
     template <typename T>
     LogWrapperBase& operator<<(T&& v) noexcept
     {
+        if (m_level < m_log->level())
+            return *this;
+
         try
         {
             m_stream << std::forward<T>(v);
