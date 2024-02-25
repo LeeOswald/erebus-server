@@ -18,7 +18,14 @@ using PropId = uint32_t;
 constexpr PropId InvalidPropId = PropId(-1);
 
 
-template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT, class FormatterT>
+template <typename T, typename = void>
+struct PropertyComparator;
+
+template <typename T, typename = void>
+struct PropertyFormatter;
+
+
+template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
 class PropertyInfo
 {
 public:
@@ -49,7 +56,7 @@ public:
 };
 
 
-template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT, class FormatterT>
+template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
 class PropertyValue final
     : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
 {
@@ -107,18 +114,12 @@ struct Property
 };
 
 
-template <typename T, typename = void>
-struct PropertyComparator;
-
 template <std::equality_comparable T>
 struct PropertyComparator<T>
 {
     bool operator()(const Property& a, const Property& b) { return std::any_cast<T>(a.value) == std::any_cast<T>(b.value); }
 };
 
-
-template <typename T, typename = void>
-struct PropertyFormatter;
 
 struct NullPropertyFormatter
 {

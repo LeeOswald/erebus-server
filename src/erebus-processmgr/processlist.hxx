@@ -38,8 +38,7 @@ private:
     {
         std::chrono::steady_clock::time_point touched = std::chrono::steady_clock::now();
         SessionId id;
-
-
+        ProcessCollection processes;
 
         explicit Session(SessionId id) noexcept
             : id(id)
@@ -48,7 +47,8 @@ private:
 
     enum class StreamType
     {
-        ProcessList
+        ProcessList,
+        ProcessListDiff
     };
 
     struct Stream
@@ -78,6 +78,26 @@ private:
         size_t next = 0;
     };
 
+    struct ProcessListDiffStream final
+        : public Stream
+    {
+        explicit ProcessListDiffStream(StreamId id, Er::ProcessProps::PropMask required, ProcessCollectionDiff&& diff) noexcept
+            : Stream(StreamType::ProcessListDiff, id)
+            , diff(std::move(diff))
+        {}
+
+        enum class Stage
+        {
+            Removed,
+            Modified,
+            Added
+        };
+
+        ProcessCollectionDiff diff;
+        Stage stage = Stage::Removed;
+        size_t next = 0;
+    };
+
     static Er::ProcessProps::PropMask getPropMask(const Er::PropertyBag& args);
     Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required);
 
@@ -88,6 +108,9 @@ private:
 
     StreamId beginProcessStream(const Er::PropertyBag& args);
     Er::PropertyBag nextProcess(ProcessListStream* stream);
+
+    StreamId beginProcessDiffStream(const Er::PropertyBag& args, Session* session);
+    Er::PropertyBag nextProcessDiff(ProcessListDiffStream* stream, Session* session);
 
     const unsigned kSessionTimeoutSeconds = 60 * 60;
     const unsigned kStreamTimeoutSeconds = 60;

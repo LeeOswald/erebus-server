@@ -98,29 +98,6 @@ Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProp
     return bag;
 }
 
-std::unique_ptr<ProcessCollection> gatherProcessCollection(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required)
-{
-    auto now = std::chrono::steady_clock::now();
-
-    auto list = std::make_unique<ProcessCollection>();
-    
-    auto kernel = collectKernelDetails(source, required);
-    Er::cachePropertyInfo(kernel);
-
-    list->processes.insert({ Er::ProcFs::KernelPid, std::make_unique<ProcessData>(now, std::move(kernel)) });
-
-    auto pids = source.enumeratePids();
-    for (auto pid: pids)
-    {
-        auto process = collectProcessDetails(source, pid, required);
-        Er::cachePropertyInfo(process);
-
-        list->processes.insert({ pid, std::make_unique<ProcessData>(now, std::move(process)) });
-    }    
-
-    return list;
-}
-
 PropertyRefs diffProcessData(const Er::PropertyBag& prev, const Er::PropertyBag& curr)
 {
     PropertyRefs diff;
@@ -152,6 +129,71 @@ PropertyRefs diffProcessData(const Er::PropertyBag& prev, const Er::PropertyBag&
     return diff;
 }
 
+static void updateDiffAndCollectionForProcess(ProcessCollectionDiff& diff, ProcessCollection& collection, std::chrono::steady_clock::time_point now, uint64_t pid, Er::PropertyBag&& process)
+{
+    auto firstRun = collection.processes.empty();
+
+    Er::cachePropertyInfo(process);
+
+    // is this a previously existed process?
+    auto it = collection.processes.find(pid);
+    if (it == collection.processes.end())
+    {
+        // new one
+        auto data = std::make_unique<ProcessData>(!firstRun, now, std::move(process));
+        auto item = collection.processes.insert({ pid, std::move(data) });
+        assert(item.second); // really a new item
+        diff.added.push_back(item.first->second.get());
+    }
+    else
+    {
+        // modified one
+        auto singleDiff = diffProcessData(process, it->second->properties);
+        if (singleDiff.empty())
+        {
+            // unmodified, just update the timestamp
+            it->second->isNew = false;
+            it->second->timestamp = now;
+        }
+        else
+        {
+            // replace with updated data
+            auto data = std::make_unique<ProcessData>(!firstRun, now, std::move(process));
+            it->second.swap(data);
+
+            diff.modified.push_back(std::move(singleDiff));
+        }
+    }
+
+    // now look for processes that haven't updated their timestamps
+    // this means they have gone away
+    for (auto process = collection.processes.begin(); process != collection.processes.end(); ++process)
+    {
+        if (process->second->timestamp < now)
+        {
+            diff.removed.push_back(process->first);
+        }
+    }
+}
+
+ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required, ProcessCollection& collection)
+{
+    auto now = std::chrono::steady_clock::now();
+
+    ProcessCollectionDiff diff;
+    
+    auto kernel = collectKernelDetails(source, required);
+    updateDiffAndCollectionForProcess(diff, collection, now, Er::ProcFs::KernelPid, std::move(kernel));
+    
+    auto pids = source.enumeratePids();
+    for (auto pid: pids)
+    {
+        auto process = collectProcessDetails(source, pid, required);
+        updateDiffAndCollectionForProcess(diff, collection, now, pid, std::move(process));
+    }    
+
+    return diff;
+}
 
 
 
