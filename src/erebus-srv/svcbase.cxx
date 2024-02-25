@@ -66,11 +66,13 @@ void ServiceBase::start()
     builder.RegisterService(service());
     m_queue = builder.AddCompletionQueue();
 
+#if !ER_DEBUG
     builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 1 * 60 * 1000);
     builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 20 * 1000);
     builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
     builder.AddChannelArgument(GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, 10 * 1000);
     builder.AddChannelArgument(GRPC_ARG_HTTP2_MAX_PING_STRIKES, 5);
+#endif
 
     // finally assemble the server
     auto server = builder.BuildAndStart();

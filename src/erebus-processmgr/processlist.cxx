@@ -50,7 +50,7 @@ void ProcessList::deleteSession(SessionId id)
     LogDebug(m_log, LogInstance("ProcessList"), "Ended session %d", id);    
 }
 
-ProcessList::Session* ProcessList::getSesstion(std::optional<SessionId> id) noexcept
+ProcessList::Session* ProcessList::getSession(std::optional<SessionId> id)
 {
     if (!id)
         throw Er::Exception(ER_HERE(), "Session not specified");
@@ -82,7 +82,7 @@ ProcessList::StreamId ProcessList::beginStream(std::string_view request, const E
     if (request == Er::ProcessRequests::ListProcesses)
         return beginProcessStream(args);
     else if (request == Er::ProcessRequests::ListProcessesDiff)
-        return beginProcessDiffStream(args, getSesstion(sessionId));
+        return beginProcessDiffStream(args, getSession(sessionId));
 
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
@@ -104,17 +104,22 @@ void ProcessList::endStream(StreamId id, std::optional<SessionId> sessionId)
 
 Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionId)
 {
-    std::shared_lock l(m_mutex);
-    auto it = m_streams.find(id);
-    if (it == m_streams.end())
-        throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
+    Stream* stream = nullptr;
+    {
+        std::unique_lock l(m_mutex);
+        auto it = m_streams.find(id);
+        if (it == m_streams.end())
+            throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
 
-    it->second->touched = std::chrono::steady_clock::now();
+        stream = it->second.get();
 
-    if (it->second->type == StreamType::ProcessList)
-        return nextProcess(static_cast<ProcessListStream*>(it->second.get()));
-    else if (it->second->type == StreamType::ProcessListDiff)
-        return nextProcessDiff(static_cast<ProcessListDiffStream*>(it->second.get()), getSesstion(sessionId));
+        stream->touched = std::chrono::steady_clock::now();
+    }
+
+    if (stream->type == StreamType::ProcessList)
+        return nextProcess(static_cast<ProcessListStream*>(stream));
+    else if (stream->type == StreamType::ProcessListDiff)
+        return nextProcessDiff(static_cast<ProcessListDiffStream*>(stream), getSession(sessionId));
 
     assert(!"Unknown stream type");
     return Er::PropertyBag();
@@ -265,15 +270,15 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         }
 
         auto& modified = stream->diff.modified[stream->next];
-        for (auto prop : modified)
+        for (auto& prop : modified.properties)
         {
-            bag.insert({ prop->id, *prop });
+            bag.insert({ prop.id, std::move(prop) });
         }
 
-        assert(bag.find(Er::ProcessProps::Pid::Id::value) != bag.end());
-        assert(bag.find(Er::ProcessProps::Valid::Id::value) != bag.end());
+        bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, modified.pid) });
+        bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, true) }); 
 
-        Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next modified PID on stream " << stream->id;
+        Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next modified PID " << modified.pid << " on stream " << stream->id;
     }
     else
     {
@@ -293,7 +298,10 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         assert(bag.find(Er::ProcessProps::Pid::Id::value) != bag.end());
         assert(bag.find(Er::ProcessProps::Valid::Id::value) != bag.end());
 
-        Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next new PID on stream " << stream->id;
+        if (added->isNew)
+            Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next new PID " << added->pid << " on stream " << stream->id;
+        else
+            Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next existing PID " << added->pid << " on stream " << stream->id;
     }
     
     ++stream->next;

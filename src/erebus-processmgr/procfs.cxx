@@ -67,7 +67,8 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
         struct ::stat64 fileStat;
         if (::stat64(path.c_str(), &fileStat) == -1)
         {
-            LogDebug(m_log, LogNowhere(), "Process %zu not found: %d", pid, errno);
+            auto e = errno;
+            LogDebug(m_log, LogNowhere(), "Process %zu not found: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
             result.error = "Process not found";
             return result;
         }
@@ -79,7 +80,8 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
         std::ifstream stat(path);
         if (!stat.good())
         {
-            LogDebug(m_log, LogNowhere(), "Process %zu could not be opened: %d", pid, errno);
+            auto e = errno;
+            LogDebug(m_log, LogNowhere(), "Process %zu could not be opened: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
             result.error = "Failed to open process";
             return result;
         }
@@ -333,7 +335,8 @@ std::string ProcFs::readExePath(uintptr_t pid) noexcept
         struct stat sb = { 0 };
         if (::lstat(path.c_str(), &sb) == -1)
         {
-            LogDebug(m_log, LogNowhere(), "exe link for process %zu could not be opened: %d", pid, errno);
+            auto e = errno;
+            LogDebug(m_log, LogNowhere(), "exe link for process %zu could not be opened: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
             return std::string();
         }
         else
@@ -353,7 +356,8 @@ std::string ProcFs::readExePath(uintptr_t pid) noexcept
             auto r = ::readlink(path.c_str(), exe.data(), size); // readlink does not append '\0'
             if (r < 0)
             {
-                LogDebug(m_log, LogNowhere(), "Failed to read exe link for process %zu: %d", pid, errno);
+                auto e = errno;
+                LogDebug(m_log, LogNowhere(), "Failed to read exe link for process %zu: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
                 return std::string();
             }
 

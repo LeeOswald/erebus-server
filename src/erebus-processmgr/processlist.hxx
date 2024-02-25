@@ -101,7 +101,7 @@ private:
     static Er::ProcessProps::PropMask getPropMask(const Er::PropertyBag& args);
     Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required);
 
-    Session* getSesstion(std::optional<SessionId> id) noexcept;
+    Session* getSession(std::optional<SessionId> id);
     void dropStaleSessions() noexcept;
 
     void dropStaleStreams() noexcept;
