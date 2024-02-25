@@ -23,13 +23,12 @@ void signalHandler(int signo)
     g_signalReceived = signo;
 }
 
-void version(Er::Client::IClient* client, Er::Log::ILog* log)
+template <typename Work>
+void protectedCall(Er::Log::ILog* log, Work w) noexcept
 {
     try
     {
-        auto ver = client->version();
-
-        log->write(Er::Log::Level::Info, LogNowhere(), "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
+        w();
     }
     catch (Er::Exception& e)
     {
@@ -39,135 +38,118 @@ void version(Er::Client::IClient* client, Er::Log::ILog* log)
     {
         Er::Util::logException(log, Er::Log::Level::Error, e);
     }
+}
+
+void version(Er::Client::IClient* client, Er::Log::ILog* log)
+{
+    protectedCall(
+        log,
+        [client, log]()
+        {
+            auto ver = client->version();
+
+            log->write(Er::Log::Level::Info, LogNowhere(), "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
+        }
+    );
 }
 
 void version(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
-
-        while (!g_signalReceived)
+    protectedCall(
+        log,
+        [log, &params, interval]()
         {
-            version(client.get(), log);
+            auto client = Er::Client::create(params);
 
-            if (interval <= 0)
-                break;
+            while (!g_signalReceived)
+            {
+                version(client.get(), log);
 
-            std::this_thread::sleep_for(std::chrono::seconds(interval));
+                if (interval <= 0)
+                    break;
+
+                std::this_thread::sleep_for(std::chrono::seconds(interval));
+            }
         }
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+    );
 }
 
 void addUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::string& name, const std::string& password)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
+    protectedCall(
+        log,
+        [log, &params, &name, &password]()
+        {
+            auto client = Er::Client::create(params);
 
-        client->addUser(name, password);
+            client->addUser(name, password);
 
-        Er::Log::Info(log, LogNowhere()) << "User " << name << " created successfully";
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+            Er::Log::Info(log, LogNowhere()) << "User " << name << " created successfully";
+        }
+    );
 }
 
 void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::string& name)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
+    protectedCall(
+        log,
+        [log, &params, &name]()
+        {
+            auto client = Er::Client::create(params);
 
-        client->removeUser(name);
+            client->removeUser(name);
 
-        Er::Log::Info(log, LogNowhere()) << "User " << name << " deleted successfully";
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+            Er::Log::Info(log, LogNowhere()) << "User " << name << " deleted successfully";
+        }
+    );
 }
 
 void listUsers(Er::Log::ILog* log, const Er::Client::Params& params)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
-
-        auto users = client->listUsers();
-
-        for (auto& u : users)
+    protectedCall(
+        log,
+        [log, &params]()
         {
-            log->write(Er::Log::Level::Info, LogNowhere(), "Found user: %s", u.name.c_str());
+            auto client = Er::Client::create(params);
+
+            auto users = client->listUsers();
+
+            for (auto& u : users)
+            {
+                log->write(Er::Log::Level::Info, LogNowhere(), "Found user: %s", u.name.c_str());
+            }
         }
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+    );
 }
 
 void exit(Er::Log::ILog* log, const Er::Client::Params& params)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
+    protectedCall(
+        log,
+        [log, &params]()
+        {
+            auto client = Er::Client::create(params);
 
-        client->exit(false);
+            client->exit(false);
 
-        log->write(Er::Log::Level::Info, LogNowhere(), "Server shutdown requested");
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+            log->write(Er::Log::Level::Info, LogNowhere(), "Server shutdown requested");
+        }
+    );
 }
 
 void restart(Er::Log::ILog* log, const Er::Client::Params& params)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
+    protectedCall(
+        log,
+        [log, &params]()
+        {
+            auto client = Er::Client::create(params);
 
-        client->exit(true);
+            client->exit(true);
 
-        log->write(Er::Log::Level::Info, LogNowhere(), "Server restart requested");
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+            log->write(Er::Log::Level::Info, LogNowhere(), "Server restart requested");
+        }
+    );
 }
 
 void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
@@ -181,190 +163,173 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
 
     auto pid = std::any_cast<uint64_t>(it->second.value);
 
+    it = info.find(Er::ProcessProps::IsDeleted::Id::value);
+    if (it != info.end())
+    {
+        log->write(Er::Log::Level::Error, LogNowhere(), "%zu { exited }", pid);
+        return;
+    }
+
     it = info.find(Er::ProcessProps::Valid::Id::value);
     if (it == info.end())
     {
         log->write(Er::Log::Level::Error, LogNowhere(), "No data for PID %zu", pid);
+        return;
     }
-    else
-    {
-        auto valid = std::any_cast<bool>(it->second.value);
-        if (!valid)
-        {
-            it = info.find(Er::ProcessProps::Error::Id::value);
-            if (it != info.end())
-                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu", pid);
-            else
-                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
-        }
-        else
-        {
-            log->write(Er::Log::Level::Info, LogNowhere(), "Dumping process %zu", pid);
-            for (auto it = info.begin(); it != info.end(); ++it)
-            {
-                if (
-                    (it->second.id != Er::ProcessProps::Valid::Id::value) &&
-                    (it->second.id != Er::ProcessProps::Error::Id::value)
-                    )
-                {
-                    auto propInfo = Er::lookupProperty(it->second.id).get();
-                    if (!propInfo)
-                    {
-                        log->write(Er::Log::Level::Warning, LogNowhere(), "   0x%08x: ???", it->second.id);
-                    }
-                    else
-                    {
-                        std::ostringstream ss;
-                        propInfo->format(it->second, ss);
 
-                        log->write(Er::Log::Level::Info, LogNowhere(), "   %s: %s", propInfo->name(), ss.str().c_str());
-                    }
-                }
+    auto valid = std::any_cast<bool>(it->second.value);
+    if (!valid)
+    {
+        it = info.find(Er::ProcessProps::Error::Id::value);
+        if (it != info.end())
+            log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu", pid);
+        else
+            log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
+
+        return;
+    }
+    
+    log->write(Er::Log::Level::Info, LogNowhere(), "%zu {", pid);
+    for (auto it = info.begin(); it != info.end(); ++it)
+    {
+        if (
+            (it->second.id != Er::ProcessProps::Valid::Id::value) &&
+            (it->second.id != Er::ProcessProps::Error::Id::value)
+            )
+        {
+            auto propInfo = Er::lookupProperty(it->second.id).get();
+            if (!propInfo)
+            {
+                log->write(Er::Log::Level::Warning, LogNowhere(), "   0x%08x: ???", it->second.id);
+            }
+            else
+            {
+                std::ostringstream ss;
+                propInfo->format(it->second, ss);
+
+                log->write(Er::Log::Level::Info, LogNowhere(), "   %s: %s", propInfo->name(), ss.str().c_str());
             }
         }
     }
+    log->write(Er::Log::Level::Info, LogNowhere(), "}", pid);
 }
 
 void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
 {
-    try
-    {
-        Er::PropertyBag req;
-        req.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, uint64_t(pid)) });
-        auto info = client->request(Er::ProcessRequests::ProcessDetails, req);
-        dumpProcess(info, log);
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+    protectedCall(
+        log,
+        [client, log, pid]()
+        {
+            Er::PropertyBag req;
+            req.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, uint64_t(pid)) });
+            auto info = client->request(Er::ProcessRequests::ProcessDetails, req);
+            dumpProcess(info, log);
+        }
+    );
 }
 
 void dumpProcess(Er::Log::ILog* log, const Er::Client::Params& params, int pid, int interval)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
-
-        while (!g_signalReceived)
+    protectedCall(
+        log,
+        [log, &params, pid, interval]()
         {
-            dumpProcess(client.get(), log, pid);
+            auto client = Er::Client::create(params);
 
-            if (interval <= 0)
-                break;
+            while (!g_signalReceived)
+            {
+                dumpProcess(client.get(), log, pid);
 
-            std::this_thread::sleep_for(std::chrono::seconds(interval));
+                if (interval <= 0)
+                    break;
+
+                log->write(Er::Log::Level::Info, LogNowhere(), "------------------------------------------------------");
+
+                std::this_thread::sleep_for(std::chrono::seconds(interval));
+            }
         }
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+    );
 }
 
 void dumpProcesses(Er::Client::IClient* client, Er::Log::ILog* log)
 {
-    try
-    {
-        Er::PropertyBag req;
-        auto list = client->requestStream(Er::ProcessRequests::ListProcesses, req);
-        for (auto& process : list)
+    protectedCall(
+        log,
+        [client, log]()
         {
-            dumpProcess(process, log);
+            Er::PropertyBag req;
+            auto list = client->requestStream(Er::ProcessRequests::ListProcesses, req);
+            for (auto& process : list)
+            {
+                dumpProcess(process, log);
+            }
         }
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+    );
 }
 
 void dumpProcesses(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
-
-        while (!g_signalReceived)
+    protectedCall(
+        log,
+        [log, &params, interval]()
         {
-            dumpProcesses(client.get(), log);
+            auto client = Er::Client::create(params);
 
-            if (interval <= 0)
-                break;
+            while (!g_signalReceived)
+            {
+                dumpProcesses(client.get(), log);
 
-            std::this_thread::sleep_for(std::chrono::seconds(interval));
+                if (interval <= 0)
+                    break;
+
+                log->write(Er::Log::Level::Info, LogNowhere(), "------------------------------------------------------");
+
+                std::this_thread::sleep_for(std::chrono::seconds(interval));
+            }
         }
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+    );
 }
 
 void dumpProcessesDiff(Er::Client::IClient* client, Er::Log::ILog* log, Er::Client::IClient::SessionId sessionId)
 {
-    try
-    {
-        Er::PropertyBag req;
-        auto list = client->requestStream(Er::ProcessRequests::ListProcessesDiff, req, sessionId);
-        for (auto& process : list)
+    protectedCall(
+        log,
+        [client, log, sessionId]()
         {
-            dumpProcess(process, log);
+            Er::PropertyBag req;
+            auto list = client->requestStream(Er::ProcessRequests::ListProcessesDiff, req, sessionId);
+            for (auto& process : list)
+            {
+                dumpProcess(process, log);
+            }
         }
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+    );
 }
 
 void dumpProcessesDiff(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
 {
-    try
-    {
-        auto client = Er::Client::create(params);
-        auto sessionId = client->beginSession(Er::ProcessRequests::ListProcessesDiff);
-
-        while (!g_signalReceived)
+    protectedCall(
+        log,
+        [log, &params, interval]()
         {
-            dumpProcessesDiff(client.get(), log, sessionId);
+            auto client = Er::Client::create(params);
+            auto sessionId = client->beginSession(Er::ProcessRequests::ListProcessesDiff);
 
-            if (interval <= 0)
-                break;
+            while (!g_signalReceived)
+            {
+                dumpProcessesDiff(client.get(), log, sessionId);
 
-            std::this_thread::sleep_for(std::chrono::seconds(interval));
+                if (interval <= 0)
+                    break;
+
+                log->write(Er::Log::Level::Info, LogNowhere(), "------------------------------------------------------");
+
+                std::this_thread::sleep_for(std::chrono::seconds(interval));
+            }
+
+            client->endSession(Er::ProcessRequests::ListProcessesDiff, sessionId);
         }
-
-        client->endSession(Er::ProcessRequests::ListProcessesDiff, sessionId);
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
+    );
 }
 
 
