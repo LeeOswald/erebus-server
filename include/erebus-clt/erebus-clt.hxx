@@ -113,13 +113,17 @@ struct UserInfo
 
 struct IClient
 {
+    using SessionId = uint32_t;
+
     virtual void addUser(std::string_view name, std::string_view password) = 0;
     virtual void removeUser(std::string_view name) = 0;
     virtual std::vector<UserInfo> listUsers() = 0;
     virtual void exit(bool restart) = 0;
     virtual Version version() = 0;
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0;
-    virtual std::vector<Er::PropertyBag> requestStream(std::string_view request, const Er::PropertyBag& args) = 0;
+    virtual SessionId beginSession(std::string_view request) = 0;
+    virtual void endSession(std::string_view request, SessionId id) = 0;
+    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId = std::nullopt) = 0;
+    virtual std::vector<Er::PropertyBag> requestStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId = std::nullopt) = 0;
 
     virtual ~IClient() {}
 };

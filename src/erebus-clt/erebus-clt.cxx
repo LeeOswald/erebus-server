@@ -149,10 +149,40 @@ public:
         return Version(reply.major(), reply.minor(), reply.patch());
     }
 
-    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args) override
+    SessionId beginSession(std::string_view req) override
+    {
+        erebus::AllocateSessionRequest request;
+        request.set_request(std::string(req));
+
+        erebus::AllocateSessionReply reply;
+        grpc::ClientContext context;
+        makeClientContext(context);
+
+        grpc::Status status = m_stub->AllocateSession(&context, request, &reply);
+        throwIfFailed(status, &reply.header());
+
+        return reply.sessionid();
+    }
+
+    void endSession(std::string_view req, SessionId id) override
+    {
+        erebus::DeleteSessionRequest request;
+        request.set_request(std::string(req));
+
+        erebus::GenericReply reply;
+        grpc::ClientContext context;
+        makeClientContext(context);
+
+        grpc::Status status = m_stub->DeleteSession(&context, request, &reply);
+        throwIfFailed(status, &reply);
+    }
+
+    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
+        if (sessionId)
+            request.set_sessionid(*sessionId);
 
         // marshal properties
         for (auto& arg: args)
@@ -227,10 +257,12 @@ public:
         return bag;
     }
 
-    std::vector<Er::PropertyBag> requestStream(std::string_view req, const Er::PropertyBag& args) override
+    std::vector<Er::PropertyBag> requestStream(std::string_view req, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
+        if (sessionId)
+            request.set_sessionid(*sessionId);
 
         // marshal properties
         for (auto& arg: args)
@@ -573,9 +605,11 @@ EREBUSCLT_EXPORT std::shared_ptr<IClient> create(const Params& params)
     bool local = params.endpoint.starts_with("unix:");
     
     grpc::ChannelArguments args;
+#if !ER_DEBUG
     args.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, 20 * 1000);
     args.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 10 * 1000);
     args.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
+#endif
 
     if (!local && params.ssl)
     {

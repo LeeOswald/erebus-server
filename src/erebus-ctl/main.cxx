@@ -317,6 +317,56 @@ void dumpProcesses(Er::Log::ILog* log, const Er::Client::Params& params, int int
     }
 }
 
+void dumpProcessesDiff(Er::Client::IClient* client, Er::Log::ILog* log, Er::Client::IClient::SessionId sessionId)
+{
+    try
+    {
+        Er::PropertyBag req;
+        auto list = client->requestStream(Er::ProcessRequests::ListProcessesDiff, req, sessionId);
+        for (auto& process : list)
+        {
+            dumpProcess(process, log);
+        }
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
+void dumpProcessesDiff(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
+{
+    try
+    {
+        auto client = Er::Client::create(params);
+        auto sessionId = client->beginSession(Er::ProcessRequests::ListProcessesDiff);
+
+        while (!g_signalReceived)
+        {
+            dumpProcessesDiff(client.get(), log, sessionId);
+
+            if (interval <= 0)
+                break;
+
+            std::this_thread::sleep_for(std::chrono::seconds(interval));
+        }
+
+        client->endSession(Er::ProcessRequests::ListProcessesDiff, sessionId);
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+    catch (std::exception& e)
+    {
+        Er::Util::logException(log, Er::Log::Level::Error, e);
+    }
+}
+
 
 } // namespace {}
 
@@ -355,9 +405,10 @@ int main(int argc, char* argv[])
             ("adduser", po::value<std::string>(), "add user <name>:<password>")
             ("rmuser", po::value<std::string>(), "delete user <name>")
             ("listusers", "list existing users")
-            ("loop", po::value<int>(&interval), "repeat the request with an interval")
+            ("loop", po::value<int>(&interval)->default_value(5), "repeat the request with an interval")
             ("process", po::value<int>(), "view process info for PID")
             ("processes", "view process list")
+            ("procdiff", "view process list (incremental)")
         ;
 
         po::variables_map vm;
@@ -452,6 +503,10 @@ int main(int argc, char* argv[])
         else if (vm.count("processes"))
         {
             dumpProcesses(&console, params, interval);
+        }
+        else if (vm.count("procdiff"))
+        {
+            dumpProcessesDiff(&console, params, interval);
         }
         
         if (g_signalReceived)
