@@ -31,7 +31,6 @@ using PGrp = PropertyValue<uint64_t, ER_PROPID("process.pgrp"), "Process Group I
 using Tpgid = PropertyValue<uint64_t, ER_PROPID("process.tpgid"), "Process Group ID of the Terminal">;
 using Session = PropertyValue<uint64_t, ER_PROPID("process.session"), "Session ID">;
 using Ruid = PropertyValue<uint64_t, ER_PROPID("process.ruid"), "User ID">;
-using Name = PropertyValue<std::string, ER_PROPID("process.stat_comm"), "Name">;
 using Comm = PropertyValue<std::string, ER_PROPID("process.comm"), "Program Name">;
 using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Command Line">;
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable Name">;
@@ -92,7 +91,6 @@ inline void registerAll()
     registerProperty(std::make_shared<PropertyInfoWrapper<Tpgid>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Session>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Ruid>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Name>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Comm>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<CmdLine>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>());
@@ -113,7 +111,6 @@ inline void unregisterAll()
     unregisterProperty(lookupProperty(ProcessProps::Tpgid::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Session::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Ruid::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Name::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Comm::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::CmdLine::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Exe::Id::value));
