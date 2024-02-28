@@ -29,7 +29,7 @@ public:
         New,
         Existing,
         Deleted,
-        Cleaned
+        Purged
     };
 
     Trackable() = default;
@@ -38,17 +38,15 @@ public:
     constexpr Trackable(bool existing, TimePoint t, Args&&... args)
         : Base(std::forward<Args&&>(args)...)
         , m_state(existing ? State::Existing : State::New)
-        , m_timeChecked(t)
         , m_timeTracked(t)
-        , m_timeModified(t)
     {
     }
 
-    // copying has no meaning with trackable items
+    // copying has no meaning for trackable items
     Trackable(const Trackable&) = delete;
     Trackable& operator=(const Trackable&) = delete;
 
-    static TimePoint now()
+    static TimePoint now() noexcept
     {
         return Clock::now();
     }
@@ -58,97 +56,59 @@ public:
         return m_state;
     }
 
-    TimePoint timeModified() const noexcept
+    bool isTracked() const noexcept
     {
-        return m_timeModified;
+        return (m_timeTracked != Never);
     }
 
-    void updateTimeModified(TimePoint t = now())
+    TimePoint timeTracked() const noexcept
     {
-        m_timeModified = t;
+        return m_timeTracked;
     }
 
-    void updateTimeChecked(TimePoint t = now())
+    void markDeleted(TimePoint t) noexcept
     {
-        m_timeChecked = t;
+        assert(m_state != State::Deleted);
+        
+        m_state = State::Deleted;
+        m_timeTracked = t;
     }
 
-    template <class ContainerT, typename GetItemF, typename UpdateItemF>
-        requires std::is_invocable_v<GetItemF, typename ContainerT::iterator> &&
-                std::is_invocable_r_v<typename ContainerT::iterator, UpdateItemF, typename ContainerT::iterator, State, State>
-    static void trackNewDeleted(ContainerT& container, TimePoint now, std::chrono::milliseconds trackThreshold, GetItemF getItem, UpdateItemF updateItem)
+    bool maybeUntrackDeleted(TimePoint now, std::chrono::milliseconds trackThreshold) noexcept
     {
-        for (auto it = container.begin(); it != container.end();)
+        if (m_state == State::Deleted)
         {
-            auto item = getItem(it);
-            auto prevState = item->state();
-
-            if (item->m_timeChecked < now)
+            if (m_timeTracked < now - trackThreshold)
             {
-                // timestamp hasn't been updated: this item has died
-                if ((item->state() == State::Deleted) && (item->m_timeTracked < now - trackThreshold))
-                {
-                    // the item has been tracked as deleted for quite a long; time to finally remove it
-                    item->clean();
-                    it = updateItem(it, State::Cleaned, prevState);
-                    continue;
-                }
-                else
-                {
-                    // start tracking this item as deleted
-                    if (item->trackDeleted(now))
-                    {
-                        updateItem(it, State::Deleted, prevState);
-                    }
-                }
+                m_state = State::Purged;
+                m_timeTracked = Never;
+                return true;
             }
-            else
-            {
-                // the item is still alive
-                if (item->state() == State::New)
-                {
-                    if (item->m_timeTracked < now - trackThreshold)
-                    {
-                        // stop tracking this item as new
-                        item->stopTrackingNew();
-                        updateItem(it, State::Existing, prevState);
-                    }
-                }
-            }
-
-            ++it;
-        }
-    }
-
-private:
-    void stopTrackingNew()
-    {
-        m_state = State::Existing;
-        m_timeTracked = Never;
-    }
-
-    bool trackDeleted(TimePoint t = now())
-    {
-        if (m_state != State::Deleted)
-        {
-            m_state = State::Deleted;
-            m_timeTracked = t;
-            return true;
         }
 
         return false;
     }
 
-    void clean()
+    bool maybeUntrackNew(TimePoint now, std::chrono::milliseconds trackThreshold) noexcept
     {
-        m_state = State::Cleaned;
+        if (m_state == State::New)
+        {
+            if (m_timeTracked < now - trackThreshold)
+            {
+                m_state = State::Existing;
+                m_timeTracked = Never;
+                return true;
+            }
+        }
+
+        return false;
     }
 
+private:
     State m_state = State::Undefined;
-    TimePoint m_timeChecked = Never;
-    TimePoint m_timeTracked = Never;
-    TimePoint m_timeModified = Never;
+    TimePoint m_timeTracked = Never;  // time this item has been being tracked since
 };
-    
+
+
     
 } // namespace Er{}    
