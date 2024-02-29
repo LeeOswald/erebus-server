@@ -1,6 +1,7 @@
 #include "processlistdiff.hxx"
 
 #include <erebus/exception.hxx>
+#include <erebus/system/user.hxx>
 #include <erebus/util/format.hxx>
 
 
@@ -70,6 +71,13 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
             auto exe = source.readExePath(pid);
             if (!exe.empty())
                 bag.insert({ Er::ProcessProps::Exe::Id::value, Er::Property(Er::ProcessProps::Exe::Id::value, std::move(exe)) });
+        }
+
+        if (required[Er::ProcessProps::PropIndices::User])
+        {
+            auto user = Er::System::User::name(stat.ruid);
+            if (!user.empty())
+                bag.insert({ Er::ProcessProps::User::Id::value, Er::Property(Er::ProcessProps::User::Id::value, std::move(user)) });
         }
     }
 

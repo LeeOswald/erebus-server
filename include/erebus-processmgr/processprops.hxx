@@ -31,6 +31,7 @@ using PGrp = PropertyValue<uint64_t, ER_PROPID("process.pgrp"), "Process Group I
 using Tpgid = PropertyValue<uint64_t, ER_PROPID("process.tpgid"), "Process Group ID of the Terminal">;
 using Session = PropertyValue<uint64_t, ER_PROPID("process.session"), "Session ID">;
 using Ruid = PropertyValue<uint64_t, ER_PROPID("process.ruid"), "User ID">;
+using User = PropertyValue<std::string, ER_PROPID("process.user"), "User Name">;
 using Comm = PropertyValue<std::string, ER_PROPID("process.comm"), "Program Name">;
 using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Command Line">;
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable Name">;
@@ -51,6 +52,7 @@ constexpr PropId IndexToProp[] =
     /* 8*/ Exe::Id::value,
     /* 9*/ StartTime::Id::value,
     /*10*/ State::Id::value,
+    /*11*/ User::Id::value
 };
 
 
@@ -67,6 +69,7 @@ struct PropIndices
     static constexpr Flag Exe = 8;
     static constexpr Flag StartTime = 9;
     static constexpr Flag State = 10;
+    static constexpr Flag User = 11;
 
     static constexpr size_t FlagsCount = 64;
 };
@@ -91,6 +94,7 @@ inline void registerAll()
     registerProperty(std::make_shared<PropertyInfoWrapper<Tpgid>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Session>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Ruid>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<User>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Comm>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<CmdLine>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>());
@@ -111,6 +115,7 @@ inline void unregisterAll()
     unregisterProperty(lookupProperty(ProcessProps::Tpgid::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Session::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Ruid::Id::value));
+    unregisterProperty(lookupProperty(ProcessProps::User::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Comm::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::CmdLine::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::Exe::Id::value));

@@ -21,6 +21,16 @@ EREBUS_EXPORT std::string name();
 
 } // namespace CurrentUser {}
 
+
+namespace User
+{
+
+#if ER_LINUX
+EREBUS_EXPORT std::string name(uid_t id);
+#endif
+
+} // namespace User {}
+
 } // namespace System {}
 
 } // namespace Er {}

@@ -16,7 +16,7 @@ namespace
 
 std::string getUserName()
 {
-    uid_t uid = ::geteuid();
+    uid_t uid = ::getuid();
     struct passwd* pw = ::getpwuid(uid);
     if (pw)
         return std::string(pw->pw_name);
@@ -37,6 +37,20 @@ EREBUS_EXPORT bool root() noexcept
 {
     return (::geteuid() == 0);
 }
+
+namespace User
+{
+
+EREBUS_EXPORT std::string name(uid_t id)
+{
+    struct passwd* pw = ::getpwuid(id);
+    if (pw)
+        return std::string(pw->pw_name);
+
+    return std::string();
+}
+
+} // namespace User {}
 
 } // namespace CurrentUser {}
 
