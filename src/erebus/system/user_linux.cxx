@@ -38,6 +38,10 @@ EREBUS_EXPORT bool root() noexcept
     return (::geteuid() == 0);
 }
 
+
+} // namespace CurrentUser {}
+
+
 namespace User
 {
 
@@ -51,8 +55,6 @@ EREBUS_EXPORT std::string name(uid_t id)
 }
 
 } // namespace User {}
-
-} // namespace CurrentUser {}
 
 } // namespace System {}
 
