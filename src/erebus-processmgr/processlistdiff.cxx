@@ -75,9 +75,9 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
 
         if (required[Er::ProcessProps::PropIndices::User])
         {
-            auto user = Er::System::User::name(stat.ruid);
-            if (!user.empty())
-                bag.insert({ Er::ProcessProps::User::Id::value, Er::Property(Er::ProcessProps::User::Id::value, std::move(user)) });
+            auto user = Er::System::User::lookup(stat.ruid);
+            if (user)
+                bag.insert({ Er::ProcessProps::User::Id::value, Er::Property(Er::ProcessProps::User::Id::value, std::move(user->name)) });
         }
     }
 

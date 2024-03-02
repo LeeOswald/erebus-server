@@ -1,4 +1,7 @@
+#include <erebus/exception.hxx>
 #include <erebus/system/user.hxx>
+#include <erebus/util/format.hxx>
+#include <erebus/util/posixerror.hxx>
 
 #include <pwd.h>
 
@@ -7,40 +10,6 @@ namespace Er
 
 namespace System
 {
-
-namespace CurrentUser
-{
-
-namespace
-{
-
-std::string getUserName()
-{
-    uid_t uid = ::getuid();
-    struct passwd* pw = ::getpwuid(uid);
-    if (pw)
-        return std::string(pw->pw_name);
-
-    return std::getenv("USERNAME");
-}
-
-} // namespace {}   
-
-
-EREBUS_EXPORT std::string name()
-{
-    static std::string user = getUserName();
-    return user;
-}
-
-EREBUS_EXPORT bool root() noexcept
-{
-    return (::geteuid() == 0);
-}
-
-
-} // namespace CurrentUser {}
-
 
 namespace User
 {
@@ -53,6 +22,86 @@ EREBUS_EXPORT std::string name(uid_t id)
 
     return std::string();
 }
+
+EREBUS_EXPORT std::optional<Info> lookup(uid_t uid)
+{
+    static auto required = ::sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (required == -1)
+        required = 4096;
+        
+    std::vector<char> buffer;
+    buffer.resize(size_t(required));
+    struct passwd pwd = {};
+    struct passwd* out = nullptr;
+    auto result = ::getpwuid_r(uid, &pwd, buffer.data(), buffer.size(), &out);
+    if (!out)
+    {
+        if (result == 0)
+            return std::nullopt;
+
+        throw Er::Exception(ER_HERE(), Er::Util::format("Could not lookup user %u", uid), Er::ExceptionProps::PosixErrorCode(result), Er::ExceptionProps::DecodedError(Er::Util::posixErrorToString(result)));
+    }
+
+    Info info;
+    info.name = out->pw_name ? out->pw_name : "";
+    info.userId = uid;
+    info.groupId = out->pw_gid;
+    info.fullName = out->pw_gecos ? out->pw_gecos : "";
+    info.homeDir = out->pw_dir ? out->pw_dir : "";
+    info.shell = out->pw_shell ? out->pw_shell : "";
+
+    return std::make_optional<Info>(std::move(info));
+}
+
+EREBUS_EXPORT Info current()
+{
+    auto info = lookup(::getuid());
+    if (!info)
+        throw Er::Exception(ER_HERE(), Er::Util::format("Could not lookup user %u", ::getuid()));
+
+    return *info;
+}
+
+EREBUS_EXPORT std::vector<Info> enumerate()
+{
+    std::vector<Info> users;
+
+    static auto required = ::sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (required == -1)
+        required = 4096;
+    
+    std::vector<char> buffer;
+    buffer.resize(size_t(required));
+        
+    ::setpwent();
+    while (true) 
+    {
+        struct passwd pwd = {};
+        struct passwd* out = nullptr;
+        auto result = ::getpwent_r(&pwd, buffer.data(), buffer.size(), &out);
+        if (!out)
+        {
+            if ((result == 0) || (result == ENOENT))
+                break;
+
+            throw Er::Exception(ER_HERE(), "Failed to enumerate users", Er::ExceptionProps::PosixErrorCode(result), Er::ExceptionProps::DecodedError(Er::Util::posixErrorToString(result)));
+        }
+        
+        Info info;
+        info.name = out->pw_name ? out->pw_name : "";
+        info.userId = out->pw_uid;
+        info.groupId = out->pw_gid;
+        info.fullName = out->pw_gecos ? out->pw_gecos : "";
+        info.homeDir = out->pw_dir ? out->pw_dir : "";
+        info.shell = out->pw_shell ? out->pw_shell : "";
+
+        users.push_back(std::move(info));
+    }
+    ::endpwent();
+
+    return users;
+}
+
 
 } // namespace User {}
 

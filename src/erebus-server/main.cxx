@@ -76,14 +76,6 @@ int main(int argc, char* argv[], char* env[])
     ::SetConsoleOutputCP(CP_UTF8);
 #endif
 
-#if ER_LINUX && !ER_DEBUG
-    if (!Er::System::CurrentUser::root())
-    {
-        std::cerr << "Root privileges required\n";
-        return EXIT_FAILURE;
-    }
-#endif
-
     // parse command line
     std::string cfgFile;
 
@@ -179,7 +171,8 @@ int main(int argc, char* argv[], char* env[])
 
     try
     {
-        logger->write(Er::Log::Level::Info, LogNowhere(), "Starting as user %s", Er::System::CurrentUser::name().c_str());
+        auto user = Er::System::User::current();
+        logger->write(Er::Log::Level::Info, LogNowhere(), "Starting as user %s", user.name.c_str());
 
         std::string root;
         std::string certificate;
