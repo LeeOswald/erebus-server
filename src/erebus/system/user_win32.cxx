@@ -14,9 +14,6 @@ namespace Er
 namespace System
 {
 
-namespace CurrentUser
-{
-
 namespace
 {
 
@@ -42,16 +39,21 @@ std::wstring getUserName()
 
 } // namespace {}   
 
-
-EREBUS_EXPORT std::string name()
+namespace User
 {
-    static auto userw = getUserName();
-    static auto user = Er::Util::utf16To8bit(CP_UTF8, userw.data(), userw.length());
+
+EREBUS_EXPORT Info current()
+{
+    static auto namew = getUserName();
+    static auto name = Er::Util::utf16To8bit(CP_UTF8, namew.data(), namew.length());
+    
+    Info user;
+    user.name = name;
     return user;
 }
 
 
-} // namespace CurrentUser {}
+} // namespace User {}
 
 } // namespace System {}
 
