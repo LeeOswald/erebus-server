@@ -58,6 +58,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/util/file.hxx
     ../../include/erebus/util/format.hxx
     ../../include/erebus/util/generichandle.hxx
+    ../../include/erebus/util/inifile.hxx
     ../../include/erebus/util/random.hxx
     ../../include/erebus/util/sha256.hxx
     ../../include/erebus/util/stringutil.hxx
@@ -71,6 +72,7 @@ add_library(${EREBUS_LIB} SHARED
     util/exceptionutil.cxx
     util/file.cxx
     util/format.cxx
+    util/inifile.cxx
     util/sha256.cxx
     ${PLATFORM_FILES}
 )

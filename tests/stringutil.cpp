@@ -3,151 +3,105 @@
 #include <erebus/util/stringutil.hxx>
 
 
-TEST(string_split_by_char, char_string)
+TEST(string_split, char_string)
 {
     // split empty string
     {
-        std::string_view s;
-        auto v = Er::Util::split(s, ':');
+        auto v = Er::Util::split(std::string_view(), std::string_view(" "), Er::Util::SplitSkipEmptyParts);
+        EXPECT_TRUE(v.empty());
+        v = Er::Util::split(std::string_view(), std::string_view(" "), Er::Util::SplitKeepEmptyParts);
         EXPECT_TRUE(v.empty());
     }
 
-    // unsplittable
+    // split by empty separator
     {
-        std::string s("unsplittable string");
-        auto v = Er::Util::split(s, ':');
+        auto v = Er::Util::split(std::string_view("test string"), std::string_view(), Er::Util::SplitSkipEmptyParts);
         ASSERT_EQ(v.size(), 1);
-        EXPECT_STREQ(v.front().c_str(), s.c_str());
+        EXPECT_STREQ(std::string(v[0]).c_str(), "test string");
+        v = Er::Util::split(std::string_view("test string"), std::string_view(), Er::Util::SplitKeepEmptyParts);
+        ASSERT_EQ(v.size(), 1);
+        EXPECT_STREQ(std::string(v[0]).c_str(), "test string");
     }
 
-    // empty parts
+    // split by single separator
     {
-        std::string s(":splittable string:");
-        auto v = Er::Util::split(s, ':');
-        ASSERT_EQ(v.size(), 3);
-        EXPECT_STREQ(v[0].c_str(), "");
-        EXPECT_STREQ(v[1].c_str(), "splittable string");
-        EXPECT_STREQ(v[2].c_str(), "");
-    }
-
-    // normal
-    {
-        std::string s("splittable string");
-        auto v = Er::Util::split(s, ' ');
+        auto v = Er::Util::split(std::string_view(";test ;string;;"), std::string_view(";"), Er::Util::SplitSkipEmptyParts);
         ASSERT_EQ(v.size(), 2);
-        EXPECT_STREQ(v[0].c_str(), "splittable");
-        EXPECT_STREQ(v[1].c_str(), "string");
+        EXPECT_STREQ(std::string(v[0]).c_str(), "test ");
+        EXPECT_STREQ(std::string(v[1]).c_str(), "string");
+
+        v = Er::Util::split(std::string_view(";test ;string;;"), std::string_view(";"), Er::Util::SplitKeepEmptyParts);
+        ASSERT_EQ(v.size(), 4);
+        EXPECT_STREQ(std::string(v[0]).c_str(), "");
+        EXPECT_STREQ(std::string(v[1]).c_str(), "test ");
+        EXPECT_STREQ(std::string(v[2]).c_str(), "string");
+        EXPECT_STREQ(std::string(v[3]).c_str(), "");
+    }
+
+    // split by multiple separator
+    {
+        auto v = Er::Util::split(std::string_view(";test .string!;"), std::string_view(";.!"), Er::Util::SplitSkipEmptyParts);
+        ASSERT_EQ(v.size(), 2);
+        EXPECT_STREQ(std::string(v[0]).c_str(), "test ");
+        EXPECT_STREQ(std::string(v[1]).c_str(), "string");
+
+        v = Er::Util::split(std::string_view(";test .string!;"), std::string_view(";.!"), Er::Util::SplitKeepEmptyParts);
+        ASSERT_EQ(v.size(), 4);
+        EXPECT_STREQ(std::string(v[0]).c_str(), "");
+        EXPECT_STREQ(std::string(v[1]).c_str(), "test ");
+        EXPECT_STREQ(std::string(v[2]).c_str(), "string");
+        EXPECT_STREQ(std::string(v[3]).c_str(), "");
     }
 }
 
-TEST(string_split_by_string, char_string)
+TEST(string_split, wchar_string)
 {
     // split empty string
     {
-        std::string_view s;
-        auto v = Er::Util::split(s, "::", 2);
+        auto v = Er::Util::split(std::wstring_view(), std::wstring_view(L" "), Er::Util::SplitSkipEmptyParts);
+        EXPECT_TRUE(v.empty());
+        v = Er::Util::split(std::wstring_view(), std::wstring_view(L" "), Er::Util::SplitKeepEmptyParts);
         EXPECT_TRUE(v.empty());
     }
 
-    // unsplittable
+    // split by empty separator
     {
-        std::string s("unsplittable string");
-        auto v = Er::Util::split(s, "::", 2);
+        auto v = Er::Util::split(std::wstring_view(L"test string"), std::wstring_view(), Er::Util::SplitSkipEmptyParts);
         ASSERT_EQ(v.size(), 1);
-        EXPECT_STREQ(v.front().c_str(), s.c_str());
-    }
-
-    // empty parts
-    {
-        std::string s("::splittable string::");
-        auto v = Er::Util::split(s, "::", 2);
-        ASSERT_EQ(v.size(), 3);
-        EXPECT_STREQ(v[0].c_str(), "");
-        EXPECT_STREQ(v[1].c_str(), "splittable string");
-        EXPECT_STREQ(v[2].c_str(), "");
-    }
-
-    // normal
-    {
-        std::string s("splittable::string");
-        auto v = Er::Util::split(s, "::", 2);
-        ASSERT_EQ(v.size(), 2);
-        EXPECT_STREQ(v[0].c_str(), "splittable");
-        EXPECT_STREQ(v[1].c_str(), "string");
-    }
-}
-
-TEST(string_split_by_char, wchar_string)
-{
-    // split empty string
-    {
-        std::wstring_view s;
-        auto v = Er::Util::split(s, L':');
-        EXPECT_TRUE(v.empty());
-    }
-
-    // unsplittable
-    {
-        std::wstring s(L"unsplittable string");
-        auto v = Er::Util::split(s, L':');
+        EXPECT_STREQ(std::wstring(v[0]).c_str(), L"test string");
+        v = Er::Util::split(std::wstring_view(L"test string"), std::wstring_view(), Er::Util::SplitKeepEmptyParts);
         ASSERT_EQ(v.size(), 1);
-        EXPECT_STREQ(v.front().c_str(), s.c_str());
+        EXPECT_STREQ(std::wstring(v[0]).c_str(), L"test string");
     }
 
-    // empty parts
+    // split by single separator
     {
-        std::wstring s(L":splittable string:");
-        auto v = Er::Util::split(s, L':');
-        ASSERT_EQ(v.size(), 3);
-        EXPECT_STREQ(v[0].c_str(), L"");
-        EXPECT_STREQ(v[1].c_str(), L"splittable string");
-        EXPECT_STREQ(v[2].c_str(), L"");
-    }
-
-    // normal
-    {
-        std::wstring s(L"splittable string");
-        auto v = Er::Util::split(s, L' ');
+        auto v = Er::Util::split(std::wstring_view(L";test ;string;;"), std::wstring_view(L";"), Er::Util::SplitSkipEmptyParts);
         ASSERT_EQ(v.size(), 2);
-        EXPECT_STREQ(v[0].c_str(), L"splittable");
-        EXPECT_STREQ(v[1].c_str(), L"string");
-    }
-}
+        EXPECT_STREQ(std::wstring(v[0]).c_str(), L"test ");
+        EXPECT_STREQ(std::wstring(v[1]).c_str(), L"string");
 
-TEST(string_split_by_string, wchar_string)
-{
-    // split empty string
-    {
-        std::wstring_view s;
-        auto v = Er::Util::split(s, L"::", 2);
-        EXPECT_TRUE(v.empty());
+        v = Er::Util::split(std::wstring_view(L";test ;string;;"), std::wstring_view(L";"), Er::Util::SplitKeepEmptyParts);
+        ASSERT_EQ(v.size(), 4);
+        EXPECT_STREQ(std::wstring(v[0]).c_str(), L"");
+        EXPECT_STREQ(std::wstring(v[1]).c_str(), L"test ");
+        EXPECT_STREQ(std::wstring(v[2]).c_str(), L"string");
+        EXPECT_STREQ(std::wstring(v[3]).c_str(), L"");
     }
 
-    // unsplittable
+    // split by multiple separator
     {
-        std::wstring s(L"unsplittable string");
-        auto v = Er::Util::split(s, L"::", 2);
-        ASSERT_EQ(v.size(), 1);
-        EXPECT_STREQ(v.front().c_str(), s.c_str());
-    }
-
-    // empty parts
-    {
-        std::wstring s(L"::splittable string::");
-        auto v = Er::Util::split(s, L"::", 2);
-        ASSERT_EQ(v.size(), 3);
-        EXPECT_STREQ(v[0].c_str(), L"");
-        EXPECT_STREQ(v[1].c_str(), L"splittable string");
-        EXPECT_STREQ(v[2].c_str(), L"");
-    }
-
-    // normal
-    {
-        std::wstring s(L"splittable::string");
-        auto v = Er::Util::split(s, L"::", 2);
+        auto v = Er::Util::split(std::wstring_view(L";test .string!;"), std::wstring_view(L";.!"), Er::Util::SplitSkipEmptyParts);
         ASSERT_EQ(v.size(), 2);
-        EXPECT_STREQ(v[0].c_str(), L"splittable");
-        EXPECT_STREQ(v[1].c_str(), L"string");
+        EXPECT_STREQ(std::wstring(v[0]).c_str(), L"test ");
+        EXPECT_STREQ(std::wstring(v[1]).c_str(), L"string");
+
+        v = Er::Util::split(std::wstring_view(L";test .string!;"), std::wstring_view(L";.!"), Er::Util::SplitKeepEmptyParts);
+        ASSERT_EQ(v.size(), 4);
+        EXPECT_STREQ(std::wstring(v[0]).c_str(), L"");
+        EXPECT_STREQ(std::wstring(v[1]).c_str(), L"test ");
+        EXPECT_STREQ(std::wstring(v[2]).c_str(), L"string");
+        EXPECT_STREQ(std::wstring(v[3]).c_str(), L"");
     }
 }
 

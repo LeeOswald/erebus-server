@@ -11,44 +11,45 @@ namespace Er
     
 namespace Util
 {
-    
-template <class StringT>
-std::vector<StringT> split(const StringT& s, const typename StringT::value_type* delimiter, size_t delimiterLength)
+
+struct SplitSkipEmptyPartsT {};
+constexpr SplitSkipEmptyPartsT SplitSkipEmptyParts;
+
+struct SplitKeepEmptyPartsT {};
+constexpr SplitKeepEmptyPartsT SplitKeepEmptyParts;
+
+
+template <class StringViewT, class ModeT>
+std::vector<StringViewT> split(StringViewT source, StringViewT delimiters, ModeT mode)
 {
-    size_t posStart = 0;
-    size_t posEnd = 0;
+    std::vector<StringViewT> output;
+    size_t first = 0;
 
-    std::vector<StringT> result;
-    if (s.empty())
-        return result;
-
-    while ((posEnd = s.find(delimiter, posStart)) != StringT::npos)
+    while (first < source.size())
     {
-        auto token = s.substr(posStart, posEnd - posStart);
-        posStart = posEnd + delimiterLength;
-        result.emplace_back(std::move(token));
+        const auto second = source.find_first_of(delimiters, first);
+
+        if constexpr (std::is_same_v<ModeT, SplitSkipEmptyPartsT>)
+        {
+            if (first != second)
+                output.emplace_back(source.substr(first, second - first));
+        }
+        else if constexpr (std::is_same_v<ModeT, SplitKeepEmptyPartsT>)
+        {
+            output.emplace_back(source.substr(first, second - first));
+        }
+        else
+        {
+            assert(!"Unsupported split mode");
+        }
+
+        if (second == StringViewT::npos)
+            break;
+
+        first = second + 1;
     }
 
-    result.emplace_back(s.substr(posStart));
-    return result;
-}
-
-template <class StringT>
-std::vector<StringT> split(const StringT& s, typename StringT::value_type delimiter)
-{
-    const typename StringT::value_type d[] = { delimiter, typename StringT::value_type() };
-    return split(s, d, 1);
-}
-
-template <class StringT>
-void replace(StringT& s, typename StringT::value_type oldChar, typename StringT::value_type newChar)
-{
-    size_t pos = 0;
-    while ((pos = s.find(oldChar, pos)) != StringT::npos)
-    {
-        s.replace(pos, 1, 1, newChar);
-        pos += 1;
-    }
+    return output;
 }
 
 template <class StringT>

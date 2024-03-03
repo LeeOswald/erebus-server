@@ -15,6 +15,7 @@ add_executable(
     condition.cpp
     exception.cpp
     flags.cpp
+    inifile.cpp
     log.cpp
     main.cpp
     stringutil.cpp
