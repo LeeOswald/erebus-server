@@ -1,3 +1,5 @@
 - implement JSON to C++ objects mapping
 - which process props are non-volatile? Read them only omce
 - use boost::format
+- use jthread
+- thread names

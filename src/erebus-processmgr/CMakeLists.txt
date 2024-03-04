@@ -1,7 +1,9 @@
 add_library(${EREBUS_PROCESSMGR} SHARED
+    ../../include/erebus-processmgr/desktopentry.hxx
     ../../include/erebus-processmgr/processmgr.hxx
     ../../include/erebus-processmgr/processprops.hxx
     ../../include/erebus-processmgr/procfs.hxx
+    desktopentry.cxx
     processlist.cxx
     processlist.hxx
     processlistdiff.cxx
