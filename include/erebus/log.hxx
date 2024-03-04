@@ -145,6 +145,7 @@ public:
     explicit LogWrapperBase(ILog* log, Level level, const Location& location) noexcept
         : m_log(log)
         , m_level(level)
+        , m_location(location)
     {
     }
 
