@@ -1,10 +1,13 @@
 #include <erebus/system/user.hxx>
+#include <erebus/util/exceptionutil.hxx>
+#include <erebus/util/file.hxx>
+#include <erebus/util/inifile.hxx>
 #include <erebus/util/stringutil.hxx>
 #include <erebus-processmgr/desktopentry.hxx>
 
 #include <filesystem>
 #include <regex>
-#include <unordered_set>
+
 
 namespace Er
 {
@@ -19,7 +22,7 @@ const std::regex DesktopFilePattern(".*\\.desktop$");
 
 template <typename PredicateT>
 void searchFor(
-    std::vector<std::string>* results, 
+    std::unordered_set<std::string>* results, 
     std::unordered_set<std::string>* uniqueDirs, 
     std::string_view dir, 
     const std::unordered_set<std::string>* excludeDirs, 
@@ -54,17 +57,10 @@ void searchFor(
                     uniqueDirs->emplace(dir);
 
                 if (results)
-                    results->emplace_back(std::move(path));
+                    results->emplace(std::move(path));
             }
         }
     }
-}
-
-std::vector<std::string> enumerateDesktopEntryFiles(const std::string& dir)
-{
-    std::vector<std::string> files;
-    searchFor(&files, nullptr, dir, nullptr, false, [](const std::string& path) { return std::regex_match(path, DesktopFilePattern); });
-    return files;
 }
 
 } // namespace {}
@@ -75,6 +71,10 @@ DesktopEntries::DesktopEntries(Er::Log::ILog* log)
 {
     addXdgDataDirs();
     addUserDirs();
+    for (auto& dir: m_dirs)
+        enumerateFiles(dir);
+
+    parseFiles();
 }
 
 void DesktopEntries::addXdgDataDirs()
@@ -103,7 +103,11 @@ void DesktopEntries::addXdgDataDirs()
         }
 
         Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "including " << pathStr;
-        m_dirs.emplace_back(std::move(pathStr));
+        
+        {
+            std::unique_lock l(m_mutex);
+            m_dirs.emplace(std::move(pathStr));
+        }
     }
 }
 
@@ -130,8 +134,77 @@ void DesktopEntries::addUserDirs()
 
         auto pathStr = path.string();
         Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "including " << pathStr;
-        m_dirs.push_back(std::move(pathStr));
+        
+        {
+            std::unique_lock l(m_mutex);
+            m_dirs.emplace(std::move(pathStr));
+        }
     }
+}
+
+void DesktopEntries::enumerateFiles(const std::string& dir)
+{
+    searchFor(
+        &m_files, 
+        nullptr, 
+        dir, 
+        nullptr, 
+        false, 
+        [this](const std::string& path) 
+        { 
+            if (std::regex_match(path, DesktopFilePattern))
+            {
+                Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "adding " << path;
+                return true;
+            }
+            return false;
+        }
+    );
+}
+
+void DesktopEntries::parseFiles()
+{
+    for (auto& file: m_files)
+    {
+        Er::protectedCall<void>(
+            m_log, 
+            LogComponent("DesktopEntries"),
+            [this](const std::string& file)
+            {
+                auto result = parseFile(file);
+                if (result)
+                    m_entries.insert({ result->exec, std::move(*result) });
+            },
+            file
+        );
+    }
+}
+
+std::optional<DesktopEntries::Entry> DesktopEntries::parseFile(const std::string& path)
+{
+    auto contents = Er::Util::loadFile(path);
+    auto ini = Er::Util::IniFile::parse(contents);
+
+    Entry e;
+    auto name = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Name"));
+    if (name)
+        e.name = std::move(*name);
+
+    auto exe = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Exec"));
+    if (!exe)
+        return std::nullopt;
+
+    e.exec = std::move(*exe);
+
+    auto ico = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Icon"));
+    if (!ico)
+        return std::nullopt;
+
+    e.icon = std::move(*ico);
+
+    Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << e.exec << " -> " << e.icon;
+
+    return std::make_optional<Entry>(std::move(e));
 }
 
 } // DesktopEnv {}

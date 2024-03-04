@@ -5,7 +5,8 @@
 
 
 #include <shared_mutex>
-#include <vector>
+#include <unordered_map>
+#include <unordered_set>
 
 
 namespace Er
@@ -22,12 +23,24 @@ public:
     explicit DesktopEntries(Er::Log::ILog* log);
 
 private:
+    struct Entry
+    {
+        std::string name;
+        std::string exec;
+        std::string icon;
+    };
+
     void addXdgDataDirs();
     void addUserDirs();
+    void enumerateFiles(const std::string& dir);
+    void parseFiles();
+    std::optional<Entry> parseFile(const std::string& path);
 
     Er::Log::ILog* const m_log;
     std::shared_mutex m_mutex;
-    std::vector<std::string> m_dirs;
+    std::unordered_set<std::string> m_dirs;
+    std::unordered_set<std::string> m_files;
+    std::unordered_map<std::string, Entry> m_entries;
 };
 
 
