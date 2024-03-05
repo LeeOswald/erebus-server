@@ -36,13 +36,13 @@ public:
 
     explicit ProcessMgrPlugin(const Er::Server::PluginParams& params)
         : m_params(params)
-        , m_args(parseArgs(params))
     {
         long expected = 0;
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
             throw Er::Exception(ER_HERE(), "Only one instance of erebus-processmgr plugin can be instantiated");
 
-        m_desktopEntries.reset(new DesktopEnv::DesktopEntries(params.log));
+        auto args = parseArgs(params);
+        m_desktopEntries.reset(new DesktopEnv::DesktopEntries(params.log, args.iconCache, args.iconCacheDir));
 
         // create and register services
         m_processList.reset(new Er::Private::ProcessList(m_params.log));
@@ -98,7 +98,6 @@ private:
     static std::atomic<long> g_instances;
 
     Er::Server::PluginParams m_params;
-    PluginArgs m_args;
     std::unique_ptr<DesktopEnv::DesktopEntries> m_desktopEntries;
     std::unique_ptr<Er::Private::ProcessList> m_processList;
 };
@@ -121,7 +120,6 @@ ER_PROCESSMGR_EXPORT Er::Server::IPlugin* createPlugin(const Er::Server::PluginP
 
 ER_PROCESSMGR_EXPORT void disposePlugin(Er::Server::IPlugin* plugin)
 {
-    assert(plugin);
     if (!plugin)
         return;
 

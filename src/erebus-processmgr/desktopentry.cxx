@@ -54,10 +54,12 @@ std::string_view extractExeNameFromCommand(std::string_view command)
 } // namespace {}
 
 
-DesktopEntries::DesktopEntries(Er::Log::ILog* log)
+DesktopEntries::DesktopEntries(Er::Log::ILog* log, const std::string& iconCache, const std::string& iconCacheDir)
     : m_log(log)
-    , m_iconCache(log)
+    , m_iconCache(log, iconCache, iconCacheDir)
 {
+    auto s = m_iconCache.lookup("mc", 16);
+    
     addXdgDataDirs();
     addUserDirs();
     for (auto& dir: m_dirs)

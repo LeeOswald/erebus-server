@@ -21,7 +21,7 @@ class ER_PROCESSMGR_EXPORT DesktopEntries final
     : public Er::NonCopyable
 {
 public:
-    explicit DesktopEntries(Er::Log::ILog* log);
+    explicit DesktopEntries(Er::Log::ILog* log, const std::string& iconCache, const std::string& iconCacheDir);
 
 private:
     struct Entry
