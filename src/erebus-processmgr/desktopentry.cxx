@@ -20,49 +20,6 @@ namespace
 
 const std::regex DesktopFilePattern(".*\\.desktop$");
 
-template <typename PredicateT>
-void searchFor(
-    std::unordered_set<std::string>* results, 
-    std::unordered_set<std::string>* uniqueDirs, 
-    std::string_view dir, 
-    const std::unordered_set<std::string>* excludeDirs, 
-    bool recursive,
-    PredicateT pred
-    )
-{
-    std::error_code ec;
-    for (auto& d: std::filesystem::directory_iterator(dir, ec))
-    {
-        if (ec)
-            continue;
-
-        auto path = d.path().string();
-        
-        if (excludeDirs && (excludeDirs->find(path) != excludeDirs->end()))
-            continue;
-
-        if (d.is_symlink(ec) || ec)
-            continue;
-
-        if (d.is_directory(ec) && !ec)
-        {
-            if (recursive)
-                searchFor(results, uniqueDirs, path, excludeDirs, recursive, pred);
-        }
-        else if (d.is_regular_file(ec) && !ec)
-        {
-            if (pred(path))
-            {
-                if (uniqueDirs)
-                    uniqueDirs->emplace(dir);
-
-                if (results)
-                    results->emplace(std::move(path));
-            }
-        }
-    }
-}
-
 std::string_view extractExeNameFromCommand(std::string_view command)
 {
     auto start = command.data();
@@ -99,6 +56,7 @@ std::string_view extractExeNameFromCommand(std::string_view command)
 
 DesktopEntries::DesktopEntries(Er::Log::ILog* log)
     : m_log(log)
+    , m_iconCache(log)
 {
     addXdgDataDirs();
     addUserDirs();
@@ -135,10 +93,7 @@ void DesktopEntries::addXdgDataDirs()
 
         Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "including " << pathStr;
         
-        {
-            std::unique_lock l(m_mutex);
-            m_dirs.emplace(std::move(pathStr));
-        }
+        m_dirs.push_back(std::move(pathStr));
     }
 }
 
@@ -166,21 +121,18 @@ void DesktopEntries::addUserDirs()
         auto pathStr = path.string();
         Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "including " << pathStr;
         
-        {
-            std::unique_lock l(m_mutex);
-            m_dirs.emplace(std::move(pathStr));
-        }
+        m_dirs.push_back(std::move(pathStr));
     }
 }
 
 void DesktopEntries::enumerateFiles(const std::string& dir)
 {
-    searchFor(
-        &m_files, 
-        nullptr, 
+    Er::Util::searchFor(
+        m_files, 
         dir, 
         nullptr, 
-        false, 
+        false,
+        Er::Util::FileSearchMode::FilesOnly, 
         [this](const std::string& path) 
         { 
             if (std::regex_match(path, DesktopFilePattern))

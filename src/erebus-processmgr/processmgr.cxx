@@ -36,6 +36,7 @@ public:
 
     explicit ProcessMgrPlugin(const Er::Server::PluginParams& params)
         : m_params(params)
+        , m_args(parseArgs(params))
     {
         long expected = 0;
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
@@ -57,9 +58,47 @@ public:
     }
 
 private:
+    struct PluginArgs
+    {
+        std::string iconCache;
+        std::string iconCacheDir;
+    };
+
+    PluginArgs parseArgs(const Er::Server::PluginParams& params)
+    {
+        PluginArgs a;
+
+        bool iconCacheNext = false;
+        bool iconCacheDirNext = false;
+        for (auto& arg: params.args)
+        {
+            if (arg == "--iconcache")
+            {
+                iconCacheNext = true;
+            }
+            else if (iconCacheNext)
+            {
+                iconCacheNext = false;
+                a.iconCache = arg;
+            }
+            else if (arg == "--iconcachedir")
+            {
+                iconCacheDirNext = true;
+            }
+            else if (iconCacheDirNext)
+            {
+                iconCacheDirNext = false;
+                a.iconCacheDir = arg;
+            }
+        }
+
+        return a;
+    }
+
     static std::atomic<long> g_instances;
 
     Er::Server::PluginParams m_params;
+    PluginArgs m_args;
     std::unique_ptr<DesktopEnv::DesktopEntries> m_desktopEntries;
     std::unique_ptr<Er::Private::ProcessList> m_processList;
 };

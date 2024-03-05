@@ -1,13 +1,13 @@
 #pragma once
 
 #include <erebus/log.hxx>
+#include <erebus-processmgr/iconcache.hxx>
 #include <erebus-processmgr/pathresolver.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
 
-#include <shared_mutex>
 #include <unordered_map>
-#include <unordered_set>
+#include <vector>
 
 
 namespace Er
@@ -40,9 +40,9 @@ private:
 
     Er::Log::ILog* const m_log;
     PathResolver m_pathResolver;
-    std::shared_mutex m_mutex;
-    std::unordered_set<std::string> m_dirs;
-    std::unordered_set<std::string> m_files;
+    IconCache m_iconCache;
+    std::vector<std::string> m_dirs;
+    std::vector<std::string> m_files;
     std::unordered_map<std::string, Entry> m_entries;
 };
 

@@ -18,6 +18,8 @@ struct PluginParams
 {
     Er::Log::ILog* log = nullptr;
     std::vector<IServiceContainer*> containers;
+    std::string binary;
+    std::vector<std::string> args;
 };
 
 
