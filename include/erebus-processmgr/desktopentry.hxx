@@ -1,6 +1,7 @@
 #pragma once
 
 #include <erebus/log.hxx>
+#include <erebus-processmgr/pathresolver.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
 
@@ -35,8 +36,10 @@ private:
     void enumerateFiles(const std::string& dir);
     void parseFiles();
     std::optional<Entry> parseFile(const std::string& path);
+    std::optional<std::string> resolveExePath(std::string_view exe) const;
 
     Er::Log::ILog* const m_log;
+    PathResolver m_pathResolver;
     std::shared_mutex m_mutex;
     std::unordered_set<std::string> m_dirs;
     std::unordered_set<std::string> m_files;

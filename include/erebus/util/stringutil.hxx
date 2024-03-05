@@ -19,10 +19,10 @@ struct SplitKeepEmptyPartsT {};
 constexpr SplitKeepEmptyPartsT SplitKeepEmptyParts;
 
 
-template <class StringViewT, class ModeT>
-std::vector<StringViewT> split(StringViewT source, StringViewT delimiters, ModeT mode)
+template <class StringT, class StringViewT, class ModeT>
+std::vector<StringT> split(StringT source, StringViewT delimiters, ModeT mode)
 {
-    std::vector<StringViewT> output;
+    std::vector<StringT> output;
     size_t first = 0;
 
     while (first < source.size())

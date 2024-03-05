@@ -63,6 +63,37 @@ void searchFor(
     }
 }
 
+std::string_view extractExeNameFromCommand(std::string_view command)
+{
+    auto start = command.data();
+    auto end = start + command.length();
+    while ((start < end) && std::isspace(*start))
+        ++start;
+
+    if (start == end)
+        return std::string_view();
+
+    if (*start == '\"') // exe path is quoted
+    {
+        ++start;
+        auto p = start;
+        while ((p < end) && (*p != '\"'))
+            ++p;
+
+        if (p == end)
+            return std::string_view();
+
+        assert(*p == '\"');
+        return std::string_view(start, p - start);
+    }
+
+    auto p = start;
+    while ((p < end) && (*p != ' '))
+        ++p;
+
+    return std::string_view(start, p - start);
+}
+
 } // namespace {}
 
 
@@ -194,7 +225,21 @@ std::optional<DesktopEntries::Entry> DesktopEntries::parseFile(const std::string
     if (!exe)
         return std::nullopt;
 
-    e.exec = std::move(*exe);
+    auto exeName = extractExeNameFromCommand(*exe);
+    if (exeName.empty())
+    {
+        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "invalid executable name " << *exe;
+        return std::nullopt;
+    }
+
+    auto exePath = resolveExePath(exeName);
+    if (!exePath)
+    {
+        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "failed to find executable " << *exe;
+        return std::nullopt;
+    }
+
+    e.exec = *exePath;
 
     auto ico = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Icon"));
     if (!ico)
@@ -205,6 +250,15 @@ std::optional<DesktopEntries::Entry> DesktopEntries::parseFile(const std::string
     Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << e.exec << " -> " << e.icon;
 
     return std::make_optional<Entry>(std::move(e));
+}
+
+std::optional<std::string> DesktopEntries::resolveExePath(std::string_view exe) const
+{
+    std::filesystem::path path(exe);
+    if (path.is_absolute())
+        return std::make_optional(std::string(exe));
+
+    return m_pathResolver.resolve(exe);
 }
 
 } // DesktopEnv {}
