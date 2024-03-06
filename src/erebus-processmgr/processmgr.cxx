@@ -42,7 +42,7 @@ public:
             throw Er::Exception(ER_HERE(), "Only one instance of erebus-processmgr plugin can be instantiated");
 
         auto args = parseArgs(params);
-        m_desktopEntries.reset(new DesktopEnv::DesktopEntries(params.log, args.iconCache, args.iconCacheDir));
+        m_desktopEntries.reset(new DesktopEnv::DesktopEntries(params.log, args.iconCacheAgent, args.iconCacheDir));
 
         // create and register services
         m_processList.reset(new Er::Private::ProcessList(m_params.log));
@@ -60,7 +60,7 @@ public:
 private:
     struct PluginArgs
     {
-        std::string iconCache;
+        std::string iconCacheAgent;
         std::string iconCacheDir;
     };
 
@@ -68,18 +68,18 @@ private:
     {
         PluginArgs a;
 
-        bool iconCacheNext = false;
+        bool iconCacheAgentNext = false;
         bool iconCacheDirNext = false;
         for (auto& arg: params.args)
         {
-            if (arg == "--iconcache")
+            if (arg == "--iconcacheagent")
             {
-                iconCacheNext = true;
+                iconCacheAgentNext = true;
             }
-            else if (iconCacheNext)
+            else if (iconCacheAgentNext)
             {
-                iconCacheNext = false;
-                a.iconCache = arg;
+                iconCacheAgentNext = false;
+                a.iconCacheAgent = arg;
             }
             else if (arg == "--iconcachedir")
             {
