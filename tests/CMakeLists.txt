@@ -17,6 +17,7 @@ add_executable(
     flags.cpp
     inifile.cpp
     log.cpp
+    lrucache.cpp
     main.cpp
     stringutil.cpp
     tree.cpp

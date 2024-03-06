@@ -38,6 +38,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/knownprops.hxx
     ../../include/erebus/lockable.hxx
     ../../include/erebus/log.hxx
+    ../../include/erebus/lrucache.hxx
     ../../include/erebus/mutexpool.hxx
     ../../include/erebus/noncopyable.hxx
     ../../include/erebus/platform.hxx
