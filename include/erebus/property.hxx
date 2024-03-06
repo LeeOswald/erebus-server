@@ -114,6 +114,17 @@ struct Property
 };
 
 
+
+struct AlwaysEqualPropertyComparator
+{
+    bool operator()(const Property& a, const Property& b) { return true; }
+};
+
+struct NeverEqualPropertyComparator
+{
+    bool operator()(const Property& a, const Property& b) { return false; }
+};
+
 template <std::equality_comparable T>
 struct PropertyComparator<T>
 {

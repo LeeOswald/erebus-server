@@ -7,8 +7,11 @@
 
 namespace Er
 {
+    
+namespace Private
+{
 
-class ER_PROCESSMGR_EXPORT PathResolver final
+class PathResolver final
     : public Er::NonCopyable
 {
 public:
@@ -19,5 +22,7 @@ public:
 private:
     std::vector<std::string> m_paths;
 };
+
+} // namespace Private {}
 
 } // namespace Er {}

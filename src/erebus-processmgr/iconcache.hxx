@@ -11,7 +11,10 @@
 namespace Er
 {
 
-class ER_PROCESSMGR_EXPORT IconCache final
+namespace Private
+{
+    
+class IconCache final
     : public Er::NonCopyable
 {
 public:
@@ -34,5 +37,8 @@ private:
     std::unique_ptr<std::jthread> m_worker;
     std::stop_token m_stop;
 };
+
+
+} // namespace Private {}
 
 } // namespace Er {}

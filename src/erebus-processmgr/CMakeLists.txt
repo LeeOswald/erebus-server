@@ -1,12 +1,12 @@
 add_library(${EREBUS_PROCESSMGR} SHARED
-    ../../include/erebus-processmgr/desktopentry.hxx
-    ../../include/erebus-processmgr/iconcache.hxx
-    ../../include/erebus-processmgr/pathresolver.hxx
     ../../include/erebus-processmgr/processmgr.hxx
     ../../include/erebus-processmgr/processprops.hxx
     ../../include/erebus-processmgr/procfs.hxx
-    desktopentry.cxx
+    desktopentries.hxx
+    desktopentries.cxx
+    iconcache.hxx
     iconcache.cxx
+    pathresolver.hxx
     pathresolver.cxx
     processlist.cxx
     processlist.hxx

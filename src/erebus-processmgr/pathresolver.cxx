@@ -1,9 +1,12 @@
 #include <erebus/util/stringutil.hxx>
-#include <erebus-processmgr/pathresolver.hxx>
+#include "pathresolver.hxx"
 
 #include <filesystem>
 
 namespace Er
+{
+    
+namespace Private
 {
 
 PathResolver::PathResolver(const char* paths)
@@ -30,5 +33,7 @@ std::optional<std::string> PathResolver::resolve(std::string_view name) const
     return std::nullopt;
 }
 
+
+} // namespace Private {}
 
 } // namespace Er {}

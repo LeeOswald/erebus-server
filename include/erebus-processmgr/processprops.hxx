@@ -20,6 +20,18 @@ static const std::string_view ProcessDetails = "ProcessDetails";
 namespace ProcessProps
 {
 
+struct IconFormatter
+{
+    void operator()(const Property& v, std::ostream& s) 
+    { 
+        auto ico = std::any_cast<std::string>(v.value); 
+        if (ico.empty())
+            s << "[null icon]";
+        else
+            s << "[icon (" << ico.size() << " bytes)]";
+    }
+};
+
 using RequiredFields = PropertyValue<uint64_t, ER_PROPID("process.fields"), "__Fields">;
 using Error = PropertyValue<std::string, ER_PROPID("process.error"), "__Error">;
 using Valid = PropertyValue<bool, ER_PROPID("process.valid"), "__Valid">;
@@ -37,6 +49,7 @@ using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Comman
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable Name">;
 using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
 using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
+using Icon = PropertyValue<std::string, ER_PROPID("process.icon"), "Icon", PropertyComparator<std::string>, IconFormatter>;
 
 
 constexpr PropId IndexToProp[] =
@@ -52,7 +65,8 @@ constexpr PropId IndexToProp[] =
     /* 8*/ Exe::Id::value,
     /* 9*/ StartTime::Id::value,
     /*10*/ State::Id::value,
-    /*11*/ User::Id::value
+    /*11*/ User::Id::value,
+    /*12*/ Icon::Id::value,
 };
 
 
@@ -70,6 +84,7 @@ struct PropIndices
     static constexpr Flag StartTime = 9;
     static constexpr Flag State = 10;
     static constexpr Flag User = 11;
+    static constexpr Flag Icon = 12;
 
     static constexpr size_t FlagsCount = 64;
 };
@@ -100,6 +115,7 @@ inline void registerAll()
     registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<StartTime>>());
     registerProperty(std::make_shared<PropertyInfoWrapper<State>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<Icon>>());
 }
 
 inline void unregisterAll()
@@ -121,6 +137,7 @@ inline void unregisterAll()
     unregisterProperty(lookupProperty(ProcessProps::Exe::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::StartTime::Id::value));
     unregisterProperty(lookupProperty(ProcessProps::State::Id::value));
+    unregisterProperty(lookupProperty(ProcessProps::Icon::Id::value));
 }
 
 } // namespace Private {}

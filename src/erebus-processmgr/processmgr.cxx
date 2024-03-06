@@ -1,8 +1,9 @@
 #include <erebus/exception.hxx>
-#include <erebus-processmgr/desktopentry.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 #include <erebus-processmgr/processprops.hxx>
 
+#include "desktopentries.hxx"
+#include "iconcache.hxx"
 #include "processlist.hxx"
 
 #include <atomic>
@@ -28,6 +29,7 @@ public:
 
         m_processList.reset();
         m_desktopEntries.reset();
+        m_iconCache.reset();
 
         Er::ProcessProps::Private::unregisterAll();
 
@@ -42,7 +44,9 @@ public:
             throw Er::Exception(ER_HERE(), "Only one instance of erebus-processmgr plugin can be instantiated");
 
         auto args = parseArgs(params);
-        m_desktopEntries.reset(new DesktopEnv::DesktopEntries(params.log, args.iconCacheAgent, args.iconCacheDir));
+
+        m_iconCache.reset(new Er::Private::IconCache(params.log, args.iconCacheAgent, args.iconCacheDir));
+        m_desktopEntries.reset(new Er::Private::DesktopEntries(params.log));
 
         // create and register services
         m_processList.reset(new Er::Private::ProcessList(m_params.log));
@@ -98,7 +102,8 @@ private:
     static std::atomic<long> g_instances;
 
     Er::Server::PluginParams m_params;
-    std::unique_ptr<DesktopEnv::DesktopEntries> m_desktopEntries;
+    std::unique_ptr<Er::Private::IconCache> m_iconCache;
+    std::unique_ptr<Er::Private::DesktopEntries> m_desktopEntries;
     std::unique_ptr<Er::Private::ProcessList> m_processList;
 };
 

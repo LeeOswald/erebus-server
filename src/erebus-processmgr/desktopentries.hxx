@@ -1,10 +1,9 @@
 #pragma once
 
 #include <erebus/log.hxx>
-#include <erebus-processmgr/iconcache.hxx>
-#include <erebus-processmgr/pathresolver.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
+#include "pathresolver.hxx"
 
 #include <unordered_map>
 #include <vector>
@@ -13,15 +12,15 @@
 namespace Er
 {
 
-namespace DesktopEnv
+namespace Private
 {
 
 
-class ER_PROCESSMGR_EXPORT DesktopEntries final
+class DesktopEntries final
     : public Er::NonCopyable
 {
 public:
-    explicit DesktopEntries(Er::Log::ILog* log, const std::string& iconCacheAgent, const std::string& iconCacheDir);
+    explicit DesktopEntries(Er::Log::ILog* log);
 
 private:
     struct Entry
@@ -40,13 +39,12 @@ private:
 
     Er::Log::ILog* const m_log;
     PathResolver m_pathResolver;
-    IconCache m_iconCache;
     std::vector<std::string> m_dirs;
     std::vector<std::string> m_files;
     std::unordered_map<std::string, Entry> m_entries;
 };
 
 
-} // DesktopEnv {}
+} // Private {}
 
 } // namespace Er {}

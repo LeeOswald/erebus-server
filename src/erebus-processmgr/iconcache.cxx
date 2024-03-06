@@ -1,7 +1,8 @@
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/generichandle.hxx>
 #include <erebus/util/sha256.hxx>
-#include <erebus-processmgr/iconcache.hxx>
+
+#include "iconcache.hxx"
 
 #include <filesystem>
 #include <sstream>
@@ -9,6 +10,9 @@
 #include <boost/process.hpp>
 
 namespace Er
+{
+    
+namespace Private
 {
 
 namespace
@@ -183,8 +187,6 @@ std::string IconCache::makeCachePath(const std::string& name, unsigned size) con
 
 int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<std::string>* iconNames, unsigned size, std::stop_token* stop) const noexcept
 {
-    // pass requested icon names in a temporary file
-    
     return Er::protectedCall<int>(
         m_log,
         LogComponent("IconCache"),
@@ -247,5 +249,8 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
         }
     );
 }
+
+
+} // namespace Private {}
 
 } // namespace Er {}

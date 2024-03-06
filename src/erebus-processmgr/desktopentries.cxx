@@ -3,7 +3,8 @@
 #include <erebus/util/file.hxx>
 #include <erebus/util/inifile.hxx>
 #include <erebus/util/stringutil.hxx>
-#include <erebus-processmgr/desktopentry.hxx>
+
+#include "desktopentries.hxx"
 
 #include <filesystem>
 #include <regex>
@@ -12,7 +13,7 @@
 namespace Er
 {
 
-namespace DesktopEnv
+namespace Private
 {
 
 namespace
@@ -54,9 +55,8 @@ std::string_view extractExeNameFromCommand(std::string_view command)
 } // namespace {}
 
 
-DesktopEntries::DesktopEntries(Er::Log::ILog* log, const std::string& iconCacheAgent, const std::string& iconCacheDir)
+DesktopEntries::DesktopEntries(Er::Log::ILog* log)
     : m_log(log)
-    , m_iconCache(log, iconCacheAgent, iconCacheDir)
 {
     addXdgDataDirs();
     addUserDirs();
@@ -64,13 +64,6 @@ DesktopEntries::DesktopEntries(Er::Log::ILog* log, const std::string& iconCacheA
         enumerateFiles(dir);
 
     parseFiles();
-
-    std::vector<std::string> iconsToCache;
-    for (auto& e: m_entries)
-        iconsToCache.push_back(e.second.icon);
-
-    if (!iconsToCache.empty())
-        m_iconCache.backgroundLookup(iconsToCache, 16);
 }
 
 void DesktopEntries::addXdgDataDirs()
@@ -220,6 +213,6 @@ std::optional<std::string> DesktopEntries::resolveExePath(std::string_view exe) 
     return m_pathResolver.resolve(exe);
 }
 
-} // DesktopEnv {}
+} // Private {}
 
 } // namespace Er {}
