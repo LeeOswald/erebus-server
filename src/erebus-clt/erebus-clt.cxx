@@ -209,6 +209,8 @@ public:
                 a->set_v_double(std::any_cast<double>(arg.second.value));
             else if (type == typeid(std::string))
                 a->set_v_string(std::any_cast<std::string>(arg.second.value));
+            else if (type == typeid(Er::Bytes))
+                a->set_v_bytes(std::any_cast<Er::Bytes>(arg.second.value).bytes);
             else
                 throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
         }
@@ -249,6 +251,8 @@ public:
                     bag.insert({ id, Er::Property(id, prop.v_double()) });
                 else if (type == typeid(std::string))
                     bag.insert({ id, Er::Property(id, prop.v_string()) });
+                else if (type == typeid(Er::Bytes))
+                    bag.insert({ id, Er::Property(id, Er::Bytes(prop.v_bytes())) });
                 else
                     m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property type %s", type.name());
             }
@@ -290,6 +294,8 @@ public:
                 a->set_v_double(std::any_cast<double>(arg.second.value));
             else if (type == typeid(std::string))
                 a->set_v_string(std::any_cast<std::string>(arg.second.value));
+            else if (type == typeid(Er::Bytes))
+                a->set_v_bytes(std::any_cast<Er::Bytes>(arg.second.value).bytes);
             else
                 throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
         }
@@ -333,6 +339,8 @@ public:
                         bag.insert({ id, Er::Property(id, prop.v_double()) });
                     else if (type == typeid(std::string))
                         bag.insert({ id, Er::Property(id, prop.v_string()) });
+                    else if (type == typeid(Er::Bytes))
+                        bag.insert({ id, Er::Property(id, Er::Bytes(prop.v_bytes())) });
                     else
                         m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property type %s", type.name());
                 }
