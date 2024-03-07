@@ -23,7 +23,8 @@ public:
     explicit IconCache(Er::Log::ILog* log, const std::string& iconCacheAgent, const std::string& iconCacheDir);
     
     void prefetch(const std::vector<std::string>& iconNames, unsigned size);
-    std::unordered_map<std::string, std::string> lookup(const std::vector<std::string>& iconNames, unsigned size); // icon name -> cache path
+    std::unordered_map<std::string, std::string> lookup(const std::vector<std::string>& iconNames, unsigned size) const; // icon name -> cache path
+    std::optional<std::string> lookup(const std::string& iconName, unsigned size) const;
 
 private:
     std::string makeCachePath(const std::string& name, unsigned size) const;

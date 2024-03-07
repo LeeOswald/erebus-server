@@ -47,7 +47,7 @@ IconCache::IconCache(Er::Log::ILog* log, const std::string& iconCacheAgent, cons
 {
 }
 
-std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector<std::string>& iconNames, unsigned size)
+std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector<std::string>& iconNames, unsigned size) const
 {
     std::unordered_map<std::string, std::string> cachedPaths;
 
@@ -84,6 +84,22 @@ std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector
     }
 
     return cachedPaths;
+}
+
+std::optional<std::string> IconCache::lookup(const std::string& iconName, unsigned size) const
+{
+    auto iconPath = makeCachePath(iconName, size);
+        
+    std::filesystem::path path(iconPath);
+    if (std::filesystem::exists(path))
+        return std::make_optional(std::move(iconPath));
+
+    std::vector<std::string> iconsToRequest{ iconName };
+    auto ret = callCacheAgent(nullptr, &iconsToRequest, size, nullptr);
+    if (ret == 1)
+        return std::make_optional(std::move(iconPath));
+
+    return std::nullopt;
 }
 
 void IconCache::prefetch(const std::vector<std::string>& iconNames, unsigned size)
