@@ -110,7 +110,7 @@ struct Property
 
     PropId id = InvalidPropId;
     std::any value;
-    IPropertyInfo* info = nullptr;
+    mutable IPropertyInfo* info = nullptr;
 };
 
 

@@ -32,7 +32,7 @@ inline IPropertyInfo* getPropertyInfo(const Property& prop) noexcept
     return info.get();
 }
 
-inline IPropertyInfo* cachePropertyInfo(Property& prop) noexcept
+inline IPropertyInfo* cachePropertyInfo(const Property& prop) noexcept
 {
     if (prop.info)
         return prop.info;
@@ -45,7 +45,7 @@ inline IPropertyInfo* cachePropertyInfo(Property& prop) noexcept
     return prop.info;
 }
 
-inline void cachePropertyInfo(PropertyBag& bag) noexcept
+inline void cachePropertyInfo(const PropertyBag& bag) noexcept
 {
     for (auto& prop: bag)
     {
