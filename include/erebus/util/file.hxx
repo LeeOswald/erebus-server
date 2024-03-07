@@ -69,13 +69,8 @@ void searchFor(
 }
 
 
-enum class LoadFile
-{
-    Binary,
-    Text
-};
-
-EREBUS_EXPORT std::string loadFile(const std::string& path, LoadFile mode);
+EREBUS_EXPORT std::string loadTextFile(const std::string& path);
+EREBUS_EXPORT Bytes loadBinaryFile(const std::string& path);
 
 } // namespace Util {}
 

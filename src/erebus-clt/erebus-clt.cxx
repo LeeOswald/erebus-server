@@ -529,6 +529,8 @@ private:
                         unmarshaledException.add(id, prop.v_double());
                     else if (type == typeid(std::string))
                         unmarshaledException.add(id, prop.v_string());
+                    else if (type == typeid(Bytes))
+                        unmarshaledException.add(id, Bytes(prop.v_bytes()));
                     else
                         m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported exception property type %s", type.name());
                 }

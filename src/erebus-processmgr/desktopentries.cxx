@@ -197,7 +197,7 @@ void DesktopEntries::parseFiles(const std::string& dir)
 
 std::shared_ptr<DesktopEntries::Entry> DesktopEntries::parseFile(const std::string& path)
 {
-    auto contents = Er::Util::loadFile(path, Er::Util::LoadFile::Text);
+    auto contents = Er::Util::loadTextFile(path);
     auto ini = Er::Util::IniFile::parse(contents);
 
     auto e = std::make_shared<Entry>();

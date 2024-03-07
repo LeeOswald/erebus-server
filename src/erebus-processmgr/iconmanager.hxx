@@ -29,15 +29,16 @@ public:
     struct IconData
     {
         bool valid; // no icon exists for this exe
-        std::string data;
+        Bytes data;
 
         IconData() noexcept
             : valid(false)
         {}
 
-        explicit IconData(std::string&& data) noexcept
+        template <typename BytesT>
+        explicit IconData(BytesT&& data) noexcept
             : valid(true)
-            , data(std::move(data))
+            , data(std::forward<BytesT>(data))
         {}
     };
 

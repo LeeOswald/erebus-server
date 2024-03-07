@@ -37,10 +37,28 @@ public:
 };
 
 
-enum class CallbackResult
+struct EREBUS_EXPORT Bytes
 {
-    Continue,
-    Abort
+    std::string bytes;
+
+    Bytes() noexcept
+    {}
+
+    Bytes(const Bytes& b)
+        : bytes(b.bytes)
+    {}
+
+    Bytes(Bytes&& b) noexcept
+        : bytes(std::move(b.bytes))
+    {}
+
+    explicit Bytes(const std::string& b)
+        : bytes(b)
+    {}
+
+    explicit Bytes(std::string&& b) noexcept
+        : bytes(std::move(b))
+    {}
 };
 
 } // namespace Er {}

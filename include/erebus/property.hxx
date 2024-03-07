@@ -125,6 +125,11 @@ struct NeverEqualPropertyComparator
     bool operator()(const Property& a, const Property& b) { return false; }
 };
 
+struct BytesComparator
+{
+    bool operator()(const Property& a, const Property& b) { return std::any_cast<Bytes>(a.value).bytes == std::any_cast<Bytes>(b.value).bytes; }
+};
+
 template <std::equality_comparable T>
 struct PropertyComparator<T>
 {

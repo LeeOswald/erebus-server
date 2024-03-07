@@ -370,7 +370,7 @@ int main(int argc, char* argv[])
             ("adduser", po::value<std::string>(), "add user <name>:<password>")
             ("rmuser", po::value<std::string>(), "delete user <name>")
             ("listusers", "list existing users")
-            ("loop", po::value<int>(&interval)->default_value(5), "repeat the request with an interval")
+            ("loop", po::value<int>(&interval)->default_value(0), "repeat the request with an interval")
             ("process", po::value<int>(), "view process info for PID")
             ("processes", "view process list")
             ("procdiff", "view process list (incremental)")
@@ -406,7 +406,7 @@ int main(int argc, char* argv[])
         std::string root;
         
         if (!rootFile.empty())
-            root = Er::Util::loadFile(rootFile, Er::Util::LoadFile::Text);
+            root = Er::Util::loadTextFile(rootFile);
 
         std::string user;
         std::string password;

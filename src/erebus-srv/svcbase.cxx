@@ -246,10 +246,12 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
                 mutableProp->set_v_int64(std::any_cast<int64_t>(property.value));
             else if (type == typeid(uint64_t))
                 mutableProp->set_v_uint64(std::any_cast<uint64_t>(property.value));
-            if (type == typeid(double))
+            else if (type == typeid(double))
                 mutableProp->set_v_double(std::any_cast<double>(property.value));
-            if (type == typeid(std::string))
+            else if (type == typeid(std::string))
                 mutableProp->set_v_string(std::any_cast<std::string>(property.value));
+            else if (type == typeid(Bytes))
+                mutableProp->set_v_bytes(std::any_cast<Bytes>(property.value).bytes);            
             else
                 assert(!"unsupported property type");
         }
@@ -289,6 +291,8 @@ Er::PropertyBag ServiceBase::unmarshalArgs(const erebus::ServiceRequest* request
                 bag.insert({ PropId(id), Property(id, arg.v_double()) });
             else if (type == typeid(std::string))
                 bag.insert({ PropId(id), Property(id, arg.v_string()) });
+            else if (type == typeid(Bytes))
+                bag.insert({ PropId(id), Property(id, Bytes(arg.v_bytes())) });
             else
                 throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->idstr(), type.name()));
         }
@@ -328,6 +332,8 @@ void ServiceBase::marshalReplyProps(const Er::PropertyBag& props, erebus::Servic
             mutableProp->set_v_double(std::any_cast<double>(prop.second.value));
         else if (type == typeid(std::string))
             mutableProp->set_v_string(std::any_cast<std::string>(prop.second.value));
+        else if (type == typeid(Bytes))
+            mutableProp->set_v_bytes(std::any_cast<Bytes>(prop.second.value).bytes);
         else
             throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->idstr(), type.name()));
     }

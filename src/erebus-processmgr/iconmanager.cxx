@@ -68,16 +68,16 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& ex
     }
 
     // load from the disk cache
-    auto data = Er::protectedCall<std::string>(
+    auto data = Er::protectedCall<Bytes>(
         m_log,
         LogComponent("IconManager"),
         [this, cachePath]()
         {
-            return Er::Util::loadFile(*cachePath, Er::Util::LoadFile::Binary);
+            return Er::Util::loadBinaryFile(*cachePath);
         }
     );
 
-    if (data.empty())
+    if (data.bytes.empty())
     {
         // no icon for this exe
         std::unique_lock l(m_mutex);

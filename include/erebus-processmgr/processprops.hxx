@@ -4,6 +4,7 @@
 #include <erebus/knownprops.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
+#include <vector>
 
 namespace Er
 {
@@ -24,11 +25,11 @@ struct IconFormatter
 {
     void operator()(const Property& v, std::ostream& s) 
     { 
-        auto ico = std::any_cast<std::string>(v.value); 
-        if (ico.empty())
+        auto ico = std::any_cast<Bytes>(v.value); 
+        if (ico.bytes.empty())
             s << "[null icon]";
         else
-            s << "[icon (" << ico.size() << " bytes)]";
+            s << "[icon (" << ico.bytes.size() << " bytes)]";
     }
 };
 
@@ -49,7 +50,7 @@ using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Comman
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable Name">;
 using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
 using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
-using Icon = PropertyValue<std::string, ER_PROPID("process.icon"), "Icon", PropertyComparator<std::string>, IconFormatter>;
+using Icon = PropertyValue<Bytes, ER_PROPID("process.icon"), "Icon", BytesComparator, IconFormatter>;
 
 
 constexpr PropId IndexToProp[] =
