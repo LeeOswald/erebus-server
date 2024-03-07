@@ -17,13 +17,15 @@ namespace Er
 namespace Private
 {
 
+class IconManager;
+
 class ProcessList final
     : public Er::Server::IService
     , public Er::NonCopyable
 {
 public:
     ~ProcessList();
-    explicit ProcessList(Er::Log::ILog* log);
+    explicit ProcessList(Er::Log::ILog* log, IconManager* iconManager);
 
     SessionId allocateSession() override;
     void deleteSession(SessionId id)  override;
@@ -116,6 +118,7 @@ private:
     const unsigned kStreamTimeoutSeconds = 60;
 
     Er::Log::ILog* m_log;
+    IconManager* m_iconManager;
     Er::ProcFs::ProcFs m_procFs;
     std::shared_mutex m_mutex;
     SessionId m_nextSessionId = 0;

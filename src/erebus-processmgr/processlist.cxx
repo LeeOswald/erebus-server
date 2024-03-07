@@ -1,3 +1,4 @@
+#include "iconmanager.hxx"
 #include "processlist.hxx"
 
 #include <erebus/exception.hxx>
@@ -16,8 +17,9 @@ ProcessList::~ProcessList()
     LogDebug(m_log, LogInstance("ProcessList"), "~ProcessList()");
 }
 
-ProcessList::ProcessList(Er::Log::ILog* log)
+ProcessList::ProcessList(Er::Log::ILog* log, IconManager* iconManager)
     : m_log(log)
+    , m_iconManager(iconManager)
     , m_procFs(log)
 {
     LogDebug(m_log, LogInstance("ProcessList"), "ProcessList()");
@@ -215,6 +217,13 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
         return Er::PropertyBag(); // end of stream
 
     auto bag = collectProcessDetails(m_procFs, stream->pids[stream->next], stream->required);
+    if (stream->required[Er::ProcessProps::PropIndices::Icon])
+    {
+        if (m_iconManager)
+        {
+            addProcessIcon(m_iconManager, bag);
+        }
+    }
 
     Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
 
@@ -227,6 +236,15 @@ ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag&
 {
     auto required = getPropMask(args);
     auto diff = updateProcessCollection(m_procFs, required, session->processes);
+    
+    if (required[Er::ProcessProps::PropIndices::Icon] && m_iconManager)
+    {
+        for (auto& process: session->processes.processes)
+        {
+            auto& processProps = process.second->properties;
+            addProcessIcon(m_iconManager, processProps);
+        }
+    }
 
     std::unique_lock l(m_mutex);
 

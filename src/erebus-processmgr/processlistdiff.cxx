@@ -1,3 +1,4 @@
+#include "iconmanager.hxx"
 #include "processlistdiff.hxx"
 
 #include <erebus/exception.hxx>
@@ -66,7 +67,7 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
                 bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });
         }
 
-        if (required[Er::ProcessProps::PropIndices::Exe])
+        if (required[Er::ProcessProps::PropIndices::Exe] || required[Er::ProcessProps::PropIndices::Icon])
         {
             auto exe = source.readExePath(pid);
             if (!exe.empty())
@@ -105,6 +106,18 @@ Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProp
     }
 
     return bag;
+}
+
+void addProcessIcon(IconManager* cache, Er::PropertyBag& bag)
+{
+    auto it = bag.find(Er::ProcessProps::Exe::Id::value);
+    if (it == bag.end())
+        return;
+
+    auto exe = std::any_cast<std::string>(it->second.value);
+    auto ico = cache->lookup(exe, Er::Private::IconSize::Small);
+    if (ico && ico->valid)
+        bag.insert({ Er::ProcessProps::Icon::Id::value, Er::Property(Er::ProcessProps::Icon::Id::value, ico->data) });
 }
 
 ProcessDataDiff diffProcessData(uint64_t pid, const Er::PropertyBag& prev, const Er::PropertyBag& curr)
@@ -179,9 +192,6 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::Pr
     auto now = std::chrono::steady_clock::now();
 
     ProcessCollectionDiff diff;
-    
-    auto kernel = collectKernelDetails(source, required);
-    updateDiffAndCollectionForProcess(firstRun, diff, collection, now, Er::ProcFs::KernelPid, std::move(kernel));
     
     auto pids = source.enumeratePids();
     for (auto pid: pids)

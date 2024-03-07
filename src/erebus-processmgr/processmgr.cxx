@@ -62,7 +62,7 @@ public:
         }
 
         // create and register services
-        m_processList.reset(new Er::Private::ProcessList(m_params.log));
+        m_processList.reset(new Er::Private::ProcessList(m_params.log, m_iconManager.get()));
         
         for (auto container: m_params.containers)
         {
