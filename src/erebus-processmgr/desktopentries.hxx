@@ -5,6 +5,7 @@
 
 #include "pathresolver.hxx"
 
+#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -20,9 +21,6 @@ class DesktopEntries final
     : public Er::NonCopyable
 {
 public:
-    explicit DesktopEntries(Er::Log::ILog* log);
-
-private:
     struct Entry
     {
         std::string name;
@@ -30,18 +28,24 @@ private:
         std::string icon;
     };
 
+    explicit DesktopEntries(Er::Log::ILog* log);
+
+    std::shared_ptr<Entry> lookup(const std::string& exec) const noexcept;
+    std::vector<std::string> iconList() const;
+
+private:
     void addXdgDataDirs();
     void addUserDirs();
-    void enumerateFiles(const std::string& dir);
-    void parseFiles();
-    std::optional<Entry> parseFile(const std::string& path);
+    void parseFiles(const std::string& dir);
+    std::shared_ptr<Entry> parseFile(const std::string& path);
     std::optional<std::string> resolveExePath(std::string_view exe) const;
 
     Er::Log::ILog* const m_log;
     PathResolver m_pathResolver;
+    mutable std::shared_mutex m_dirsLock;
     std::vector<std::string> m_dirs;
-    std::vector<std::string> m_files;
-    std::unordered_map<std::string, Entry> m_entries;
+    mutable std::shared_mutex m_entriesLock;
+    std::unordered_map<std::string, std::shared_ptr<Entry>> m_entries; // exe -> Entry
 };
 
 

@@ -6,6 +6,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 namespace Er
@@ -21,8 +22,8 @@ public:
     ~IconCache();
     explicit IconCache(Er::Log::ILog* log, const std::string& iconCacheAgent, const std::string& iconCacheDir);
     
-    std::vector<std::string> lookup(const std::vector<std::string>& iconNames, unsigned size);
-    void backgroundLookup(const std::vector<std::string>& iconNames, unsigned size);
+    void prefetch(const std::vector<std::string>& iconNames, unsigned size);
+    std::unordered_map<std::string, std::string> lookup(const std::vector<std::string>& iconNames, unsigned size); // icon name -> cache path
 
 private:
     std::string makeCachePath(const std::string& name, unsigned size) const;
@@ -34,7 +35,7 @@ private:
     std::atomic<long> m_workerStarted;
     std::atomic<long> m_workerExited;
     std::mutex m_mutex;
-    std::unique_ptr<std::jthread> m_worker;
+    std::shared_ptr<std::jthread> m_worker;
     std::stop_token m_stop;
 };
 

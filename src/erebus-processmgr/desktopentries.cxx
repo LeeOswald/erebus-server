@@ -21,7 +21,7 @@ namespace
 
 const std::regex DesktopFilePattern(".*\\.desktop$");
 
-std::string_view extractExeNameFromCommand(std::string_view command)
+std::string_view extractExeNameFromCommand(std::string_view command) noexcept
 {
     auto start = command.data();
     auto end = start + command.length();
@@ -60,10 +60,35 @@ DesktopEntries::DesktopEntries(Er::Log::ILog* log)
 {
     addXdgDataDirs();
     addUserDirs();
-    for (auto& dir: m_dirs)
-        enumerateFiles(dir);
 
-    parseFiles();
+    std::shared_lock l(m_dirsLock);
+    for (auto& dir: m_dirs)
+        parseFiles(dir);
+}
+
+std::shared_ptr<DesktopEntries::Entry> DesktopEntries::lookup(const std::string& exec) const noexcept
+{
+    std::shared_lock l(m_entriesLock);
+
+    auto it = m_entries.find(exec);
+    if (it == m_entries.end())
+        return std::shared_ptr<DesktopEntries::Entry>();
+
+    return it->second;
+}
+
+std::vector<std::string> DesktopEntries::iconList() const
+{
+    std::vector<std::string> v;
+
+    std::shared_lock l(m_entriesLock);
+
+    for (auto& e: m_entries)
+    {
+        v.push_back(e.second->icon);
+    }
+
+    return v;
 }
 
 void DesktopEntries::addXdgDataDirs()
@@ -92,8 +117,11 @@ void DesktopEntries::addXdgDataDirs()
         }
 
         Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "including " << pathStr;
-        
-        m_dirs.push_back(std::move(pathStr));
+
+        {
+            std::unique_lock l(m_dirsLock);
+            m_dirs.push_back(std::move(pathStr));
+        }
     }
 }
 
@@ -121,14 +149,18 @@ void DesktopEntries::addUserDirs()
         auto pathStr = path.string();
         Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "including " << pathStr;
         
-        m_dirs.push_back(std::move(pathStr));
+        {
+            std::unique_lock l(m_dirsLock);
+            m_dirs.push_back(std::move(pathStr));
+        }
     }
 }
 
-void DesktopEntries::enumerateFiles(const std::string& dir)
+void DesktopEntries::parseFiles(const std::string& dir)
 {
+    std::vector<std::string> filePaths;
     Er::Util::searchFor(
-        m_files, 
+        filePaths, 
         dir, 
         nullptr, 
         false,
@@ -143,11 +175,8 @@ void DesktopEntries::enumerateFiles(const std::string& dir)
             return false;
         }
     );
-}
 
-void DesktopEntries::parseFiles()
-{
-    for (auto& file: m_files)
+    for (auto& file: filePaths)
     {
         Er::protectedCall<void>(
             m_log, 
@@ -156,52 +185,55 @@ void DesktopEntries::parseFiles()
             {
                 auto result = parseFile(file);
                 if (result)
-                    m_entries.insert({ result->exec, std::move(*result) });
+                {
+                    std::unique_lock l(m_entriesLock);
+                    m_entries.insert({ result->exec, result });
+                }
             },
             file
         );
     }
 }
 
-std::optional<DesktopEntries::Entry> DesktopEntries::parseFile(const std::string& path)
+std::shared_ptr<DesktopEntries::Entry> DesktopEntries::parseFile(const std::string& path)
 {
-    auto contents = Er::Util::loadFile(path);
+    auto contents = Er::Util::loadFile(path, Er::Util::LoadFile::Text);
     auto ini = Er::Util::IniFile::parse(contents);
 
-    Entry e;
+    auto e = std::make_shared<Entry>();
     auto name = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Name"));
     if (name)
-        e.name = std::move(*name);
+        e->name = std::move(*name);
 
     auto exe = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Exec"));
     if (!exe)
-        return std::nullopt;
+        return std::shared_ptr<DesktopEntries::Entry>();
 
     auto exeName = extractExeNameFromCommand(*exe);
     if (exeName.empty())
     {
-        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "invalid executable name " << *exe;
-        return std::nullopt;
+        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "invalid executable name [" << *exe << "] in " << path;
+        return std::shared_ptr<DesktopEntries::Entry>();
     }
 
     auto exePath = resolveExePath(exeName);
     if (!exePath)
     {
-        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "failed to find executable " << *exe;
-        return std::nullopt;
+        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "failed to find executable [" << *exe << "] for " << path;
+        return std::shared_ptr<DesktopEntries::Entry>();
     }
 
-    e.exec = *exePath;
+    e->exec = *exePath;
 
     auto ico = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Icon"));
     if (!ico)
-        return std::nullopt;
+        return std::shared_ptr<DesktopEntries::Entry>();
 
-    e.icon = std::move(*ico);
+    e->icon = std::move(*ico);
 
-    Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << e.exec << " -> " << e.icon;
+    Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << e->exec << " -> " << e->icon;
 
-    return std::make_optional<Entry>(std::move(e));
+    return e;
 }
 
 std::optional<std::string> DesktopEntries::resolveExePath(std::string_view exe) const

@@ -179,13 +179,13 @@ int main(int argc, char* argv[], char* env[])
         std::string key;
 
         if (!cfg.rootCA.empty())
-            root = Er::Util::loadFile(cfg.rootCA);
+            root = Er::Util::loadFile(cfg.rootCA, Er::Util::LoadFile::Text);
 
         if (!cfg.certificate.empty())
-            certificate = Er::Util::loadFile(cfg.certificate);
+            certificate = Er::Util::loadFile(cfg.certificate, Er::Util::LoadFile::Text);
 
         if (!cfg.privateKey.empty())
-            key = Er::Util::loadFile(cfg.privateKey);
+            key = Er::Util::loadFile(cfg.privateKey, Er::Util::LoadFile::Text);
     
         Er::Private::UserDb userDb(cfg.userDb);
 

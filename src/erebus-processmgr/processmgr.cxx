@@ -4,6 +4,7 @@
 
 #include "desktopentries.hxx"
 #include "iconcache.hxx"
+#include "iconmanager.hxx"
 #include "processlist.hxx"
 
 #include <atomic>
@@ -28,6 +29,7 @@ public:
         }
 
         m_processList.reset();
+        m_iconManager.reset();
         m_desktopEntries.reset();
         m_iconCache.reset();
 
@@ -45,8 +47,19 @@ public:
 
         auto args = parseArgs(params);
 
-        m_iconCache.reset(new Er::Private::IconCache(params.log, args.iconCacheAgent, args.iconCacheDir));
+        // cache desktop entries & icons for registered apps
+        if (!args.iconCacheAgent.empty())
+            m_iconCache.reset(new Er::Private::IconCache(params.log, args.iconCacheAgent, args.iconCacheDir));
+        else
+            params.log->write(Er::Log::Level::Warning, LogComponent("ProcessMgrPlugin"), "Starting without icon cache");
+
         m_desktopEntries.reset(new Er::Private::DesktopEntries(params.log));
+
+        if (m_iconCache)
+        {
+            m_iconManager.reset(new Er::Private::IconManager(params.log, m_iconCache.get(), m_desktopEntries.get(), args.iconCacheSize));
+            m_iconManager->prefetch(Er::Private::IconSize::Small);
+        }
 
         // create and register services
         m_processList.reset(new Er::Private::ProcessList(m_params.log));
@@ -66,6 +79,7 @@ private:
     {
         std::string iconCacheAgent;
         std::string iconCacheDir;
+        size_t iconCacheSize;
     };
 
     PluginArgs parseArgs(const Er::Server::PluginParams& params)
@@ -74,6 +88,7 @@ private:
 
         bool iconCacheAgentNext = false;
         bool iconCacheDirNext = false;
+        bool iconCacheSizeNext = false;
         for (auto& arg: params.args)
         {
             if (arg == "--iconcacheagent")
@@ -94,6 +109,17 @@ private:
                 iconCacheDirNext = false;
                 a.iconCacheDir = arg;
             }
+            else if (arg == "--iconcachesize")
+            {
+                iconCacheSizeNext = true;
+            }
+            else if (iconCacheSizeNext)
+            {
+                iconCacheSizeNext = false;
+                a.iconCacheSize = std::strtoul(arg.c_str(), nullptr, 10);
+                if (a.iconCacheSize == 0)
+                    a.iconCacheSize = 1024;
+            }
         }
 
         return a;
@@ -104,6 +130,7 @@ private:
     Er::Server::PluginParams m_params;
     std::unique_ptr<Er::Private::IconCache> m_iconCache;
     std::unique_ptr<Er::Private::DesktopEntries> m_desktopEntries;
+    std::unique_ptr<Er::Private::IconManager> m_iconManager;
     std::unique_ptr<Er::Private::ProcessList> m_processList;
 };
 

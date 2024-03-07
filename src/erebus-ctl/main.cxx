@@ -406,7 +406,7 @@ int main(int argc, char* argv[])
         std::string root;
         
         if (!rootFile.empty())
-            root = Er::Util::loadFile(rootFile);
+            root = Er::Util::loadFile(rootFile, Er::Util::LoadFile::Text);
 
         std::string user;
         std::string password;

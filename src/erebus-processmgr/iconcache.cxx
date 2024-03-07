@@ -47,37 +47,38 @@ IconCache::IconCache(Er::Log::ILog* log, const std::string& iconCacheAgent, cons
 {
 }
 
-std::vector<std::string> IconCache::lookup(const std::vector<std::string>& iconNames, unsigned size)
+std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector<std::string>& iconNames, unsigned size)
 {
-    std::vector<std::string> cachedPaths;
-    cachedPaths.reserve(iconNames.size());
+    std::unordered_map<std::string, std::string> cachedPaths;
 
-    std::vector<std::string> requestedIcons;
-    requestedIcons.reserve(iconNames.size());
+    std::vector<std::string> iconsToRequest;
+    iconsToRequest.reserve(iconNames.size());
 
+    // maybe it's already in cache
     for (auto& name: iconNames)
     {
         auto iconPath = makeCachePath(name, size);
-        // maybe it's already in cache
+        
         std::filesystem::path path(iconPath);
         if (std::filesystem::exists(path))
-            cachedPaths.push_back(std::move(iconPath));
+            cachedPaths.insert({ name, std::move(iconPath) });
         else
-            requestedIcons.push_back(std::move(name));
+            iconsToRequest.push_back(std::move(name));
     }
 
-    if (!requestedIcons.empty())
+    // cache what's missing
+    if (!iconsToRequest.empty())
     {
-        auto ret = callCacheAgent(nullptr, &requestedIcons, size, nullptr);
+        auto ret = callCacheAgent(nullptr, &iconsToRequest, size, nullptr);
 
         // check if icons have been cached successfully
-        for (auto& name: requestedIcons)
+        for (auto& name: iconsToRequest)
         {
             auto iconPath = makeCachePath(name, size);
             
             std::filesystem::path path(iconPath);
             if (std::filesystem::exists(path))
-                cachedPaths.push_back(std::move(iconPath));
+                cachedPaths.insert({ name, std::move(iconPath) });
             
         }
     }
@@ -85,9 +86,10 @@ std::vector<std::string> IconCache::lookup(const std::vector<std::string>& iconN
     return cachedPaths;
 }
 
-void IconCache::backgroundLookup(const std::vector<std::string>& iconNames, unsigned size)
+void IconCache::prefetch(const std::vector<std::string>& iconNames, unsigned size)
 {
     std::lock_guard l(m_mutex);
+
     if (m_worker)
     {
         if (m_workerExited.load(std::memory_order_acquire) > 0)
@@ -104,8 +106,8 @@ void IconCache::backgroundLookup(const std::vector<std::string>& iconNames, unsi
         }
     }
 
-    std::vector<std::string> requestedIcons;
-    requestedIcons.reserve(iconNames.size());
+    std::vector<std::string> iconsToRequest;
+    iconsToRequest.reserve(iconNames.size());
 
     for (auto& name: iconNames)
     {
@@ -113,10 +115,10 @@ void IconCache::backgroundLookup(const std::vector<std::string>& iconNames, unsi
         // maybe it's already in cache
         std::filesystem::path path(iconPath);
         if (!std::filesystem::exists(path))
-            requestedIcons.push_back(std::move(name));
+            iconsToRequest.push_back(std::move(name));
     }
 
-    if (!requestedIcons.empty())
+    if (!iconsToRequest.empty())
     {
         // pass requested icon names thru a temporary file
         char tempFileName[PATH_MAX] = "/tmp/erebus_cache_agent_XXXXXX";
@@ -131,19 +133,25 @@ void IconCache::backgroundLookup(const std::vector<std::string>& iconNames, unsi
 
         std::string tmpName(tempFileName);
 
-        m_worker.reset(new std::jthread(
+        m_worker = std::make_shared<std::jthread>(
             [this, tmpName, size]()
             {
                 // wait for the main theread to store m_worker because we need it
                 while (m_workerStarted.load(std::memory_order_acquire) == 0)
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                m_stop = m_worker->get_stop_token();
+                std::shared_ptr<std::jthread> w;
+                {
+                    std::lock_guard l(m_mutex);
+                    w = m_worker;
+                    m_stop = w->get_stop_token();
+                }
+                                
                 callCacheAgent(&tmpName, nullptr, size, &m_stop);
 
                 m_workerExited.store(1, std::memory_order_release);
             }
-        ));
+        );
 
         m_workerStarted.store(1, std::memory_order_release);
     }

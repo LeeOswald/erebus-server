@@ -6,6 +6,8 @@ add_library(${EREBUS_PROCESSMGR} SHARED
     desktopentries.cxx
     iconcache.hxx
     iconcache.cxx
+    iconmanager.hxx
+    iconmanager.cxx
     pathresolver.hxx
     pathresolver.cxx
     processlist.cxx

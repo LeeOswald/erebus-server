@@ -11,9 +11,9 @@ namespace Er
 namespace Util
 {
 
-EREBUS_EXPORT std::string loadFile(const std::string& path)
+EREBUS_EXPORT std::string loadFile(const std::string& path, LoadFile mode)
 {
-    std::ifstream file(path);
+    std::ifstream file(path, (mode == LoadFile::Binary) ? std::ios::binary : std::ios::in);
     if (!file.is_open())
         throw Er::Exception(ER_HERE(), Er::Util::format("Failed to open [%s]", path.c_str()));
 
