@@ -56,4 +56,4 @@ add_library(${EREBUS_PROTOLIB} STATIC
     ${EREBUS_GRPC_PB_H}
 )
 
-target_link_libraries(${EREBUS_PROTOLIB} ${GRPC_DEPS} ${GRPC_LIBS})
+target_link_libraries(${EREBUS_PROTOLIB} PRIVATE ${GRPC_DEPS} ${GRPC_LIBS})

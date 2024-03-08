@@ -210,7 +210,7 @@ public:
             else if (type == typeid(std::string))
                 a->set_v_string(std::any_cast<std::string>(arg.second.value));
             else if (type == typeid(Er::Bytes))
-                a->set_v_bytes(std::any_cast<Er::Bytes>(arg.second.value));
+                a->set_v_bytes(std::any_cast<Er::Bytes>(arg.second.value).bytes());
             else
                 throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
         }
@@ -295,7 +295,7 @@ public:
             else if (type == typeid(std::string))
                 a->set_v_string(std::any_cast<std::string>(arg.second.value));
             else if (type == typeid(Er::Bytes))
-                a->set_v_bytes(std::any_cast<Er::Bytes>(arg.second.value));
+                a->set_v_bytes(std::any_cast<Er::Bytes>(arg.second.value).bytes());
             else
                 throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
         }

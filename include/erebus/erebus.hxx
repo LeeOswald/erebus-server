@@ -37,29 +37,82 @@ public:
 };
 
 
-struct EREBUS_EXPORT Bytes
-    : public std::string
-{
-    using Base = std::string;
+//
+// binary string for use with gRPC 'bytes' type
+//
 
+struct EREBUS_EXPORT Bytes final
+{
     Bytes() noexcept
     {}
 
     Bytes(const Bytes& b)
-        : Base(b)
+        : m_bytes(b.m_bytes)
     {}
 
     Bytes(Bytes&& b) noexcept
-        : Base(std::move(b))
+        : m_bytes(std::move(b.m_bytes))
     {}
 
     explicit Bytes(const std::string& b)
-        : Base(b)
+        : m_bytes(b)
     {}
 
     explicit Bytes(std::string&& b) noexcept
-        : Base(std::move(b))
+        : m_bytes(std::move(b))
     {}
+
+    Bytes& operator=(const Bytes& o)
+    {
+        Bytes tmp(o);
+        m_bytes.swap(tmp.m_bytes);
+        return *this;
+    }
+
+    Bytes& operator=(Bytes&& o) noexcept
+    {
+        Bytes tmp(std::move(o));
+        m_bytes.swap(tmp.m_bytes);
+        return *this;
+    }
+
+    friend auto operator==(const Bytes& a, const Bytes& b) noexcept
+    {
+        return a.m_bytes == b.m_bytes;
+    }
+
+    friend auto operator<=>(const Bytes& a, const Bytes& b) noexcept
+    {
+        return a.m_bytes <=> b.m_bytes;
+    }
+
+    const std::string& bytes() const noexcept
+    {
+        return m_bytes;
+    }
+
+    char* data() noexcept
+    {
+        return m_bytes.data();
+    }
+
+    const char* data() const noexcept
+    {
+        return m_bytes.data();
+    }
+
+    std::size_t size() const noexcept
+    {
+        return m_bytes.size();
+    }
+
+    bool empty() const noexcept
+    {
+        return m_bytes.empty();
+    }
+
+private:
+    std::string m_bytes;
 };
 
 } // namespace Er {}

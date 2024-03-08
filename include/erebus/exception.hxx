@@ -5,6 +5,10 @@
 #include <erebus/stacktrace.hxx>
 #include <erebus/util/crc32.hxx>
 
+//
+// exception class with arbitrary properties
+// that can be marshaled through RPC
+//
 
 namespace Er
 {
