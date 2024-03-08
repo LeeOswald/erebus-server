@@ -178,13 +178,15 @@ ServerConfig loadConfig(const std::string& path)
         }
         else if (!std::strcmp(name, "plugins"))
         {
-            for (size_t index = 0; index < m->value.Size(); ++index)
+            auto plugins = m->value.GetArray();
+            
+            for (size_t index = 0; index < plugins.Size(); ++index)
             {
-                auto& entry = m->value[index];
+                ServerConfig::Plugin plugin;
+
+                auto& entry = plugins[index];
                 for (auto m = entry.MemberBegin(); m != entry.MemberEnd(); ++m)
                 {
-                    ServerConfig::Plugin plugin;
-
                     auto name = m->name.GetString();
                     if (!std::strcmp(name, "path"))
                     {
@@ -198,9 +200,9 @@ ServerConfig loadConfig(const std::string& path)
                             plugin.args.push_back(v.GetString());
                         }
                     }
-
-                    cfg.plugins.push_back(std::move(plugin));
                 }
+
+                cfg.plugins.push_back(std::move(plugin));
             }
         }
     }

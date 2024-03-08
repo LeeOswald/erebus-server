@@ -218,7 +218,7 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
         [this, size, stop, sourceFile, iconNames]()
         {
             std::ostringstream cmd;
-            cmd << m_iconCacheAgent << " --cache " << m_iconCacheDir << " --size " << size << "--theme" << m_iconTheme;
+            cmd << m_iconCacheAgent << " --cache " << m_iconCacheDir << " --size " << size << " --theme " << m_iconTheme;
             
             if (sourceFile)
             {
@@ -226,7 +226,7 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
             }
             else if (iconNames)
             {
-                cmd << "--icons ";
+                cmd << " --icons ";
                 bool first = true;
                 for (auto& name: *iconNames)
                 {
