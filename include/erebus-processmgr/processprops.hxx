@@ -26,10 +26,10 @@ struct IconFormatter
     void operator()(const Property& v, std::ostream& s) 
     { 
         auto ico = std::any_cast<Bytes>(v.value); 
-        if (ico.bytes.empty())
+        if (ico.empty())
             s << "[null icon]";
         else
-            s << "[icon (" << ico.bytes.size() << " bytes)]";
+            s << "[icon (" << ico.size() << " bytes)]";
     }
 };
 

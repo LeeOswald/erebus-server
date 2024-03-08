@@ -49,7 +49,7 @@ public:
 
         // cache desktop entries & icons for registered apps
         if (!args.iconCacheAgent.empty())
-            m_iconCache.reset(new Er::Private::IconCache(params.log, args.iconCacheAgent, args.iconCacheDir));
+            m_iconCache.reset(new Er::Private::IconCache(params.log, args.iconTheme, args.iconCacheAgent, args.iconCacheDir));
         else
             params.log->write(Er::Log::Level::Warning, LogComponent("ProcessMgrPlugin"), "Starting without icon cache");
 
@@ -80,43 +80,34 @@ private:
         std::string iconCacheAgent;
         std::string iconCacheDir;
         size_t iconCacheSize;
+        std::string iconTheme;
     };
 
     PluginArgs parseArgs(const Er::Server::PluginParams& params)
     {
         PluginArgs a;
 
-        bool iconCacheAgentNext = false;
-        bool iconCacheDirNext = false;
-        bool iconCacheSizeNext = false;
-        for (auto& arg: params.args)
+        for (auto arg = params.args.begin(); arg != params.args.end(); ++arg)
         {
-            if (arg == "--iconcacheagent")
+            if ((*arg == "iconcacheagent") && (std::next(arg) != params.args.end()))
             {
-                iconCacheAgentNext = true;
+                arg = std::next(arg);
+                a.iconCacheAgent = *arg;
             }
-            else if (iconCacheAgentNext)
+            else if ((*arg == "iconcachedir") && (std::next(arg) != params.args.end()))
             {
-                iconCacheAgentNext = false;
-                a.iconCacheAgent = arg;
+                arg = std::next(arg);
+                a.iconCacheDir = *arg;
             }
-            else if (arg == "--iconcachedir")
+            else if ((*arg == "icontheme") && (std::next(arg) != params.args.end()))
             {
-                iconCacheDirNext = true;
+                arg = std::next(arg);
+                a.iconTheme = *arg;
             }
-            else if (iconCacheDirNext)
+            else if ((*arg == "iconcachesize") && (std::next(arg) != params.args.end()))
             {
-                iconCacheDirNext = false;
-                a.iconCacheDir = arg;
-            }
-            else if (arg == "--iconcachesize")
-            {
-                iconCacheSizeNext = true;
-            }
-            else if (iconCacheSizeNext)
-            {
-                iconCacheSizeNext = false;
-                a.iconCacheSize = std::strtoul(arg.c_str(), nullptr, 10);
+                arg = std::next(arg);
+                a.iconCacheSize = std::strtoul(arg->c_str(), nullptr, 10);
                 if (a.iconCacheSize == 0)
                     a.iconCacheSize = 1024;
             }

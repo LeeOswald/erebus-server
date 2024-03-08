@@ -38,8 +38,9 @@ IconCache::~IconCache()
     }
 }
 
-IconCache::IconCache(Er::Log::ILog* log, const std::string& iconCacheAgent, const std::string& iconCacheDir)
+IconCache::IconCache(Er::Log::ILog* log, const std::string& iconTheme, const std::string& iconCacheAgent, const std::string& iconCacheDir)
     : m_log(log)
+    , m_iconTheme(iconTheme)
     , m_iconCacheAgent(iconCacheAgent)
     , m_iconCacheDir(iconCacheDir)
     , m_workerStarted(0)
@@ -217,7 +218,7 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
         [this, size, stop, sourceFile, iconNames]()
         {
             std::ostringstream cmd;
-            cmd << m_iconCacheAgent << " --cache " << m_iconCacheDir << " --size " << size;
+            cmd << m_iconCacheAgent << " --cache " << m_iconCacheDir << " --size " << size << "--theme" << m_iconTheme;
             
             if (sourceFile)
             {
@@ -225,8 +226,17 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
             }
             else if (iconNames)
             {
+                cmd << "--icons ";
+                bool first = true;
                 for (auto& name: *iconNames)
-                    cmd << " " << name;
+                {
+                    if (!first)
+                        cmd << ":";
+                    else
+                        first = false;
+
+                    cmd << name;
+                }
             }
 
             // icon cache agent relies on XCB and needs a valid $DISPLAY

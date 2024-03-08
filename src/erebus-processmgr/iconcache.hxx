@@ -20,7 +20,7 @@ class IconCache final
 {
 public:
     ~IconCache();
-    explicit IconCache(Er::Log::ILog* log, const std::string& iconCacheAgent, const std::string& iconCacheDir);
+    explicit IconCache(Er::Log::ILog* log, const std::string& iconTheme, const std::string& iconCacheAgent, const std::string& iconCacheDir);
     
     void prefetch(const std::vector<std::string>& iconNames, unsigned size);
     std::unordered_map<std::string, std::string> lookup(const std::vector<std::string>& iconNames, unsigned size) const; // icon name -> cache path
@@ -31,6 +31,7 @@ private:
     int callCacheAgent(const std::string* sourceFile, const std::vector<std::string>* iconNames, unsigned size, std::stop_token* stop) const noexcept;
 
     Er::Log::ILog* const m_log;
+    const std::string m_iconTheme;
     const std::string m_iconCacheAgent;
     const std::string m_iconCacheDir;
     std::atomic<long> m_workerStarted;

@@ -21,9 +21,14 @@ PluginMgr::PluginMgr(const Er::Server::PluginParams& params)
 {
 }
 
-Er::Server::IPlugin* PluginMgr::load(const std::string& pathAndArgs)
+Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<std::string>& args)
 {
-    auto params = makeParams(m_params, pathAndArgs);
+    Er::Server::PluginParams params;
+    params.containers = m_params.containers;
+    params.log = m_params.log;
+    params.binary = path;
+    params.args = args;
+
     auto info = std::make_shared<PluginInfo>(params.binary, m_params.log);
     
     boost::system::error_code ec;
@@ -72,24 +77,6 @@ void PluginMgr::unloadAll()
     m_plugins.clear();
 }
 
-Er::Server::PluginParams PluginMgr::makeParams(const Er::Server::PluginParams& source, const std::string& args)
-{
-    Er::Server::PluginParams params;
-    params.containers = source.containers;
-    params.log = source.log;
-
-    auto splittedArgs = Er::Util::split(args, std::string_view(" "), Er::Util::SplitSkipEmptyParts);
-    if (splittedArgs.empty())
-        throw Er::Exception(ER_HERE(), Er::Util::format("Plugin args [%s] contain no binary path", args.c_str()));
-
-    params.binary = std::move(splittedArgs[0]);
-    for (size_t i = 1; i < splittedArgs.size(); ++i)
-    {
-        params.args.push_back(std::move(splittedArgs[i]));
-    }
-
-    return params;
-}
 
 } // namespace Private {}
 

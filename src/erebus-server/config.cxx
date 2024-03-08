@@ -66,7 +66,18 @@ R"(
         "plugins": {
             "type": "array",
             "items": {
-                "type": "string"
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "args": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         }
     },
@@ -170,8 +181,26 @@ ServerConfig loadConfig(const std::string& path)
             for (size_t index = 0; index < m->value.Size(); ++index)
             {
                 auto& entry = m->value[index];
-                auto path = entry.GetString();
-                cfg.plugins.push_back(path);
+                for (auto m = entry.MemberBegin(); m != entry.MemberEnd(); ++m)
+                {
+                    ServerConfig::Plugin plugin;
+
+                    auto name = m->name.GetString();
+                    if (!std::strcmp(name, "path"))
+                    {
+                        plugin.path = m->value.GetString();
+                    }
+                    else if (!std::strcmp(name, "args"))
+                    {
+                        for (size_t index = 0; index < m->value.Size(); ++index)
+                        {
+                            auto& v = m->value[index];
+                            plugin.args.push_back(v.GetString());
+                        }
+                    }
+
+                    cfg.plugins.push_back(std::move(plugin));
+                }
             }
         }
     }

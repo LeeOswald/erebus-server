@@ -227,11 +227,11 @@ int main(int argc, char* argv[], char* env[])
         }
 
         Er::Private::PluginMgr pluginMgr(pluginParams);
-        for (auto& path: cfg.plugins)
+        for (auto& plugin: cfg.plugins)
         {
             try
             {
-                pluginMgr.load(path);
+                pluginMgr.load(plugin.path, plugin.args);
             }
             catch (Er::Exception& e)
             {

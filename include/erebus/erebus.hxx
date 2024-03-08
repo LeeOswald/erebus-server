@@ -38,26 +38,27 @@ public:
 
 
 struct EREBUS_EXPORT Bytes
+    : public std::string
 {
-    std::string bytes;
+    using Base = std::string;
 
     Bytes() noexcept
     {}
 
     Bytes(const Bytes& b)
-        : bytes(b.bytes)
+        : Base(b)
     {}
 
     Bytes(Bytes&& b) noexcept
-        : bytes(std::move(b.bytes))
+        : Base(std::move(b))
     {}
 
     explicit Bytes(const std::string& b)
-        : bytes(b)
+        : Base(b)
     {}
 
     explicit Bytes(std::string&& b) noexcept
-        : bytes(std::move(b))
+        : Base(std::move(b))
     {}
 };
 

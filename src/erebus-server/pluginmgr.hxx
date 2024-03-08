@@ -22,7 +22,7 @@ public:
     ~PluginMgr();
     explicit PluginMgr(const Er::Server::PluginParams& params);
 
-    Er::Server::IPlugin* load(const std::string& pathAndArgs);
+    Er::Server::IPlugin* load(const std::string& path, const std::vector<std::string>& args);
     void unloadAll();
 
 private:
@@ -49,8 +49,6 @@ private:
             , log(log)
         {}
     };
-
-    Er::Server::PluginParams makeParams(const Er::Server::PluginParams& source, const std::string& args);
 
     const Er::Server::PluginParams m_params;
     std::mutex m_mutex;

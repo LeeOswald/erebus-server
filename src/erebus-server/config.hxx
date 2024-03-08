@@ -18,6 +18,12 @@ struct ServerConfig final
         bool ssl = false;
     };
 
+    struct Plugin final
+    {
+        std::string path;
+        std::vector<std::string> args;
+    };
+
     int verbose = 0;
     std::string logfile;
     std::vector<Endpoint> endpoints;
@@ -25,7 +31,7 @@ struct ServerConfig final
     std::string privateKey;
     std::string rootCA;
     std::string userDb;
-    std::vector<std::string> plugins;
+    std::vector<Plugin> plugins;
 };
 
 ServerConfig loadConfig(const std::string& path);

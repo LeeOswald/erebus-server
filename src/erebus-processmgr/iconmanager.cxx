@@ -77,7 +77,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& ex
         }
     );
 
-    if (data.bytes.empty())
+    if (data.empty())
     {
         // no icon for this exe
         std::unique_lock l(m_mutex);
