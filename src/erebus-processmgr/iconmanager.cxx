@@ -17,6 +17,7 @@ IconManager::IconManager(Er::Log::ILog* log, IconCache* iconCache, DesktopEntrie
     : m_log(log)
     , m_iconCache(iconCache)
     , m_desktopEntries(desktopEntries)
+    , DefaultExeIcon("application-x-executable")
     , m_cache16(cacheSize)
     , m_cache32(cacheSize)
 {
@@ -29,41 +30,28 @@ void IconManager::prefetch(IconSize size)
     m_iconCache->prefetch(iconList, static_cast<unsigned>(size));
 }
 
-std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& exe, IconSize size) const noexcept
+std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::string& exe, const std::string& name, IconSize size) const noexcept
 {
-    // first look in in-memory cache
-    Er::LruCache<std::string, std::shared_ptr<IconData>>* cache = (size == IconSize::Large) ? &m_cache32 : &m_cache16;
+    // look for cached default icon
+    auto cache = (size == IconSize::Large) ? &m_default32 : &m_default16;
     {
         std::shared_lock l(m_mutex);
-        auto cached = cache->get(exe);
-        if (cached)
+        auto cached = cache->find(name);
+        if (cached != cache->end())
         {
-            LogDebug(m_log, LogComponent("IconManager"), "Found cached icon for [%s]", exe.c_str());
-            return *cached;
+            LogDebug(m_log, LogComponent("IconManager"), "Found cached default icon [%s] for [%s]", name.c_str(), exe.c_str());
+            return cached->second;
         }
     }
 
-    // lookup the desktop entry
-    auto desktop = m_desktopEntries->lookup(exe);
-    if (!desktop)
-    {
-        // no icon for this exe
-        std::unique_lock l(m_mutex);
-        auto dummy = std::make_shared<IconData>();
-        cache->put(exe, dummy);
-        LogDebug(m_log, LogComponent("IconManager"), "No registered icon for [%s]", exe.c_str());
-        return dummy;
-    }
-
-    // maybe it is cached on disk
-    auto cachePath = m_iconCache->lookup(desktop->icon, static_cast<unsigned>(size));
+    // ask the system for the (default) icon
+    auto cachePath = m_iconCache->lookup(name, static_cast<unsigned>(size));
     if (!cachePath)
     {
-        // no icon for this exe
         std::unique_lock l(m_mutex);
         auto dummy = std::make_shared<IconData>();
-        cache->put(exe, dummy);
-        LogDebug(m_log, LogComponent("IconManager"), "No cached icon for [%s]", exe.c_str());
+        cache->insert({ name, dummy });
+        LogWarning(m_log, LogComponent("IconManager"), "No default icon [%s] for [%s]", name.c_str(), exe.c_str());
         return dummy;
     }
 
@@ -79,12 +67,66 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& ex
 
     if (data.empty())
     {
-        // no icon for this exe
         std::unique_lock l(m_mutex);
         auto dummy = std::make_shared<IconData>();
-        cache->put(exe, dummy);
-        LogDebug(m_log, LogComponent("IconManager"), "No valid icon for [%s]", exe.c_str());
+        cache->insert({ name, dummy });
+        LogWarning(m_log, LogComponent("IconManager"), "Default icon [%s] could not be loaded", name.c_str());
         return dummy;
+    }
+
+    // cache it
+    std::unique_lock l(m_mutex);
+    auto result = std::make_shared<IconData>(std::move(data.bytes()));
+    cache->insert({ name, result });
+    LogDebug(m_log, LogComponent("IconManager"), "Using default icon [%s] for [%s]", name.c_str(), exe.c_str());
+
+    return result;
+}
+
+std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& exe, IconSize size) const noexcept
+{
+    // first look in in-memory cache
+    auto cache = (size == IconSize::Large) ? &m_cache32 : &m_cache16;
+    {
+        std::shared_lock l(m_mutex);
+        auto cached = cache->get(exe);
+        if (cached)
+        {
+            LogDebug(m_log, LogComponent("IconManager"), "Found cached icon for [%s]", exe.c_str());
+            return *cached;
+        }
+    }
+
+    // lookup the desktop entry
+    auto desktop = m_desktopEntries->lookup(exe);
+    if (!desktop)
+    {
+        // no icon for this exe
+        return defaultIcon(exe, DefaultExeIcon, size);
+    }
+
+    // maybe it is cached on disk
+    auto cachePath = m_iconCache->lookup(desktop->icon, static_cast<unsigned>(size));
+    if (!cachePath)
+    {
+        // no icon for this exe
+        return defaultIcon(exe, DefaultExeIcon, size);
+    }
+
+    // load from the disk cache
+    auto data = Er::protectedCall<Bytes>(
+        m_log,
+        LogComponent("IconManager"),
+        [this, cachePath]()
+        {
+            return Er::Util::loadBinaryFile(*cachePath);
+        }
+    );
+
+    if (data.empty())
+    {
+        // no icon for this exe
+        return defaultIcon(exe, DefaultExeIcon, size);
     }
 
     // cache this icon in memory
