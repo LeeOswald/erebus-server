@@ -33,8 +33,8 @@ public:
         m_desktopEntries.reset();
         m_iconCache.reset();
 
-        Er::ProcessProps::Private::unregisterAll();
-        Er::ProcessesGlobal::Private::unregisterAll();
+        Er::ProcessProps::Private::unregisterAll(m_params.log);
+        Er::ProcessesGlobal::Private::unregisterAll(m_params.log);
 
         g_instances--;
     }
@@ -73,8 +73,8 @@ public:
             container->registerService(Er::ProcessRequests::ProcessesGlobal, m_processList.get());
         }
 
-        Er::ProcessesGlobal::Private::registerAll();
-        Er::ProcessProps::Private::registerAll();
+        Er::ProcessesGlobal::Private::registerAll(m_params.log);
+        Er::ProcessProps::Private::registerAll(m_params.log);
     }
 
 private:

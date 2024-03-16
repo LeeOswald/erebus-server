@@ -98,48 +98,48 @@ using PropMask = Flags<PropIndices>;
 namespace Private
 {
 
-inline void registerAll()
+inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Error>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Valid>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<IsNew>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<IsDeleted>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Pid>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<PPid>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<PGrp>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Tpgid>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Session>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Ruid>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<User>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Comm>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<CmdLine>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<StartTime>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<State>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Icon>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Error>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Valid>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<IsNew>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<IsDeleted>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Pid>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<PPid>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<PGrp>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Tpgid>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Session>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Ruid>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<User>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Comm>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<CmdLine>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<StartTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<State>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Icon>>(), log);
 }
 
-inline void unregisterAll()
+inline void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(lookupProperty(ProcessProps::RequiredFields::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Error::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Valid::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::IsNew::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::IsDeleted::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Pid::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::PPid::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::PGrp::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Tpgid::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Session::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Ruid::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::User::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Comm::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::CmdLine::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Exe::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::StartTime::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::State::Id::value));
-    unregisterProperty(lookupProperty(ProcessProps::Icon::Id::value));
+    unregisterProperty(lookupProperty(ProcessProps::RequiredFields::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Error::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Valid::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::IsNew::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::IsDeleted::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Pid::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::PPid::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::PGrp::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Tpgid::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Session::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Ruid::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::User::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Comm::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::CmdLine::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Exe::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::StartTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::State::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::Icon::Id::value), log);
 }
 
 } // namespace Private {}
@@ -172,18 +172,18 @@ using PropMask = Flags<PropIndices>;
 namespace Private
 {
 
-inline void registerAll()
+inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<Lazy>>());
-    registerProperty(std::make_shared<PropertyInfoWrapper<ProcessCount>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Lazy>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<ProcessCount>>(), log);
 }
 
-inline void unregisterAll()
+inline void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(lookupProperty(ProcessesGlobal::RequiredFields::Id::value));
-    unregisterProperty(lookupProperty(ProcessesGlobal::Lazy::Id::value));
-    unregisterProperty(lookupProperty(ProcessesGlobal::ProcessCount::Id::value));
+    unregisterProperty(lookupProperty(ProcessesGlobal::RequiredFields::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::Lazy::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::ProcessCount::Id::value), log);
 }
 
 } // namespace Private {}

@@ -585,7 +585,7 @@ EREBUSCLT_EXPORT void initialize(const LibParams& params)
     {
         g_libParams = params;
         
-        registerProperty(std::make_shared<PropertyInfoWrapper<::Er::Client::Props::ResultCode>>());
+        registerProperty(std::make_shared<PropertyInfoWrapper<::Er::Client::Props::ResultCode>>(), params.log);
 
         ::grpc_init();
 
@@ -604,9 +604,10 @@ EREBUSCLT_EXPORT void finalize()
     if (g_initialized.fetch_sub(1, std::memory_order_acq_rel) == 1)
     {
         ::grpc_shutdown();
-        g_libParams = LibParams();
+        
+        unregisterProperty(lookupProperty(ER_PROPID_("erebus.ResultCode")), g_libParams.log);
 
-        unregisterProperty(lookupProperty(ER_PROPID_("erebus.ResultCode")));
+        g_libParams = LibParams();
     }
 }
 

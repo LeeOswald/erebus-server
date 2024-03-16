@@ -18,8 +18,13 @@
 namespace Er
 {
 
-EREBUS_EXPORT void initialize();
-EREBUS_EXPORT void finalize();
+namespace Log
+{
+    struct ILog;
+}
+
+EREBUS_EXPORT void initialize(Er::Log::ILog* log);
+EREBUS_EXPORT void finalize(Er::Log::ILog* log);
 
 class LibScope
     : public Er::NonCopyable
@@ -27,13 +32,17 @@ class LibScope
 public:
     ~LibScope()
     {
-        finalize();
+        finalize(m_log);
     }
 
-    LibScope()
+    LibScope(Er::Log::ILog* log)
+        : m_log(log)
     {
-        initialize();
+        initialize(log);
     }
+
+private:
+    Er::Log::ILog* const m_log;
 };
 
 

@@ -8,20 +8,22 @@ namespace Er
 
 static std::atomic<long> g_initialized = 0;
 
-EREBUS_EXPORT void initialize()
+EREBUS_EXPORT void initialize(Er::Log::ILog* log)
 {
     if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
     {
         Er::Private::initializeKnownProps();
 
-        Er::ExceptionProps::Private::registerAll();
+        Er::ExceptionProps::Private::registerAll(log);
     }
 }
 
-EREBUS_EXPORT void finalize()
+EREBUS_EXPORT void finalize(Er::Log::ILog* log)
 {
     if (g_initialized.fetch_sub(1, std::memory_order_acq_rel) == 1)
     {
+        Er::ExceptionProps::Private::unregisterAll(log);
+        
         Er::Private::finalizeKnownProps();
     }
 }

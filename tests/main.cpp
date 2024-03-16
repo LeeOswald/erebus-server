@@ -1,9 +1,37 @@
 #include "common.hpp"
 
+#include <erebus/log.hxx>
+
+#include <iostream>
 
 #if ER_DEBUG && defined(_MSC_VER)
 #include <crtdbg.h>
 #endif
+
+class Logger
+    : public Er::Log::LogBase
+{
+public:
+    explicit Logger(Er::Log::Level level)
+        : Er::Log::LogBase(level, 65536)
+    {
+        addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
+        unmute();
+    }
+
+private:
+    void delegate(std::shared_ptr<Er::Log::Record> r)
+    {
+        std::lock_guard l(m_mutex);
+
+        if (r->level < Er::Log::Level::Warning)
+            std::cout << r->message << std::endl;
+        else 
+            std::cerr << r->message << std::endl;
+    }
+
+    std::mutex m_mutex;
+};
 
 int main(int argc, char** argv)
 {
@@ -19,7 +47,8 @@ int main(int argc, char** argv)
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    Er::LibScope er;
+    Logger log(Er::Log::Level::Debug);
+    Er::LibScope er(&log);
 
     auto ret = RUN_ALL_TESTS();
 

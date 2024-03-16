@@ -159,7 +159,6 @@ int main(int argc, char* argv[], char* env[])
     // setup std::terminate() handler
     std::set_terminate(terminateHandler);
 
-    Er::LibScope er;
 
     Er::Log::Level logLevel = (cfg.verbose > 0) ? Er::Log::Level::Debug : Er::Log::Level::Info;
     auto logger = std::make_unique<Er::Private::Logger>(logLevel, cfg.logfile.c_str());
@@ -167,6 +166,9 @@ int main(int argc, char* argv[], char* env[])
         return EXIT_FAILURE;
 
     g_log = logger.get();
+
+    Er::LibScope er(g_log);
+
     logger->unmute();
 
     try

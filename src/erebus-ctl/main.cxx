@@ -429,11 +429,12 @@ int main(int argc, char* argv[])
         bool verbose = (vm.count("verbose") > 0);
         ErCtl::Log console(verbose ? Er::Log::Level::Debug : Er::Log::Level::Info);
 
-        Er::LibScope er;
+        Er::LibScope er(&console);
         Er::Client::LibParams cltParams(&console, console.level());
         Er::Client::LibScope cs(cltParams);
 
-        Er::ProcessProps::Private::registerAll();
+        Er::ProcessesGlobal::Private::registerAll(&console);
+        Er::ProcessProps::Private::registerAll(&console);
                 
         bool ssl = (vm.count("ssl") > 0);
         std::string root;

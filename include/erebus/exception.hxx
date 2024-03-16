@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/log.hxx>
 #include <erebus/property.hxx>
 #include <erebus/sourcelocation.hxx>
 #include <erebus/stacktrace.hxx>
@@ -19,7 +20,8 @@ namespace ExceptionProps
 namespace Private
 {
 
-void registerAll();
+void registerAll(Er::Log::ILog* log);
+void unregisterAll(Er::Log::ILog* log);
 
 } // namespace Private {}
 

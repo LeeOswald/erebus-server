@@ -47,7 +47,7 @@ EREBUS_EXPORT void finalizeKnownProps()
 
 
 
-EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi)
+EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log)
 {
     std::lock_guard l(s_registry->mutex);
 
@@ -62,9 +62,11 @@ EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi)
     {
         throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->idstr()));
     }
+
+    LogDebug(log, LogNowhere(), "Registered property %08x (%s)", pi->id(), pi->idstr());
 }
 
-EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi) noexcept
+EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log) noexcept
 {
     if (!pi)
         return;
@@ -82,6 +84,8 @@ EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi) noexcept
     {
         s_registry->propsByName.erase(it2);
     }
+
+    LogDebug(log, LogNowhere(), "Unregistered property %08x (%s)", pi->id(), pi->idstr());
 }
 
 EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id) noexcept
