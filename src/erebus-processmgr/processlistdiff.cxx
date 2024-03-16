@@ -12,9 +12,9 @@ namespace Er
 namespace Private
 {
 
-Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required)
+Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required, Er::PropertyBag&& previous)
 {
-    Er::PropertyBag bag;
+    Er::PropertyBag bag(std::move(previous));
 
     auto stat = source.readStat(pid);
     assert(stat.pid != ProcFs::InvalidPid); // PID is always valid
@@ -67,7 +67,7 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
                 bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });
         }
 
-        if (required[Er::ProcessProps::PropIndices::Exe] || required[Er::ProcessProps::PropIndices::Icon])
+        if (required[Er::ProcessProps::PropIndices::Exe])
         {
             auto exe = source.readExePath(pid);
             if (!exe.empty())
@@ -106,6 +106,44 @@ Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProp
     }
 
     return bag;
+}
+
+Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current)
+{
+    auto filtered = required;
+    if (existing.empty())
+        return filtered; // looks like this is a new process, no data collected yet
+
+    // almost all props get changed when exec() is called
+    // compare /proc/[pid]/exe contents to detect that exec() has occurred 
+    
+    auto exeOld = Er::getProperty<Er::ProcessProps::Exe::ValueType>(existing, Er::ProcessProps::Exe::Id::value, std::string());
+    auto exeCurrent = source.readExePath(pid);
+    auto exeChanged = (exeCurrent != exeOld);
+    if (exeChanged)
+    {
+        // since we already have an exe path, no need to look for it again
+        current.insert({ Er::ProcessProps::Exe::Id::value, Er::Property(Er::ProcessProps::Exe::Id::value, std::move(exeCurrent)) });
+        filtered.reset(Er::ProcessProps::PropIndices::Exe);
+    }
+
+    if (!exeChanged)
+    {
+        if (required[Er::ProcessProps::PropIndices::Icon])
+        {
+            // if we have an icon already
+            if (propertyPresent(existing, Er::ProcessProps::Icon::Id::value))
+            {
+                if (!exeChanged)
+                    filtered.reset(Er::ProcessProps::PropIndices::Icon);
+            }
+        }
+
+        filtered.reset(Er::ProcessProps::PropIndices::User);
+        filtered.reset(Er::ProcessProps::PropIndices::Ruid);
+    }
+
+    return filtered;
 }
 
 void addProcessIcon(IconManager* cache, Er::PropertyBag& bag)
@@ -186,7 +224,7 @@ static void updateDiffAndCollectionForProcess(bool firstRun, ProcessCollectionDi
     }
 }
 
-ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required, ProcessCollection& collection)
+ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconManager* iconCache, Er::ProcessProps::PropMask required, ProcessCollection& collection)
 {
     auto firstRun = collection.processes.empty();
     auto now = std::chrono::steady_clock::now();
@@ -198,8 +236,33 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::Pr
 
     for (auto pid: pids)
     {
-        auto process = collectProcessDetails(source, pid, required);
-        updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
+        auto existing = collection.processes.find(pid);
+        if (existing != collection.processes.end())
+        {
+            // this is an existing process, only need to update volatile props
+            auto& oldProps = existing->second.get()->properties;
+            Er::PropertyBag newProps;
+            auto filtered = filterVolatileProps(source, pid, oldProps, required, newProps);
+
+            if (filtered[Er::ProcessProps::PropIndices::Icon])
+            {
+                if (iconCache)
+                    addProcessIcon(iconCache, newProps);
+            }
+
+            auto process = collectProcessDetails(source, pid, filtered, std::move(newProps));
+            updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
+        }
+        else
+        {
+            // this is a new process
+            auto process = collectProcessDetails(source, pid, required, Er::PropertyBag());
+
+            if (iconCache)
+                addProcessIcon(iconCache, process);
+
+            updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
+        }
     }
 
     // now look for processes that haven't updated their timestamps

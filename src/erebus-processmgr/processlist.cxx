@@ -175,7 +175,7 @@ Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::Pro
     if (pid == ProcFs::KernelPid)
         return collectKernelDetails(m_procFs, required);
         
-    return collectProcessDetails(m_procFs, pid, required);
+    return collectProcessDetails(m_procFs, pid, required, Er::PropertyBag());
 }
 
 Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::ProcessesGlobal::PropMask required, bool lazy)
@@ -263,7 +263,7 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
     if (stream->next >= stream->pids.size())
         return Er::PropertyBag(); // end of stream
 
-    auto bag = collectProcessDetails(m_procFs, stream->pids[stream->next], stream->required);
+    auto bag = collectProcessDetails(m_procFs, stream->pids[stream->next], stream->required, Er::PropertyBag());
     if (stream->required[Er::ProcessProps::PropIndices::Icon])
     {
         if (m_iconManager)
@@ -282,17 +282,8 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
 ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag& args, Session* session)
 {
     auto required = getProcessPropMask(args);
-    auto diff = updateProcessCollection(m_procFs, required, session->processes);
+    auto diff = updateProcessCollection(m_procFs, m_iconManager, required, session->processes);
     m_processCount.store(diff.processCount, std::memory_order_relaxed);
-
-    if (required[Er::ProcessProps::PropIndices::Icon] && m_iconManager)
-    {
-        for (auto& process: session->processes.processes)
-        {
-            auto& processProps = process.second->properties;
-            addProcessIcon(m_iconManager, processProps);
-        }
-    }
 
     std::unique_lock l(m_mutex);
 

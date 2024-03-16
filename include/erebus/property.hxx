@@ -14,6 +14,10 @@
 namespace Er
 {
 
+//
+// Properties that can be marshaled through RPC
+//
+
 using PropId = uint32_t;
 constexpr PropId InvalidPropId = PropId(-1);
 
@@ -252,6 +256,34 @@ struct PropertyInfoWrapper
 
 
 using PropertyBag = std::unordered_map<PropId, Property>;
+
+
+inline bool propertyPresent(const PropertyBag& bag, PropId id) noexcept
+{
+    auto it = bag.find(id);
+    return (it != bag.end());
+}
+
+template <typename T>
+std::optional<T> getProperty(const PropertyBag& bag, PropId id)
+{
+    auto it = bag.find(id);
+    if (it == bag.end())
+        return std::nullopt;
+
+    return std::make_optional<T>(std::any_cast<T>(it->second.value));
+}
+
+template <typename T>
+T getProperty(const PropertyBag& bag, PropId id, T&& defaultValue)
+{
+    auto it = bag.find(id);
+    if (it == bag.end())
+        return T(std::forward<T>(defaultValue));
+
+    return std::any_cast<T>(it->second.value);
+}
+
 
 } // namespace Er {}
 
