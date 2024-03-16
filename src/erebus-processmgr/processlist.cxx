@@ -4,13 +4,28 @@
 #include <erebus/exception.hxx>
 #include <erebus/util/format.hxx>
 
-
+#include <time.h>
 
 namespace Er
 {
 
 namespace Private
 {
+
+namespace
+{
+
+double rtime() noexcept // current time, sec
+{
+    struct timespec time = {};
+    ::clock_gettime(CLOCK_MONOTONIC, &time);
+    double v = time.tv_sec;
+    v += double(time.tv_nsec) / 1000000000LL;
+    return v;
+} 
+
+} // namespace {}
+
 
 ProcessList::~ProcessList()
 {
@@ -175,7 +190,8 @@ Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::Pro
     if (pid == ProcFs::KernelPid)
         return collectKernelDetails(m_procFs, required);
         
-    return collectProcessDetails(m_procFs, pid, required, Er::PropertyBag());
+    ProcessDetailsCached cached;
+    return collectProcessDetails(m_procFs, pid, required, Er::PropertyBag(), cached);
 }
 
 Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::ProcessesGlobal::PropMask required, bool lazy)
@@ -193,6 +209,24 @@ Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::Pr
         }
 
         bag.insert({ Er::ProcessesGlobal::ProcessCount::Id::value, Er::Property(Er::ProcessesGlobal::ProcessCount::Id::value, count) }); 
+    }
+
+    if (required[Er::ProcessesGlobal::PropIndices::RTime])
+    {
+        auto r = rtime();
+        bag.insert({ Er::ProcessesGlobal::RTime::Id::value, Er::Property(Er::ProcessesGlobal::RTime::Id::value, rtime) }); 
+    }
+
+    if (required[Er::ProcessesGlobal::PropIndices::STime])
+    {
+        auto s = m_stime.load(std::memory_order_relaxed);
+        bag.insert({ Er::ProcessesGlobal::STime::Id::value, Er::Property(Er::ProcessesGlobal::STime::Id::value, s) }); 
+    }
+
+    if (required[Er::ProcessesGlobal::PropIndices::UTime])
+    {
+        auto u = m_utime.load(std::memory_order_relaxed);
+        bag.insert({ Er::ProcessesGlobal::UTime::Id::value, Er::Property(Er::ProcessesGlobal::UTime::Id::value, u) }); 
     }
 
     return bag;
@@ -261,9 +295,18 @@ ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& arg
 Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
 {
     if (stream->next >= stream->pids.size())
+    {
+        
         return Er::PropertyBag(); // end of stream
+    }
 
-    auto bag = collectProcessDetails(m_procFs, stream->pids[stream->next], stream->required, Er::PropertyBag());
+    ProcessDetailsCached cached;
+    auto bag = collectProcessDetails(m_procFs, stream->pids[stream->next], stream->required, Er::PropertyBag(), cached);
+
+    // update total CPU time
+    stream->stime += cached.stime;
+    stream->utime += cached.utime;
+
     if (stream->required[Er::ProcessProps::PropIndices::Icon])
     {
         if (m_iconManager)
@@ -282,8 +325,14 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
 ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag& args, Session* session)
 {
     auto required = getProcessPropMask(args);
-    auto diff = updateProcessCollection(m_procFs, m_iconManager, required, session->processes);
+
+    ProcessStatistics stats;
+    auto diff = updateProcessCollection(m_procFs, m_iconManager, required, session->processes, stats);
+    
+    // update stats
     m_processCount.store(diff.processCount, std::memory_order_relaxed);
+    m_stime.store(stats.sTimeTotal, std::memory_order_relaxed);
+    m_utime.store(stats.uTimeTotal, std::memory_order_relaxed);
 
     std::unique_lock l(m_mutex);
 

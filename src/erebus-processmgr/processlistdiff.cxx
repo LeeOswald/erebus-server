@@ -12,7 +12,7 @@ namespace Er
 namespace Private
 {
 
-Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required, Er::PropertyBag&& previous)
+Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required, Er::PropertyBag&& previous, ProcessDetailsCached& cached)
 {
     Er::PropertyBag bag(std::move(previous));
 
@@ -80,6 +80,25 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
             if (user)
                 bag.insert({ Er::ProcessProps::User::Id::value, Er::Property(Er::ProcessProps::User::Id::value, std::move(user->name)) });
         }
+
+        if (required[Er::ProcessProps::PropIndices::ThreadCount])
+        {
+            bag.insert({ Er::ProcessProps::ThreadCount::Id::value, Er::Property(Er::ProcessProps::ThreadCount::Id::value, stat.num_threads)});
+        }
+
+        if (required[Er::ProcessProps::PropIndices::UTime])
+        {
+            bag.insert({ Er::ProcessProps::UTime::Id::value, Er::Property(Er::ProcessProps::UTime::Id::value, stat.uTime)});
+        }
+
+        cached.utime = stat.uTime;
+
+        if (required[Er::ProcessProps::PropIndices::STime])
+        {
+            bag.insert({ Er::ProcessProps::STime::Id::value, Er::Property(Er::ProcessProps::STime::Id::value, stat.sTime)});
+        }
+
+        cached.stime = stat.sTime;
     }
 
     return bag;
@@ -94,7 +113,7 @@ Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProp
     
     if (required[Er::ProcessProps::PropIndices::StartTime])
     {
-        auto bootTime = source.getBootTime();
+        auto bootTime = source.bootTime();
         bag.insert({ Er::ProcessProps::StartTime::Id::value, Er::Property(Er::ProcessProps::StartTime::Id::value, bootTime) });
     }
 
@@ -224,7 +243,7 @@ static void updateDiffAndCollectionForProcess(bool firstRun, ProcessCollectionDi
     }
 }
 
-ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconManager* iconCache, Er::ProcessProps::PropMask required, ProcessCollection& collection)
+ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconManager* iconCache, Er::ProcessProps::PropMask required, ProcessCollection& collection, ProcessStatistics& stats)
 {
     auto firstRun = collection.processes.empty();
     auto now = std::chrono::steady_clock::now();
@@ -236,6 +255,8 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconMa
 
     for (auto pid: pids)
     {
+        ProcessDetailsCached cached;
+
         auto existing = collection.processes.find(pid);
         if (existing != collection.processes.end())
         {
@@ -250,19 +271,23 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconMa
                     addProcessIcon(iconCache, newProps);
             }
 
-            auto process = collectProcessDetails(source, pid, filtered, std::move(newProps));
+            auto process = collectProcessDetails(source, pid, filtered, std::move(newProps), cached);
+
             updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
         }
         else
         {
             // this is a new process
-            auto process = collectProcessDetails(source, pid, required, Er::PropertyBag());
+            auto process = collectProcessDetails(source, pid, required, Er::PropertyBag(), cached);
 
             if (iconCache)
                 addProcessIcon(iconCache, process);
 
             updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
         }
+
+        stats.uTimeTotal += cached.utime;
+        stats.sTimeTotal += cached.stime;
     }
 
     // now look for processes that haven't updated their timestamps

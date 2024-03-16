@@ -4,6 +4,7 @@
 #include <erebus/knownprops.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
+#include <iomanip>
 #include <vector>
 
 namespace Er
@@ -19,8 +20,6 @@ static const std::string_view ProcessesGlobal = "ProcessesGlobal";
 
 } // namespace ProcessRequests {}
 
-namespace ProcessProps
-{
 
 struct IconFormatter
 {
@@ -33,6 +32,20 @@ struct IconFormatter
             s << "[icon (" << ico.size() << " bytes)]";
     }
 };
+
+struct CpuTimeFormatter
+{
+    void operator()(const Property& v, std::ostream& s) 
+    { 
+        auto val = std::any_cast<double>(v.value); 
+        s << std::fixed << std::setprecision(2) << val;
+    }
+};
+
+
+namespace ProcessProps
+{
+
 
 using RequiredFields = PropertyValue<uint64_t, ER_PROPID("process.fields"), "__Fields">;
 using Error = PropertyValue<std::string, ER_PROPID("process.error"), "__Error">;
@@ -52,7 +65,9 @@ using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable Nam
 using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
 using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
 using Icon = PropertyValue<Bytes, ER_PROPID("process.icon"), "Icon", BytesComparator, IconFormatter>;
-
+using ThreadCount = PropertyValue<int64_t, ER_PROPID("process.nthreads"), "Thread Count">;
+using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
+using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
 
 constexpr PropId IndexToProp[] =
 {
@@ -69,6 +84,9 @@ constexpr PropId IndexToProp[] =
     /*10*/ State::Id::value,
     /*11*/ User::Id::value,
     /*12*/ Icon::Id::value,
+    /*13*/ ThreadCount::Id::value,
+    /*14*/ STime::Id::value,
+    /*15*/ UTime::Id::value,
 };
 
 
@@ -87,6 +105,9 @@ struct PropIndices
     static constexpr Flag State = 10;
     static constexpr Flag User = 11;
     static constexpr Flag Icon = 12;
+    static constexpr Flag ThreadCount = 13;
+    static constexpr Flag STime = 14;
+    static constexpr Flag UTime = 15;
 
     static constexpr size_t FlagsCount = 64;
 };
@@ -118,6 +139,9 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(std::make_shared<PropertyInfoWrapper<StartTime>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<State>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<Icon>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<ThreadCount>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<STime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<UTime>>(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -140,6 +164,9 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(lookupProperty(ProcessProps::StartTime::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::State::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::Icon::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::ThreadCount::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::STime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::UTime::Id::value), log);
 }
 
 } // namespace Private {}
@@ -152,16 +179,25 @@ namespace ProcessesGlobal
 using RequiredFields = PropertyValue<uint64_t, ER_PROPID("processes.global.fields"), "__Fields">;
 using Lazy = PropertyValue<bool, ER_PROPID("processes.global.lazy"), "__Lazy">;
 using ProcessCount = PropertyValue<uint64_t, ER_PROPID("processes.global.process_count"), "Total Processes">;
+using RTime = PropertyValue<double, ER_PROPID("processes.global.rtime"), "Real Time", PropertyComparator<double>, CpuTimeFormatter>;
+using STime = PropertyValue<double, ER_PROPID("processes.global.stime"), "Total CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
+using UTime = PropertyValue<double, ER_PROPID("processes.global.utime"), "Total CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
 
 constexpr PropId IndexToProp[] =
 {
     /* 0*/ ProcessCount::Id::value,
+    /* 1*/ RTime::Id::value,
+    /* 2*/ STime::Id::value,
+    /* 3*/ UTime::Id::value,
 };
 
 
 struct PropIndices
 {
     static constexpr Flag ProcessCount = 0;
+    static constexpr Flag RTime = 1;
+    static constexpr Flag STime = 2;
+    static constexpr Flag UTime = 3;
 
     static constexpr size_t FlagsCount = 64;
 };
@@ -177,6 +213,9 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<Lazy>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<ProcessCount>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<RTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<STime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<UTime>>(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -184,6 +223,9 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(lookupProperty(ProcessesGlobal::RequiredFields::Id::value), log);
     unregisterProperty(lookupProperty(ProcessesGlobal::Lazy::Id::value), log);
     unregisterProperty(lookupProperty(ProcessesGlobal::ProcessCount::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::RTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::STime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::UTime::Id::value), log);
 }
 
 } // namespace Private {}

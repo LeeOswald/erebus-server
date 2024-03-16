@@ -3,7 +3,6 @@
 #include <erebus/log.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
-#include <atomic>
 
 namespace Er
 {
@@ -76,8 +75,10 @@ struct Stat
     /*50*/ uint64_t env_end = 0;
     /*51*/ int32_t exit_code = 0;
 
-    uint64_t startTime;                   // start time (absolute)
-    uint64_t ruid = uint64_t(-1);         // real user ID of process owner
+    uint64_t startTime = 0;                          // start time (absolute)
+    uint64_t ruid = uint64_t(-1);                    // real user ID of process owner
+    double uTime = 0.0;                              // seconds
+    double sTime = 0.0;                              // seconds
 
     Stat() noexcept = default;
 };
@@ -101,15 +102,16 @@ public:
     std::string readCmdLine(uint64_t pid) noexcept;
 
     std::vector<uint64_t> enumeratePids() noexcept;
-
-    uint64_t getBootTime() noexcept;
+    
+    uint64_t bootTime() noexcept;
 
 private:
     uint64_t getBootTimeImpl() noexcept;
     uint64_t fromRelativeTime(uint64_t relative) noexcept;
 
     Er::Log::ILog* const m_log;
-    std::atomic<std::size_t> m_pidCountMax = 0;
+    uint64_t const m_clkTck; // ticks per second
+    std::size_t m_pidCountMax = 0;
 };
 
 

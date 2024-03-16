@@ -79,6 +79,8 @@ private:
         Er::ProcessProps::PropMask required;
         std::vector<uint64_t> pids;
         size_t next = 0;
+        double utime = 0.0;
+        double stime = 0.0;
     };
 
     struct ProcessListDiffStream final
@@ -125,6 +127,8 @@ private:
     IconManager* m_iconManager;
     Er::ProcFs::ProcFs m_procFs;
     std::atomic<std::size_t> m_processCount = 0;
+    std::atomic<double> m_stime = 0.0;
+    std::atomic<double> m_utime = 0.0;
     std::shared_mutex m_mutex;
     SessionId m_nextSessionId = 0;
     StreamId m_nextStreamId = 0;

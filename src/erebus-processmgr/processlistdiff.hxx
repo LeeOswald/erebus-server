@@ -56,8 +56,13 @@ struct ProcessCollectionDiff
     std::vector<const ProcessData*> added;
 };
 
+struct ProcessDetailsCached // smth that is faster than a property bag lookup
+{
+    double stime = 0.0;
+    double utime = 0.0;
+};
 
-Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required, Er::PropertyBag&& previous);
+Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required, Er::PropertyBag&& previous, ProcessDetailsCached& cached);
 Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required);
 
 Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current);
@@ -67,7 +72,13 @@ void addProcessIcon(IconManager* iconCache, Er::PropertyBag& bag);
 
 ProcessDataDiff diffProcessData(uint64_t pid, const Er::PropertyBag& prev, const Er::PropertyBag& curr);
 
-ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconManager* iconCache, Er::ProcessProps::PropMask required, ProcessCollection& collection);
+struct ProcessStatistics
+{
+    double sTimeTotal = 0.0;
+    double uTimeTotal = 0.0;
+};
+
+ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconManager* iconCache, Er::ProcessProps::PropMask required, ProcessCollection& collection, ProcessStatistics& stats);
 
 
 } // namespace Private {}

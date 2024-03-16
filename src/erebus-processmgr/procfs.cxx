@@ -36,6 +36,7 @@ using DirHolder = Util::AutoPtr<DIR, DirCloser>;
 
 ProcFs::ProcFs(Er::Log::ILog* log)
     : m_log(log)
+    , m_clkTck(::sysconf(_SC_CLK_TCK))
 {
     auto rootPath = root();
     if (::access(rootPath.c_str(), R_OK) == -1)
@@ -283,6 +284,8 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
         }
 
         result.startTime = fromRelativeTime(result.starttime);
+        result.uTime = double(result.utime) / m_clkTck;
+        result.sTime = double(result.stime) / m_clkTck;
 
         result.valid = true;
     }
@@ -421,7 +424,7 @@ std::string ProcFs::readCmdLine(uintptr_t pid) noexcept
 std::vector<uintptr_t> ProcFs::enumeratePids() noexcept
 {
     std::vector<uintptr_t> result;
-    auto reserve = m_pidCountMax.load(std::memory_order_relaxed);
+    auto reserve = m_pidCountMax;
     if (!reserve)
         reserve = 512;
     result.reserve(reserve);
@@ -465,7 +468,7 @@ std::vector<uintptr_t> ProcFs::enumeratePids() noexcept
     }
 
     if (result.size() > reserve)
-        m_pidCountMax.store(result.size(), std::memory_order_relaxed);
+        m_pidCountMax = result.size();
 
     return result;
 }
@@ -503,7 +506,7 @@ uint64_t ProcFs::getBootTimeImpl() noexcept
     return 0;
 }
 
-uint64_t ProcFs::getBootTime() noexcept
+uint64_t ProcFs::bootTime() noexcept
 {
     static uint64_t bootTime = getBootTimeImpl();
     return bootTime;
@@ -511,14 +514,12 @@ uint64_t ProcFs::getBootTime() noexcept
 
 uint64_t ProcFs::fromRelativeTime(uint64_t relative) noexcept
 {
-    static long clockRes = ::sysconf(_SC_CLK_TCK);
-    assert(clockRes > 0);
+    auto boot = bootTime();
+    auto time = relative / m_clkTck;
 
-    auto bootTime = getBootTime();
-    auto time = relative / clockRes;
-
-    return bootTime + time;
+    return boot + time;
 }
+
 
     
 } // namespace ProcFs {}
