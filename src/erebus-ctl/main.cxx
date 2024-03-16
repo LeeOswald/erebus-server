@@ -152,6 +152,25 @@ void restart(Er::Log::ILog* log, const Er::Client::Params& params)
     );
 }
 
+void dumpProcessesGlobal(const Er::PropertyBag& info, Er::Log::ILog* log)
+{
+    for (auto it = info.begin(); it != info.end(); ++it)
+    {
+        auto propInfo = Er::lookupProperty(it->second.id).get();
+        if (!propInfo)
+        {
+            log->write(Er::Log::Level::Warning, LogNowhere(), "0x%08x: ???", it->second.id);
+        }
+        else
+        {
+            std::ostringstream ss;
+            propInfo->format(it->second, ss);
+
+            log->write(Er::Log::Level::Info, LogNowhere(), "%s: %s", propInfo->name(), ss.str().c_str());
+        }
+    }
+}
+
 void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
 {
     auto it = info.find(Er::ProcessProps::Pid::Id::value);
@@ -284,6 +303,13 @@ void dumpProcesses(Er::Log::ILog* log, const Er::Client::Params& params, int int
 
                 log->write(Er::Log::Level::Info, LogNowhere(), "------------------------------------------------------");
 
+                // globals
+                {
+                    Er::PropertyBag req;
+                    auto globals = client->request(Er::ProcessRequests::ProcessesGlobal, req);
+                    dumpProcessesGlobal(globals, log);
+                }
+
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
             }
         }
@@ -301,6 +327,13 @@ void dumpProcessesDiff(Er::Client::IClient* client, Er::Log::ILog* log, Er::Clie
             for (auto& process : list)
             {
                 dumpProcess(process, log);
+            }
+
+            // globals
+            {
+                Er::PropertyBag req;
+                auto globals = client->request(Er::ProcessRequests::ProcessesGlobal, req);
+                dumpProcessesGlobal(globals, log);
             }
         }
     );

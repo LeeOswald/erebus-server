@@ -50,6 +50,7 @@ struct ProcessDataDiff
 
 struct ProcessCollectionDiff
 {
+    std::size_t processCount = 0;
     std::vector<uint64_t> removed;
     std::vector<ProcessDataDiff> modified;
     std::vector<const ProcessData*> added;

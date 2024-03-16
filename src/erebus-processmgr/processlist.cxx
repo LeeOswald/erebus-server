@@ -72,8 +72,13 @@ Er::PropertyBag ProcessList::request(std::string_view request, const Er::Propert
 {
     if (request == Er::ProcessRequests::ProcessDetails)
     {
-        auto required = getPropMask(args);
+        auto required = getProcessPropMask(args);
         return processDetails(args, required);
+    }
+    else if (request == Er::ProcessRequests::ProcessesGlobal)
+    {
+        auto required = getProcessesGlobalPropMask(args);
+        return processesGlobal(args, required.first, required.second);
     }
 
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
@@ -127,7 +132,7 @@ Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionI
     return Er::PropertyBag();
 }
 
-Er::ProcessProps::PropMask ProcessList::getPropMask(const Er::PropertyBag& args)
+Er::ProcessProps::PropMask ProcessList::getProcessPropMask(const Er::PropertyBag& args)
 {
     auto it = args.find(Er::ProcessProps::RequiredFields::Id::value);
     if (it == args.end())
@@ -138,6 +143,26 @@ Er::ProcessProps::PropMask ProcessList::getPropMask(const Er::PropertyBag& args)
 
     auto mask = std::any_cast<uint64_t>(it->second.value);
     return Er::ProcessProps::PropMask(mask, Er::ProcessProps::PropMask::FromBits);
+}
+
+std::pair<Er::ProcessesGlobal::PropMask, bool> ProcessList::getProcessesGlobalPropMask(const Er::PropertyBag& args)
+{
+    bool lazy = false;
+    auto it = args.find(Er::ProcessesGlobal::Lazy::Id::value);
+    if (it != args.end())
+    {
+        lazy = std::any_cast<Er::ProcessesGlobal::Lazy::ValueType>(it->second.value);
+    }
+
+    it = args.find(Er::ProcessesGlobal::RequiredFields::Id::value);
+    if (it == args.end())
+    {
+        // default mask - everything included
+        return std::make_pair(Er::ProcessesGlobal::PropMask(0xffffffffffffffff, Er::ProcessesGlobal::PropMask::FromBits), lazy);
+    }
+
+    auto mask = std::any_cast<uint64_t>(it->second.value);
+    return std::make_pair(Er::ProcessesGlobal::PropMask(mask, Er::ProcessesGlobal::PropMask::FromBits), lazy);
 }
 
 Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required)
@@ -151,6 +176,26 @@ Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::Pro
         return collectKernelDetails(m_procFs, required);
         
     return collectProcessDetails(m_procFs, pid, required);
+}
+
+Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::ProcessesGlobal::PropMask required, bool lazy)
+{
+    Er::PropertyBag bag;
+
+    if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
+    {
+        auto count = m_processCount.load(std::memory_order_relaxed);
+        if (!count || !lazy)
+        {
+            auto pids = m_procFs.enumeratePids();
+            count = pids.size();
+            m_processCount.store(count, std::memory_order_relaxed);
+        }
+
+        bag.insert({ Er::ProcessesGlobal::ProcessCount::Id::value, Er::Property(Er::ProcessesGlobal::ProcessCount::Id::value, count) }); 
+    }
+
+    return bag;
 }
 
 void ProcessList::dropStaleStreams() noexcept
@@ -198,10 +243,12 @@ void ProcessList::dropStaleSessions() noexcept
 ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& args)
 {
     auto pids = m_procFs.enumeratePids();
-    auto required = getPropMask(args);
+    m_processCount.store(pids.size(), std::memory_order_relaxed);
+
+    auto required = getProcessPropMask(args);
 
     std::unique_lock l(m_mutex);
-
+    
     auto streamId = m_nextStreamId++;
     auto stream = std::make_unique<ProcessListStream>(streamId, required, std::move(pids));
     m_streams.insert({ streamId, std::move(stream) });
@@ -234,9 +281,10 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
 
 ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag& args, Session* session)
 {
-    auto required = getPropMask(args);
+    auto required = getProcessPropMask(args);
     auto diff = updateProcessCollection(m_procFs, required, session->processes);
-    
+    m_processCount.store(diff.processCount, std::memory_order_relaxed);
+
     if (required[Er::ProcessProps::PropIndices::Icon] && m_iconManager)
     {
         for (auto& process: session->processes.processes)

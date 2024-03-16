@@ -343,13 +343,7 @@ std::string ProcFs::readExePath(uintptr_t pid) noexcept
         {
             size_t size = sb.st_size;
             if (size == 0) // lstat can yield sb.st_size = 0
-            {
-#ifdef PATH_MAX
                 size = PATH_MAX;
-#else
-                size = 4096;
-#endif
-            }
 
             std::string exe;
             exe.resize(size + 1, '\0');
@@ -427,6 +421,10 @@ std::string ProcFs::readCmdLine(uintptr_t pid) noexcept
 std::vector<uintptr_t> ProcFs::enumeratePids() noexcept
 {
     std::vector<uintptr_t> result;
+    auto reserve = m_pidCountMax.load(std::memory_order_relaxed);
+    if (!reserve)
+        reserve = 512;
+    result.reserve(reserve);
 
     try
     {
@@ -465,6 +463,9 @@ std::vector<uintptr_t> ProcFs::enumeratePids() noexcept
     {
         Er::Util::logException(m_log, Er::Log::Level::Error, e);
     }
+
+    if (result.size() > reserve)
+        m_pidCountMax.store(result.size(), std::memory_order_relaxed);
 
     return result;
 }

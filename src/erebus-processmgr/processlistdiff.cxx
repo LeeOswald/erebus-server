@@ -194,6 +194,8 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::Pr
     ProcessCollectionDiff diff;
     
     auto pids = source.enumeratePids();
+    diff.processCount = pids.size();
+
     for (auto pid: pids)
     {
         auto process = collectProcessDetails(source, pid, required);

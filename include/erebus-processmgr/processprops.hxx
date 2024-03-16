@@ -15,6 +15,7 @@ namespace ProcessRequests
 static const std::string_view ListProcesses = "ListProcesses";
 static const std::string_view ListProcessesDiff = "ListProcessesDiff";
 static const std::string_view ProcessDetails = "ProcessDetails";
+static const std::string_view ProcessesGlobal = "ProcessesGlobal";
 
 } // namespace ProcessRequests {}
 
@@ -144,5 +145,49 @@ inline void unregisterAll()
 } // namespace Private {}
 
 } // namespace ProcessProps {}
+
+namespace ProcessesGlobal
+{
+
+using RequiredFields = PropertyValue<uint64_t, ER_PROPID("processes.global.fields"), "__Fields">;
+using Lazy = PropertyValue<bool, ER_PROPID("processes.global.lazy"), "__Lazy">;
+using ProcessCount = PropertyValue<uint64_t, ER_PROPID("processes.global.process_count"), "Total Processes">;
+
+constexpr PropId IndexToProp[] =
+{
+    /* 0*/ ProcessCount::Id::value,
+};
+
+
+struct PropIndices
+{
+    static constexpr Flag ProcessCount = 0;
+
+    static constexpr size_t FlagsCount = 64;
+};
+
+
+using PropMask = Flags<PropIndices>;
+
+namespace Private
+{
+
+inline void registerAll()
+{
+    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<Lazy>>());
+    registerProperty(std::make_shared<PropertyInfoWrapper<ProcessCount>>());
+}
+
+inline void unregisterAll()
+{
+    unregisterProperty(lookupProperty(ProcessesGlobal::RequiredFields::Id::value));
+    unregisterProperty(lookupProperty(ProcessesGlobal::Lazy::Id::value));
+    unregisterProperty(lookupProperty(ProcessesGlobal::ProcessCount::Id::value));
+}
+
+} // namespace Private {}
+
+} // namespace ProcessesGlobal {}
 
 } // namespace Er {}

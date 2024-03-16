@@ -6,6 +6,7 @@
 
 #include "processlistdiff.hxx"
 
+#include <atomic>
 #include <chrono>
 #include <shared_mutex>
 #include <unordered_map>
@@ -100,8 +101,11 @@ private:
         size_t next = 0;
     };
 
-    static Er::ProcessProps::PropMask getPropMask(const Er::PropertyBag& args);
+    static Er::ProcessProps::PropMask getProcessPropMask(const Er::PropertyBag& args);
     Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required);
+
+    static std::pair<Er::ProcessesGlobal::PropMask, bool> getProcessesGlobalPropMask(const Er::PropertyBag& args); // mask:lazy
+    Er::PropertyBag processesGlobal(const Er::PropertyBag& args, Er::ProcessesGlobal::PropMask required, bool lazy);
 
     Session* getSession(std::optional<SessionId> id);
     void dropStaleSessions() noexcept;
@@ -120,11 +124,13 @@ private:
     Er::Log::ILog* m_log;
     IconManager* m_iconManager;
     Er::ProcFs::ProcFs m_procFs;
+    std::atomic<std::size_t> m_processCount = 0;
     std::shared_mutex m_mutex;
     SessionId m_nextSessionId = 0;
     StreamId m_nextStreamId = 0;
     std::unordered_map<StreamId, std::unique_ptr<Session>> m_sessions;
     std::unordered_map<StreamId, std::unique_ptr<Stream>> m_streams;
+    
 };
 
 } // namespace Private {}

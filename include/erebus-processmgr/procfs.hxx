@@ -3,6 +3,7 @@
 #include <erebus/log.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
+#include <atomic>
 
 namespace Er
 {
@@ -12,6 +13,10 @@ namespace ProcFs
 
 constexpr uint64_t InvalidPid = uint64_t(-1);
 constexpr uint64_t KernelPid = 0;
+
+//
+// parsed /proc/[pid]/stat entry
+//
 
 struct Stat
 {
@@ -78,6 +83,10 @@ struct Stat
 };
 
 
+//
+// /proc parser
+// 
+
 class ER_PROCESSMGR_EXPORT ProcFs final
     : public Er::NonCopyable
 {
@@ -99,7 +108,8 @@ private:
     uint64_t getBootTimeImpl() noexcept;
     uint64_t fromRelativeTime(uint64_t relative) noexcept;
 
-    Er::Log::ILog* m_log;
+    Er::Log::ILog* const m_log;
+    std::atomic<std::size_t> m_pidCountMax = 0;
 };
 
 

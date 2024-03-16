@@ -34,6 +34,7 @@ public:
         m_iconCache.reset();
 
         Er::ProcessProps::Private::unregisterAll();
+        Er::ProcessesGlobal::Private::unregisterAll();
 
         g_instances--;
     }
@@ -69,8 +70,10 @@ public:
             container->registerService(Er::ProcessRequests::ListProcesses, m_processList.get());
             container->registerService(Er::ProcessRequests::ListProcessesDiff, m_processList.get());
             container->registerService(Er::ProcessRequests::ProcessDetails, m_processList.get());
+            container->registerService(Er::ProcessRequests::ProcessesGlobal, m_processList.get());
         }
 
+        Er::ProcessesGlobal::Private::registerAll();
         Er::ProcessProps::Private::registerAll();
     }
 
