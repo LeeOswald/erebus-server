@@ -75,14 +75,14 @@ inline StreamT& operator<<(StreamT& stream, ResultCode code)
 
 struct ResultCodeFormatter
 {
-    void operator()(const Property& v, std::ostream& s) { s << std::any_cast<ResultCode>(v.value); }
+    void operator()(const Property& v, std::ostream& s) { s << static_cast<ResultCode>(std::any_cast<int32_t>(v.value)); }
 };
 
 
 namespace Props
 {
 
-using ResultCode = PropertyValue<ResultCode, ER_PROPID("erebus.ResultCode"), "Erebus error code", PropertyComparator<Er::Client::ResultCode>, ResultCodeFormatter>;
+using ResultCode = PropertyValue<int32_t, ER_PROPID("erebus.ResultCode"), "Erebus error code", PropertyComparator<int32_t>, ResultCodeFormatter>;
 
 } // namespace Props {}
 

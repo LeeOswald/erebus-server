@@ -28,8 +28,20 @@ struct PropertyComparator;
 template <typename T, typename = void>
 struct PropertyFormatter;
 
+template <typename T>
+concept SupportedPropertyType = 
+    std::is_same_v<T, bool> ||
+    std::is_same_v<T, int32_t> ||
+    std::is_same_v<T, uint32_t> ||
+    std::is_same_v<T, int64_t> ||
+    std::is_same_v<T, uint64_t> ||
+    std::is_same_v<T, double> ||
+    std::is_same_v<T, std::string> ||
+    std::is_same_v<T, int32_t> ||
+    std::is_same_v<T, Bytes>;
 
-template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
+
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
 class PropertyInfo
 {
 public:
@@ -60,7 +72,7 @@ public:
 };
 
 
-template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
 class PropertyValue final
     : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
 {

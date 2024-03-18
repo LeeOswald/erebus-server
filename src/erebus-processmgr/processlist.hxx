@@ -6,7 +6,6 @@
 
 #include "processlistdiff.hxx"
 
-#include <atomic>
 #include <chrono>
 #include <shared_mutex>
 #include <unordered_map>
@@ -126,10 +125,13 @@ private:
     Er::Log::ILog* m_log;
     IconManager* m_iconManager;
     Er::ProcFs::ProcFs m_procFs;
-    std::atomic<std::size_t> m_processCount = 0;
-    std::atomic<double> m_stime = 0.0;
-    std::atomic<double> m_utime = 0.0;
-    std::shared_mutex m_mutex;
+
+    std::shared_mutex m_mutexGlobals;
+    std::size_t m_processCount = 0;
+    double m_stime = 0.0;
+    double m_utime = 0.0;
+    
+    std::shared_mutex m_mutexSession;
     SessionId m_nextSessionId = 0;
     StreamId m_nextStreamId = 0;
     std::unordered_map<StreamId, std::unique_ptr<Session>> m_sessions;

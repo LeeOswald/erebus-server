@@ -456,7 +456,7 @@ private:
         if (!status.ok())
         {
             auto mappedStatus = mapGrpcStatus(status.error_code());
-            throw Er::Exception(ER_HERE(), "RPC call failed", ::Er::Client::Props::ResultCode(mappedStatus), ::Er::ExceptionProps::DecodedError(status.error_message()));
+            throw Er::Exception(ER_HERE(), "RPC call failed", ::Er::Client::Props::ResultCode(static_cast<int32_t>(mappedStatus)), ::Er::ExceptionProps::DecodedError(status.error_message()));
         }
 
         if (!reply)
@@ -471,7 +471,7 @@ private:
                 std::ostringstream ss;
                 ss << code;
                 
-                throw Er::Exception(ER_HERE(), "RPC call failed", ::Er::Client::Props::ResultCode(code), ::Er::ExceptionProps::DecodedError(ss.str()));
+                throw Er::Exception(ER_HERE(), "RPC call failed", ::Er::Client::Props::ResultCode(static_cast<int32_t>(code)), ::Er::ExceptionProps::DecodedError(ss.str()));
             }
         }
         else

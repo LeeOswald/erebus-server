@@ -42,7 +42,7 @@ ProcessList::ProcessList(Er::Log::ILog* log, IconManager* iconManager)
 
 ProcessList::SessionId ProcessList::allocateSession()
 {
-    std::unique_lock l(m_mutex);
+    std::unique_lock l(m_mutexSession);
     auto id = m_nextSessionId++;
 
     m_sessions.insert({ id, std::make_unique<Session>(id) });
@@ -54,7 +54,7 @@ ProcessList::SessionId ProcessList::allocateSession()
 
 void ProcessList::deleteSession(SessionId id)
 {
-    std::unique_lock l(m_mutex);
+    std::unique_lock l(m_mutexSession);
 
     auto it = m_sessions.find(id);
     if (it == m_sessions.end())
@@ -72,7 +72,7 @@ ProcessList::Session* ProcessList::getSession(std::optional<SessionId> id)
     if (!id)
         throw Er::Exception(ER_HERE(), "Session not specified");
 
-    std::unique_lock l(m_mutex);
+    std::unique_lock l(m_mutexSession);
 
     auto it = m_sessions.find(*id);
     if (it == m_sessions.end())
@@ -111,7 +111,7 @@ ProcessList::StreamId ProcessList::beginStream(std::string_view request, const E
 
 void ProcessList::endStream(StreamId id, std::optional<SessionId> sessionId)
 {
-    std::unique_lock l(m_mutex);
+    std::unique_lock l(m_mutexSession);
 
     auto it = m_streams.find(id);
     if (it == m_streams.end())
@@ -128,7 +128,7 @@ Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionI
 {
     Stream* stream = nullptr;
     {
-        std::unique_lock l(m_mutex);
+        std::unique_lock l(m_mutexSession);
         auto it = m_streams.find(id);
         if (it == m_streams.end())
             throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
@@ -198,14 +198,16 @@ Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::Pr
 {
     Er::PropertyBag bag;
 
+    std::unique_lock l(m_mutexGlobals);
+
     if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
     {
-        auto count = m_processCount.load(std::memory_order_relaxed);
+        auto count = m_processCount;
         if (!count || !lazy)
         {
             auto pids = m_procFs.enumeratePids();
             count = pids.size();
-            m_processCount.store(count, std::memory_order_relaxed);
+            m_processCount = count;
         }
 
         bag.insert({ Er::ProcessesGlobal::ProcessCount::Id::value, Er::Property(Er::ProcessesGlobal::ProcessCount::Id::value, count) }); 
@@ -219,13 +221,13 @@ Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::Pr
 
     if (required[Er::ProcessesGlobal::PropIndices::STime])
     {
-        auto s = m_stime.load(std::memory_order_relaxed);
+        auto s = m_stime;
         bag.insert({ Er::ProcessesGlobal::STime::Id::value, Er::Property(Er::ProcessesGlobal::STime::Id::value, s) }); 
     }
 
     if (required[Er::ProcessesGlobal::PropIndices::UTime])
     {
-        auto u = m_utime.load(std::memory_order_relaxed);
+        auto u = m_utime;
         bag.insert({ Er::ProcessesGlobal::UTime::Id::value, Er::Property(Er::ProcessesGlobal::UTime::Id::value, u) }); 
     }
 
@@ -277,11 +279,9 @@ void ProcessList::dropStaleSessions() noexcept
 ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& args)
 {
     auto pids = m_procFs.enumeratePids();
-    m_processCount.store(pids.size(), std::memory_order_relaxed);
-
     auto required = getProcessPropMask(args);
 
-    std::unique_lock l(m_mutex);
+    std::unique_lock l(m_mutexSession);
     
     auto streamId = m_nextStreamId++;
     auto stream = std::make_unique<ProcessListStream>(streamId, required, std::move(pids));
@@ -296,7 +296,14 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
 {
     if (stream->next >= stream->pids.size())
     {
-        
+        // update stats
+        {
+            std::unique_lock l(m_mutexGlobals);
+            m_processCount = stream->pids.size();
+            m_stime = stream->stime;
+            m_utime = stream->utime;
+        }
+
         return Er::PropertyBag(); // end of stream
     }
 
@@ -330,11 +337,14 @@ ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag&
     auto diff = updateProcessCollection(m_procFs, m_iconManager, required, session->processes, stats);
     
     // update stats
-    m_processCount.store(diff.processCount, std::memory_order_relaxed);
-    m_stime.store(stats.sTimeTotal, std::memory_order_relaxed);
-    m_utime.store(stats.uTimeTotal, std::memory_order_relaxed);
+    {
+        std::unique_lock l(m_mutexGlobals);
+        m_processCount = diff.processCount;
+        m_stime = stats.sTimeTotal;
+        m_utime = stats.uTimeTotal;
+    }
 
-    std::unique_lock l(m_mutex);
+    std::unique_lock l(m_mutexSession);
 
     auto streamId = m_nextStreamId++;
 

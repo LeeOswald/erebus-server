@@ -7,10 +7,10 @@ namespace Er
 {
     
 //
-// wrapper to allow use of string literals as template args
+// wrapper that enables usage of string literals as template args
 //
 
-template<size_t N>
+template <size_t N>
 struct StringLiteral
 {
     static constexpr size_t size = N;
