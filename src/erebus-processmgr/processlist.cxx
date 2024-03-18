@@ -216,7 +216,7 @@ Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::Pr
     if (required[Er::ProcessesGlobal::PropIndices::RTime])
     {
         auto r = rtime();
-        bag.insert({ Er::ProcessesGlobal::RTime::Id::value, Er::Property(Er::ProcessesGlobal::RTime::Id::value, rtime) }); 
+        bag.insert({ Er::ProcessesGlobal::RTime::Id::value, Er::Property(Er::ProcessesGlobal::RTime::Id::value, r) }); 
     }
 
     if (required[Er::ProcessesGlobal::PropIndices::STime])
