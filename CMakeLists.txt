@@ -99,10 +99,11 @@ set(GRPC_LIBS
 
 # require Boost
 if(MSVC)
-    find_package(Boost REQUIRED COMPONENTS filesystem system program_options)
+    find_package(Boost REQUIRED COMPONENTS filesystem iostreams system program_options)
 else()
     find_package(Boost REQUIRED COMPONENTS 
-        filesystem 
+        filesystem
+        iostreams
         stacktrace_basic
         stacktrace_backtrace
         stacktrace_addr2line

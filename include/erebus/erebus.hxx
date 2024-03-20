@@ -100,6 +100,11 @@ struct EREBUS_EXPORT Bytes final
         return m_bytes;
     }
 
+    std::string& bytes() noexcept
+    {
+        return m_bytes;
+    }
+
     char* data() noexcept
     {
         return m_bytes.data();

@@ -18,10 +18,6 @@ endif()
 
 if(ER_LINUX)
     set(PLATFORM_LIBS
-        ${Boost_STACKTRACE_BASIC_LIBRARY}
-        ${Boost_STACKTRACE_BACKTRACE_LIBRARY}
-        ${Boost_STACKTRACE_ADDR2LINE_LIBRARY}
-        ${Boost_STACKTRACE_NOOP_LIBRARY}
         pthread
         dl
     )
@@ -83,4 +79,4 @@ add_compile_definitions(EREBUS_EXPORTS=1)
 
 target_compile_features(${EREBUS_LIB} PUBLIC ${ER_CXX_FEATURES})
 
-target_link_libraries(${EREBUS_LIB} PRIVATE  ${PLATFORM_LIBS})
+target_link_libraries(${EREBUS_LIB} PRIVATE ${Boost_LIBRARIES} ${PLATFORM_LIBS})
