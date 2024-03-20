@@ -170,12 +170,10 @@ Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint6
 
 void addProcessIcon(IconManager* cache, Er::PropertyBag& bag)
 {
-    auto it = bag.find(Er::ProcessProps::Exe::Id::value);
-    if (it == bag.end())
-        return;
-
-    auto exe = std::any_cast<std::string>(it->second.value);
-    auto ico = cache->lookup(exe, Er::Private::IconSize::Small);
+    auto comm = Er::getProperty(bag, Er::ProcessProps::Comm::Id::value, std::string());
+    auto exe = Er::getProperty(bag, Er::ProcessProps::Exe::Id::value, std::string());
+    
+    auto ico = cache->lookup(comm, exe, Er::Private::IconSize::Small);
     if (ico && ico->valid)
         bag.insert({ Er::ProcessProps::Icon::Id::value, Er::Property(Er::ProcessProps::Icon::Id::value, ico->data) });
 }

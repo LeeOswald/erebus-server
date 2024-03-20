@@ -5,6 +5,7 @@
 #include "iconcache.hxx"
 #include "iconmanager.hxx"
 
+#include <regex>
 
 
 namespace Er
@@ -12,6 +13,33 @@ namespace Er
 
 namespace Private
 {
+
+namespace
+{
+
+struct KnownApp
+{
+    std::regex command;
+    std::string icon;
+};
+
+const KnownApp g_KnownApps[] =
+{
+    { std::regex("^((ba|z|tc|c|k)?sh)$"), "utilities-terminal" }
+};
+
+std::optional<std::string> findKnownAppIcon(const std::string& app)
+{
+    for (auto& k: g_KnownApps)
+    {
+        if (regex_match(app, k.command))
+            return k.icon;
+    }
+
+    return std::nullopt;
+}
+
+}
 
 IconManager::IconManager(Er::Log::ILog* log, IconCache* iconCache, DesktopEntries* desktopEntries, size_t cacheSize)
     : m_log(log)
@@ -30,8 +58,12 @@ void IconManager::prefetch(IconSize size)
     m_iconCache->prefetch(iconList, static_cast<unsigned>(size));
 }
 
-std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::string& exe, const std::string& name, IconSize size) const noexcept
+std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::string& comm, const std::string& exe, IconSize size) const noexcept
 {
+    std::string name;
+    auto knownIcon = findKnownAppIcon(comm);
+    name = knownIcon ? *knownIcon : DefaultExeIcon;
+
     // look for cached default icon
     auto cache = (size == IconSize::Large) ? &m_default32 : &m_default16;
     {
@@ -83,7 +115,7 @@ std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::strin
     return result;
 }
 
-std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& exe, IconSize size) const noexcept
+std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& comm, const std::string& exe, IconSize size) const noexcept
 {
     // first look in in-memory cache
     auto cache = (size == IconSize::Large) ? &m_cache32 : &m_cache16;
@@ -102,7 +134,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& ex
     if (!desktop)
     {
         // no icon for this exe
-        return defaultIcon(exe, DefaultExeIcon, size);
+        return defaultIcon(comm, exe, size);
     }
 
     // maybe it is cached on disk
@@ -110,7 +142,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& ex
     if (!cachePath)
     {
         // no icon for this exe
-        return defaultIcon(exe, DefaultExeIcon, size);
+        return defaultIcon(comm, exe, size);
     }
 
     // load from the disk cache
@@ -126,7 +158,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& ex
     if (data.empty())
     {
         // no icon for this exe
-        return defaultIcon(exe, DefaultExeIcon, size);
+        return defaultIcon(comm, exe, size);
     }
 
     // cache this icon in memory

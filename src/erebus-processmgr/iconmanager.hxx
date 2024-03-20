@@ -45,8 +45,8 @@ public:
     explicit IconManager(Er::Log::ILog* log, IconCache* iconCache, DesktopEntries* desktopEntries, size_t cacheSize);
 
     void prefetch(IconSize size);
-    std::shared_ptr<IconData> lookup(const std::string& exe, IconSize size) const noexcept;
-    std::shared_ptr<IconData> defaultIcon(const std::string& exe, const std::string& name, IconSize size) const noexcept;
+    std::shared_ptr<IconData> lookup(const std::string& comm, const std::string& exe, IconSize size) const noexcept;
+    std::shared_ptr<IconData> defaultIcon(const std::string& comm, const std::string& exe, IconSize size) const noexcept;
 
 private:
     Er::Log::ILog* const m_log;
