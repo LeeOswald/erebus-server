@@ -46,6 +46,9 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
         
         if (required[Er::ProcessProps::PropIndices::StartTime])
             bag.insert({ Er::ProcessProps::StartTime::Id::value, Er::Property(Er::ProcessProps::StartTime::Id::value, stat.startTime) });
+
+        if (required[Er::ProcessProps::PropIndices::Tty])
+            bag.insert({ Er::ProcessProps::Tty::Id::value, Er::Property(Er::ProcessProps::Tty::Id::value, stat.tty_nr) });
         
         if (required[Er::ProcessProps::PropIndices::State])
         {
