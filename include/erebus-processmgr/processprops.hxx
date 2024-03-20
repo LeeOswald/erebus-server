@@ -100,6 +100,7 @@ constexpr PropId IndexToProp[] =
     /*13*/ ThreadCount::Id::value,
     /*14*/ STime::Id::value,
     /*15*/ UTime::Id::value,
+    /*16*/ CpuUsage::Id::value,
 };
 
 
@@ -121,6 +122,7 @@ struct PropIndices
     static constexpr Flag ThreadCount = 13;
     static constexpr Flag STime = 14;
     static constexpr Flag UTime = 15;
+    static constexpr Flag CpuUsage = 16;
 
     static constexpr size_t FlagsCount = 64;
 };
@@ -155,6 +157,7 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(std::make_shared<PropertyInfoWrapper<ThreadCount>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<STime>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<UTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<CpuUsage>>(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -180,6 +183,7 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(lookupProperty(ProcessProps::ThreadCount::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::STime::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::UTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessProps::CpuUsage::Id::value), log);
 }
 
 } // namespace Private {}
