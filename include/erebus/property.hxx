@@ -85,9 +85,12 @@ public:
 
     PropertyValue() noexcept = default;
 
-    template <typename T>
-    explicit constexpr PropertyValue(T&& value) noexcept
-        : m_value(std::forward<T>(value))
+    constexpr PropertyValue(const ValueT& value)
+        : m_value(value)
+    {}
+
+    constexpr PropertyValue(ValueT&& value) noexcept
+        : m_value(std::move(value))
     {}
 
     constexpr ValueType&& value() && noexcept

@@ -43,6 +43,18 @@ struct CpuTimeFormatter
 };
 
 
+struct CpuLoadFormatter
+{
+    void operator()(const Property& v, std::ostream& s) 
+    { 
+        auto val = std::any_cast<double>(v.value);
+        val *= 100; 
+        val = clamp(val, 0.0, 100.0);
+        s << std::fixed << std::setprecision(2) << static_cast<unsigned>(val);
+    }
+};
+
+
 namespace ProcessProps
 {
 
@@ -61,13 +73,14 @@ using Ruid = PropertyValue<uint64_t, ER_PROPID("process.ruid"), "User ID">;
 using User = PropertyValue<std::string, ER_PROPID("process.user"), "User Name">;
 using Comm = PropertyValue<std::string, ER_PROPID("process.comm"), "Program Name">;
 using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Command Line">;
-using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable Name">;
+using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable">;
 using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
 using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
 using Icon = PropertyValue<Bytes, ER_PROPID("process.icon"), "Icon", BytesComparator, IconFormatter>;
 using ThreadCount = PropertyValue<int64_t, ER_PROPID("process.nthreads"), "Thread Count">;
 using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
 using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
+using CpuUsage = PropertyValue<double, ER_PROPID("process.cpu_usage"), "%CPU", PropertyComparator<double>, CpuLoadFormatter>;
 
 constexpr PropId IndexToProp[] =
 {

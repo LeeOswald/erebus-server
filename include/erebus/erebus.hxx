@@ -124,4 +124,17 @@ private:
     std::string m_bytes;
 };
 
+
+template <std::three_way_comparable T>
+constexpr T clamp(T val, T lo, T hi) noexcept
+{
+    if (val < lo) [[unlikely]]
+        return lo;
+
+    if (val > hi) [[unlikely]]
+        return hi;
+    
+    return val;
+}
+
 } // namespace Er {}

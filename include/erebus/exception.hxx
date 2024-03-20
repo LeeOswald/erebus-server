@@ -132,7 +132,7 @@ public:
     {
         if (m_context)
         {
-            m_context->addProp(id, std::forward<ValueT&&>(value));
+            m_context->addProp(id, std::forward<ValueT>(value));
         }
 
         return *this;
