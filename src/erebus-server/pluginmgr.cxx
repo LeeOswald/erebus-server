@@ -21,7 +21,7 @@ PluginMgr::PluginMgr(const Er::Server::PluginParams& params)
 {
 }
 
-Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<std::string>& args)
+Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<Er::Server::PluginParams::Arg>& args)
 {
     Er::Server::PluginParams params;
     params.containers = m_params.containers;

@@ -44,7 +44,7 @@ public:
     {
         long expected = 0;
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
-            throw Er::Exception(ER_HERE(), "Only one instance of erebus-processmgr plugin can be instantiated");
+            throw Er::Exception(ER_HERE(), "Only one instance of erebus-processmgr plugin can be created");
 
         auto args = parseArgs(params);
 
@@ -92,30 +92,25 @@ private:
 
         for (auto arg = params.args.begin(); arg != params.args.end(); ++arg)
         {
-            if ((*arg == "iconcacheagent") && (std::next(arg) != params.args.end()))
+            if (arg->name == "iconcacheagent")
             {
-                arg = std::next(arg);
-                a.iconCacheAgent = *arg;
+                a.iconCacheAgent = arg->value;
             }
-            else if ((*arg == "iconcachedir") && (std::next(arg) != params.args.end()))
+            else if (arg->name == "iconcachedir")
             {
-                arg = std::next(arg);
-                a.iconCacheDir = *arg;
+                a.iconCacheDir = arg->value;
             }
-            else if ((*arg == "icontheme") && (std::next(arg) != params.args.end()))
+            else if (arg->name == "icontheme")
             {
-                arg = std::next(arg);
-                a.iconTheme = *arg;
+                a.iconTheme = arg->value;
             }
-            else if ((*arg == "iconcachesize") && (std::next(arg) != params.args.end()))
+            else if (arg->name == "iconcachesize")
             {
-                arg = std::next(arg);
-                a.iconCacheSize = std::strtoul(arg->c_str(), nullptr, 10);
-                if (a.iconCacheSize == 0)
-                    a.iconCacheSize = 1024;
+                a.iconCacheSize = std::strtoul(arg->value.c_str(), nullptr, 10);
             }
         }
 
+        a.iconCacheSize = Er::clamp(a.iconCacheSize, size_t(1024), size_t(65536));
         return a;
     }
 

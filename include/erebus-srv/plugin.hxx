@@ -16,10 +16,22 @@ struct IServiceContainer;
 
 struct PluginParams
 {
+    struct Arg
+    {
+        std::string name;
+        std::string value;
+
+        template <typename KeyT, typename ValueT>
+        Arg(KeyT&& key, ValueT&& val)
+            : name(std::forward<KeyT>(key))
+            , value(std::forward<ValueT>(val))
+        {}
+    };
+
     Er::Log::ILog* log = nullptr;
     std::vector<IServiceContainer*> containers;
     std::string binary;
-    std::vector<std::string> args;
+    std::vector<Arg> args;
 };
 
 

@@ -22,7 +22,7 @@ public:
     ~PluginMgr();
     explicit PluginMgr(const Er::Server::PluginParams& params);
 
-    Er::Server::IPlugin* load(const std::string& path, const std::vector<std::string>& args);
+    Er::Server::IPlugin* load(const std::string& path, const std::vector<Er::Server::PluginParams::Arg>& args);
     void unloadAll();
 
 private:

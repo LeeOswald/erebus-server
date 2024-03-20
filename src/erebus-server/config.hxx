@@ -1,6 +1,7 @@
 #pragma once
 
 #include <erebus/erebus.hxx>
+#include <erebus-srv/plugin.hxx>
 
 #include <vector>
 
@@ -19,9 +20,9 @@ struct ServerConfig final
     };
 
     struct Plugin final
-    {
+    {        
         std::string path;
-        std::vector<std::string> args;
+        std::vector<Er::Server::PluginParams::Arg> args;
     };
 
     int verbose = 0;

@@ -74,7 +74,15 @@ R"(
                     "args": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type":"string"
+                                },
+                                "value": {
+                                    "type":"string"
+                                }
+                            }
                         }
                     }
                 }
@@ -194,10 +202,27 @@ ServerConfig loadConfig(const std::string& path)
                     }
                     else if (!std::strcmp(name, "args"))
                     {
+                        auto args = m->value.GetArray();
                         for (size_t index = 0; index < m->value.Size(); ++index)
                         {
-                            auto& v = m->value[index];
-                            plugin.args.push_back(v.GetString());
+                            std::string key;
+                            std::string val;
+
+                            auto& arg = args[index];
+                            for (auto m = arg.MemberBegin(); m != arg.MemberEnd(); ++m)
+                            {
+                                auto name = m->name.GetString();
+                                if (!std::strcmp(name, "name"))
+                                    key = m->value.GetString();
+                                else if (!std::strcmp(name, "value"))
+                                    val = m->value.GetString();
+
+                            }
+
+                            if (!key.empty())
+                            {
+                                plugin.args.emplace_back(std::move(key), std::move(val));
+                            }
                         }
                     }
                 }
