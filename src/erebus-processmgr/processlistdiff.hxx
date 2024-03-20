@@ -58,6 +58,8 @@ struct ProcessCollectionDiff
 
 struct ProcessDetailsCached // smth that is faster than a property bag lookup
 {
+    std::string comm;
+    std::string exe;
     double stime = 0.0;
     double utime = 0.0;
 };
@@ -68,7 +70,7 @@ Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProp
 Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current);
 
 class IconManager;
-void addProcessIcon(IconManager* iconCache, Er::PropertyBag& bag);
+void addProcessIcon(const std::string& comm, const std::string& exe, IconManager* iconCache, Er::PropertyBag& bag);
 
 ProcessDataDiff diffProcessData(uint64_t pid, const Er::PropertyBag& prev, const Er::PropertyBag& curr);
 

@@ -60,7 +60,10 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
         {
             auto comm = source.readComm(pid);
             if (!comm.empty())
+            {
+                cached.comm = comm;
                 bag.insert({ Er::ProcessProps::Comm::Id::value, Er::Property(Er::ProcessProps::Comm::Id::value, std::move(comm)) });
+            }
         }
 
         if (required[Er::ProcessProps::PropIndices::CmdLine])
@@ -74,7 +77,10 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
         {
             auto exe = source.readExePath(pid);
             if (!exe.empty())
+            {
+                cached.exe = exe;
                 bag.insert({ Er::ProcessProps::Exe::Id::value, Er::Property(Er::ProcessProps::Exe::Id::value, std::move(exe)) });
+            }
         }
 
         if (required[Er::ProcessProps::PropIndices::User])
@@ -168,11 +174,8 @@ Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint6
     return filtered;
 }
 
-void addProcessIcon(IconManager* cache, Er::PropertyBag& bag)
+void addProcessIcon(const std::string& comm, const std::string& exe, IconManager* cache, Er::PropertyBag& bag)
 {
-    auto comm = Er::getProperty(bag, Er::ProcessProps::Comm::Id::value, std::string());
-    auto exe = Er::getProperty(bag, Er::ProcessProps::Exe::Id::value, std::string());
-    
     auto ico = cache->lookup(comm, exe, Er::Private::IconSize::Small);
     if (ico && ico->valid)
         bag.insert({ Er::ProcessProps::Icon::Id::value, Er::Property(Er::ProcessProps::Icon::Id::value, ico->data) });
@@ -266,13 +269,13 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconMa
             Er::PropertyBag newProps;
             auto filtered = filterVolatileProps(source, pid, oldProps, required, newProps);
 
+            auto process = collectProcessDetails(source, pid, filtered, std::move(newProps), cached);
+            
             if (filtered[Er::ProcessProps::PropIndices::Icon])
             {
                 if (iconCache)
-                    addProcessIcon(iconCache, newProps);
+                    addProcessIcon(cached.comm, cached.exe, iconCache, process);
             }
-
-            auto process = collectProcessDetails(source, pid, filtered, std::move(newProps), cached);
 
             updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
         }
@@ -282,7 +285,7 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconMa
             auto process = collectProcessDetails(source, pid, required, Er::PropertyBag(), cached);
 
             if (iconCache)
-                addProcessIcon(iconCache, process);
+                addProcessIcon(cached.comm, cached.exe, iconCache, process);
 
             updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
         }

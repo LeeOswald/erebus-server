@@ -61,8 +61,16 @@ void IconManager::prefetch(IconSize size)
 std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::string& comm, const std::string& exe, IconSize size) const noexcept
 {
     std::string name;
-    auto knownIcon = findKnownAppIcon(comm);
-    name = knownIcon ? *knownIcon : DefaultExeIcon;
+
+    if (comm.empty())
+    {
+        name = DefaultExeIcon;
+    }
+    else
+    {
+        auto knownIcon = findKnownAppIcon(comm);
+        name = knownIcon ? *knownIcon : DefaultExeIcon;
+    }
 
     // look for cached default icon
     auto cache = (size == IconSize::Large) ? &m_default32 : &m_default16;
@@ -71,7 +79,7 @@ std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::strin
         auto cached = cache->find(name);
         if (cached != cache->end())
         {
-            LogDebug(m_log, LogComponent("IconManager"), "Found cached default icon [%s] for [%s]", name.c_str(), exe.c_str());
+            LogDebug(m_log, LogComponent("IconManager"), "Found cached default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
             return cached->second;
         }
     }
@@ -83,7 +91,7 @@ std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::strin
         std::unique_lock l(m_mutex);
         auto dummy = std::make_shared<IconData>();
         cache->insert({ name, dummy });
-        LogWarning(m_log, LogComponent("IconManager"), "No default icon [%s] for [%s]", name.c_str(), exe.c_str());
+        LogWarning(m_log, LogComponent("IconManager"), "No default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
         return dummy;
     }
 
@@ -110,7 +118,7 @@ std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::strin
     std::unique_lock l(m_mutex);
     auto result = std::make_shared<IconData>(std::move(data.bytes()));
     cache->insert({ name, result });
-    LogDebug(m_log, LogComponent("IconManager"), "Using default icon [%s] for [%s]", name.c_str(), exe.c_str());
+    LogDebug(m_log, LogComponent("IconManager"), "Using default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
 
     return result;
 }
@@ -124,7 +132,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& co
         auto cached = cache->get(exe);
         if (cached)
         {
-            LogDebug(m_log, LogComponent("IconManager"), "Found cached icon for [%s]", exe.c_str());
+            LogDebug(m_log, LogComponent("IconManager"), "Found cached icon for [%s] [%s]", comm.c_str(), exe.c_str());
             return *cached;
         }
     }
@@ -165,7 +173,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& co
     auto ico = std::make_shared<IconData>(std::move(data));
     std::unique_lock l(m_mutex);
     cache->put(exe, ico);
-    LogDebug(m_log, LogComponent("IconManager"), "Found icon for [%s]", exe.c_str());
+    LogDebug(m_log, LogComponent("IconManager"), "Found icon for [%s] [%s]", comm.c_str(), exe.c_str());
 
     return ico;
 }

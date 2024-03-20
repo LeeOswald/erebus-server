@@ -318,7 +318,7 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
     {
         if (m_iconManager)
         {
-            addProcessIcon(m_iconManager, bag);
+            addProcessIcon(cached.comm, cached.exe, m_iconManager, bag);
         }
     }
 
