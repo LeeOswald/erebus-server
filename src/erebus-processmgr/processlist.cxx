@@ -407,7 +407,9 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, modified.pid) });
         bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, true) }); 
 
+#if 0
         Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next modified PID " << modified.pid << " on stream " << stream->id;
+#endif
     }
     else
     {

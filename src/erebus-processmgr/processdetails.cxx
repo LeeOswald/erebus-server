@@ -37,7 +37,6 @@ static const SignalName g_SignalNames[] =
     { "SIGSTOP", SIGSTOP },
     { "SIGTSTP", SIGTSTP },
     { "SIGHUP", SIGHUP },
-    { "SIGTERM", SIGTERM },
     { "SIGUSR1", SIGUSR1 },
     { "SIGUSR2", SIGUSR2 },
     { "SIGSEGV", SIGSEGV },
