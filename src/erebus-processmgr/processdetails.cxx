@@ -110,11 +110,11 @@ Er::PropertyBag ProcessDetails::next(StreamId id, std::optional<SessionId> sessi
 
 Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
 {
-    auto pid = Er::getProperty<int64_t>(args, Er::ProcessesGlobal::Pid::Id::value);
+    auto pid = Er::getProperty<Er::ProcessesGlobal::Pid::ValueType>(args, Er::ProcessesGlobal::Pid::Id::value);
     if (!pid)
         throw Er::Exception(ER_HERE(), "Process ID expected");
 
-    auto signame = Er::getProperty<std::string>(args, Er::ProcessesGlobal::Signal::Id::value);
+    auto signame = Er::getProperty<Er::ProcessesGlobal::Signal::ValueType>(args, Er::ProcessesGlobal::Signal::Id::value);
     if (!signame)
         throw Er::Exception(ER_HERE(), "Signal name expected");
 
@@ -126,7 +126,7 @@ Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
     auto r = ::kill(*pid, signo);
 
     Er::PropertyBag result;
-    result.insert({ Er::ProcessesGlobal::PosixResult::Id::value, Er::Property(Er::ProcessesGlobal::PosixResult::Id::value, int32_t(r)) });
+    result.insert({ Er::ProcessesGlobal::PosixResult::Id::value, Er::Property(Er::ProcessesGlobal::PosixResult::Id::value, Er::ProcessesGlobal::PosixResult::ValueType(r)) });
 
     if (r < 0)
     {
