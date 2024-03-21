@@ -40,6 +40,19 @@ ProcessList::ProcessList(Er::Log::ILog* log, IconManager* iconManager)
     LogDebug(m_log, LogInstance("ProcessList"), "ProcessList()");
 }
 
+void ProcessList::registerService(Er::Server::IServiceContainer* container)
+{
+    container->registerService(Er::ProcessRequests::ListProcesses, this);
+    container->registerService(Er::ProcessRequests::ListProcessesDiff, this);
+    container->registerService(Er::ProcessRequests::ProcessDetails, this);
+    container->registerService(Er::ProcessRequests::ProcessesGlobal, this);
+}
+
+void ProcessList::unregisterService(Er::Server::IServiceContainer* container)
+{
+    container->unregisterService(this);
+}
+
 ProcessList::SessionId ProcessList::allocateSession()
 {
     std::unique_lock l(m_mutexSession);

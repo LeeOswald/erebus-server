@@ -27,6 +27,9 @@ public:
     ~ProcessList();
     explicit ProcessList(Er::Log::ILog* log, IconManager* iconManager);
 
+    void registerService(Er::Server::IServiceContainer* container);
+    void unregisterService(Er::Server::IServiceContainer* container);
+
     SessionId allocateSession() override;
     void deleteSession(SessionId id)  override;
     Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override; 
@@ -122,7 +125,7 @@ private:
     const unsigned kSessionTimeoutSeconds = 60 * 60;
     const unsigned kStreamTimeoutSeconds = 60;
 
-    Er::Log::ILog* m_log;
+    Er::Log::ILog* const m_log;
     IconManager* m_iconManager;
     Er::ProcFs::ProcFs m_procFs;
 

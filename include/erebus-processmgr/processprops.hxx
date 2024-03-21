@@ -17,6 +17,7 @@ static const std::string_view ListProcesses = "ListProcesses";
 static const std::string_view ListProcessesDiff = "ListProcessesDiff";
 static const std::string_view ProcessDetails = "ProcessDetails";
 static const std::string_view ProcessesGlobal = "ProcessesGlobal";
+static const std::string_view KillProcess = "KillProcess";
 
 } // namespace ProcessRequests {}
 
@@ -198,6 +199,11 @@ inline void unregisterAll(Er::Log::ILog* log)
 namespace ProcessesGlobal
 {
 
+using Pid = PropertyValue<uint64_t, ER_PROPID("processes.global.pid"), "PID">;
+using Signal = PropertyValue<std::string, ER_PROPID("processes.global.signal"), "Signal">;
+using PosixResult = PropertyValue<int32_t, ER_PROPID("processes.global.posix_result"), "POSIX Result">;
+using ErrorText = PropertyValue<std::string, ER_PROPID("processes.global.error_text"), "Error Message">;
+
 using RequiredFields = PropertyValue<uint64_t, ER_PROPID("processes.global.fields"), "__Fields">;
 using Lazy = PropertyValue<bool, ER_PROPID("processes.global.lazy"), "__Lazy">;
 using ProcessCount = PropertyValue<uint64_t, ER_PROPID("processes.global.process_count"), "Total Processes">;
@@ -232,8 +238,14 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
+    registerProperty(std::make_shared<PropertyInfoWrapper<Pid>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Signal>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<PosixResult>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<ErrorText>>(), log);
+
     registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<Lazy>>(), log);
+    
     registerProperty(std::make_shared<PropertyInfoWrapper<ProcessCount>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<RTime>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<STime>>(), log);
@@ -242,8 +254,14 @@ inline void registerAll(Er::Log::ILog* log)
 
 inline void unregisterAll(Er::Log::ILog* log)
 {
+    unregisterProperty(lookupProperty(ProcessesGlobal::Pid::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::Signal::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::PosixResult::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::ErrorText::Id::value), log);
+    
     unregisterProperty(lookupProperty(ProcessesGlobal::RequiredFields::Id::value), log);
     unregisterProperty(lookupProperty(ProcessesGlobal::Lazy::Id::value), log);
+    
     unregisterProperty(lookupProperty(ProcessesGlobal::ProcessCount::Id::value), log);
     unregisterProperty(lookupProperty(ProcessesGlobal::RTime::Id::value), log);
     unregisterProperty(lookupProperty(ProcessesGlobal::STime::Id::value), log);

@@ -5,6 +5,7 @@
 #include "desktopentries.hxx"
 #include "iconcache.hxx"
 #include "iconmanager.hxx"
+#include "processdetails.hxx"
 #include "processlist.hxx"
 
 #include <atomic>
@@ -25,10 +26,12 @@ public:
         // unregister services
         for (auto container: m_params.containers)
         {
-            container->unregisterService(m_processList.get());
+            m_processList->unregisterService(container);
+            m_processDetails->unregisterService(container);
         }
 
         m_processList.reset();
+        m_processDetails.reset();
         m_iconManager.reset();
         m_desktopEntries.reset();
         m_iconCache.reset();
@@ -64,13 +67,12 @@ public:
 
         // create and register services
         m_processList.reset(new Er::Private::ProcessList(m_params.log, m_iconManager.get()));
+        m_processDetails.reset(new Er::Private::ProcessDetails(m_params.log));
         
         for (auto container: m_params.containers)
         {
-            container->registerService(Er::ProcessRequests::ListProcesses, m_processList.get());
-            container->registerService(Er::ProcessRequests::ListProcessesDiff, m_processList.get());
-            container->registerService(Er::ProcessRequests::ProcessDetails, m_processList.get());
-            container->registerService(Er::ProcessRequests::ProcessesGlobal, m_processList.get());
+            m_processList->registerService(container);
+            m_processDetails->registerService(container);
         }
 
         Er::ProcessesGlobal::Private::registerAll(m_params.log);
@@ -121,6 +123,7 @@ private:
     std::unique_ptr<Er::Private::DesktopEntries> m_desktopEntries;
     std::unique_ptr<Er::Private::IconManager> m_iconManager;
     std::unique_ptr<Er::Private::ProcessList> m_processList;
+    std::unique_ptr<Er::Private::ProcessDetails> m_processDetails;
 };
 
 std::atomic<long> ProcessMgrPlugin::g_instances = 0;

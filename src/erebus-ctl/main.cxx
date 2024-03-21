@@ -152,7 +152,7 @@ void restart(Er::Log::ILog* log, const Er::Client::Params& params)
     );
 }
 
-void dumpProcessesGlobal(const Er::PropertyBag& info, Er::Log::ILog* log)
+void dumpPropertyBag(const Er::PropertyBag& info, Er::Log::ILog* log)
 {
     for (auto it = info.begin(); it != info.end(); ++it)
     {
@@ -307,7 +307,7 @@ void dumpProcesses(Er::Log::ILog* log, const Er::Client::Params& params, int int
                 {
                     Er::PropertyBag req;
                     auto globals = client->request(Er::ProcessRequests::ProcessesGlobal, req);
-                    dumpProcessesGlobal(globals, log);
+                    dumpPropertyBag(globals, log);
                 }
 
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
@@ -333,7 +333,7 @@ void dumpProcessesDiff(Er::Client::IClient* client, Er::Log::ILog* log, Er::Clie
             {
                 Er::PropertyBag req;
                 auto globals = client->request(Er::ProcessRequests::ProcessesGlobal, req);
-                dumpProcessesGlobal(globals, log);
+                dumpPropertyBag(globals, log);
             }
         }
     );
@@ -361,6 +361,24 @@ void dumpProcessesDiff(Er::Log::ILog* log, const Er::Client::Params& params, int
             }
 
             client->endSession(Er::ProcessRequests::ListProcessesDiff, sessionId);
+        }
+    );
+}
+
+void killProcess(Er::Log::ILog* log, const Er::Client::Params& params, uint64_t pid, const std::string& signame)
+{
+    protectedCall(
+        log,
+        [log, &params, pid, &signame]()
+        {
+            auto client = Er::Client::create(params);
+            
+            Er::PropertyBag req;
+            req.insert({ Er::ProcessesGlobal::Pid::Id::value, Er::Property(Er::ProcessesGlobal::Pid::Id::value, pid) });
+            req.insert({ Er::ProcessesGlobal::Signal::Id::value, Er::Property(Er::ProcessesGlobal::Signal::Id::value, signame) });
+            auto result = client->request(Er::ProcessRequests::KillProcess, req);
+
+            dumpPropertyBag(result, log);
         }
     );
 }
@@ -407,6 +425,7 @@ int main(int argc, char* argv[])
             ("process", po::value<int>(), "view process info for PID")
             ("processes", "view process list")
             ("procdiff", "view process list (incremental)")
+            ("kill", po::value<std::string>(), "kill <pid>:<signal>")
         ;
 
         po::variables_map vm;
@@ -506,6 +525,20 @@ int main(int argc, char* argv[])
         else if (vm.count("procdiff"))
         {
             dumpProcessesDiff(&console, params, interval);
+        }
+        else if (vm.count("kill"))
+        {
+            auto tmp = vm["kill"].as<std::string>();
+            std::vector<std::string> parts;
+            boost::split(parts, tmp, boost::is_any_of(":"));
+            if (parts.size() != 2)
+            {
+                std::cerr << "Expected <pid>:<signal> pair specified for \"kill\" command\n";
+                return EXIT_FAILURE;
+            }
+
+            auto pid = std::strtoull(parts[0].c_str(), nullptr, 10);
+            killProcess(&console, params, pid, parts[1]);
         }
         
         if (g_signalReceived)
