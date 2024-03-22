@@ -7,6 +7,7 @@
 #include "processlistdiff.hxx"
 
 #include <chrono>
+#include <mutex>
 #include <shared_mutex>
 #include <unordered_map>
 #include <vector>
@@ -95,21 +96,22 @@ private:
 
         enum class Stage
         {
+            Globals,
             Removed,
             Modified,
             Added
         };
 
         ProcessCollectionDiff diff;
-        Stage stage = Stage::Removed;
+        Stage stage = Stage::Globals;
         size_t next = 0;
     };
 
     static Er::ProcessProps::PropMask getProcessPropMask(const Er::PropertyBag& args);
     Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required);
 
-    static std::pair<Er::ProcessesGlobal::PropMask, bool> getProcessesGlobalPropMask(const Er::PropertyBag& args); // mask:lazy
-    Er::PropertyBag processesGlobal(const Er::PropertyBag& args, Er::ProcessesGlobal::PropMask required, bool lazy);
+    static Er::ProcessesGlobal::PropMask getProcessesGlobalPropMask(const Er::PropertyBag& args);
+    Er::PropertyBag processesGlobal(Er::ProcessesGlobal::PropMask required);
 
     Session* getSession(std::optional<SessionId> id);
     void dropStaleSessions() noexcept;
@@ -129,10 +131,14 @@ private:
     IconManager* m_iconManager;
     Er::ProcFs::ProcFs m_procFs;
 
-    std::shared_mutex m_mutexGlobals;
-    std::size_t m_processCount = 0;
-    double m_stime = 0.0;
-    double m_utime = 0.0;
+    struct
+    {
+        std::mutex mutex;
+        std::size_t processCount = 0;
+        double stime = 0.0;
+        double utime = 0.0;
+
+    } m_globals;
     
     std::shared_mutex m_mutexSession;
     SessionId m_nextSessionId = 0;

@@ -106,7 +106,7 @@ Er::PropertyBag ProcessList::request(std::string_view request, const Er::Propert
     else if (request == Er::ProcessRequests::ProcessesGlobal)
     {
         auto required = getProcessesGlobalPropMask(args);
-        return processesGlobal(args, required.first, required.second);
+        return processesGlobal(required);
     }
 
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
@@ -162,65 +162,45 @@ Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionI
 
 Er::ProcessProps::PropMask ProcessList::getProcessPropMask(const Er::PropertyBag& args)
 {
-    auto it = args.find(Er::ProcessProps::RequiredFields::Id::value);
-    if (it == args.end())
-    {
-        // default mask - everything included
-        return Er::ProcessProps::PropMask(0xffffffffffffffff, Er::ProcessProps::PropMask::FromBits);
-    }
-
-    auto mask = std::any_cast<uint64_t>(it->second.value);
+    // default mask is 'everything included'
+    auto mask = Er::getProperty<Er::ProcessProps::RequiredFields>(args, 0xffffffffffffffff);
     return Er::ProcessProps::PropMask(mask, Er::ProcessProps::PropMask::FromBits);
 }
 
-std::pair<Er::ProcessesGlobal::PropMask, bool> ProcessList::getProcessesGlobalPropMask(const Er::PropertyBag& args)
+Er::ProcessesGlobal::PropMask ProcessList::getProcessesGlobalPropMask(const Er::PropertyBag& args)
 {
-    bool lazy = false;
-    auto it = args.find(Er::ProcessesGlobal::Lazy::Id::value);
-    if (it != args.end())
-    {
-        lazy = std::any_cast<Er::ProcessesGlobal::Lazy::ValueType>(it->second.value);
-    }
-
-    it = args.find(Er::ProcessesGlobal::RequiredFields::Id::value);
-    if (it == args.end())
-    {
-        // default mask - everything included
-        return std::make_pair(Er::ProcessesGlobal::PropMask(0xffffffffffffffff, Er::ProcessesGlobal::PropMask::FromBits), lazy);
-    }
-
-    auto mask = std::any_cast<uint64_t>(it->second.value);
-    return std::make_pair(Er::ProcessesGlobal::PropMask(mask, Er::ProcessesGlobal::PropMask::FromBits), lazy);
+    // default mask is 'everything included'
+    auto mask = Er::getProperty<Er::ProcessesGlobal::RequiredFields>(args, 0xffffffffffffffff);
+    return Er::ProcessesGlobal::PropMask(mask, Er::ProcessesGlobal::PropMask::FromBits);
 }
 
 Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required)
 {
-    auto it = args.find(Er::ProcessProps::Pid::Id::value);
-    if (it == args.end())
+    auto pid = Er::getProperty<Er::ProcessProps::Pid>(args);
+    if (!pid)
         throw Er::Exception(ER_HERE(), "No process.pid field in ProcessDetails request");
 
-    auto pid = std::any_cast<Er::ProcessProps::Pid::ValueType>(it->second.value);
-    if (pid == ProcFs::KernelPid)
+    if (*pid == ProcFs::KernelPid)
         return collectKernelDetails(m_procFs, required);
         
     ProcessDetailsCached cached;
-    return collectProcessDetails(m_procFs, pid, required, Er::PropertyBag(), cached);
+    return collectProcessDetails(m_procFs, *pid, required, Er::PropertyBag(), cached);
 }
 
-Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::ProcessesGlobal::PropMask required, bool lazy)
+Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask required)
 {
     Er::PropertyBag bag;
 
-    std::unique_lock l(m_mutexGlobals);
+    std::unique_lock l(m_globals.mutex);
 
     if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
     {
-        auto count = m_processCount;
-        if (!count || !lazy)
+        auto count = m_globals.processCount;
+        if (!count)
         {
             auto pids = m_procFs.enumeratePids();
             count = pids.size();
-            m_processCount = count;
+            m_globals.processCount = count;
         }
 
         Er::addProperty<Er::ProcessesGlobal::ProcessCount>(bag, count);
@@ -234,13 +214,13 @@ Er::PropertyBag ProcessList::processesGlobal(const Er::PropertyBag& args, Er::Pr
 
     if (required[Er::ProcessesGlobal::PropIndices::STime])
     {
-        auto s = m_stime;
+        auto s = m_globals.stime;
         Er::addProperty<Er::ProcessesGlobal::STime>(bag, s);
     }
 
     if (required[Er::ProcessesGlobal::PropIndices::UTime])
     {
-        auto u = m_utime;
+        auto u = m_globals.utime;
         Er::addProperty<Er::ProcessesGlobal::UTime>(bag, u);
     }
 
@@ -311,10 +291,10 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
     {
         // update stats
         {
-            std::unique_lock l(m_mutexGlobals);
-            m_processCount = stream->pids.size();
-            m_stime = stream->stime;
-            m_utime = stream->utime;
+            std::unique_lock l(m_globals.mutex);
+            m_globals.processCount = stream->pids.size();
+            m_globals.stime = stream->stime;
+            m_globals.utime = stream->utime;
         }
 
         return Er::PropertyBag(); // end of stream
@@ -351,10 +331,10 @@ ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag&
     
     // update stats
     {
-        std::unique_lock l(m_mutexGlobals);
-        m_processCount = diff.processCount;
-        m_stime = stats.sTimeTotal;
-        m_utime = stats.uTimeTotal;
+        std::unique_lock l(m_globals.mutex);
+        m_globals.processCount = diff.processCount;
+        m_globals.stime = stats.sTimeTotal;
+        m_globals.utime = stats.uTimeTotal;
     }
 
     std::unique_lock l(m_mutexSession);
@@ -373,7 +353,12 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
 {
     Er::PropertyBag bag;
 
-    if (stream->stage == ProcessListDiffStream::Stage::Removed)
+    if (stream->stage == ProcessListDiffStream::Stage::Globals)
+    {
+        bag = processesGlobal(Er::ProcessesGlobal::PropMask(0xffffffffffffffff, Er::ProcessesGlobal::PropMask::FromBits));
+        stream->stage = ProcessListDiffStream::Stage::Removed;
+    }
+    else if (stream->stage == ProcessListDiffStream::Stage::Removed)
     {
         // pack next removed process
         if (stream->next >= stream->diff.removed.size())
@@ -387,6 +372,8 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         Er::addProperty<Er::ProcessProps::IsDeleted>(bag, true);
 
         Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next removed PID " << stream->diff.removed[stream->next] << " on stream " << stream->id;
+
+        ++stream->next;
     }
     else if (stream->stage == ProcessListDiffStream::Stage::Modified)
     {
@@ -410,6 +397,8 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
 #if 0
         Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next modified PID " << modified.pid << " on stream " << stream->id;
 #endif
+        
+        ++stream->next;
     }
     else
     {
@@ -433,9 +422,11 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
             Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next new PID " << added->pid << " on stream " << stream->id;
         else
             Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next existing PID " << added->pid << " on stream " << stream->id;
+    
+        
+        ++stream->next;
     }
     
-    ++stream->next;
 
     return bag;
 }

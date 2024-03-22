@@ -173,42 +173,47 @@ void dumpPropertyBag(const Er::PropertyBag& info, Er::Log::ILog* log)
 
 void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
 {
-    auto it = info.find(Er::ProcessProps::Pid::Id::value);
+    auto it = info.find(Er::ProcessesGlobal::Global::Id::value);
     if (it == info.end())
     {
-        log->write(Er::Log::Level::Error, LogNowhere(), "<invalid process>");
-        return;
-    }
+        it = info.find(Er::ProcessProps::Pid::Id::value);
+        if (it == info.end())
+        {
+            log->write(Er::Log::Level::Error, LogNowhere(), "<invalid process>");
+            return;
+        }
 
-    auto pid = std::any_cast<uint64_t>(it->second.value);
+        auto pid = std::any_cast<uint64_t>(it->second.value);
 
-    it = info.find(Er::ProcessProps::IsDeleted::Id::value);
-    if (it != info.end())
-    {
-        log->write(Er::Log::Level::Error, LogNowhere(), "%zu { exited }", pid);
-        return;
-    }
-
-    it = info.find(Er::ProcessProps::Valid::Id::value);
-    if (it == info.end())
-    {
-        log->write(Er::Log::Level::Error, LogNowhere(), "No data for PID %zu", pid);
-        return;
-    }
-
-    auto valid = std::any_cast<bool>(it->second.value);
-    if (!valid)
-    {
-        it = info.find(Er::ProcessProps::Error::Id::value);
+        it = info.find(Er::ProcessProps::IsDeleted::Id::value);
         if (it != info.end())
-            log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu", pid);
-        else
-            log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
+        {
+            log->write(Er::Log::Level::Error, LogNowhere(), "%zu { exited }", pid);
+            return;
+        }
 
-        return;
+        it = info.find(Er::ProcessProps::Valid::Id::value);
+        if (it == info.end())
+        {
+            log->write(Er::Log::Level::Error, LogNowhere(), "No data for PID %zu", pid);
+            return;
+        }
+
+        auto valid = std::any_cast<bool>(it->second.value);
+        if (!valid)
+        {
+            it = info.find(Er::ProcessProps::Error::Id::value);
+            if (it != info.end())
+                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu", pid);
+            else
+                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
+
+            return;
+        }
+        
+        log->write(Er::Log::Level::Info, LogNowhere(), "%zu {", pid);
     }
-    
-    log->write(Er::Log::Level::Info, LogNowhere(), "%zu {", pid);
+
     for (auto it = info.begin(); it != info.end(); ++it)
     {
         if (
@@ -230,7 +235,8 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
             }
         }
     }
-    log->write(Er::Log::Level::Info, LogNowhere(), "}", pid);
+
+    log->write(Er::Log::Level::Info, LogNowhere(), "}");
 }
 
 void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
@@ -329,12 +335,6 @@ void dumpProcessesDiff(Er::Client::IClient* client, Er::Log::ILog* log, Er::Clie
                 dumpProcess(process, log);
             }
 
-            // globals
-            {
-                Er::PropertyBag req;
-                auto globals = client->request(Er::ProcessRequests::ProcessesGlobal, req);
-                dumpPropertyBag(globals, log);
-            }
         }
     );
 }
