@@ -45,6 +45,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/stringliteral.hxx
     ../../include/erebus/syncstream.hxx
     ../../include/erebus/system/process.hxx
+    ../../include/erebus/system/thread.hxx
     ../../include/erebus/system/time.hxx
     ../../include/erebus/system/user.hxx
     ../../include/erebus/trackable.hxx
@@ -65,6 +66,7 @@ add_library(${EREBUS_LIB} SHARED
     log.cxx
     stacktrace.cxx
     system/process.cxx
+    system/thread.cxx
     system/time.cxx
     util/exceptionutil.cxx
     util/file.cxx
