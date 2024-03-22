@@ -29,7 +29,7 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
     {
         Er::addProperty<Er::ProcessProps::Valid>(bag, true);
         Er::addProperty<Er::ProcessProps::Pid>(bag, stat.pid);
-        Er::addProperty<Er::ProcessProps::Pid>(bag, stat.ppid);
+        Er::addProperty<Er::ProcessProps::PPid>(bag, stat.ppid);
                 
         if (required[Er::ProcessProps::PropIndices::PGrp])
             Er::addProperty<Er::ProcessProps::PGrp>(bag, stat.pgrp);

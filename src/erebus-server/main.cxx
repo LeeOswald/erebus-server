@@ -157,8 +157,6 @@ int main(int argc, char* argv[], char* env[])
     ::signal(SIGTERM, signalHandler);
 #endif
 
-    Er::System::CurrentThread::setName("Main");
-    
     // setup std::terminate() handler
     std::set_terminate(terminateHandler);
 
