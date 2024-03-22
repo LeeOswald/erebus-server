@@ -29,6 +29,10 @@ else()
     endif()
 endif()
 
+if(NOT MSVC)
+    add_compile_options(-fconcepts-diagnostics-depth=2)
+endif() 
+
 # -fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # -fvisibility=hidden

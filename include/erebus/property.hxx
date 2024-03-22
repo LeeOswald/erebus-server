@@ -41,6 +41,22 @@ concept SupportedPropertyType =
     std::is_same_v<T, Bytes>;
 
 
+template <typename T>
+concept MinimalProperty = 
+    requires
+    {
+        typename T::ValueType;
+        typename T::Comparator;
+        typename T::Formatter;
+
+        requires std::same_as<std::decay_t<typename T::Id::value_type>, PropId>;
+        { T::type() } -> std::same_as<const std::type_info&>;
+        { T::id() } -> std::same_as<PropId>;
+        { T::idstr() } -> std::same_as<const char*>;
+        { T::name() } -> std::same_as<const char*>;
+    };
+
+
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
 class PropertyInfo
 {
@@ -279,24 +295,41 @@ inline bool propertyPresent(const PropertyBag& bag, PropId id) noexcept
     return (it != bag.end());
 }
 
-template <typename T>
-std::optional<T> getProperty(const PropertyBag& bag, PropId id)
+
+template <MinimalProperty PropT>
+std::optional<typename PropT::ValueType> getProperty(const PropertyBag& bag)
 {
-    auto it = bag.find(id);
+    using Id = typename PropT::Id;
+    auto it = bag.find(Id::value);
     if (it == bag.end())
         return std::nullopt;
 
-    return std::make_optional<T>(std::any_cast<T>(it->second.value));
+    return std::make_optional<typename PropT::ValueType>(std::any_cast<typename PropT::ValueType>(it->second.value));
+} 
+
+
+template <MinimalProperty PropT>
+typename PropT::ValueType getProperty(const PropertyBag& bag, typename PropT::ValueType&& defaultValue)
+{
+    using Id = typename PropT::Id;
+    auto it = bag.find(Id::value);
+    if (it == bag.end())
+        return typename PropT::ValueType(std::forward<typename PropT::ValueType>(defaultValue));
+
+    return std::any_cast<typename PropT::ValueType>(it->second.value);
 }
 
-template <typename T>
-T getProperty(const PropertyBag& bag, PropId id, T&& defaultValue)
-{
-    auto it = bag.find(id);
-    if (it == bag.end())
-        return T(std::forward<T>(defaultValue));
 
-    return std::any_cast<T>(it->second.value);
+template <MinimalProperty PropT>
+void addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
+{
+    bag.insert({ PropT::id(), Er::Property(PropT::id(), v) });
+}
+
+template <MinimalProperty PropT>
+void addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
+{
+    bag.insert({ PropT::id(), Er::Property(PropT::id(), std::move(v)) });
 }
 
 

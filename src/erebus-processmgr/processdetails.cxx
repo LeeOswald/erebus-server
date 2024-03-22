@@ -109,11 +109,11 @@ Er::PropertyBag ProcessDetails::next(StreamId id, std::optional<SessionId> sessi
 
 Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
 {
-    auto pid = Er::getProperty<Er::ProcessesGlobal::Pid::ValueType>(args, Er::ProcessesGlobal::Pid::Id::value);
+    auto pid = Er::getProperty<Er::ProcessesGlobal::Pid>(args);
     if (!pid)
         throw Er::Exception(ER_HERE(), "Process ID expected");
 
-    auto signame = Er::getProperty<Er::ProcessesGlobal::Signal::ValueType>(args, Er::ProcessesGlobal::Signal::Id::value);
+    auto signame = Er::getProperty<Er::ProcessesGlobal::Signal>(args);
     if (!signame)
         throw Er::Exception(ER_HERE(), "Signal name expected");
 
@@ -125,7 +125,7 @@ Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
     auto r = ::kill(*pid, signo);
 
     Er::PropertyBag result;
-    result.insert({ Er::ProcessesGlobal::PosixResult::Id::value, Er::Property(Er::ProcessesGlobal::PosixResult::Id::value, Er::ProcessesGlobal::PosixResult::ValueType(r)) });
+    Er::addProperty<Er::ProcessesGlobal::PosixResult>(result, r);
 
     if (r < 0)
     {
@@ -134,7 +134,7 @@ Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
         LogWarning(m_log, LogInstance("ProcessDetails"), "kill(%zu, %d) -> %d [%s]", *pid, signo, r, decoded.c_str());
         
         if (!decoded.empty())
-            result.insert({ Er::ProcessesGlobal::ErrorText::Id::value, Er::Property(Er::ProcessesGlobal::ErrorText::Id::value, std::move(decoded)) });
+            Er::addProperty<Er::ProcessesGlobal::ErrorText>(result, std::move(decoded));
     }
     else
     {

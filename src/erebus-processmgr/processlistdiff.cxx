@@ -21,39 +21,39 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
 
     if (!stat.valid)
     {
-        bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, stat.pid) }); 
-        bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, false) });
-        bag.insert({ Er::ProcessProps::Error::Id::value, Er::Property(Er::ProcessProps::Error::Id::value, std::move(stat.error)) });
+        Er::addProperty<Er::ProcessProps::Pid>(bag, stat.pid);
+        Er::addProperty<Er::ProcessProps::Valid>(bag, false);
+        Er::addProperty<Er::ProcessProps::Error>(bag, std::move(stat.error));
     }
     else
     {
-        bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, true) });
-        bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, stat.pid) });
-        bag.insert({ Er::ProcessProps::PPid::Id::value, Er::Property(Er::ProcessProps::PPid::Id::value, stat.ppid) });
-        
+        Er::addProperty<Er::ProcessProps::Valid>(bag, true);
+        Er::addProperty<Er::ProcessProps::Pid>(bag, stat.pid);
+        Er::addProperty<Er::ProcessProps::Pid>(bag, stat.ppid);
+                
         if (required[Er::ProcessProps::PropIndices::PGrp])
-            bag.insert({ Er::ProcessProps::PGrp::Id::value, Er::Property(Er::ProcessProps::PGrp::Id::value, stat.pgrp) });
+            Er::addProperty<Er::ProcessProps::PGrp>(bag, stat.pgrp);
 
         if (required[Er::ProcessProps::PropIndices::Tpgid])
             if (stat.tpgid != std::numeric_limits<uint64_t>::max())
-                bag.insert({ Er::ProcessProps::Tpgid::Id::value, Er::Property(Er::ProcessProps::Tpgid::Id::value, stat.tpgid) });
+                Er::addProperty<Er::ProcessProps::Tpgid>(bag, stat.tpgid);
         
         if (required[Er::ProcessProps::PropIndices::Session])
-            bag.insert({ Er::ProcessProps::Session::Id::value, Er::Property(Er::ProcessProps::Session::Id::value, stat.session) });
+            Er::addProperty<Er::ProcessProps::Session>(bag, stat.session);
         
         if (required[Er::ProcessProps::PropIndices::Ruid])
-            bag.insert({ Er::ProcessProps::Ruid::Id::value, Er::Property(Er::ProcessProps::Ruid::Id::value, stat.ruid) });
+            Er::addProperty<Er::ProcessProps::Ruid>(bag, stat.ruid);
         
         if (required[Er::ProcessProps::PropIndices::StartTime])
-            bag.insert({ Er::ProcessProps::StartTime::Id::value, Er::Property(Er::ProcessProps::StartTime::Id::value, stat.startTime) });
+            Er::addProperty<Er::ProcessProps::StartTime>(bag, stat.startTime);
 
         if (required[Er::ProcessProps::PropIndices::Tty])
-            bag.insert({ Er::ProcessProps::Tty::Id::value, Er::Property(Er::ProcessProps::Tty::Id::value, stat.tty_nr) });
+            Er::addProperty<Er::ProcessProps::Tty>(bag, stat.tty_nr);
         
         if (required[Er::ProcessProps::PropIndices::State])
         {
             std::string state({ stat.state });
-            bag.insert({ Er::ProcessProps::State::Id::value, Er::Property(Er::ProcessProps::State::Id::value, std::move(state)) });
+            Er::addProperty<Er::ProcessProps::State>(bag, std::move(state));
         }
 
         if (required[Er::ProcessProps::PropIndices::Comm])
@@ -62,7 +62,7 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
             if (!comm.empty())
             {
                 cached.comm = comm;
-                bag.insert({ Er::ProcessProps::Comm::Id::value, Er::Property(Er::ProcessProps::Comm::Id::value, std::move(comm)) });
+                Er::addProperty<Er::ProcessProps::Comm>(bag, std::move(comm));
             }
         }
 
@@ -70,7 +70,7 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
         {
             auto cmdLine = source.readCmdLine(pid);
             if (!cmdLine.empty())
-                bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });
+                Er::addProperty<Er::ProcessProps::CmdLine>(bag, std::move(cmdLine));
         }
 
         if (required[Er::ProcessProps::PropIndices::Exe])
@@ -79,7 +79,7 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
             if (!exe.empty())
             {
                 cached.exe = exe;
-                bag.insert({ Er::ProcessProps::Exe::Id::value, Er::Property(Er::ProcessProps::Exe::Id::value, std::move(exe)) });
+                Er::addProperty<Er::ProcessProps::Exe>(bag, std::move(exe));
             }
         }
 
@@ -87,24 +87,24 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
         {
             auto user = Er::System::User::lookup(stat.ruid);
             if (user)
-                bag.insert({ Er::ProcessProps::User::Id::value, Er::Property(Er::ProcessProps::User::Id::value, std::move(user->name)) });
+                Er::addProperty<Er::ProcessProps::User>(bag, std::move(user->name));
         }
 
         if (required[Er::ProcessProps::PropIndices::ThreadCount])
         {
-            bag.insert({ Er::ProcessProps::ThreadCount::Id::value, Er::Property(Er::ProcessProps::ThreadCount::Id::value, stat.num_threads)});
+            Er::addProperty<Er::ProcessProps::ThreadCount>(bag, stat.num_threads);
         }
 
         if (required[Er::ProcessProps::PropIndices::UTime])
         {
-            bag.insert({ Er::ProcessProps::UTime::Id::value, Er::Property(Er::ProcessProps::UTime::Id::value, stat.uTime)});
+            Er::addProperty<Er::ProcessProps::UTime>(bag, stat.uTime);
         }
 
         cached.utime = stat.uTime;
 
         if (required[Er::ProcessProps::PropIndices::STime])
         {
-            bag.insert({ Er::ProcessProps::STime::Id::value, Er::Property(Er::ProcessProps::STime::Id::value, stat.sTime)});
+            Er::addProperty<Er::ProcessProps::STime>(bag, stat.sTime);
         }
 
         cached.stime = stat.sTime;
@@ -117,20 +117,20 @@ Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProp
 {
     Er::PropertyBag bag;
 
-    bag.insert({ Er::ProcessProps::Valid::Id::value, Er::Property(Er::ProcessProps::Valid::Id::value, true) });
-    bag.insert({ Er::ProcessProps::Pid::Id::value, Er::Property(Er::ProcessProps::Pid::Id::value, ProcFs::KernelPid) });
+    Er::addProperty<Er::ProcessProps::Valid>(bag, true);
+    Er::addProperty<Er::ProcessProps::Pid>(bag, ProcFs::KernelPid);
     
     if (required[Er::ProcessProps::PropIndices::StartTime])
     {
         auto bootTime = source.bootTime();
-        bag.insert({ Er::ProcessProps::StartTime::Id::value, Er::Property(Er::ProcessProps::StartTime::Id::value, bootTime) });
+        Er::addProperty<Er::ProcessProps::StartTime>(bag, bootTime);
     }
 
     if (required[Er::ProcessProps::PropIndices::CmdLine])
     {
         auto cmdLine = source.readCmdLine(ProcFs::KernelPid);
         if (!cmdLine.empty())
-            bag.insert({ Er::ProcessProps::CmdLine::Id::value, Er::Property(Er::ProcessProps::CmdLine::Id::value, std::move(cmdLine)) });
+            Er::addProperty<Er::ProcessProps::CmdLine>(bag, std::move(cmdLine));
     }
 
     return bag;
@@ -145,13 +145,13 @@ Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint6
     // almost all props get changed when exec() is called
     // compare /proc/[pid]/exe contents to detect that exec() has occurred 
     
-    auto exeOld = Er::getProperty<Er::ProcessProps::Exe::ValueType>(existing, Er::ProcessProps::Exe::Id::value, std::string());
+    auto exeOld = Er::getProperty<Er::ProcessProps::Exe>(existing, std::string());
     auto exeCurrent = source.readExePath(pid);
     auto exeChanged = (exeCurrent != exeOld);
     if (exeChanged)
     {
         // since we already have an exe path, no need to look for it again
-        current.insert({ Er::ProcessProps::Exe::Id::value, Er::Property(Er::ProcessProps::Exe::Id::value, std::move(exeCurrent)) });
+        Er::addProperty<Er::ProcessProps::Exe>(current, std::move(exeCurrent));
         filtered.reset(Er::ProcessProps::PropIndices::Exe);
     }
 
@@ -178,7 +178,7 @@ void addProcessIcon(const std::string& comm, const std::string& exe, IconManager
 {
     auto ico = cache->lookup(comm, exe, Er::Private::IconSize::Small);
     if (ico && ico->valid)
-        bag.insert({ Er::ProcessProps::Icon::Id::value, Er::Property(Er::ProcessProps::Icon::Id::value, ico->data) });
+        Er::addProperty<Er::ProcessProps::Icon>(bag, ico->data);
 }
 
 ProcessDataDiff diffProcessData(uint64_t pid, const Er::PropertyBag& prev, const Er::PropertyBag& curr)
