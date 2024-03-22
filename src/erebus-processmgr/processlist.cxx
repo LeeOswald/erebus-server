@@ -224,6 +224,8 @@ Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask requi
         Er::addProperty<Er::ProcessesGlobal::UTime>(bag, u);
     }
 
+    Er::addProperty<Er::ProcessesGlobal::Global>(bag, true);
+
     return bag;
 }
 
