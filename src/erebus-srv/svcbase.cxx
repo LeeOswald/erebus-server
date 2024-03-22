@@ -1,5 +1,6 @@
 #include "svcbase.hxx"
 
+#include <erebus/system/thread.hxx>
 #include <erebus/util/format.hxx>
 
 namespace Er
@@ -87,6 +88,8 @@ void ServiceBase::start()
 
 void ServiceBase::handleRpcs()
 {
+    Er::System::CurrentThread::setName("RPCHandler");
+
     Er::Log::Debug(m_params.log, LogComponent("ServiceBase")) << "RPC handler thread started";
 
     createRpcs();
@@ -121,6 +124,7 @@ void ServiceBase::handleRpcs()
 
 void ServiceBase::processRpcs()
 {
+    Er::System::CurrentThread::setName("RPCProcessor");
     Er::Log::Debug(m_params.log, LogComponent("ServiceBase")) << "RPC processor thread started";
 
     while (!m_stop)

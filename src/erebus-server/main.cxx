@@ -5,6 +5,7 @@
 #include <erebus/condition.hxx>
 #include <erebus/knownprops.hxx>
 #include <erebus/system/process.hxx>
+#include <erebus/system/thread.hxx>
 #include <erebus/system/user.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
@@ -156,6 +157,8 @@ int main(int argc, char* argv[], char* env[])
     ::signal(SIGTERM, signalHandler);
 #endif
 
+    Er::System::CurrentThread::setName("Main");
+    
     // setup std::terminate() handler
     std::set_terminate(terminateHandler);
 

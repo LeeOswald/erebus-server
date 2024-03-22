@@ -1,6 +1,6 @@
 #include <erebus/log.hxx>
 #include <erebus/system/process.hxx>
-
+#include <erebus/system/thread.hxx>
 
 namespace Er
 {
@@ -58,6 +58,8 @@ void LogBase::run() noexcept
 {
     try
     {
+        System::CurrentThread::setName("Logger");
+        
         while (!m_stop)
         {
             std::unique_lock l(m_mutex);
@@ -155,11 +157,7 @@ bool LogBase::write(Level l, const Location& location, std::string_view s) noexc
         return false;
 
     auto pid = System::CurrentProcess::id();
-#if ER_POSIX
-    auto tid = static_cast<uintptr_t>(::gettid());
-#elif ER_WINDOWS
-    auto tid = static_cast<uintptr_t>(::GetCurrentThreadId());
-#endif
+    auto tid = System::CurrentThread::id();
 
     try
     {

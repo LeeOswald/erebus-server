@@ -1,3 +1,4 @@
+#include <erebus/system/thread.hxx>
 #include <erebus/util/signalhandler.hxx>
 
 
@@ -43,6 +44,8 @@ int SignalHandler::wait() const
 
 int SignalHandler::waitHandler(std::function<bool(int)> handler) const
 {
+    Er::System::CurrentThread::setName("SignalHandler");
+
     while (true)
     {
         int signum = wait();
