@@ -181,19 +181,21 @@ void addProcessIcon(const std::string& comm, const std::string& exe, IconManager
         Er::addProperty<Er::ProcessProps::Icon>(bag, ico->data);
 }
 
-ProcessDataDiff diffProcessData(uint64_t pid, const Er::PropertyBag& prev, const Er::PropertyBag& curr)
+ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, Er::PropertyBag&& newProps, Er::PropertyBag& existing)
 {
     ProcessDataDiff diff(pid);
-    diff.properties.reserve(curr.size()); // do not track properties that have wanished
+    diff.properties.reserve(existing.size()); // do not track properties that have wanished
 
-    for (auto& prop: curr)
+    for (auto& prop: newProps)
     {
         auto id = prop.first;
-        auto it = prev.find(id);
-        if (it == prev.end())
+        auto it = existing.find(id);
+        if (it == existing.end())
         {
             // new property appeared
             diff.properties.push_back(prop.second);
+
+            existing.insert({prop.first, std::move(prop.second)});
         }
         else
         {
@@ -204,7 +206,11 @@ ProcessDataDiff diffProcessData(uint64_t pid, const Er::PropertyBag& prev, const
 
             if (!pi->equal(it->second, prop.second))
             {
+                // update changed props
                 diff.properties.push_back(prop.second);
+
+                auto& ref = existing.at(prop.first);
+                ref = std::move(prop.second);
             }
         }
     }
@@ -212,16 +218,15 @@ ProcessDataDiff diffProcessData(uint64_t pid, const Er::PropertyBag& prev, const
     return diff;
 }
 
-static void updateDiffAndCollectionForProcess(bool firstRun, ProcessCollectionDiff& diff, ProcessCollection& collection, std::chrono::steady_clock::time_point now, uint64_t pid, Er::PropertyBag&& process)
+static void updateDiffAndCollectionForProcess(ProcessCollection::Container::iterator which, bool firstRun, ProcessCollectionDiff& diff, ProcessCollection& collection, std::chrono::steady_clock::time_point now, uint64_t pid, Er::PropertyBag&& newProps)
 {
-    Er::cachePropertyInfo(process);
+    Er::cachePropertyInfo(newProps);
 
     // is this a previously existed process?
-    auto it = collection.processes.find(pid);
-    if (it == collection.processes.end())
+    if (which == collection.processes.end())
     {
         // new one
-        auto data = std::make_unique<ProcessData>(pid, !firstRun, now, std::move(process));
+        auto data = std::make_unique<ProcessData>(pid, !firstRun, now, std::move(newProps));
         auto item = collection.processes.insert({ pid, std::move(data) });
         assert(item.second); // really a new item
         diff.added.push_back(item.first->second.get());
@@ -229,19 +234,13 @@ static void updateDiffAndCollectionForProcess(bool firstRun, ProcessCollectionDi
     else
     {
         // modified one
-        auto singleDiff = diffProcessData(pid, process, it->second->properties);
-        if (singleDiff.properties.empty())
+        auto singleDiff = diffAndUpdateProcessProps(pid, std::move(newProps), which->second->properties);
+        
+        which->second->isNew = false;
+        which->second->timestamp = now;
+        
+        if (!singleDiff.properties.empty())
         {
-            // unmodified, just update the timestamp
-            it->second->isNew = false;
-            it->second->timestamp = now;
-        }
-        else
-        {
-            // replace with updated data
-            auto data = std::make_unique<ProcessData>(pid, !firstRun, now, std::move(process));
-            it->second.swap(data);
-
             diff.modified.push_back(std::move(singleDiff));
         }
     }
@@ -277,7 +276,7 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconMa
                     addProcessIcon(cached.comm, cached.exe, iconCache, process);
             }
 
-            updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
+            updateDiffAndCollectionForProcess(existing, firstRun, diff, collection, now, pid, std::move(process));
         }
         else
         {
@@ -287,7 +286,7 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconMa
             if (iconCache)
                 addProcessIcon(cached.comm, cached.exe, iconCache, process);
 
-            updateDiffAndCollectionForProcess(firstRun, diff, collection, now, pid, std::move(process));
+            updateDiffAndCollectionForProcess(collection.processes.end(), firstRun, diff, collection, now, pid, std::move(process));
         }
 
         stats.uTimeTotal += cached.utime;

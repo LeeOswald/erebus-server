@@ -35,7 +35,8 @@ struct ProcessData
 struct ProcessCollection
     : public Er::NonCopyable
 {
-    std::unordered_map<uint64_t, std::unique_ptr<ProcessData>> processes;
+    using Container = std::unordered_map<uint64_t, std::unique_ptr<ProcessData>>;
+    Container processes;
 };
 
 struct ProcessDataDiff
@@ -72,7 +73,7 @@ Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint6
 class IconManager;
 void addProcessIcon(const std::string& comm, const std::string& exe, IconManager* iconCache, Er::PropertyBag& bag);
 
-ProcessDataDiff diffProcessData(uint64_t pid, const Er::PropertyBag& prev, const Er::PropertyBag& curr);
+ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, const Er::PropertyBag& prev, Er::PropertyBag& curr);
 
 struct ProcessStatistics
 {
