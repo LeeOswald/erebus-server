@@ -213,12 +213,17 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
         
         log->write(Er::Log::Level::Info, LogNowhere(), "%zu {", pid);
     }
+    else
+    {
+        log->write(Er::Log::Level::Info, LogNowhere(), "Global {");
+    }
 
     for (auto it = info.begin(); it != info.end(); ++it)
     {
         if (
             (it->second.id != Er::ProcessProps::Valid::Id::value) &&
-            (it->second.id != Er::ProcessProps::Error::Id::value)
+            (it->second.id != Er::ProcessProps::Error::Id::value) &&
+            (it->second.id != Er::ProcessesGlobal::Global::Id::value)
             )
         {
             auto propInfo = Er::lookupProperty(it->second.id).get();
