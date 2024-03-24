@@ -212,7 +212,7 @@ using RealTime = PropertyValue<double, ER_PROPID("processes.global.real_time"), 
 using IdleTime = PropertyValue<double, ER_PROPID("processes.global.idle_time"), "CPU Time (Idle)", PropertyComparator<double>, CpuTimeFormatter>;
 using UserTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
 using SystemTime = PropertyValue<double, ER_PROPID("processes.global.system_time"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
-using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (Virtual)", PropertyComparator<double>, CpuTimeFormatter>;
+using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.virtual_time"), "CPU Time (Virtual)", PropertyComparator<double>, CpuTimeFormatter>;
 using TotalTime = PropertyValue<double, ER_PROPID("processes.global.total_time"), "Total CPU Time", PropertyComparator<double>, CpuTimeFormatter>;
 
 constexpr PropId IndexToProp[] =
