@@ -60,13 +60,13 @@ struct MemUnitFormatter
     { 
         auto val = std::any_cast<uint64_t>(v.value);
         if (val < 10ULL * 1024)
-            s << val << "B";
+            s << val << " B";
         else if (val < 10ULL * 1024 * 1024)
-            s << (val / 1024) << "kB";
+            s << (val / 1024) << " kB";
         else if (val < 10ULL * 1024 * 1024 * 1024)
-            s << (val / (1024 * 1024)) << "MB";
+            s << (val / (1024 * 1024)) << " MB";
         else
-            s << (val / (1024 * 1024 * 1024)) << "GB";
+            s << (val / (1024 * 1024 * 1024)) << " GB";
     }
 };
 
