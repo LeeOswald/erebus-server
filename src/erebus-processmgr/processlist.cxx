@@ -215,7 +215,7 @@ Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask requi
     auto userAll = g.cpuTimes.all.user + g.cpuTimes.all.user_nice;
     auto systemAll = g.cpuTimes.all.system + g.cpuTimes.all.irq + g.cpuTimes.all.softirq;
     auto virtAll = g.cpuTimes.all.guest + g.cpuTimes.all.guest_nice;
-    auto totalAll = userAll + systemAll + idleAll + g.cpuTimes.all.steal + virtAll;
+    auto totalAll = userAll + systemAll + g.cpuTimes.all.steal + virtAll;
 
     auto cpuCount = g.cpuTimes.cores.size();
     if (!cpuCount) [[unlikely]]
