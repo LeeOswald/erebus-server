@@ -112,7 +112,7 @@ private:
             }
         }
 
-        a.iconCacheSize = Er::clamp(a.iconCacheSize, size_t(1024), size_t(65536));
+        a.iconCacheSize = std::clamp(a.iconCacheSize, size_t(1024), size_t(65536));
         return a;
     }
 

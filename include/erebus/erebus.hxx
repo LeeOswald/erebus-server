@@ -130,16 +130,10 @@ private:
 };
 
 
-template <std::three_way_comparable T>
-constexpr T clamp(T val, T lo, T hi) noexcept
+template <typename T>
+auto saturatingSub(T a, T b) noexcept 
 {
-    if (val < lo) [[unlikely]]
-        return lo;
-
-    if (val > hi) [[unlikely]]
-        return hi;
-    
-    return val;
+   return a > b ? a - b : 0;
 }
 
 } // namespace Er {}

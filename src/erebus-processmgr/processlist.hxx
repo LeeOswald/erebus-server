@@ -39,6 +39,14 @@ public:
     Er::PropertyBag next(StreamId id, std::optional<SessionId> sessionId) override;
 
 private:
+    struct Globals
+    {
+        uint64_t processCount = 0;
+        ProcFs::CpuTimesAll cpuTimes;
+
+        Globals() noexcept = default;
+    };
+
     struct Session
         : public Er::NonCopyable
     {
@@ -82,8 +90,6 @@ private:
         Er::ProcessProps::PropMask required;
         std::vector<uint64_t> pids;
         size_t next = 0;
-        double utime = 0.0;
-        double stime = 0.0;
     };
 
     struct ProcessListDiffStream final
@@ -111,7 +117,7 @@ private:
     Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required);
 
     static Er::ProcessesGlobal::PropMask getProcessesGlobalPropMask(const Er::PropertyBag& args);
-    Er::PropertyBag processesGlobal(Er::ProcessesGlobal::PropMask required);
+    Er::PropertyBag processesGlobal(Er::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount);
 
     Session* getSession(std::optional<SessionId> id);
     void dropStaleSessions() noexcept;
@@ -130,16 +136,7 @@ private:
     Er::Log::ILog* const m_log;
     IconManager* m_iconManager;
     Er::ProcFs::ProcFs m_procFs;
-
-    struct
-    {
-        std::mutex mutex;
-        std::size_t processCount = 0;
-        double stime = 0.0;
-        double utime = 0.0;
-
-    } m_globals;
-    
+   
     std::shared_mutex m_mutexSession;
     SessionId m_nextSessionId = 0;
     StreamId m_nextStreamId = 0;

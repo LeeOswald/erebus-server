@@ -106,7 +106,7 @@ Er::PropertyBag ProcessList::request(std::string_view request, const Er::Propert
     else if (request == Er::ProcessRequests::ProcessesGlobal)
     {
         auto required = getProcessesGlobalPropMask(args);
-        return processesGlobal(required);
+        return processesGlobal(required, std::nullopt);
     }
 
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
@@ -133,8 +133,9 @@ void ProcessList::endStream(StreamId id, std::optional<SessionId> sessionId)
     m_streams.erase(it);
 
     dropStaleStreams();
-
+#if 0
     LogDebug(m_log, LogInstance("ProcessList"), "Ended stream %d", id);    
+#endif
 }
 
 Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionId)
@@ -187,41 +188,69 @@ Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::Pro
     return collectProcessDetails(m_procFs, *pid, required, Er::PropertyBag(), cached);
 }
 
-Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask required)
+Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount)
 {
     Er::PropertyBag bag;
+    Globals g;
+    if (!processCount)
+    {
+        if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
+        {
+            auto pids = m_procFs.enumeratePids();
+            g.processCount = pids.size();
+        }
+    }
+    else
+    {
+        g.processCount = *processCount;
+    }
 
-    std::unique_lock l(m_globals.mutex);
+    g.cpuTimes = m_procFs.readCpuTimes();
+
+    // guest time is already accounted in user time
+    g.cpuTimes.all.user -= g.cpuTimes.all.guest;
+    g.cpuTimes.all.user_nice -= g.cpuTimes.all.guest_nice;
+
+    auto idleAll = g.cpuTimes.all.idle + g.cpuTimes.all.iowait;
+    auto userAll = g.cpuTimes.all.user + g.cpuTimes.all.user_nice;
+    auto systemAll = g.cpuTimes.all.system + g.cpuTimes.all.irq + g.cpuTimes.all.softirq;
+    auto virtAll = g.cpuTimes.all.guest + g.cpuTimes.all.guest_nice;
+    auto totalAll = userAll + systemAll + idleAll + g.cpuTimes.all.steal + virtAll;
 
     if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
     {
-        auto count = m_globals.processCount;
-        if (!count)
-        {
-            auto pids = m_procFs.enumeratePids();
-            count = pids.size();
-            m_globals.processCount = count;
-        }
-
-        Er::addProperty<Er::ProcessesGlobal::ProcessCount>(bag, count);
+        Er::addProperty<Er::ProcessesGlobal::ProcessCount>(bag, g.processCount);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::RTime])
+    if (required[Er::ProcessesGlobal::PropIndices::RealTime])
     {
         auto r = rtime();
-        Er::addProperty<Er::ProcessesGlobal::RTime>(bag, r);
+        Er::addProperty<Er::ProcessesGlobal::RealTime>(bag, r);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::STime])
+    if (required[Er::ProcessesGlobal::PropIndices::IdleTime])
     {
-        auto s = m_globals.stime;
-        Er::addProperty<Er::ProcessesGlobal::STime>(bag, s);
+        Er::addProperty<Er::ProcessesGlobal::IdleTime>(bag, idleAll);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::UTime])
+    if (required[Er::ProcessesGlobal::PropIndices::UserTime])
     {
-        auto u = m_globals.utime;
-        Er::addProperty<Er::ProcessesGlobal::UTime>(bag, u);
+        Er::addProperty<Er::ProcessesGlobal::UserTime>(bag, userAll);
+    }
+
+    if (required[Er::ProcessesGlobal::PropIndices::SystemTime])
+    {
+        Er::addProperty<Er::ProcessesGlobal::SystemTime>(bag, systemAll);
+    }
+
+    if (required[Er::ProcessesGlobal::PropIndices::VirtualTime])
+    {
+        Er::addProperty<Er::ProcessesGlobal::VirtualTime>(bag, virtAll);
+    }
+
+    if (required[Er::ProcessesGlobal::PropIndices::TotalTime])
+    {
+        Er::addProperty<Er::ProcessesGlobal::TotalTime>(bag, totalAll);
     }
 
     Er::addProperty<Er::ProcessesGlobal::Global>(bag, true);
@@ -281,9 +310,9 @@ ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& arg
     auto streamId = m_nextStreamId++;
     auto stream = std::make_unique<ProcessListStream>(streamId, required, std::move(pids));
     m_streams.insert({ streamId, std::move(stream) });
-
+#if 0
     LogDebug(m_log, LogInstance("ProcessList"), "Started process stream %d", streamId);
-
+#endif
     return streamId;
 }
 
@@ -291,23 +320,11 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
 {
     if (stream->next >= stream->pids.size())
     {
-        // update stats
-        {
-            std::unique_lock l(m_globals.mutex);
-            m_globals.processCount = stream->pids.size();
-            m_globals.stime = stream->stime;
-            m_globals.utime = stream->utime;
-        }
-
         return Er::PropertyBag(); // end of stream
     }
 
     ProcessDetailsCached cached;
     auto bag = collectProcessDetails(m_procFs, stream->pids[stream->next], stream->required, Er::PropertyBag(), cached);
-
-    // update total CPU time
-    stream->stime += cached.stime;
-    stream->utime += cached.utime;
 
     if (stream->required[Er::ProcessProps::PropIndices::Icon])
     {
@@ -316,9 +333,9 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
             addProcessIcon(cached.comm, cached.exe, m_iconManager, bag);
         }
     }
-
+#if 0
     Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
-
+#endif
     ++stream->next;
 
     return bag;
@@ -331,14 +348,6 @@ ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag&
     ProcessStatistics stats;
     auto diff = updateProcessCollection(m_procFs, m_iconManager, required, session->processes, stats);
     
-    // update stats
-    {
-        std::unique_lock l(m_globals.mutex);
-        m_globals.processCount = diff.processCount;
-        m_globals.stime = stats.sTimeTotal;
-        m_globals.utime = stats.uTimeTotal;
-    }
-
     std::unique_lock l(m_mutexSession);
 
     auto streamId = m_nextStreamId++;
@@ -346,7 +355,9 @@ ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag&
     auto stream = std::make_unique<ProcessListDiffStream>(streamId, required, std::move(diff));
     m_streams.insert({ streamId, std::move(stream) });
 
+#if 0
     LogDebug(m_log, LogInstance("ProcessList"), "Started process diff stream %d", streamId);
+#endif
 
     return streamId;
 }
@@ -357,7 +368,7 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
 
     if (stream->stage == ProcessListDiffStream::Stage::Globals)
     {
-        bag = processesGlobal(Er::ProcessesGlobal::PropMask(0xffffffffffffffff, Er::ProcessesGlobal::PropMask::FromBits));
+        bag = processesGlobal(Er::ProcessesGlobal::PropMask(0xffffffffffffffff, Er::ProcessesGlobal::PropMask::FromBits), stream->diff.processCount);
         stream->stage = ProcessListDiffStream::Stage::Removed;
     }
     else if (stream->stage == ProcessListDiffStream::Stage::Removed)
@@ -372,9 +383,9 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
 
         Er::addProperty<Er::ProcessProps::Pid>(bag, stream->diff.removed[stream->next]);
         Er::addProperty<Er::ProcessProps::IsDeleted>(bag, true);
-
+#if 0
         Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next removed PID " << stream->diff.removed[stream->next] << " on stream " << stream->id;
-
+#endif
         ++stream->next;
     }
     else if (stream->stage == ProcessListDiffStream::Stage::Modified)
@@ -420,11 +431,12 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         assert(bag.find(Er::ProcessProps::Pid::Id::value) != bag.end());
         assert(bag.find(Er::ProcessProps::Valid::Id::value) != bag.end());
 
+#if 0
         if (added->isNew)
             Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next new PID " << added->pid << " on stream " << stream->id;
         else
             Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next existing PID " << added->pid << " on stream " << stream->id;
-    
+#endif
         
         ++stream->next;
     }

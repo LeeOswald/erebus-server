@@ -4,12 +4,14 @@
 #include <erebus/util/autoptr.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/posixerror.hxx>
+#include <erebus/util/stringutil.hxx>
 
 
 #include <fstream>
 
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/sysinfo.h>
 
 
 namespace Er
@@ -37,7 +39,11 @@ using DirHolder = Util::AutoPtr<DIR, DirCloser>;
 ProcFs::ProcFs(Er::Log::ILog* log)
     : m_log(log)
     , m_clkTck(::sysconf(_SC_CLK_TCK))
+    , m_cpusMax(::get_nprocs_conf())
 {
+    assert(m_clkTck > 0);
+    assert(m_cpusMax > 0);
+
     auto rootPath = root();
     if (::access(rootPath.c_str(), R_OK) == -1)
     {   
@@ -520,6 +526,95 @@ uint64_t ProcFs::fromRelativeTime(uint64_t relative) noexcept
     return boot + time;
 }
 
+CpuTimesAll ProcFs::readCpuTimes() noexcept
+{
+    CpuTimesAll all;
+
+    try
+    {
+        std::string path = root();
+        path.append("/stat");
+
+        std::ifstream stream(path);
+        if (!stream.good())
+        {
+            LogError(m_log, LogNowhere(), "Failed to open %s", path.c_str());
+            return all;
+        }
+
+        all.cores.reserve(m_cpusMax);
+
+        auto lineParser = [this](const std::string& line, CpuTimes& t)
+        {
+            auto parts = Er::Util::split(line, std::string_view(" "), Er::Util::SplitSkipEmptyParts);
+            if (parts.size() > 1)
+                t.user = ::strtoull(parts[1].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 2)
+                t.user_nice = ::strtoull(parts[2].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 3)
+                t.system = ::strtoull(parts[3].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 4)
+                t.idle = ::strtoull(parts[4].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 5)
+                t.iowait = ::strtoull(parts[5].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 6)
+                t.irq = ::strtoull(parts[6].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 7)
+                t.softirq = ::strtoull(parts[7].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 8)
+                t.steal = ::strtoull(parts[8].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 9)
+                t.guest = ::strtoull(parts[9].c_str(), nullptr, 10) / double(m_clkTck);
+
+            if (parts.size() > 10)
+                t.guest_nice = ::strtoull(parts[10].c_str(), nullptr, 10) / double(m_clkTck);
+
+        };
+
+        std::string line;
+        int cpuno = -1;
+        char cpuname[16];
+        
+        while (std::getline(stream, line))
+        {
+            if ((cpuno == -1) && (line.find("cpu ") == 0))
+            {
+                lineParser(line, all.all);
+
+                cpuno = 0;
+                std::snprintf(cpuname, _countof(cpuname), "cpu%d", cpuno);
+            }
+            else if ((cpuno >= 0) && (line.find(cpuname) == 0))
+            {
+                CpuTimes times;
+                lineParser(line, times);
+                all.cores.push_back(times);
+
+                ++cpuno;
+                std::snprintf(cpuname, _countof(cpuname), "cpu%d", cpuno);
+            }
+        }
+
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(m_log, Er::Log::Level::Error, e);
+    } 
+    catch (std::exception& e)
+    {
+        Er::Util::logException(m_log, Er::Log::Level::Error, e);
+    }
+
+    return all;
+}
 
     
 } // namespace ProcFs {}

@@ -50,7 +50,7 @@ struct CpuLoadFormatter
     { 
         auto val = std::any_cast<double>(v.value);
         val *= 100; 
-        val = clamp(val, 0.0, 100.0);
+        val = std::clamp(val, 0.0, 100.0);
         s << std::fixed << std::setprecision(2) << static_cast<unsigned>(val);
     }
 };
@@ -208,25 +208,34 @@ using ErrorText = PropertyValue<std::string, ER_PROPID("processes.global.error_t
 using RequiredFields = PropertyValue<uint64_t, ER_PROPID("processes.global.fields"), "__Fields">;
 
 using ProcessCount = PropertyValue<uint64_t, ER_PROPID("processes.global.process_count"), "Total Processes">;
-using RTime = PropertyValue<double, ER_PROPID("processes.global.rtime"), "Real Time", PropertyComparator<double>, CpuTimeFormatter>;
-using STime = PropertyValue<double, ER_PROPID("processes.global.stime"), "Total CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
-using UTime = PropertyValue<double, ER_PROPID("processes.global.utime"), "Total CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
+using RealTime = PropertyValue<double, ER_PROPID("processes.global.real_time"), "Real Time", PropertyComparator<double>, CpuTimeFormatter>;
+using IdleTime = PropertyValue<double, ER_PROPID("processes.global.idle_time"), "CPU Time (Idle)", PropertyComparator<double>, CpuTimeFormatter>;
+using UserTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
+using SystemTime = PropertyValue<double, ER_PROPID("processes.global.system_time"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
+using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (Virtual)", PropertyComparator<double>, CpuTimeFormatter>;
+using TotalTime = PropertyValue<double, ER_PROPID("processes.global.total_time"), "Total CPU Time", PropertyComparator<double>, CpuTimeFormatter>;
 
 constexpr PropId IndexToProp[] =
 {
     /* 0*/ ProcessCount::Id::value,
-    /* 1*/ RTime::Id::value,
-    /* 2*/ STime::Id::value,
-    /* 3*/ UTime::Id::value,
+    /* 1*/ RealTime::Id::value,
+    /* 2*/ IdleTime::Id::value,
+    /* 3*/ UserTime::Id::value,
+    /* 4*/ SystemTime::Id::value,
+    /* 5*/ VirtualTime::Id::value,
+    /* 6*/ TotalTime::Id::value,
 };
 
 
 struct PropIndices
 {
     static constexpr Flag ProcessCount = 0;
-    static constexpr Flag RTime = 1;
-    static constexpr Flag STime = 2;
-    static constexpr Flag UTime = 3;
+    static constexpr Flag RealTime = 1;
+    static constexpr Flag IdleTime = 2;
+    static constexpr Flag UserTime = 3;
+    static constexpr Flag SystemTime = 4;
+    static constexpr Flag VirtualTime = 5;
+    static constexpr Flag TotalTime = 6;
 
     static constexpr size_t FlagsCount = 64;
 };
@@ -248,9 +257,12 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(std::make_shared<PropertyInfoWrapper<Global>>(), log);
     
     registerProperty(std::make_shared<PropertyInfoWrapper<ProcessCount>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<RTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<STime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<RealTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<IdleTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<UserTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<SystemTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<VirtualTime>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<TotalTime>>(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -264,9 +276,12 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(lookupProperty(ProcessesGlobal::Global::Id::value), log);
     
     unregisterProperty(lookupProperty(ProcessesGlobal::ProcessCount::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::RTime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::STime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::UTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::RealTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::IdleTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::UserTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::SystemTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::VirtualTime::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::TotalTime::Id::value), log);
 }
 
 } // namespace Private {}

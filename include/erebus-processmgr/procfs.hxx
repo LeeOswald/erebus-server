@@ -3,6 +3,7 @@
 #include <erebus/log.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
+#include <vector>
 
 namespace Er
 {
@@ -12,6 +13,7 @@ namespace ProcFs
 
 constexpr uint64_t InvalidPid = uint64_t(-1);
 constexpr uint64_t KernelPid = 0;
+constexpr uint64_t KThreadDPid = 2;
 
 //
 // parsed /proc/[pid]/stat entry
@@ -84,6 +86,32 @@ struct Stat
 };
 
 
+struct CpuTimes
+{
+    double user = 0.0;                               // seconds
+    double user_nice = 0.0;
+    double system = 0.0;
+    double idle = 0.0;
+    double iowait = 0.0;
+    double irq = 0.0;
+    double softirq = 0.0;
+    double steal = 0.0;
+    double guest = 0.0;
+    double guest_nice = 0.0;
+
+    constexpr CpuTimes() noexcept = default;
+};
+
+
+struct CpuTimesAll
+{
+    CpuTimes all;
+    std::vector<CpuTimes> cores;
+
+    CpuTimesAll() noexcept = default;
+};
+
+
 //
 // /proc parser
 // 
@@ -105,12 +133,15 @@ public:
     
     uint64_t bootTime() noexcept;
 
+    CpuTimesAll readCpuTimes() noexcept;
+
 private:
     uint64_t getBootTimeImpl() noexcept;
     uint64_t fromRelativeTime(uint64_t relative) noexcept;
 
     Er::Log::ILog* const m_log;
     uint64_t const m_clkTck; // ticks per second
+    int const m_cpusMax;
     std::size_t m_pidCountMax = 0;
 };
 
