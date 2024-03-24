@@ -217,6 +217,10 @@ Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask requi
     auto virtAll = g.cpuTimes.all.guest + g.cpuTimes.all.guest_nice;
     auto totalAll = userAll + systemAll + idleAll + g.cpuTimes.all.steal + virtAll;
 
+    auto cpuCount = g.cpuTimes.cores.size();
+    if (!cpuCount) [[unlikely]]
+        cpuCount = 1;
+
     if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
     {
         Er::addProperty<Er::ProcessesGlobal::ProcessCount>(bag, g.processCount);
@@ -230,27 +234,27 @@ Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask requi
 
     if (required[Er::ProcessesGlobal::PropIndices::IdleTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::IdleTime>(bag, idleAll);
+        Er::addProperty<Er::ProcessesGlobal::IdleTime>(bag, idleAll / cpuCount);
     }
 
     if (required[Er::ProcessesGlobal::PropIndices::UserTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::UserTime>(bag, userAll);
+        Er::addProperty<Er::ProcessesGlobal::UserTime>(bag, userAll / cpuCount);
     }
 
     if (required[Er::ProcessesGlobal::PropIndices::SystemTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::SystemTime>(bag, systemAll);
+        Er::addProperty<Er::ProcessesGlobal::SystemTime>(bag, systemAll / cpuCount);
     }
 
     if (required[Er::ProcessesGlobal::PropIndices::VirtualTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::VirtualTime>(bag, virtAll);
+        Er::addProperty<Er::ProcessesGlobal::VirtualTime>(bag, virtAll / cpuCount);
     }
 
     if (required[Er::ProcessesGlobal::PropIndices::TotalTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::TotalTime>(bag, totalAll);
+        Er::addProperty<Er::ProcessesGlobal::TotalTime>(bag, totalAll / cpuCount);
     }
 
     Er::addProperty<Er::ProcessesGlobal::Global>(bag, true);
