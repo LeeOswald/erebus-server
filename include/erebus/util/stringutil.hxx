@@ -20,9 +20,12 @@ constexpr SplitKeepEmptyPartsT SplitKeepEmptyParts;
 
 
 template <class StringT, class StringViewT, class ModeT>
-std::vector<StringT> split(StringT source, StringViewT delimiters, ModeT mode)
+std::vector<StringT> split(StringT source, StringViewT delimiters, ModeT mode, std::optional<std::size_t> countHint = std::nullopt)
 {
     std::vector<StringT> output;
+    if (countHint && *countHint)
+        output.reserve(*countHint);
+        
     size_t first = 0;
 
     while (first < source.size())

@@ -191,39 +191,39 @@ Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::Pro
 Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount)
 {
     Er::PropertyBag bag;
-    Globals g;
+    
     if (!processCount)
     {
         if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
         {
             auto pids = m_procFs.enumeratePids();
-            g.processCount = pids.size();
+            processCount = pids.size();
+        }
+        else
+        {
+            processCount = 0;
         }
     }
-    else
-    {
-        g.processCount = *processCount;
-    }
 
-    g.cpuTimes = m_procFs.readCpuTimes();
+    auto cpuTimes = m_procFs.readCpuTimes();
 
     // guest time is already accounted in user time
-    g.cpuTimes.all.user -= g.cpuTimes.all.guest;
-    g.cpuTimes.all.user_nice -= g.cpuTimes.all.guest_nice;
+    cpuTimes.all.user -= cpuTimes.all.guest;
+    cpuTimes.all.user_nice -= cpuTimes.all.guest_nice;
 
-    auto idleAll = g.cpuTimes.all.idle + g.cpuTimes.all.iowait;
-    auto userAll = g.cpuTimes.all.user + g.cpuTimes.all.user_nice;
-    auto systemAll = g.cpuTimes.all.system + g.cpuTimes.all.irq + g.cpuTimes.all.softirq;
-    auto virtAll = g.cpuTimes.all.guest + g.cpuTimes.all.guest_nice;
-    auto totalAll = userAll + systemAll + g.cpuTimes.all.steal + virtAll;
+    auto idleAll = cpuTimes.all.idle + cpuTimes.all.iowait;
+    auto userAll = cpuTimes.all.user + cpuTimes.all.user_nice;
+    auto systemAll = cpuTimes.all.system + cpuTimes.all.irq + cpuTimes.all.softirq;
+    auto virtAll = cpuTimes.all.guest + cpuTimes.all.guest_nice;
+    auto totalAll = userAll + systemAll + cpuTimes.all.steal + virtAll;
 
-    auto cpuCount = g.cpuTimes.cores.size();
+    auto cpuCount = cpuTimes.cores.size();
     if (!cpuCount) [[unlikely]]
         cpuCount = 1;
 
     if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
     {
-        Er::addProperty<Er::ProcessesGlobal::ProcessCount>(bag, g.processCount);
+        Er::addProperty<Er::ProcessesGlobal::ProcessCount>(bag, *processCount);
     }
 
     if (required[Er::ProcessesGlobal::PropIndices::RealTime])
@@ -256,6 +256,41 @@ Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask requi
     {
         Er::addProperty<Er::ProcessesGlobal::TotalTime>(bag, totalAll / cpuCount);
     }
+
+    auto mem = m_procFs.readMemStats();
+
+    if (required[Er::ProcessesGlobal::PropIndices::TotalMem])
+        Er::addProperty<Er::ProcessesGlobal::TotalMem>(bag, mem.totalMem);
+
+    if (required[Er::ProcessesGlobal::PropIndices::UsedMem])
+        Er::addProperty<Er::ProcessesGlobal::UsedMem>(bag, mem.usedMem);
+
+    if (required[Er::ProcessesGlobal::PropIndices::BuffersMem])
+        Er::addProperty<Er::ProcessesGlobal::BuffersMem>(bag, mem.buffersMem);
+
+    if (required[Er::ProcessesGlobal::PropIndices::CachedMem])
+        Er::addProperty<Er::ProcessesGlobal::CachedMem>(bag, mem.cachedMem);
+
+    if (required[Er::ProcessesGlobal::PropIndices::SharedMem])
+        Er::addProperty<Er::ProcessesGlobal::SharedMem>(bag, mem.sharedMem);
+
+    if (required[Er::ProcessesGlobal::PropIndices::AvailableMem])
+        Er::addProperty<Er::ProcessesGlobal::AvailableMem>(bag, mem.availableMem);
+
+    if (required[Er::ProcessesGlobal::PropIndices::TotalSwap])
+        Er::addProperty<Er::ProcessesGlobal::TotalSwap>(bag, mem.totalSwap);
+
+    if (required[Er::ProcessesGlobal::PropIndices::UsedSwap])
+        Er::addProperty<Er::ProcessesGlobal::UsedSwap>(bag, mem.usedSwap);
+
+    if (required[Er::ProcessesGlobal::PropIndices::CachedSwap])
+        Er::addProperty<Er::ProcessesGlobal::CachedSwap>(bag, mem.cachedSwap);
+
+    if (required[Er::ProcessesGlobal::PropIndices::ZSwapComp])
+        Er::addProperty<Er::ProcessesGlobal::ZSwapComp>(bag, mem.zswapComp);
+
+    if (required[Er::ProcessesGlobal::PropIndices::ZSwapOrig])
+        Er::addProperty<Er::ProcessesGlobal::ZSwapOrig>(bag, mem.zswapOrig);
 
     Er::addProperty<Er::ProcessesGlobal::Global>(bag, true);
 

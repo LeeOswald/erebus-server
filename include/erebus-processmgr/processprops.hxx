@@ -39,10 +39,9 @@ struct CpuTimeFormatter
     void operator()(const Property& v, std::ostream& s) 
     { 
         auto val = std::any_cast<double>(v.value); 
-        s << std::fixed << std::setprecision(2) << val;
+        s << std::fixed << std::setprecision(2) << val << std::dec;
     }
 };
-
 
 struct CpuLoadFormatter
 {
@@ -51,7 +50,23 @@ struct CpuLoadFormatter
         auto val = std::any_cast<double>(v.value);
         val *= 100; 
         val = std::clamp(val, 0.0, 100.0);
-        s << std::fixed << std::setprecision(2) << static_cast<unsigned>(val);
+        s << std::fixed << std::setprecision(2) << static_cast<unsigned>(val) << std::dec;
+    }
+};
+
+struct MemUnitFormatter
+{
+    void operator()(const Property& v, std::ostream& s) 
+    { 
+        auto val = std::any_cast<uint64_t>(v.value);
+        if (val < 10ULL * 1024)
+            s << val << "B";
+        else if (val < 10ULL * 1024 * 1024)
+            s << (val / 1024) << "kB";
+        else if (val < 10ULL * 1024 * 1024 * 1024)
+            s << (val / (1024 * 1024)) << "MB";
+        else
+            s << (val / (1024 * 1024 * 1024)) << "GB";
     }
 };
 
@@ -215,6 +230,19 @@ using SystemTime = PropertyValue<double, ER_PROPID("processes.global.system_time
 using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.virtual_time"), "CPU Time (Virtual)", PropertyComparator<double>, CpuTimeFormatter>;
 using TotalTime = PropertyValue<double, ER_PROPID("processes.global.total_time"), "Total CPU Time", PropertyComparator<double>, CpuTimeFormatter>;
 
+using TotalMem = PropertyValue<uint64_t, ER_PROPID("processes.global.total_mem"), "Total Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using UsedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.used_mem"), "Used Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using BuffersMem = PropertyValue<uint64_t, ER_PROPID("processes.global.buffers_mem"), "Buffers", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using CachedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_mem"), "Cached Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using SharedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.shared_mem"), "Shared Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using AvailableMem = PropertyValue<uint64_t, ER_PROPID("processes.global.avail_mem"), "Available Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
+
+using TotalSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.total_swap"), "Swap Total", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using UsedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.used_swap"), "Swap Used", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using CachedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_swap"), "Swap Cached", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using ZSwapComp = PropertyValue<uint64_t, ER_PROPID("processes.global.comp_zswap"), "ZSwap Compressed", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using ZSwapOrig = PropertyValue<uint64_t, ER_PROPID("processes.global.orig_zswap"), "ZSwap Original", PropertyComparator<uint64_t>, MemUnitFormatter>;
+
 constexpr PropId IndexToProp[] =
 {
     /* 0*/ ProcessCount::Id::value,
@@ -224,6 +252,17 @@ constexpr PropId IndexToProp[] =
     /* 4*/ SystemTime::Id::value,
     /* 5*/ VirtualTime::Id::value,
     /* 6*/ TotalTime::Id::value,
+    /* 7*/ TotalMem::Id::value,
+    /* 8*/ UsedMem::Id::value,
+    /* 9*/ BuffersMem::Id::value,
+    /*10*/ CachedMem::Id::value,
+    /*11*/ SharedMem::Id::value,
+    /*12*/ AvailableMem::Id::value,
+    /*13*/ TotalSwap::Id::value,
+    /*14*/ UsedSwap::Id::value,
+    /*15*/ CachedSwap::Id::value,
+    /*16*/ ZSwapComp::Id::value,
+    /*17*/ ZSwapOrig::Id::value,
 };
 
 
@@ -236,6 +275,17 @@ struct PropIndices
     static constexpr Flag SystemTime = 4;
     static constexpr Flag VirtualTime = 5;
     static constexpr Flag TotalTime = 6;
+    static constexpr Flag TotalMem = 7;
+    static constexpr Flag UsedMem = 8;
+    static constexpr Flag BuffersMem = 9;
+    static constexpr Flag CachedMem = 10;
+    static constexpr Flag SharedMem = 11;
+    static constexpr Flag AvailableMem = 12;
+    static constexpr Flag TotalSwap = 13;
+    static constexpr Flag UsedSwap = 14;
+    static constexpr Flag CachedSwap = 15;
+    static constexpr Flag ZSwapComp = 16;
+    static constexpr Flag ZSwapOrig = 17;
 
     static constexpr size_t FlagsCount = 64;
 };
@@ -263,6 +313,19 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(std::make_shared<PropertyInfoWrapper<SystemTime>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<VirtualTime>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<TotalTime>>(), log);
+
+    registerProperty(std::make_shared<PropertyInfoWrapper<TotalMem>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<UsedMem>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<BuffersMem>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<CachedMem>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<SharedMem>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<AvailableMem>>(), log);
+    
+    registerProperty(std::make_shared<PropertyInfoWrapper<TotalSwap>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<UsedSwap>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<CachedSwap>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<ZSwapComp>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<ZSwapOrig>>(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -282,6 +345,19 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(lookupProperty(ProcessesGlobal::SystemTime::Id::value), log);
     unregisterProperty(lookupProperty(ProcessesGlobal::VirtualTime::Id::value), log);
     unregisterProperty(lookupProperty(ProcessesGlobal::TotalTime::Id::value), log);
+
+    unregisterProperty(lookupProperty(ProcessesGlobal::TotalMem::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::UsedMem::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::BuffersMem::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::CachedMem::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::SharedMem::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::AvailableMem::Id::value), log);
+    
+    unregisterProperty(lookupProperty(ProcessesGlobal::TotalSwap::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::UsedSwap::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::CachedSwap::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::ZSwapComp::Id::value), log);
+    unregisterProperty(lookupProperty(ProcessesGlobal::ZSwapOrig::Id::value), log);
 }
 
 } // namespace Private {}

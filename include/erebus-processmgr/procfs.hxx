@@ -112,6 +112,25 @@ struct CpuTimesAll
 };
 
 
+struct MemStats
+{
+    uint64_t totalMem = 0;
+    uint64_t usedMem = 0;
+    uint64_t buffersMem = 0;
+    uint64_t cachedMem = 0;
+    uint64_t sharedMem = 0;
+    uint64_t availableMem = 0;
+
+    uint64_t totalSwap = 0;
+    uint64_t usedSwap = 0;
+    uint64_t cachedSwap = 0;
+
+    uint64_t zswapComp = 0;
+    uint64_t zswapOrig = 0;
+
+    constexpr MemStats() noexcept = default;
+};
+
 //
 // /proc parser
 // 
@@ -134,6 +153,8 @@ public:
     uint64_t bootTime() noexcept;
 
     CpuTimesAll readCpuTimes() noexcept;
+
+    MemStats readMemStats() noexcept;
 
 private:
     uint64_t getBootTimeImpl() noexcept;

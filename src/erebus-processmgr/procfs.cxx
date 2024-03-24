@@ -546,7 +546,7 @@ CpuTimesAll ProcFs::readCpuTimes() noexcept
 
         auto lineParser = [this](const std::string& line, CpuTimes& t)
         {
-            auto parts = Er::Util::split(line, std::string_view(" "), Er::Util::SplitSkipEmptyParts);
+            auto parts = Er::Util::split(line, std::string_view(" "), Er::Util::SplitSkipEmptyParts, 12);
             if (parts.size() > 1)
                 t.user = ::strtoull(parts[1].c_str(), nullptr, 10) / double(m_clkTck);
 
@@ -614,6 +614,127 @@ CpuTimesAll ProcFs::readCpuTimes() noexcept
     }
 
     return all;
+}
+
+MemStats ProcFs::readMemStats() noexcept
+{
+    MemStats mem;
+
+    auto getUnit = [](const std::string& unit) -> std::size_t
+    {
+        if (unit.length() < 2) [[unlikely]]
+            return 1;
+        else if ((unit[0] == 'k') && (unit[1] == 'B')) [[likely]]
+            return 1024;
+        else if (((unit[0] == 'm') || (unit[0] == 'M')) && (unit[1] == 'B'))
+            return 1024 * 1024;
+        else if (((unit[0] == 'g') || (unit[0] == 'G')) && (unit[1] == 'B'))
+            return 1024 * 1024 * 1024;
+
+        return 1;
+    };
+
+    try
+    {
+        std::string path = root();
+        path.append("/meminfo");
+
+        std::ifstream stream(path);
+        if (!stream.good())
+        {
+            LogError(m_log, LogNowhere(), "Failed to open %s", path.c_str());
+            return mem;
+        }
+
+        uint64_t availableMem = 0;
+        uint64_t freeMem = 0;
+        uint64_t totalMem = 0;
+        uint64_t buffersMem = 0;
+        uint64_t cachedMem = 0;
+        uint64_t sharedMem = 0;
+        uint64_t swapTotalMem = 0;
+        uint64_t swapCachedMem = 0;
+        uint64_t swapFreeMem = 0;
+        uint64_t reclaimable = 0;
+        uint64_t zswapCompMem = 0;
+        uint64_t zswapOrigMem = 0;
+
+        std::string line;
+        while (std::getline(stream, line))
+        {
+            auto parts = Er::Util::split(line, std::string_view(" "), Er::Util::SplitSkipEmptyParts, 3);
+            if (parts.size() < 3)
+                continue;
+
+            auto unit = getUnit(parts[2]);
+
+            if (parts[0].length() < 1)
+                continue;
+
+            if (parts[0][0] == 'M')
+            {
+                if (parts[0] == std::string_view("MemAvailable:"))
+                    availableMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+                else if (parts[0] == std::string_view("MemFree:"))
+                    freeMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+                else if (parts[0] == std::string_view("MemTotal:"))
+                    totalMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+            }
+            else if (parts[0][0] == 'B')
+            {
+                if (parts[0] == std::string_view("Buffers:"))
+                    buffersMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+            }
+            else if (parts[0][0] == 'C')
+            {
+                if (parts[0] == std::string_view("Cached:"))
+                    cachedMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+            }
+            else if (parts[0][0] == 'S')
+            {
+                if (parts[0] == std::string_view("Shmem:"))
+                    sharedMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+                else if (parts[0] == std::string_view("SwapTotal:"))
+                    swapTotalMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+                else if (parts[0] == std::string_view("SwapCached:"))
+                    swapCachedMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+                else if (parts[0] == std::string_view("SwapFree:"))
+                    swapFreeMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+                else if (parts[0] == std::string_view("SReclaimable:"))
+                    reclaimable = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+            }
+            else if (parts[0][0] == 'Z')
+            {
+                if (parts[0] == std::string_view("Zswap:"))
+                    zswapOrigMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+                else if (parts[0] == std::string_view("Zswapped:"))
+                    zswapCompMem = unit * std::strtoull(parts[1].c_str(), nullptr, 10);
+            }
+        }
+
+        mem.totalMem = totalMem;
+        mem.cachedMem = cachedMem + reclaimable - sharedMem;
+        mem.sharedMem = sharedMem;
+        auto usedDiff = freeMem + cachedMem + reclaimable + buffersMem;
+        mem.usedMem = (totalMem >= usedDiff) ? totalMem - usedDiff : totalMem - freeMem;
+        mem.buffersMem = buffersMem;
+        mem.availableMem = availableMem != 0 ? std::min(availableMem, totalMem) : freeMem;
+        mem.totalSwap = swapTotalMem;
+        mem.usedSwap = swapTotalMem - swapFreeMem - swapCachedMem;
+        mem.cachedSwap = swapCachedMem;
+        mem.zswapComp = zswapCompMem;
+        mem.zswapOrig = zswapOrigMem;
+    }
+    catch (Er::Exception& e)
+    {
+        Er::Util::logException(m_log, Er::Log::Level::Error, e);
+    } 
+    catch (std::exception& e)
+    {
+        Er::Util::logException(m_log, Er::Log::Level::Error, e);
+    }
+
+    return mem;
 }
 
     

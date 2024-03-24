@@ -39,14 +39,6 @@ public:
     Er::PropertyBag next(StreamId id, std::optional<SessionId> sessionId) override;
 
 private:
-    struct Globals
-    {
-        uint64_t processCount = 0;
-        ProcFs::CpuTimesAll cpuTimes;
-
-        Globals() noexcept = default;
-    };
-
     struct Session
         : public Er::NonCopyable
     {
