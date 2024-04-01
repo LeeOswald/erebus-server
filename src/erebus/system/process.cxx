@@ -36,14 +36,7 @@ EREBUS_EXPORT std::string exe()
     return Util::utf16To8bit(CP_UTF8, exeFile);
 #elif ER_POSIX
     
-    struct stat sb = { 0 };
-    
-#ifdef PATH_MAX
-    size_t size = PATH_MAX;
-#else
-    size_t size = 4096;
-#endif
-
+    const size_t size = PATH_MAX;
     std::string exe;
     exe.resize(size + 1, '\0');
     auto r = ::readlink("/proc/self/exe", exe.data(), size); // readlink does not append '\0'

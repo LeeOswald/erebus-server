@@ -22,6 +22,7 @@
 #include "pluginmgr.hxx"
 #include "users.hxx"
 
+#include <filesystem>
 #include <future>
 #include <iostream>
 #include <vector>
@@ -76,6 +77,14 @@ int main(int argc, char* argv[], char* env[])
 #if ER_WINDOWS
     ::SetConsoleOutputCP(CP_UTF8);
 #endif
+
+    // set current dir the same as exe dir
+    {
+        std::filesystem::path exe(Er::System::CurrentProcess::exe());
+        auto dir = exe.parent_path();
+        std::error_code ec;
+        std::filesystem::current_path(dir, ec);
+    }
 
     // parse command line
     std::string cfgFile;
