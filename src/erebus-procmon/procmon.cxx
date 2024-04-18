@@ -1,7 +1,8 @@
 #include <erebus/exception.hxx>
-
+#include <erebus/log.hxx>
 #include "procmon.hxx"
 
+#include <bpf/libbpf.h>
 
 #include <atomic>
 
@@ -20,6 +21,8 @@ public:
     ~ProcMonPlugin()
     {
         g_instances--;
+        ::libbpf_set_print(nullptr);
+        g_log = nullptr;
     }
 
     explicit ProcMonPlugin(const Er::Server::PluginParams& params)
@@ -29,16 +32,36 @@ public:
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
             throw Er::Exception(ER_HERE(), "Only one instance of erebus-procmon plugin can be created");
 
+        g_log = params.log;
+        ::libbpf_set_print(libbpf_print_fn);
     }
 
 private:
+    static int libbpf_print_fn(enum libbpf_print_level level, const char* format, va_list args) noexcept
+    {
+        if (!g_log) [[unlikely]]
+            return 0;
+
+        Er::Log::Level l = Er::Log::Level::Info;
+        if (level == LIBBPF_DEBUG)
+            l = Er::Log::Level::Debug;
+        else if (level == LIBBPF_WARN)
+            l = Er::Log::Level::Warning;
+
+        g_log->writev(l, LogComponent("gRPC"), format, args);
+
+        return 0;
+    }
+
+
     static std::atomic<long> g_instances;
+    static Er::Log::ILog* g_log;
 
     Er::Server::PluginParams m_params;
 };
 
 std::atomic<long> ProcMonPlugin::g_instances = 0;
-
+Er::Log::ILog* ProcMonPlugin::g_log = nullptr;
     
 } // namespace {}
     

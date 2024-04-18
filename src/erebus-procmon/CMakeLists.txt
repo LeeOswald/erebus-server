@@ -9,7 +9,6 @@ ExternalProject_Add(libbpf
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../3rd_party/libbpf/src
   CONFIGURE_COMMAND ""
   BUILD_COMMAND make
-    BUILD_STATIC_ONLY=1
     OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
     DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
     INCLUDEDIR=
@@ -50,7 +49,7 @@ endif()
 set(BPFOBJECT_BPFTOOL_EXE ${CMAKE_CURRENT_BINARY_DIR}/bpftool/bootstrap/bpftool)
 set(BPFOBJECT_VMLINUX_H ${CMAKE_CURRENT_BINARY_DIR}/vmlinux.h)
 set(LIBBPF_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/libbpf)
-set(LIBBPF_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf.a)
+set(LIBBPF_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf.so)
 find_package(BpfObject REQUIRED)
 
 
