@@ -14,12 +14,5 @@
 #endif
 
 
-extern "C"
-{
-
-ER_PROCMON_EXPORT Er::Server::IPlugin* createPlugin(const Er::Server::PluginParams& params);
-ER_PROCMON_EXPORT void disposePlugin(Er::Server::IPlugin* plugin);
-
-} // extern "C" {}
 
 
