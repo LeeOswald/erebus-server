@@ -34,11 +34,9 @@ private:
     const std::string m_iconTheme;
     const std::string m_iconCacheAgent;
     const std::string m_iconCacheDir;
-    std::atomic<long> m_workerStarted;
     std::atomic<long> m_workerExited;
     std::mutex m_mutex;
-    std::shared_ptr<std::jthread> m_worker;
-    std::stop_token m_stop;
+    std::unique_ptr<std::jthread> m_worker;
 };
 
 

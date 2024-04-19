@@ -65,6 +65,8 @@ bpf_object(sched sched.bpf.c)
 add_dependencies(sched_skel libbpf-build bpftool-build vmlinux_h)
 
 add_library(${EREBUS_PROCMON} SHARED
+    process_spy.cxx
+    process_spy.hxx
     procmon.cxx
     procmon.hxx
 )

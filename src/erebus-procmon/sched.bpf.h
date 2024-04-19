@@ -4,7 +4,7 @@
 #define TASK_COMM_LEN	 16
 #define MAX_FILENAME_LEN 127
 
-struct event 
+struct sched_event 
 {
     int pid;
     int ppid;

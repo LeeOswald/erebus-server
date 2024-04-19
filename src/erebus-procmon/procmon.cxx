@@ -1,8 +1,7 @@
 #include <erebus/exception.hxx>
 #include <erebus/log.hxx>
-#include "procmon.hxx"
 
-#include <bpf/libbpf.h>
+#include "process_spy.hxx"
 
 #include <atomic>
 
@@ -20,6 +19,8 @@ class ProcMonPlugin final
 public:
     ~ProcMonPlugin()
     {
+        m_processSpy.reset();
+
         g_instances--;
         ::libbpf_set_print(nullptr);
         g_log = nullptr;
@@ -34,6 +35,8 @@ public:
 
         g_log = params.log;
         ::libbpf_set_print(libbpf_print_fn);
+
+        m_processSpy.reset(new Er::Private::ProcessSpy(m_params.log));
     }
 
 private:
@@ -48,7 +51,7 @@ private:
         else if (level == LIBBPF_WARN)
             l = Er::Log::Level::Warning;
 
-        g_log->writev(l, LogComponent("gRPC"), format, args);
+        g_log->writev(l, LogComponent("eBPF"), format, args);
 
         return 0;
     }
@@ -58,6 +61,7 @@ private:
     static Er::Log::ILog* g_log;
 
     Er::Server::PluginParams m_params;
+    std::unique_ptr<Er::Private::ProcessSpy> m_processSpy;
 };
 
 std::atomic<long> ProcMonPlugin::g_instances = 0;

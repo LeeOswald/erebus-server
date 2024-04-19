@@ -30,12 +30,6 @@ struct FileCloser
 
 IconCache::~IconCache()
 {
-    if (m_worker)
-    {
-        auto stop = m_worker->get_stop_source();
-        stop.request_stop();
-        m_worker.reset();
-    }
 }
 
 IconCache::IconCache(Er::Log::ILog* log, const std::string& iconTheme, const std::string& iconCacheAgent, const std::string& iconCacheDir)
@@ -43,7 +37,6 @@ IconCache::IconCache(Er::Log::ILog* log, const std::string& iconTheme, const std
     , m_iconTheme(iconTheme)
     , m_iconCacheAgent(iconCacheAgent)
     , m_iconCacheDir(iconCacheDir)
-    , m_workerStarted(0)
     , m_workerExited(0)
 {
 }
@@ -115,7 +108,6 @@ void IconCache::prefetch(const std::vector<std::string>& iconNames, unsigned siz
             m_worker.reset();
 
             m_workerExited.store(0, std::memory_order_release);
-            m_workerStarted.store(0, std::memory_order_release);
         }
         else
         {
@@ -150,27 +142,14 @@ void IconCache::prefetch(const std::vector<std::string>& iconNames, unsigned siz
 
         std::string tmpName(tempFileName);
 
-        m_worker = std::make_shared<std::jthread>(
-            [this, tmpName, size]()
+        m_worker = std::make_unique<std::jthread>(
+            [this, tmpName, size](std::stop_token stop)
             {
-                // wait for the main theread to store m_worker because we need it
-                while (m_workerStarted.load(std::memory_order_acquire) == 0)
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-                std::shared_ptr<std::jthread> w;
-                {
-                    std::lock_guard l(m_mutex);
-                    w = m_worker;
-                    m_stop = w->get_stop_token();
-                }
-                                
-                callCacheAgent(&tmpName, nullptr, size, &m_stop);
+                callCacheAgent(&tmpName, nullptr, size, &stop);
 
                 m_workerExited.store(1, std::memory_order_release);
             }
         );
-
-        m_workerStarted.store(1, std::memory_order_release);
     }
 }
 
