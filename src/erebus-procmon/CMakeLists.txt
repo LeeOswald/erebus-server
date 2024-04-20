@@ -18,6 +18,7 @@ ExternalProject_Add(libbpf
   BUILD_IN_SOURCE TRUE
   INSTALL_COMMAND ""
   STEP_TARGETS build
+  BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf.so
 )
 
 # Build bpftool
@@ -52,17 +53,21 @@ set(LIBBPF_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/libbpf)
 set(LIBBPF_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf.so)
 find_package(BpfObject REQUIRED)
 
-
-add_custom_target(vmlinux_h ALL
+add_custom_command(
+    OUTPUT ${BPFOBJECT_VMLINUX_H}
     COMMAND ${BPFOBJECT_BPFTOOL_EXE} btf dump file /sys/kernel/btf/vmlinux format c > ${BPFOBJECT_VMLINUX_H}
     DEPENDS bpftool-build
     VERBATIM
+    COMMENT "Generating vmlinux.h"
 )
 
+add_custom_target(generate_vmlinux_h DEPENDS "${BPFOBJECT_VMLINUX_H}")
+
+# for generated headers
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 bpf_object(sched sched.bpf.c)
-add_dependencies(sched_skel libbpf-build bpftool-build vmlinux_h)
+add_dependencies(sched_skel libbpf-build bpftool-build generate_vmlinux_h)
 
 add_library(${EREBUS_PROCMON} SHARED
     process_spy.cxx
