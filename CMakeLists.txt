@@ -29,6 +29,11 @@ else()
     endif()
 endif()
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+# help debugging concepts
 if(NOT MSVC)
     add_compile_options(-fconcepts-diagnostics-depth=2)
 endif() 
