@@ -69,6 +69,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 bpf_object(sched sched.bpf.c)
 add_dependencies(sched_skel libbpf-build bpftool-build generate_vmlinux_h)
 
+bpf_object(execve execve.bpf.c)
+add_dependencies(execve_skel libbpf-build bpftool-build generate_vmlinux_h)
+
+
 add_library(${EREBUS_PROCMON} SHARED
     process_spy.cxx
     process_spy.hxx
@@ -80,4 +84,4 @@ add_compile_definitions(ER_PROCMON_EXPORTS=1)
 
 target_compile_features(${EREBUS_PROCMON} PUBLIC ${ER_CXX_FEATURES})
 
-target_link_libraries(${EREBUS_PROCMON} PRIVATE sched_skel ${EREBUS_LIB} ${PLATFORM_LIBS}) 
+target_link_libraries(${EREBUS_PROCMON} PRIVATE sched_skel execve_skel ${EREBUS_LIB} ${PLATFORM_LIBS}) 
