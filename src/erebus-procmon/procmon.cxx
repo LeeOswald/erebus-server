@@ -36,6 +36,8 @@ public:
         g_log = params.log;
         ::libbpf_set_print(libbpf_print_fn);
 
+        ::libbpf_set_strict_mode(libbpf_strict_mode(LIBBPF_STRICT_CLEAN_PTRS | LIBBPF_STRICT_DIRECT_ERRS));
+
         m_processSpy.reset(new Er::Private::ProcessSpy(m_params.log));
     }
 
