@@ -78,6 +78,14 @@ int main(int argc, char* argv[], char* env[])
     ::SetConsoleOutputCP(CP_UTF8);
 #endif
 
+#if ER_POSIX
+    if (::geteuid() != 0)
+    {
+        std::cerr << "Root privileges required\n";
+        return EXIT_FAILURE;
+    }
+#endif
+
     // set current dir the same as exe dir
     {
         std::filesystem::path exe(Er::System::CurrentProcess::exe());
