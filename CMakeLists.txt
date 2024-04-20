@@ -134,12 +134,35 @@ if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 # Windows-specific settings
 if(WIN32)
     add_definitions(-D_WIN32_WINNT=0x0601)
 endif()
+
+
+# download and unpack googletest at configure time
+configure_file(cmake/gtest-download.in googletest-download/CMakeLists.txt)
+execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download"
+)
+execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download"
+)
+
+# prevent GoogleTest from overriding our compiler/linker options
+# when building with Visual Studio
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+# this adds the following targets:
+# gtest, gtest_main, gmock and gmock_main
+add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
+                 "${CMAKE_BINARY_DIR}/googletest-build"
+)
+
+include_directories("${CMAKE_BINARY_DIR}/googletest-src/googletest/include"
+                    "${CMAKE_BINARY_DIR}/googletest-src/googlemock/include"
+)
 
 
 # component names
@@ -153,7 +176,6 @@ set(EREBUS_CTL erebus-ctl)
 
 # components
 add_subdirectory(protocol)
-add_subdirectory(3rd_party/googletest)
 add_subdirectory(src/erebus)
 if(ER_LINUX)
     add_subdirectory(src/erebus-processmgr)
