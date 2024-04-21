@@ -12,6 +12,11 @@ class Logger
     : public Er::Log::LogBase
 {
 public:
+    ~Logger()
+    {
+        removeDelegate("this");
+    }
+
     explicit Logger(Er::Log::Level level)
         : Er::Log::LogBase(level, 65536)
     {
@@ -33,6 +38,14 @@ private:
     std::mutex m_mutex;
 };
 
+void signalHandler(int signo)
+{
+    std::cerr << "Signal " << signo << "\n";
+    while (!::IsDebuggerPresent())
+        ::Sleep(100);
+    __debugbreak();
+}
+
 int main(int argc, char** argv)
 {
 #if ER_DEBUG && defined(_MSC_VER)
@@ -44,6 +57,8 @@ int main(int argc, char** argv)
 #if ER_WINDOWS
     ::SetConsoleOutputCP(CP_UTF8);
 #endif
+
+    ::signal(SIGABRT, signalHandler);
 
     ::testing::InitGoogleTest(&argc, argv);
 

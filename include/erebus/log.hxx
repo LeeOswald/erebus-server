@@ -119,16 +119,15 @@ public:
         
 private:
     void _flush() noexcept;
-    void run() noexcept;
+    void run(std::stop_token stop) noexcept;
 
     Level m_level;
     size_t m_maxQueue;
     std::mutex m_mutex;
     std::unordered_map<std::string, Delegate> m_delegates;
     std::queue<std::shared_ptr<Record>> m_queue;
-    std::condition_variable m_event;
-    bool m_stop = false;
-    std::thread m_worker;
+    std::condition_variable_any m_event;
+    std::jthread m_worker;
     bool m_mute = true;
 };
 

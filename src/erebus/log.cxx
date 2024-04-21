@@ -10,17 +10,12 @@ namespace Log
 
 LogBase::~LogBase()
 {
-    m_stop = true;
-    m_event.notify_one();
-
-    if (m_worker.joinable())
-        m_worker.join();
 }
 
 LogBase::LogBase(Level level, size_t maxQueue) noexcept
     : m_level(level)
     , m_maxQueue(maxQueue)
-    , m_worker([this]() { run(); })
+    , m_worker([this](std::stop_token stop) { run(stop); })
 {
 }
 
@@ -54,17 +49,17 @@ void LogBase::removeDelegate(std::string_view id) noexcept
     }
 }
 
-void LogBase::run() noexcept
+void LogBase::run(std::stop_token stop) noexcept
 {
     try
     {
         System::CurrentThread::setName("Logger");
         
-        while (!m_stop)
+        while (!stop.stop_requested())
         {
             std::unique_lock l(m_mutex);
 
-            m_event.wait(l, [this]() { return m_stop || !m_queue.empty(); });
+            m_event.wait(l, stop, [this]() { return !m_queue.empty(); });
 
             _flush();
         }
