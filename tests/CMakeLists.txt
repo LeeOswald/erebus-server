@@ -1,4 +1,9 @@
-set(TARGET ertests)
+
+include(FetchGTest)
+include(GoogleTest)
+
+set(ER_TESTS ertests)
+
 
 if(ER_LINUX)
     set(PLATFORM_SOURCES 
@@ -10,7 +15,7 @@ endif()
 enable_testing()
 
 add_executable(
-    ${TARGET}
+    ${ER_TESTS}
     common.hpp
     condition.cpp
     exception.cpp
@@ -24,6 +29,8 @@ add_executable(
     ${PLATFORM_SOURCES}
 )
 
-target_link_libraries(${TARGET} gtest_main ${EREBUS_LIB})
+target_link_libraries(${ER_TESTS} gtest_main ${EREBUS_LIB})
 
-target_compile_features(${TARGET} PUBLIC ${ER_CXX_FEATURES})
+target_compile_features(${ER_TESTS} PUBLIC ${ER_CXX_FEATURES})
+
+gtest_discover_tests(${ER_TESTS})

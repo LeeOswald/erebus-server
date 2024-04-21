@@ -1,15 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 
-function(get_version_from_file VER_FILE_NAME)
-    file(READ ${VER_FILE_NAME} ER_VERSION_RAW)
-    # Remove trailing whitespaces and/or newline
-    string(STRIP ${ER_VERSION_RAW} ER_VERSION_)
-    set(ER_VERSION ${ER_VERSION_} CACHE STRING
-        "Project version determined from version.txt" FORCE
-    )
-    message(STATUS "Determined project version ${ER_VERSION}")
-endfunction()
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+include(version)
 
 get_version_from_file("version.txt")
 
@@ -23,6 +16,8 @@ else()
         set(CMAKE_BUILD_TYPE Release)
     elseif(${CMAKE_BUILD_TYPE} MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
         set(CMAKE_BUILD_TYPE Debug)
+    elseif(${CMAKE_BUILD_TYPE} MATCHES "^[Rr][Ee][Ll][Ww][Ii][Tt][Hh][Dd][Ee][Bb][Ii][Nn][Ff][Oo]$")
+        set(CMAKE_BUILD_TYPE RelWithDebInfo)    
     else()
         message(WARNING "CMAKE_BUILD_TYPE isn't Release or Debug. Debug value will be used by default.")
         set(CMAKE_BUILD_TYPE Debug)
@@ -146,30 +141,6 @@ if(WIN32)
 endif()
 
 
-# download and unpack googletest at configure time
-configure_file(cmake/gtest-download.in googletest-download/CMakeLists.txt)
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download"
-)
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download"
-)
-
-# prevent GoogleTest from overriding our compiler/linker options
-# when building with Visual Studio
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-# this adds the following targets:
-# gtest, gtest_main, gmock and gmock_main
-add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
-                 "${CMAKE_BINARY_DIR}/googletest-build"
-)
-
-include_directories("${CMAKE_BINARY_DIR}/googletest-src/googletest/include"
-                    "${CMAKE_BINARY_DIR}/googletest-src/googlemock/include"
-)
-
-
 # component names
 set(EREBUS_LIB erebus-rtl)
 set(EREBUS_PROCESSMGR processmgr)
@@ -190,4 +161,11 @@ add_subdirectory(src/erebus-srv)
 add_subdirectory(src/erebus-clt)
 add_subdirectory(src/erebus-server)
 add_subdirectory(src/erebus-ctl)
-add_subdirectory(tests)
+
+# don't build tests if we're a subproject
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    include(CTest)
+    if(BUILD_TESTING)
+        add_subdirectory(tests)
+    endif()
+endif()
