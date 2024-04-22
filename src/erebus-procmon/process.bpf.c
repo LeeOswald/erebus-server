@@ -117,3 +117,27 @@ int sys_exit_execve(struct trace_event_raw_sys_exit *ctx)
 
     return 0;
 }
+
+SEC("tp/sched/sched_process_exit")
+int sched_process_exit(struct trace_event_raw_sched_process_template *ctx)
+{
+    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+
+    u64 id = bpf_get_current_pid_tgid();
+    pid_t pid = id >> 32;
+    pid_t tid = (u32)id;
+
+    struct process_event_exit_t *ev = bpf_ringbuf_reserve(&g_ringbuf, sizeof(struct process_event_exit_t), 0);
+    if (!ev)
+        return 0;
+
+    ev->header.pid = pid;
+    ev->header.type = PROCESS_EVENT_EXIT;
+    
+    ev->tid = tid;
+    ev->exit_code = (BPF_CORE_READ(task, exit_code) >> 8) & 0xff;
+ 
+    bpf_ringbuf_submit(ev, 0);
+ 
+    return 0;
+}

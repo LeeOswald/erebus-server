@@ -91,6 +91,7 @@ int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
             case PROCESS_EVENT_RETVAL: return this_->handleRetval(static_cast<const process_event_retval_t*>(data));
             case PROCESS_EVENT_FILENAME: return this_->handleFilename(static_cast<const process_event_data_t*>(data));
             case PROCESS_EVENT_ARG: return this_->handleArg(static_cast<const process_event_data_t*>(data));
+            case PROCESS_EVENT_EXIT: return this_->handleExit(static_cast<const process_event_exit_t*>(data));
             }
 
             LogError(this_->m_log, LogComponent("ProcessSpy"), "Unknown process event type %d", header->type);
@@ -173,10 +174,44 @@ int ProcessSpy::handleArg(const process_event_data_t* ev)
 
     return 0;
 }
+
+int ProcessSpy::handleExit(const process_event_exit_t* ev)
+{
+    std::shared_ptr<ProcessInfo> process;
+    auto it = m_runningProcesses.find(ev->header.pid);
+    if (it != m_runningProcesses.end())
+    {
+        process = it->second;
+
+        m_runningProcesses.erase(it);
+    }
+
+    issueTaskExit(process, ev->exit_code, ev->header.pid, ev->tid);
+
+    return 0;
+}
     
 void ProcessSpy::issueProcessStart(std::shared_ptr<ProcessInfo> info)
 {
     LogInfo(m_log, LogNowhere(), "%d EXECVE pid=%zu; ppid=%zu; uid=%zu; sid=%zu; [%s] [%s] %s", int(info->retVal.value_or(-1)), info->pid, info->ppid, info->uid, info->sid, info->comm.c_str(), info->fileName.c_str(), info->argv.c_str());
+}
+
+void ProcessSpy::issueTaskExit(std::shared_ptr<ProcessInfo> info, int32_t exitCode, uint64_t pid, uint64_t tid)
+{
+    if (info)
+    {
+        if (pid == tid)
+            LogInfo(m_log, LogNowhere(), "EXIT pid=%zu; [%s] -> %d", pid, info->comm.c_str(), exitCode);
+        else
+            LogInfo(m_log, LogNowhere(), "THREAD EXIT pid=%zu; tid=%zu; [%s] -> %d", pid, tid, info->comm.c_str(), exitCode);
+    }
+    else
+    {
+        if (pid == tid)
+            LogInfo(m_log, LogNowhere(), "EXIT pid=%zu -> %d", pid, exitCode);
+        else
+            LogInfo(m_log, LogNowhere(), "THREAD EXIT pid=%zu; tid=%zu -> %d", pid, tid, exitCode);
+    }
 }
 
 } // namespace Private {}

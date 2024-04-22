@@ -30,3 +30,10 @@ struct process_event_data_t {
     struct process_event_header_t header;
     char data[256];
 } __attribute__((__packed__));
+
+
+struct process_event_exit_t {
+    struct process_event_header_t header;
+    pid_t tid;
+    __s32 exit_code;
+} __attribute__((__packed__));

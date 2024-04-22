@@ -55,7 +55,7 @@ private:
         std::string fileName;
         std::string argv;
         std::optional<uint64_t> retVal;
-
+        
         ProcessInfo() noexcept = default;
 
         ProcessInfo(const process_event_start_t* ev)
@@ -74,8 +74,10 @@ private:
     int handleRetval(const process_event_retval_t* ev);
     int handleFilename(const process_event_data_t* ev);
     int handleArg(const process_event_data_t* ev);
+    int handleExit(const process_event_exit_t* ev);
     void worker(std::stop_token stop) noexcept;
     void issueProcessStart(std::shared_ptr<ProcessInfo> info);
+    void issueTaskExit(std::shared_ptr<ProcessInfo> info, int32_t exitCode, uint64_t pid, uint64_t tid);
 
     static constexpr int PollTimeoutMs = 1000;
     Er::Log::ILog* m_log;
