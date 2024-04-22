@@ -40,6 +40,20 @@ private:
 
 int main(int argc, char** argv)
 {
+#if ER_POSIX
+    // globally block signals so that child threads, e.g., logger 
+    // inherit signal mask with signals blocked 
+    sigset_t mask;
+    ::sigemptyset(&mask);
+    ::sigaddset(&mask, SIGTERM);
+    ::sigaddset(&mask, SIGHUP);
+    ::sigaddset(&mask, SIGINT);
+    ::sigaddset(&mask, SIGUSR1);
+    ::sigaddset(&mask, SIGUSR2);
+    ::sigprocmask(SIG_BLOCK, &mask, nullptr);
+#endif
+
+
 #if ER_DEBUG && defined(_MSC_VER)
     int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
     tmpFlag |= _CRTDBG_LEAK_CHECK_DF;
@@ -52,8 +66,19 @@ int main(int argc, char** argv)
 
     ::testing::InitGoogleTest(&argc, argv);
 
+
     Logger log(Er::Log::Level::Debug);
     Er::LibScope er(&log);
+
+#if ER_POSIX
+    // unblock signals in the test thread
+    ::sigemptyset(&mask);
+    ::sigaddset(&mask, SIGTERM);
+    ::sigaddset(&mask, SIGINT);
+    ::sigaddset(&mask, SIGUSR1);
+    ::sigaddset(&mask, SIGUSR2);
+    ::sigprocmask(SIG_UNBLOCK, &mask, nullptr);
+#endif
 
     auto ret = RUN_ALL_TESTS();
 
