@@ -106,34 +106,57 @@ int ProcessSpy::handleStart(const process_event_start_t* ev)
     if (!r.second)
         LogWarning(m_log, LogComponent("ProcessSpy"), "Reusing existing PID %zu", ev->header.pid);
 
+    m_starting = r.first->second;
     return 0;
 }
 
 int ProcessSpy::handleRetval(const process_event_retval_t* ev)
 {
-    auto it = m_runningProcesses.find(uint64_t(ev->header.pid));
-    if (it == m_runningProcesses.end())
+    auto current = lookupCurrent(ev->header.pid);
+    if (current) [[likely]]
     {
-        LogWarning(m_log, LogComponent("ProcessSpy"), "Non-existing PID %zu", ev->header.pid);
-    }
-    else
-    {
-        it->second->retVal = ev->retval;
+        current->retVal = ev->retval;
+        auto p = current;
+        current.reset();
+
+        issueProcessStart(p);
     }
 
     return 0;
 }
 
+std::shared_ptr<ProcessSpy::ProcessInfo> ProcessSpy::lookupCurrent(uint64_t pid)
+{
+    auto current = m_starting;
+    if (current) [[likely]]
+    {
+        if (current->pid != pid) [[unlikely]]
+        {
+            current.reset();
+        }
+    }
+
+    if (!current) [[unlikely]]
+    {
+        auto it = m_runningProcesses.find(pid);
+        if (it == m_runningProcesses.end())
+        {
+            LogWarning(m_log, LogComponent("ProcessSpy"), "Non-existing PID %zu", pid);
+            return std::shared_ptr<ProcessInfo>();
+        }
+
+        current = it->second;
+    }
+
+    return current;
+}
+
 int ProcessSpy::handleFilename(const process_event_data_t* ev)
 {
-    auto it = m_runningProcesses.find(uint64_t(ev->header.pid));
-    if (it == m_runningProcesses.end())
+    auto current = lookupCurrent(ev->header.pid);
+    if (current) [[likely]]
     {
-        LogWarning(m_log, LogComponent("ProcessSpy"), "Non-existing PID %zu", ev->header.pid);
-    }
-    else
-    {
-        it->second->fileName.assign(ev->data);
+        current->fileName.assign(ev->data);
     }
 
     return 0;
@@ -141,19 +164,11 @@ int ProcessSpy::handleFilename(const process_event_data_t* ev)
 
 int ProcessSpy::handleArg(const process_event_data_t* ev)
 {
-    auto it = m_runningProcesses.find(uint64_t(ev->header.pid));
-    if (it == m_runningProcesses.end())
+    auto current = lookupCurrent(ev->header.pid);
+    if (current) [[likely]]
     {
-        LogWarning(m_log, LogComponent("ProcessSpy"), "Non-existing PID %zu", ev->header.pid);
-    }
-    else
-    {
-        it->second->argv.append(" ");
-        it->second->argv.append(ev->data);
-
-        issueProcessStart(it->second);
-
-        m_runningProcesses.erase(it);
+        current->argv.append(" ");
+        current->argv.append(ev->data);
     }
 
     return 0;
@@ -161,7 +176,7 @@ int ProcessSpy::handleArg(const process_event_data_t* ev)
     
 void ProcessSpy::issueProcessStart(std::shared_ptr<ProcessInfo> info)
 {
-    LogInfo(m_log, LogNowhere(), "%d EXECVE pid=%zu; ppid=%zu; uid=%zu; sid=%zu; [%s] [%s] %s", int(info->retVal), info->pid, info->ppid, info->uid, info->sid, info->comm.c_str(), info->fileName.c_str(), info->argv.c_str());
+    LogInfo(m_log, LogNowhere(), "%d EXECVE pid=%zu; ppid=%zu; uid=%zu; sid=%zu; [%s] [%s] %s", int(info->retVal.value_or(-1)), info->pid, info->ppid, info->uid, info->sid, info->comm.c_str(), info->fileName.c_str(), info->argv.c_str());
 }
 
 } // namespace Private {}

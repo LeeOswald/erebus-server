@@ -73,7 +73,10 @@ __attribute__((always_inline)) int issue_process_args(struct trace_event_raw_sys
         const char *argp = NULL;
         bpf_core_read_user(&argp, sizeof(argp), (const void*)addr);
         if (!argp || (bpf_core_read_user_str(ev->data, sizeof(ev->data), argp) <= 0))
+        {
+            bpf_ringbuf_discard(ev, 0);
             break;
+        }
   
         bpf_ringbuf_submit(ev, 0);
     }

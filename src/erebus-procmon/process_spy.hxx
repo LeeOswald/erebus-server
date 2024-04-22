@@ -54,7 +54,7 @@ private:
         std::string comm;
         std::string fileName;
         std::string argv;
-        uint64_t retVal = 0;
+        std::optional<uint64_t> retVal;
 
         ProcessInfo() noexcept = default;
 
@@ -69,6 +69,7 @@ private:
     };
 
     static int staticHandleEvent(void* ctx, void* data, size_t size) noexcept;
+    std::shared_ptr<ProcessInfo> lookupCurrent(uint64_t pid);
     int handleStart(const process_event_start_t* ev);
     int handleRetval(const process_event_retval_t* ev);
     int handleFilename(const process_event_data_t* ev);
@@ -83,6 +84,7 @@ private:
     bool m_attached = false;
     std::unique_ptr<std::jthread> m_worker;
     std::unordered_map<uint64_t, std::shared_ptr<ProcessInfo>> m_runningProcesses;
+    std::shared_ptr<ProcessInfo> m_starting;
 };
 
 
