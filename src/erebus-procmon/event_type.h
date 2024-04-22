@@ -1,10 +1,8 @@
 #pragma once
 
-enum event_type {
-    EVENT_FILENAME,
-    EVENT_ARG,
-    EVENT_COMM,
-    EVENT_CWD,
-    EVENT_ENV,
-    EVENT_RETVAL,
+enum process_event_type {
+    PROCESS_EVENT_START,
+    PROCESS_EVENT_FILENAME,
+    PROCESS_EVENT_ARG,
+    PROCESS_EVENT_RETVAL,
 };

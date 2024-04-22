@@ -12,39 +12,46 @@ namespace Private
 
 ProcessSpy::~ProcessSpy()
 {
+    detach();
+
     if (m_worker)
         m_worker.reset();
-
-    if (m_bpf)
-        sched_bpf::detach(m_bpf);
-
-    ::ring_buffer__free(m_ringBuffer);
-    sched_bpf::destroy(m_bpf);
 }
 
 ProcessSpy::ProcessSpy(Er::Log::ILog* log)
     : m_log(log)
-    , m_bpf(sched_bpf::open_and_load())
+    , m_bpf(process_bpf::open_and_load())
 {
     if (!m_bpf)
         throw Er::Exception(ER_HERE(), "Failed to load the BPF object");
 
-    auto err = sched_bpf::attach(m_bpf);
-    if (err)
-    {
-        sched_bpf::destroy(m_bpf);
-        throw Er::Exception(ER_HERE(), "Failed to attach to the BPF object");
-    }
-
-    m_ringBuffer = ::ring_buffer__new(::bpf_map__fd(m_bpf->maps.rb), staticHandleEvent, this, nullptr);
+    m_ringBuffer.reset(::ring_buffer__new(::bpf_map__fd(m_bpf->maps.g_ringbuf), staticHandleEvent, this, nullptr));
     if (!m_ringBuffer)
-    {
-        sched_bpf::detach(m_bpf);
-        sched_bpf::destroy(m_bpf);
         throw Er::Exception(ER_HERE(), "Failed to create a ring buffer");
-    }
-
+    
     m_worker.reset(new std::jthread([this](std::stop_token stop){ worker(stop); }));
+
+    attach();
+}
+
+void ProcessSpy::attach()
+{
+    assert(!m_attached);
+    
+    auto err = process_bpf::attach(m_bpf);
+    if (err)
+        throw Er::Exception(ER_HERE(), "Failed to attach to the BPF object");
+
+    m_attached = true;
+}
+
+void ProcessSpy::detach()
+{
+    if (m_attached)
+    {
+        process_bpf::detach(m_bpf);
+        m_attached = false;
+    }
 }
 
 void ProcessSpy::worker(std::stop_token stop) noexcept
@@ -72,29 +79,89 @@ int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
     auto this_ = static_cast<ProcessSpy*>(ctx);
     assert(this_);
 
-    auto ev = static_cast<const sched_event*>(data);
-    return this_->handleEvent(ev);
-}
-
-int ProcessSpy::handleEvent(const sched_event* ev) noexcept
-{
     return Er::protectedCall<int>(
-        m_log,
-        LogInstance("ProcessSpy"),
-        [this, ev]()
+        this_->m_log,
+        LogComponent("ProcessSpy"),
+        [this_, ctx, data, size]()
         {
-            if (ev->exit_event) 
+            auto header = static_cast<const process_event_header_t*>(data);
+            switch (header->type)
             {
-                LogInfo(m_log, LogInstance("ProcessSpy"), "%-5s %-16s %-7d %-7d [%u]", "EXIT", ev->comm, ev->pid, ev->ppid, ev->exit_code);
-            } 
-            else 
-            {
-                LogInfo(m_log, LogInstance("ProcessSpy"), "%-5s %-16s %-7d %-7d %s\n", "EXEC", ev->comm, ev->pid, ev->ppid, ev->filename);
+            case PROCESS_EVENT_START: return this_->handleStart(static_cast<const process_event_start_t*>(data));
+            case PROCESS_EVENT_RETVAL: return this_->handleRetval(static_cast<const process_event_retval_t*>(data));
+            case PROCESS_EVENT_FILENAME: return this_->handleFilename(static_cast<const process_event_data_t*>(data));
+            case PROCESS_EVENT_ARG: return this_->handleArg(static_cast<const process_event_data_t*>(data));
             }
 
+            LogError(this_->m_log, LogComponent("ProcessSpy"), "Unknown process event type %d", header->type);
             return 0;
         }
     );
+}
+
+int ProcessSpy::handleStart(const process_event_start_t* ev)
+{
+    auto process = std::make_shared<ProcessInfo>(ev);
+    auto r = m_runningProcesses.insert({ uint64_t(ev->header.pid), process });
+    if (!r.second)
+        LogWarning(m_log, LogComponent("ProcessSpy"), "Reusing existing PID %zu", ev->header.pid);
+
+    return 0;
+}
+
+int ProcessSpy::handleRetval(const process_event_retval_t* ev)
+{
+    auto it = m_runningProcesses.find(uint64_t(ev->header.pid));
+    if (it == m_runningProcesses.end())
+    {
+        LogWarning(m_log, LogComponent("ProcessSpy"), "Non-existing PID %zu", ev->header.pid);
+    }
+    else
+    {
+        it->second->retVal = ev->retval;
+    }
+
+    return 0;
+}
+
+int ProcessSpy::handleFilename(const process_event_data_t* ev)
+{
+    auto it = m_runningProcesses.find(uint64_t(ev->header.pid));
+    if (it == m_runningProcesses.end())
+    {
+        LogWarning(m_log, LogComponent("ProcessSpy"), "Non-existing PID %zu", ev->header.pid);
+    }
+    else
+    {
+        it->second->fileName.assign(ev->data);
+    }
+
+    return 0;
+}
+
+int ProcessSpy::handleArg(const process_event_data_t* ev)
+{
+    auto it = m_runningProcesses.find(uint64_t(ev->header.pid));
+    if (it == m_runningProcesses.end())
+    {
+        LogWarning(m_log, LogComponent("ProcessSpy"), "Non-existing PID %zu", ev->header.pid);
+    }
+    else
+    {
+        it->second->argv.append(" ");
+        it->second->argv.append(ev->data);
+
+        issueProcessStart(it->second);
+
+        m_runningProcesses.erase(it);
+    }
+
+    return 0;
+}
+    
+void ProcessSpy::issueProcessStart(std::shared_ptr<ProcessInfo> info)
+{
+    LogInfo(m_log, LogNowhere(), "%d EXECVE pid=%zu; ppid=%zu; uid=%zu; sid=%zu; [%s] [%s] %s", int(info->retVal), info->pid, info->ppid, info->uid, info->sid, info->comm.c_str(), info->fileName.c_str(), info->argv.c_str());
 }
 
 } // namespace Private {}
