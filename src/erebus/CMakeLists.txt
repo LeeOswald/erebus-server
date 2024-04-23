@@ -47,6 +47,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/system/process.hxx
     ../../include/erebus/system/thread.hxx
     ../../include/erebus/system/time.hxx
+    ../../include/erebus/system/timestamp.hxx
     ../../include/erebus/system/user.hxx
     ../../include/erebus/trackable.hxx
     ../../include/erebus/tree.hxx
@@ -68,6 +69,7 @@ add_library(${EREBUS_LIB} SHARED
     system/process.cxx
     system/thread.cxx
     system/time.cxx
+    system/timestamp.cxx
     util/exceptionutil.cxx
     util/file.cxx
     util/format.cxx
