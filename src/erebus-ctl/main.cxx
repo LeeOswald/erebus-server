@@ -183,7 +183,7 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
             return;
         }
 
-        auto pid = std::any_cast<uint64_t>(it->second.value);
+        auto pid = std::get<uint64_t>(it->second.value);
 
         it = info.find(Er::ProcessProps::IsDeleted::Id::value);
         if (it != info.end())
@@ -199,14 +199,14 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
             return;
         }
 
-        auto valid = std::any_cast<bool>(it->second.value);
+        auto valid = std::get<bool>(it->second.value);
         if (!valid)
         {
             it = info.find(Er::ProcessProps::Error::Id::value);
             if (it != info.end())
                 log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu", pid);
             else
-                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu: %s", pid, std::any_cast<std::string>(it->second.value).c_str());
+                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu: %s", pid, std::get<std::string>(it->second.value).c_str());
 
             return;
         }

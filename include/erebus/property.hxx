@@ -4,11 +4,11 @@
 #include <erebus/system/time.hxx>
 #include <erebus/util/crc32.hxx>
 
-#include <any>
 #include <iomanip>
 #include <ostream>
 #include <typeinfo>
 #include <unordered_map>
+#include <variant>
 
 
 namespace Er
@@ -37,7 +37,6 @@ concept SupportedPropertyType =
     std::is_same_v<T, uint64_t> ||
     std::is_same_v<T, double> ||
     std::is_same_v<T, std::string> ||
-    std::is_same_v<T, int32_t> ||
     std::is_same_v<T, Bytes>;
 
 
@@ -128,13 +127,18 @@ struct IPropertyInfo;
 
 struct Property
 {
-    Property() = default;
+    using Value = std::variant<
+        bool,
+        int32_t,
+        uint32_t,
+        int64_t,
+        uint64_t,
+        double,
+        std::string,
+        Bytes
+    >;
 
-    Property(PropId id, std::any&& value, IPropertyInfo* info = nullptr) noexcept
-        : id(id)
-        , value(std::move(value))
-        , info(info)
-    {}
+    Property() = default;
 
     template <typename ValueT>
     Property(PropId id, ValueT&& value, IPropertyInfo* info = nullptr) noexcept
@@ -144,7 +148,7 @@ struct Property
     {}
 
     PropId id = InvalidPropId;
-    std::any value;
+    Value value;
     mutable IPropertyInfo* info = nullptr;
 };
 
@@ -162,13 +166,13 @@ struct NeverEqualPropertyComparator
 
 struct BytesComparator
 {
-    bool operator()(const Property& a, const Property& b) { return std::any_cast<Bytes>(a.value) == std::any_cast<Bytes>(b.value); }
+    bool operator()(const Property& a, const Property& b) { return std::get<Bytes>(a.value) == std::get<Bytes>(b.value); }
 };
 
 template <std::equality_comparable T>
 struct PropertyComparator<T>
 {
-    bool operator()(const Property& a, const Property& b) { return std::any_cast<T>(a.value) == std::any_cast<T>(b.value); }
+    bool operator()(const Property& a, const Property& b) { return std::get<T>(a.value) == std::get<T>(b.value); }
 };
 
 
@@ -180,19 +184,19 @@ struct NullPropertyFormatter
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, bool>::value>>
 {
-    void operator()(const Property& v, std::ostream& s) { s << std::boolalpha << std::any_cast<T>(v.value); }
+    void operator()(const Property& v, std::ostream& s) { s << std::boolalpha << std::get<T>(v.value); }
 };
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>>
 {
-    void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
+    void operator()(const Property& v, std::ostream& s) { s << std::get<T>(v.value); }
 };
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value>>
 {
-    void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
+    void operator()(const Property& v, std::ostream& s) { s << std::get<T>(v.value); }
 };
 
 
@@ -209,7 +213,7 @@ struct TimeFormatter
 
     void operator()(const Property& v, std::ostream& s) 
     {
-        auto packed = std::any_cast<uint64_t>(v.value);
+        auto packed = std::get<uint64_t>(v.value);
         Er::System::Time unpacked;
         if constexpr (Zone == TimeZone::Utc)
             unpacked = Er::System::Time::gmt(packed);
@@ -304,7 +308,7 @@ std::optional<typename PropT::ValueType> getProperty(const PropertyBag& bag)
     if (it == bag.end())
         return std::nullopt;
 
-    return std::make_optional<typename PropT::ValueType>(std::any_cast<typename PropT::ValueType>(it->second.value));
+    return std::make_optional<typename PropT::ValueType>(std::get<typename PropT::ValueType>(it->second.value));
 } 
 
 
@@ -316,7 +320,7 @@ typename PropT::ValueType getProperty(const PropertyBag& bag, typename PropT::Va
     if (it == bag.end())
         return typename PropT::ValueType(std::forward<typename PropT::ValueType>(defaultValue));
 
-    return std::any_cast<typename PropT::ValueType>(it->second.value);
+    return std::get<typename PropT::ValueType>(it->second.value);
 }
 
 

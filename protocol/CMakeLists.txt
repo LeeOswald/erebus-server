@@ -46,6 +46,7 @@ add_custom_command(
 
 
 add_library(${EREBUS_PROTOLIB} STATIC
+    erebus/protocol.hxx
     ${COMMON_PB_CC}
     ${COMMON_PB_H}
     ${COMMON_GRPC_PB_CC}

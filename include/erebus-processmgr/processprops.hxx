@@ -26,7 +26,7 @@ struct IconFormatter
 {
     void operator()(const Property& v, std::ostream& s) 
     { 
-        auto ico = std::any_cast<Bytes>(v.value); 
+        auto ico = std::get<Bytes>(v.value); 
         if (ico.empty())
             s << "[null icon]";
         else
@@ -38,7 +38,7 @@ struct CpuTimeFormatter
 {
     void operator()(const Property& v, std::ostream& s) 
     { 
-        auto val = std::any_cast<double>(v.value); 
+        auto val = std::get<double>(v.value); 
         s << std::fixed << std::setprecision(2) << val << std::dec;
     }
 };
@@ -47,7 +47,7 @@ struct CpuLoadFormatter
 {
     void operator()(const Property& v, std::ostream& s) 
     { 
-        auto val = std::any_cast<double>(v.value);
+        auto val = std::get<double>(v.value);
         val *= 100; 
         val = std::clamp(val, 0.0, 100.0);
         s << std::fixed << std::setprecision(2) << static_cast<unsigned>(val) << std::dec;
@@ -58,7 +58,7 @@ struct MemUnitFormatter
 {
     void operator()(const Property& v, std::ostream& s) 
     { 
-        auto val = std::any_cast<uint64_t>(v.value);
+        auto val = std::get<uint64_t>(v.value);
         if (val < 10ULL * 1024)
             s << val << " B";
         else if (val < 10ULL * 1024 * 1024)

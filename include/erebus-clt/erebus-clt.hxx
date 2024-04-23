@@ -75,7 +75,7 @@ inline StreamT& operator<<(StreamT& stream, ResultCode code)
 
 struct ResultCodeFormatter
 {
-    void operator()(const Property& v, std::ostream& s) { s << static_cast<ResultCode>(std::any_cast<int32_t>(v.value)); }
+    void operator()(const Property& v, std::ostream& s) { s << static_cast<ResultCode>(std::get<int32_t>(v.value)); }
 };
 
 

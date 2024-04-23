@@ -4,8 +4,8 @@
 #include <erebus/util/sha256.hxx>
 #include <erebus-clt/erebus-clt.hxx>
 
+#include <erebus/protocol.hxx>
 #include <grpcpp/grpcpp.h>
-
 #include <erebus/erebus.grpc.pb.h>
 
 #include <atomic>
@@ -188,31 +188,7 @@ public:
         for (auto& arg: args)
         {
             auto a = request.add_args();
-            a->set_id(arg.second.id);
-            auto info = Er::getPropertyInfo(arg.second);
-            assert(info);
-            if (!info)
-                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08x", arg.second.id));
-
-            auto& type = info->type();
-            if (type == typeid(bool))
-                a->set_v_bool(std::any_cast<bool>(arg.second.value));
-            else if (type == typeid(int32_t))
-                a->set_v_int32(std::any_cast<int32_t>(arg.second.value));
-            else if (type == typeid(uint32_t))
-                a->set_v_uint32(std::any_cast<uint32_t>(arg.second.value));
-            else if (type == typeid(int64_t))
-                a->set_v_int64(std::any_cast<int64_t>(arg.second.value));
-            else if (type == typeid(uint64_t))
-                a->set_v_uint64(std::any_cast<uint64_t>(arg.second.value));
-            else if (type == typeid(double))
-                a->set_v_double(std::any_cast<double>(arg.second.value));
-            else if (type == typeid(std::string))
-                a->set_v_string(std::any_cast<std::string>(arg.second.value));
-            else if (type == typeid(Er::Bytes))
-                a->set_v_bytes(std::any_cast<Er::Bytes>(arg.second.value).bytes());
-            else
-                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
+            Er::Protocol::assignProperty(*a, arg.second);
         }
 
         erebus::ServiceReply reply;
@@ -272,32 +248,7 @@ public:
         for (auto& arg: args)
         {
             auto a = request.add_args();
-            a->set_id(arg.second.id);
-            
-            auto info = Er::getPropertyInfo(arg.second);
-            assert(info);
-            if (!info)
-                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08x", arg.second.id));
-
-            auto& type = info->type();
-            if (type == typeid(bool))
-                a->set_v_bool(std::any_cast<bool>(arg.second.value));
-            else if (type == typeid(int32_t))
-                a->set_v_int32(std::any_cast<int32_t>(arg.second.value));
-            else if (type == typeid(uint32_t))
-                a->set_v_uint32(std::any_cast<uint32_t>(arg.second.value));
-            else if (type == typeid(int64_t))
-                a->set_v_int64(std::any_cast<int64_t>(arg.second.value));
-            else if (type == typeid(uint64_t))
-                a->set_v_uint64(std::any_cast<uint64_t>(arg.second.value));
-            else if (type == typeid(double))
-                a->set_v_double(std::any_cast<double>(arg.second.value));
-            else if (type == typeid(std::string))
-                a->set_v_string(std::any_cast<std::string>(arg.second.value));
-            else if (type == typeid(Er::Bytes))
-                a->set_v_bytes(std::any_cast<Er::Bytes>(arg.second.value).bytes());
-            else
-                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %s", type.name()));
+            Er::Protocol::assignProperty(*a, arg.second);
         }
 
         grpc::ClientContext context;
