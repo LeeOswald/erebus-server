@@ -40,32 +40,6 @@ TEST(Er_Exception, simple)
     }
 }
 
-TEST(Er_Exception, props)
-{
-    try
-    {
-        throw Er::Exception(ER_HERE(), "Test exception 2").add(1, "value1").add(2, 1991);
-    }
-    catch (Er::Exception& e)
-    {
-        EXPECT_STREQ(e.what(), "Test exception 2");
-
-        auto props = e.properties();
-        ASSERT_NE(props, nullptr);
-        EXPECT_EQ(props->size(), 2);
-
-        auto p0 = e.find(1);
-        ASSERT_NE(p0, nullptr);
-        EXPECT_EQ(p0->id, 1);
-        EXPECT_STREQ(std::any_cast<const char*>(p0->value), "value1");
-
-        auto p1 = e.find(2);
-        ASSERT_NE(p1, nullptr);
-        EXPECT_EQ(p1->id, 2);
-        EXPECT_EQ(std::any_cast<int>(p1->value), 1991);
-    }
-}
-
 TEST(Er_Exception, known_props)
 {
     try
@@ -83,12 +57,12 @@ TEST(Er_Exception, known_props)
         auto code = e.find(Er::ExceptionProps::PosixErrorCode::Id::value);
         ASSERT_NE(code, nullptr);
         EXPECT_EQ(code->id, Er::ExceptionProps::PosixErrorCode::Id::value);
-        EXPECT_EQ(std::any_cast<int>(code->value), ENOENT);
+        EXPECT_EQ(std::get<Er::ExceptionProps::PosixErrorCode::ValueType>(code->value), ENOENT);
 
         auto text = e.find(Er::ExceptionProps::DecodedError::Id::value);
         ASSERT_NE(text, nullptr);
         EXPECT_EQ(text->id, Er::ExceptionProps::DecodedError::Id::value);
-        EXPECT_STREQ(std::any_cast<std::string>(text->value).c_str(), "ENOENT");
+        EXPECT_EQ(std::get<Er::ExceptionProps::DecodedError::ValueType>(text->value), std::string_view("ENOENT"));
 
     }
 }

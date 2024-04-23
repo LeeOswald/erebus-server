@@ -30,42 +30,110 @@ struct PropertyFormatter;
 
 template <typename T>
 concept SupportedPropertyType = 
-    std::is_same_v<T, bool> ||
-    std::is_same_v<T, int32_t> ||
-    std::is_same_v<T, uint32_t> ||
-    std::is_same_v<T, int64_t> ||
-    std::is_same_v<T, uint64_t> ||
-    std::is_same_v<T, double> ||
-    std::is_same_v<T, std::string> ||
-    std::is_same_v<T, Bytes>;
+    std::is_same_v<std::remove_cvref_t<T>, bool> ||
+    std::is_same_v<std::remove_cvref_t<T>, int32_t> ||
+    std::is_same_v<std::remove_cvref_t<T>, uint32_t> ||
+    std::is_same_v<std::remove_cvref_t<T>, int64_t> ||
+    std::is_same_v<std::remove_cvref_t<T>, uint64_t> ||
+    std::is_same_v<std::remove_cvref_t<T>, double> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::string> ||
+    std::is_same_v<std::remove_cvref_t<T>, Bytes>;
+
+
+using PropertyValueStorage = std::variant<
+    bool,
+    int32_t,
+    uint32_t,
+    int64_t,
+    uint64_t,
+    double,
+    std::string,
+    Bytes
+>;
+
+
+enum class PropertyType : std::size_t
+{
+    Invalid = std::variant_npos,
+    Bool = 0,
+    Int32,
+    UInt32,
+    Int64,
+    UInt64,
+    Double,
+    String,
+    Bytes
+};
 
 
 template <typename T>
-concept MinimalProperty = 
-    requires
-    {
-        typename T::ValueType;
-        typename T::Comparator;
-        typename T::Formatter;
+struct PropertyTypeFrom;
 
-        requires std::same_as<std::decay_t<typename T::Id::value_type>, PropId>;
-        { T::type() } -> std::same_as<const std::type_info&>;
-        { T::id() } -> std::same_as<PropId>;
-        { T::idstr() } -> std::same_as<const char*>;
-        { T::name() } -> std::same_as<const char*>;
-    };
+template <>
+struct PropertyTypeFrom<bool>
+{
+    static constexpr PropertyType type = PropertyType::Bool;
+};
+
+template <>
+struct PropertyTypeFrom<int32_t>
+{
+    static constexpr PropertyType type = PropertyType::Int32;
+};
+
+template <>
+struct PropertyTypeFrom<uint32_t>
+{
+    static constexpr PropertyType type = PropertyType::UInt32;
+};
+
+template <>
+struct PropertyTypeFrom<int64_t>
+{
+    static constexpr PropertyType type = PropertyType::Int64;
+};
+
+template <>
+struct PropertyTypeFrom<uint64_t>
+{
+    static constexpr PropertyType type = PropertyType::UInt64;
+};
+
+template <>
+struct PropertyTypeFrom<double>
+{
+    static constexpr PropertyType type = PropertyType::Double;
+};
+
+template <>
+struct PropertyTypeFrom<std::string>
+{
+    static constexpr PropertyType type = PropertyType::String;
+};
+
+template <>
+struct PropertyTypeFrom<Bytes>
+{
+    static constexpr PropertyType type = PropertyType::Bytes;
+};
+
 
 
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
 class PropertyInfo
 {
 public:
-    using ValueType = ValueT;
+    using ValueType = std::decay_t<ValueT>;
     using Id = std::integral_constant<PropId, PrId>;
     using Comparator = ComparatorT;
     using Formatter = FormatterT;
+    
+    static constexpr PropertyType type() noexcept
+    {
+        return PropertyTypeFrom<ValueType>::type;
+    }
 
-    static constexpr const std::type_info& type() noexcept
+    static constexpr const std::type_info& type_info() noexcept
     {
         return typeid(ValueT);
     }
@@ -75,7 +143,7 @@ public:
         return Id::value;
     }
 
-    static constexpr const char* idstr() noexcept
+    static constexpr const char* id_str() noexcept
     {
         return fromStringLiteral<PrIdStr>();
     }
@@ -87,28 +155,34 @@ public:
 };
 
 
+struct PropertyValueTag
+{
+};
+
+
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
 class PropertyValue final
     : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
 {
 public:
     using Base = PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>;
-    using ValueType = Base::ValueType;
+    using ValueType = typename Base::ValueType;
     using Id = Base::Id;
     using Comparator = ComparatorT;
-    using Formatter = Base::Formatter;
+    using Formatter = typename Base::Formatter;
+    using Tag = PropertyValueTag;
 
-    PropertyValue() noexcept = default;
+    PropertyValue() noexcept(noexcept(ValueType())) = default;
 
-    constexpr PropertyValue(const ValueT& value)
+    constexpr PropertyValue(const ValueT& value) noexcept(noexcept(ValueType(value)))
         : m_value(value)
     {}
 
-    constexpr PropertyValue(ValueT&& value) noexcept
+    constexpr PropertyValue(ValueT&& value) noexcept(noexcept(ValueType(std::move(value))))
         : m_value(std::move(value))
     {}
 
-    constexpr ValueType&& value() && noexcept
+    constexpr ValueType&& value() && noexcept(noexcept(std::move(m_value)))
     {
         return std::move(m_value);
     }
@@ -123,35 +197,64 @@ private:
 };
 
 
-struct IPropertyInfo;
-
-struct Property
+template <typename T>
+concept IsPropertyValue =
+    requires
 {
-    using Value = std::variant<
-        bool,
-        int32_t,
-        uint32_t,
-        int64_t,
-        uint64_t,
-        double,
-        std::string,
-        Bytes
-    >;
+    typename T::ValueType;
+    typename T::Comparator;
+    typename T::Formatter;
 
-    Property() = default;
-
-    template <typename ValueT>
-    Property(PropId id, ValueT&& value, IPropertyInfo* info = nullptr) noexcept
-        : id(id)
-        , value(std::forward<ValueT>(value))
-        , info(info)
-    {}
-
-    PropId id = InvalidPropId;
-    Value value;
-    mutable IPropertyInfo* info = nullptr;
+    requires std::same_as<typename T::Tag, PropertyValueTag>;
+    requires std::same_as<std::decay_t<typename T::Id::value_type>, PropId>;
+    { T::type_info() } -> std::same_as<const std::type_info&>;
+    { T::id() } -> std::same_as<PropId>;
+    { T::id_str() } -> std::same_as<const char*>;
+    { T::name() } -> std::same_as<const char*>;
 };
 
+
+
+struct IPropertyInfo;
+
+
+struct EREBUS_EXPORT Property
+{
+    Property() noexcept = default;
+
+    template <IsPropertyValue PropertyValueT>
+    Property(PropertyValueT&& pv)
+        : id(pv.id())
+        , value(std::forward<PropertyValueT>(pv).value())
+        , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
+    {
+#if ER_DEBUG
+        checkProperty();
+#endif
+    }
+
+    template <SupportedPropertyType ValueT>
+    Property(PropId id, ValueT&& value, IPropertyInfo* info = nullptr)
+        : id(id)
+        , value(std::forward<ValueT>(value))
+        , type(static_cast<PropertyType>(this->value.index()))
+        , info(info)
+    {
+#if ER_DEBUG
+        checkProperty();
+#endif
+    }
+
+    PropId id = InvalidPropId;
+    PropertyValueStorage value;
+    PropertyType type = PropertyType::Invalid;
+    mutable IPropertyInfo* info = nullptr;
+
+private:
+#if ER_DEBUG
+    void checkProperty();
+#endif
+};
 
 
 struct AlwaysEqualPropertyComparator
@@ -236,9 +339,10 @@ struct IPropertyInfo
 {
     using Ptr = std::shared_ptr<IPropertyInfo>;
 
-    virtual const std::type_info& type() const noexcept = 0;
+    virtual PropertyType type() const noexcept = 0;
+    virtual const std::type_info& type_info() const noexcept = 0;
     virtual PropId id() const noexcept = 0;
-    virtual const char* idstr() const noexcept = 0;
+    virtual const char* id_str() const noexcept = 0;
     virtual const char* name() const noexcept = 0;
     virtual void format(const Property& v, std::ostream& s) const = 0;
     virtual bool equal(const Property& a, const Property& b) const noexcept = 0;
@@ -256,9 +360,14 @@ struct PropertyInfoWrapper
     using Comparator = typename PropertyInfo::Comparator;
     using Formatter = typename PropertyInfo::Formatter;
 
-    const std::type_info& type() const noexcept override
+    PropertyType type() const noexcept override
     {
         return PropertyInfo::type();
+    }
+
+    const std::type_info& type_info() const noexcept override
+    {
+        return PropertyInfo::type_info();
     }
 
     PropId id() const noexcept override
@@ -266,9 +375,9 @@ struct PropertyInfoWrapper
         return PropertyInfo::id();
     }
 
-    const char* idstr() const noexcept override
+    const char* id_str() const noexcept override
     {
-        return PropertyInfo::idstr();
+        return PropertyInfo::id_str();
     }
 
     const char* name() const noexcept override
@@ -300,7 +409,7 @@ inline bool propertyPresent(const PropertyBag& bag, PropId id) noexcept
 }
 
 
-template <MinimalProperty PropT>
+template <IsPropertyValue PropT>
 std::optional<typename PropT::ValueType> getProperty(const PropertyBag& bag)
 {
     using Id = typename PropT::Id;
@@ -308,11 +417,11 @@ std::optional<typename PropT::ValueType> getProperty(const PropertyBag& bag)
     if (it == bag.end())
         return std::nullopt;
 
-    return std::make_optional<typename PropT::ValueType>(std::get<typename PropT::ValueType>(it->second.value));
+    return std::optional<typename PropT::ValueType>(std::get<typename PropT::ValueType>(it->second.value));
 } 
 
 
-template <MinimalProperty PropT>
+template <IsPropertyValue PropT>
 typename PropT::ValueType getProperty(const PropertyBag& bag, typename PropT::ValueType&& defaultValue)
 {
     using Id = typename PropT::Id;
@@ -324,13 +433,13 @@ typename PropT::ValueType getProperty(const PropertyBag& bag, typename PropT::Va
 }
 
 
-template <MinimalProperty PropT>
+template <IsPropertyValue PropT>
 void addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
 {
     bag.insert({ PropT::id(), Er::Property(PropT::id(), v) });
 }
 
-template <MinimalProperty PropT>
+template <IsPropertyValue PropT>
 void addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
 {
     bag.insert({ PropT::id(), Er::Property(PropT::id(), std::move(v)) });

@@ -64,44 +64,51 @@ inline void assignProperty(erebus::Property& out, const Property& source)
 {
     out.set_id(source.id);
 
-    std::visit(
-        [&out](auto&& arg)
-        {
-            Private::assignPropertyImpl(out, arg);
-        }, 
-        source.value
-    );
+    if (source.value.valueless_by_exception()) [[unlikely]]
+    {
+        out.clear_value();
+    }
+    else
+    {
+        std::visit(
+            [&out](auto&& arg)
+            {
+                Private::assignPropertyImpl(out, arg);
+            },
+            source.value
+        );
+    }
 }
 
 inline Property getProperty(const erebus::Property& source)
 {
     auto id = source.id();
     auto info = Er::lookupProperty(id);
-    if (!info)
+    if (!info) [[unlikely]]
     {
         throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08x", id));
     }
     else
     {
-        auto& type = info->type();
-        if (type == typeid(bool))
+        auto type = info->type();
+        if (type == PropertyType::Bool)
             return Property(id, source.v_bool(), info.get());
-        else if (type == typeid(int32_t))
+        else if (type == PropertyType::Int32)
             return Property(id, source.v_int32(), info.get());
-        else if (type == typeid(uint32_t))
+        else if (type == PropertyType::UInt32)
             return Property(id, source.v_uint32(), info.get());
-        else if (type == typeid(int64_t))
+        else if (type == PropertyType::Int64)
             return Property(id, source.v_int64(), info.get());
-        else if (type == typeid(uint64_t))
+        else if (type == PropertyType::UInt64)
             return Property(id, source.v_uint64(), info.get());
-        else if (type == typeid(double))
+        else if (type == PropertyType::Double)
             return Property(id, source.v_double(), info.get());
-        else if (type == typeid(std::string))
+        else if (type == PropertyType::String)
             return Property(id, source.v_string(), info.get());
-        else if (type == typeid(Bytes))
+        else if (type == PropertyType::Bytes)
             return Property(id, Bytes(source.v_bytes()), info.get());
         else
-            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->idstr(), type.name()));
+            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->id_str(), info->type_info().name()));
     }
 }
 

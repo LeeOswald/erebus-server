@@ -127,7 +127,19 @@ public:
         return nullptr;
     }
 
-    template <typename ValueT>
+    template <typename PropT>
+        requires std::is_same_v<std::remove_cvref_t<PropT>, Property>
+    Exception& add(PropT&& prop)
+    {
+        if (m_context)
+        {
+            m_context->addProp(std::forward<PropT>(prop));
+        }
+
+        return *this;
+    }
+
+    template <SupportedPropertyType ValueT>
     Exception& add(PropId id, ValueT&& value)
     {
         if (m_context)
@@ -138,12 +150,12 @@ public:
         return *this;
     }
 
-    template <typename PropT>
+    template <IsPropertyValue PropT>
     Exception& add(PropT&& prop)
     {
         if (m_context)
         {
-            m_context->addProp(prop.id(), (std::forward<PropT>(prop)).value());
+            m_context->addProp(std::forward<PropT>(prop));
         }
 
         return *this;
@@ -173,16 +185,23 @@ private:
             this->location = location;
         }
 
-        template <typename ValueT>
+        template <typename PropT>
+            requires std::is_same_v<std::remove_cvref_t<PropT>, Property>
+        void addProp(PropT&& prop)
+        {
+            properties.emplace_back(std::forward<PropT>(prop));
+        }
+
+        template <IsPropertyValue PropT>
+        void addProp(PropT&& prop)
+        {
+            properties.emplace_back(std::forward<PropT>(prop));
+        }
+
+        template <SupportedPropertyType ValueT>
         void addProp(PropId id, ValueT&& value)
         {
             properties.emplace_back(id, std::forward<ValueT>(value));
-        }
-
-        template <typename PropT>
-        void addProp(PropT&& prop)
-        {
-            properties.emplace_back(prop.id(), (std::forward<PropT>(prop)).value());
         }
     };
 

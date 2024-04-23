@@ -3,6 +3,9 @@
 #include <erebus/log.hxx>
 
 #include <iostream>
+#include <sstream>
+
+#include <boost/stacktrace.hpp>
 
 #if ER_DEBUG && defined(_MSC_VER)
 #include <crtdbg.h>
@@ -38,6 +41,16 @@ private:
     std::mutex m_mutex;
 };
 
+void terminateHandler()
+{
+    std::ostringstream ss;
+    ss << boost::stacktrace::stacktrace();
+
+    std::cerr << "std::terminate() called from\n" << ss.str();
+
+    std::abort();
+}
+
 int main(int argc, char** argv)
 {
 #if ER_POSIX
@@ -53,6 +66,8 @@ int main(int argc, char** argv)
     ::sigprocmask(SIG_BLOCK, &mask, nullptr);
 #endif
 
+    // setup std::terminate() handler
+    std::set_terminate(terminateHandler);
 
 #if ER_DEBUG && defined(_MSC_VER)
     int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);

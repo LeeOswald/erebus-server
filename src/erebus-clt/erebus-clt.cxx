@@ -205,33 +205,7 @@ public:
         {
             auto& prop = reply.props(i);
             auto id = prop.id();
-            auto info = Er::lookupProperty(id);
-            if (!info)
-            {
-                m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property 0x%08x", id);
-            }
-            else
-            {
-                auto& type = info->type();
-                if (type == typeid(bool))
-                    bag.insert({ id, Er::Property(id, prop.v_bool()) });
-                else if (type == typeid(int32_t))
-                    bag.insert({ id, Er::Property(id, prop.v_int32()) });
-                else if (type == typeid(uint32_t))
-                    bag.insert({ id, Er::Property(id, prop.v_uint32()) });
-                else if (type == typeid(int64_t))
-                    bag.insert({ id, Er::Property(id, prop.v_int64()) });
-                else if (type == typeid(uint64_t))
-                    bag.insert({ id, Er::Property(id, prop.v_uint64()) });
-                else if (type == typeid(double))
-                    bag.insert({ id, Er::Property(id, prop.v_double()) });
-                else if (type == typeid(std::string))
-                    bag.insert({ id, Er::Property(id, prop.v_string()) });
-                else if (type == typeid(Er::Bytes))
-                    bag.insert({ id, Er::Property(id, Er::Bytes(prop.v_bytes())) });
-                else
-                    m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property type %s", type.name());
-            }
+            bag.insert({ id, Er::Protocol::getProperty(prop) });
         }
 
         return bag;
@@ -268,33 +242,7 @@ public:
             {
                 auto& prop = reply.props(i);
                 auto id = prop.id();
-                auto info = Er::lookupProperty(id);
-                if (!info)
-                {
-                    m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property 0x%08x", id);
-                }
-                else
-                {
-                    auto& type = info->type();
-                    if (type == typeid(bool))
-                        bag.insert({ id, Er::Property(id, prop.v_bool()) });
-                    else if (type == typeid(int32_t))
-                        bag.insert({ id, Er::Property(id, prop.v_int32()) });
-                    else if (type == typeid(uint32_t))
-                        bag.insert({ id, Er::Property(id, prop.v_uint32()) });
-                    else if (type == typeid(int64_t))
-                        bag.insert({ id, Er::Property(id, prop.v_int64()) });
-                    else if (type == typeid(uint64_t))
-                        bag.insert({ id, Er::Property(id, prop.v_uint64()) });
-                    else if (type == typeid(double))
-                        bag.insert({ id, Er::Property(id, prop.v_double()) });
-                    else if (type == typeid(std::string))
-                        bag.insert({ id, Er::Property(id, prop.v_string()) });
-                    else if (type == typeid(Er::Bytes))
-                        bag.insert({ id, Er::Property(id, Er::Bytes(prop.v_bytes())) });
-                    else
-                        m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported property type %s", type.name());
-                }
+                bag.insert({ id, Er::Protocol::getProperty(prop) });
             }
 
             if (!bag.empty())
@@ -465,34 +413,7 @@ private:
             for (int i = 0; i < propCount; ++i)
             {
                 auto& prop = exception.props(i);
-                auto id = prop.id();
-                auto info = Er::lookupProperty(id);
-                if (!info)
-                {
-                    m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported exception property 0x%08x", id);
-                }
-                else
-                {
-                    auto& type = info->type();
-                    if (type == typeid(bool))
-                        unmarshaledException.add(id, prop.v_bool());
-                    else if (type == typeid(int32_t))
-                        unmarshaledException.add(id, prop.v_int32());
-                    else if (type == typeid(uint32_t))
-                        unmarshaledException.add(id, prop.v_uint32());
-                    else if (type == typeid(int64_t))
-                        unmarshaledException.add(id, prop.v_int64());
-                    else if (type == typeid(uint64_t))
-                        unmarshaledException.add(id, prop.v_uint64());
-                    else if (type == typeid(double))
-                        unmarshaledException.add(id, prop.v_double());
-                    else if (type == typeid(std::string))
-                        unmarshaledException.add(id, prop.v_string());
-                    else if (type == typeid(Bytes))
-                        unmarshaledException.add(id, Bytes(prop.v_bytes()));
-                    else
-                        m_params.log->write(Er::Log::Level::Error, LogComponent("ClientImpl"), "Unsupported exception property type %s", type.name());
-                }
+                unmarshaledException.add(Er::Protocol::getProperty(prop));
             }
             
             throw unmarshaledException;

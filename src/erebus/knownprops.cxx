@@ -54,16 +54,16 @@ EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log)
     auto ret1 = s_registry->propsById.insert({ pi->id(), pi });
     if (!ret1.second)
     {
-        throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->idstr()));
+        throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->id_str()));
     }
 
-    auto ret2 = s_registry->propsByName.insert({ pi->idstr(), pi });
+    auto ret2 = s_registry->propsByName.insert({ pi->id_str(), pi });
     if (!ret2.second)
     {
-        throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->idstr()));
+        throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->id_str()));
     }
 
-    LogDebug(log, LogNowhere(), "Registered property %08x (%s)", pi->id(), pi->idstr());
+    LogDebug(log, LogNowhere(), "Registered property %08x (%s)", pi->id(), pi->id_str());
 }
 
 EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log) noexcept
@@ -79,13 +79,13 @@ EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log)
         s_registry->propsById.erase(it1);
     }
 
-    auto it2 = s_registry->propsByName.find(pi->idstr());
+    auto it2 = s_registry->propsByName.find(pi->id_str());
     if (it2 != s_registry->propsByName.end())
     {
         s_registry->propsByName.erase(it2);
     }
 
-    LogDebug(log, LogNowhere(), "Unregistered property %08x (%s)", pi->id(), pi->idstr());
+    LogDebug(log, LogNowhere(), "Unregistered property %08x (%s)", pi->id(), pi->id_str());
 }
 
 EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id) noexcept
@@ -109,5 +109,33 @@ EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id) noexcept
 
     return it->second;
 }
+
+
+#if ER_DEBUG
+void Property::checkProperty()
+{
+    auto info_ = info ? info : Er::lookupProperty(id).get();
+    assert(info_);
+    auto& type_ = info_->type_info();
+    if (type_ == typeid(bool))
+        assert(type == PropertyType::Bool);
+    else if (type_ == typeid(int32_t))
+        assert(type == PropertyType::Int32);
+    else if (type_ == typeid(uint32_t))
+        assert(type == PropertyType::UInt32);
+    else if (type_ == typeid(int64_t))
+        assert(type == PropertyType::Int64);
+    else if (type_ == typeid(uint64_t))
+        assert(type == PropertyType::UInt64);
+    else if (type_ == typeid(double))
+        assert(type == PropertyType::Double);
+    else if (type_ == typeid(std::string))
+        assert(type == PropertyType::String);
+    else if (type_ == typeid(Bytes))
+        assert(type == PropertyType::Bytes);
+    else
+        assert(!"Mismatched property type");
+}
+#endif
 
 } // namespace Er {}
