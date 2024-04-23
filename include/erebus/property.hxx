@@ -174,15 +174,15 @@ public:
 
     PropertyValue() noexcept(noexcept(ValueType())) = default;
 
-    constexpr PropertyValue(const ValueT& value) noexcept(noexcept(ValueType(value)))
+    constexpr PropertyValue(const ValueT& value) noexcept(std::is_nothrow_constructible_v<ValueType, const ValueT&>)
         : m_value(value)
     {}
 
-    constexpr PropertyValue(ValueT&& value) noexcept(noexcept(ValueType(std::move(value))))
+    constexpr PropertyValue(ValueT&& value) noexcept(std::is_nothrow_constructible_v<ValueType, ValueT&&>)
         : m_value(std::move(value))
     {}
 
-    constexpr ValueType&& value() && noexcept(noexcept(std::move(m_value)))
+    constexpr ValueType&& value() && noexcept
     {
         return std::move(m_value);
     }
@@ -223,7 +223,7 @@ struct EREBUS_EXPORT Property
     Property() noexcept = default;
 
     template <IsPropertyValue PropertyValueT>
-    Property(PropertyValueT&& pv)
+    Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, decltype(std::forward<PropertyValueT>(pv).value())>))
         : id(pv.id())
         , value(std::forward<PropertyValueT>(pv).value())
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
@@ -234,7 +234,7 @@ struct EREBUS_EXPORT Property
     }
 
     template <SupportedPropertyType ValueT>
-    Property(PropId id, ValueT&& value, IPropertyInfo* info = nullptr)
+    Property(PropId id, ValueT&& value, IPropertyInfo* info = nullptr) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, decltype(std::forward<ValueT>(value))>))
         : id(id)
         , value(std::forward<ValueT>(value))
         , type(static_cast<PropertyType>(this->value.index()))
