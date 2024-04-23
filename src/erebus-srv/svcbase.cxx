@@ -1,5 +1,6 @@
 #include "svcbase.hxx"
 
+#include <erebus/protocol.hxx>
 #include <erebus/system/thread.hxx>
 #include <erebus/util/format.hxx>
 
@@ -232,34 +233,8 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
         for (auto& property : *properties)
         {
             auto mutableProp = mutableProps->Add();
-            mutableProp->set_id(property.id);
-
-            auto info = Er::getPropertyInfo(property);
-            assert(info);
-            if (!info)
-                continue;
-            
-            auto& type = info->type();
-            if (type == typeid(bool))
-                mutableProp->set_v_bool(std::any_cast<bool>(property.value));
-            else if (type == typeid(int32_t))
-                mutableProp->set_v_int32(std::any_cast<int32_t>(property.value));
-            else if (type == typeid(uint32_t))
-                mutableProp->set_v_uint32(std::any_cast<uint32_t>(property.value));
-            else if (type == typeid(int64_t))
-                mutableProp->set_v_int64(std::any_cast<int64_t>(property.value));
-            else if (type == typeid(uint64_t))
-                mutableProp->set_v_uint64(std::any_cast<uint64_t>(property.value));
-            else if (type == typeid(double))
-                mutableProp->set_v_double(std::any_cast<double>(property.value));
-            else if (type == typeid(std::string))
-                mutableProp->set_v_string(std::any_cast<std::string>(property.value));
-            else if (type == typeid(Bytes))
-                mutableProp->set_v_bytes(std::any_cast<Bytes>(property.value).bytes());            
-            else
-                assert(!"unsupported property type");
+            Er::Protocol::assignProperty(*mutableProp, property);
         }
-
     }
 }
 
@@ -271,35 +246,8 @@ Er::PropertyBag ServiceBase::unmarshalArgs(const erebus::ServiceRequest* request
     for (int i = 0; i < count; ++i)
     {
         auto& arg = request->args(i);
-
         auto id = arg.id();
-        auto info = Er::lookupProperty(id);
-        if (!info)
-        {
-            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08x", id));
-        }
-        else
-        {
-            auto& type = info->type();
-            if (type == typeid(bool))
-                bag.insert({ PropId(id), Property(id, arg.v_bool()) });
-            else if (type == typeid(int32_t))
-                bag.insert({ PropId(id), Property(id, arg.v_int32()) });
-            else if (type == typeid(uint32_t))
-                bag.insert({ PropId(id), Property(id, arg.v_uint32()) });
-            else if (type == typeid(int64_t))
-                bag.insert({ PropId(id), Property(id, arg.v_int64()) });
-            else if (type == typeid(uint64_t))
-                bag.insert({ PropId(id), Property(id, arg.v_uint64()) });
-            else if (type == typeid(double))
-                bag.insert({ PropId(id), Property(id, arg.v_double()) });
-            else if (type == typeid(std::string))
-                bag.insert({ PropId(id), Property(id, arg.v_string()) });
-            else if (type == typeid(Bytes))
-                bag.insert({ PropId(id), Property(id, Bytes(arg.v_bytes())) });
-            else
-                throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->idstr(), type.name()));
-        }
+        bag.insert({ PropId(id), Er::Protocol::getProperty(arg) });
     }
 
     return bag;
@@ -314,32 +262,7 @@ void ServiceBase::marshalReplyProps(const Er::PropertyBag& props, erebus::Servic
     for (auto& prop: props)
     {
         auto mutableProp = out->Add();
-        mutableProp->set_id(prop.second.id);
-
-        auto info = Er::getPropertyInfo(prop.second);
-        if (!info)
-            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08d", prop.second.id));
-
-        auto& type = info->type();
-
-        if (type == typeid(bool))
-            mutableProp->set_v_bool(std::any_cast<bool>(prop.second.value));
-        else if (type == typeid(int32_t))
-            mutableProp->set_v_int32(std::any_cast<int32_t>(prop.second.value));
-        else if (type == typeid(uint32_t))
-            mutableProp->set_v_uint32(std::any_cast<uint32_t>(prop.second.value));
-        else if (type == typeid(int64_t))
-            mutableProp->set_v_int64(std::any_cast<int64_t>(prop.second.value));
-        else if (type == typeid(uint64_t))
-            mutableProp->set_v_uint64(std::any_cast<uint64_t>(prop.second.value));
-        else if (type == typeid(double))
-            mutableProp->set_v_double(std::any_cast<double>(prop.second.value));
-        else if (type == typeid(std::string))
-            mutableProp->set_v_string(std::any_cast<std::string>(prop.second.value));
-        else if (type == typeid(Bytes))
-            mutableProp->set_v_bytes(std::any_cast<Bytes>(prop.second.value).bytes());
-        else
-            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->idstr(), type.name()));
+        Er::Protocol::assignProperty(*mutableProp, prop.second);
     }
 }
 
