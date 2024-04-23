@@ -1,9 +1,0 @@
-#pragma once
-
-enum process_event_type {
-    PROCESS_EVENT_START,
-    PROCESS_EVENT_FILENAME,
-    PROCESS_EVENT_ARG,
-    PROCESS_EVENT_RETVAL,
-    PROCESS_EVENT_EXIT
-};

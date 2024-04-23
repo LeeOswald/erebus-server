@@ -1,3 +1,4 @@
+#include <erebus/system/thread.hxx>
 #include <erebus/util/exceptionutil.hxx>
 
 #include "process_spy.hxx"
@@ -56,6 +57,8 @@ void ProcessSpy::detach()
 
 void ProcessSpy::worker(std::stop_token stop) noexcept
 {
+    Er::System::CurrentThread::setName("ProcmonWorker");
+    
     LogDebug(m_log, LogInstance("ProcessSpy"), "Worker started");
 
     while (!stop.stop_requested())

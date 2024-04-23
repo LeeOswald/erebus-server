@@ -1,7 +1,16 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include "event_type.h"
+enum process_event_type {
+    PROCESS_EVENT_START,
+    PROCESS_EVENT_FILENAME,
+    PROCESS_EVENT_ARG,
+    PROCESS_EVENT_RETVAL,
+    PROCESS_EVENT_EXIT
+};
 
 
 struct process_event_header_t {
@@ -37,3 +46,8 @@ struct process_event_exit_t {
     pid_t tid;
     __s32 exit_code;
 } __attribute__((__packed__));
+
+
+#ifdef __cplusplus
+} // extern "C" { }
+#endif

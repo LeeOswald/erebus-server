@@ -37,7 +37,7 @@ typedef struct
 
 const DWORD VCThreadNameMagic = 0x406D1388;
 
-EREBUS_EXPORT void setName(const char* name)
+EREBUS_EXPORT void setName(const char* name) noexcept
 {
     if (::IsDebuggerPresent())
     {
@@ -59,7 +59,7 @@ EREBUS_EXPORT void setName(const char* name)
 
 #elif ER_LINUX
 
-EREBUS_EXPORT void setName(const char* name)
+EREBUS_EXPORT void setName(const char* name) noexcept
 {
     auto self = ::pthread_self();
     ::pthread_setname_np(self, name);
