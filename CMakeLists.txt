@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 
+include(ExternalProject)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 include(version)
-
 get_version_from_file("version.txt")
 
 project(erebus-server VERSION ${ER_VERSION})
@@ -56,6 +57,69 @@ elseif(UNIX AND NOT APPLE)
     set(ER_POSIX 1)
 else()
     message(FATAL_ERROR "Unsupported OS")
+endif()
+
+if(ER_LINUX)
+    # Build libbpf
+
+    ExternalProject_Add(libbpf
+        PREFIX libbpf
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/libbpf/src
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND make
+            OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
+            DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
+            INCLUDEDIR=
+            LIBDIR=
+            UAPIDIR=
+            install install_uapi_headers
+        BUILD_IN_SOURCE TRUE
+        INSTALL_COMMAND ""
+        STEP_TARGETS build
+        BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf.so
+    )
+
+    # Build bpftool
+    ExternalProject_Add(bpftool
+        PREFIX bpftool
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/bpftool/src
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND make bootstrap
+            OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/bpftool/
+        BUILD_IN_SOURCE TRUE
+        INSTALL_COMMAND ""
+        STEP_TARGETS build
+    )
+
+    find_program(CARGO_EXISTS cargo)
+    if(CARGO_EXISTS)
+    ExternalProject_Add(blazesym
+        PREFIX blazesym
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/blazesym
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND cargo build --verbose --package=blazesym-c --release
+        BUILD_IN_SOURCE TRUE
+        INSTALL_COMMAND ""
+        STEP_TARGETS build
+    )
+    endif()
+
+    set(BPFOBJECT_BPFTOOL_EXE ${CMAKE_CURRENT_BINARY_DIR}/bpftool/bootstrap/bpftool)
+    set(BPFOBJECT_VMLINUX_H ${CMAKE_CURRENT_BINARY_DIR}/vmlinux.h)
+    set(LIBBPF_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/libbpf)
+    set(LIBBPF_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf.so)
+    find_package(BpfObject REQUIRED)
+
+    add_custom_command(
+        OUTPUT ${BPFOBJECT_VMLINUX_H}
+        COMMAND ${BPFOBJECT_BPFTOOL_EXE} btf dump file /sys/kernel/btf/vmlinux format c > ${BPFOBJECT_VMLINUX_H}
+        DEPENDS bpftool-build
+        VERBATIM
+        COMMENT "Generating vmlinux.h"
+    )
+
+    add_custom_target(generate_vmlinux_h DEPENDS "${BPFOBJECT_VMLINUX_H}")
+
 endif()
 
 
