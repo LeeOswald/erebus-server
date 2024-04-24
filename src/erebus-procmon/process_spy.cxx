@@ -114,13 +114,13 @@ int ProcessSpy::handleExecveEnter(const process_event_execve_enter_t* ev)
     if (!r.second)
         LogWarning(m_log, LogComponent("ProcessSpy"), "Reusing existing PID %zu", ev->header.pid);
 
-    m_starting = r.first->second;
+    m_currentExecve = r.first->second;
     return 0;
 }
 
 int ProcessSpy::handleExecveRetval(const process_event_retval_t* ev)
 {
-    auto current = lookupCurrent(ev->header.pid);
+    auto current = lookupCurrentExecve(ev->header.pid);
     if (current) [[likely]]
     {
         auto p = current;
@@ -141,9 +141,9 @@ int ProcessSpy::handleExecveRetval(const process_event_retval_t* ev)
     return 0;
 }
 
-std::shared_ptr<ProcessSpy::ProcessInfo> ProcessSpy::lookupCurrent(uint64_t pid)
+std::shared_ptr<ProcessSpy::ProcessInfo> ProcessSpy::lookupCurrentExecve(uint64_t pid)
 {
-    auto current = m_starting;
+    auto current = m_currentExecve;
     if (current) [[likely]]
     {
         if (current->pid != pid) [[unlikely]]
@@ -169,7 +169,7 @@ std::shared_ptr<ProcessSpy::ProcessInfo> ProcessSpy::lookupCurrent(uint64_t pid)
 
 int ProcessSpy::handleExecveFilename(const process_event_data_t* ev)
 {
-    auto current = lookupCurrent(ev->header.pid);
+    auto current = lookupCurrentExecve(ev->header.pid);
     if (current) [[likely]]
     {
         current->fileName.assign(ev->data);
@@ -180,7 +180,7 @@ int ProcessSpy::handleExecveFilename(const process_event_data_t* ev)
 
 int ProcessSpy::handleExecveArg(const process_event_data_t* ev)
 {
-    auto current = lookupCurrent(ev->header.pid);
+    auto current = lookupCurrentExecve(ev->header.pid);
     if (current) [[likely]]
     {
         current->argv.append(" ");
