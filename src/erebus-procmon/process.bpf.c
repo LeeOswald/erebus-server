@@ -17,15 +17,15 @@ struct {
 } g_ringbuf SEC(".maps");
 
 
-__attribute__((always_inline)) pid_t issue_process_start(struct task_struct *task)
+__attribute__((always_inline)) pid_t issue_execve_enter(struct task_struct *task)
 {
-    struct process_event_start_t *ev = bpf_ringbuf_reserve(&g_ringbuf, sizeof(struct process_event_start_t), 0);
+    struct process_event_execve_enter_t *ev = bpf_ringbuf_reserve(&g_ringbuf, sizeof(struct process_event_execve_enter_t), 0);
     if (!ev)
         return (pid_t)-1;
 
     pid_t pid = (pid_t)(bpf_get_current_pid_tgid() >> 32);
     ev->header.pid = pid;
-    ev->header.type = PROCESS_EVENT_START;
+    ev->header.type = PROCESS_EVENT_EXECVE_ENTER;
 
     ev->ppid = (pid_t)BPF_CORE_READ(task, real_parent, tgid);
     ev->uid = bpf_get_current_uid_gid() & 0xffffffff;
@@ -45,7 +45,7 @@ __attribute__((always_inline)) int issue_process_filename(struct trace_event_raw
         return -1;
 
     ev->header.pid = pid;
-    ev->header.type = PROCESS_EVENT_FILENAME;
+    ev->header.type = PROCESS_EVENT_EXECVE_FILENAME;
 
     const char* filename = (const char*)(BPF_CORE_READ(ctx, args[0]));
     if (bpf_core_read_user_str(ev->data, sizeof(ev->data), filename) <= 0)
@@ -67,7 +67,7 @@ __attribute__((always_inline)) int issue_process_args(struct trace_event_raw_sys
             break;
 
         ev->header.pid = pid;
-        ev->header.type = PROCESS_EVENT_ARG;
+        ev->header.type = PROCESS_EVENT_EXECVE_ARG;
 
         const phys_addr_t addr = ((phys_addr_t)argv + sizeof(phys_addr_t) * i);
         const char *argp = NULL;
@@ -84,12 +84,45 @@ __attribute__((always_inline)) int issue_process_args(struct trace_event_raw_sys
     return 0;
 }
 
+__attribute__((always_inline)) int issue_fork_enter(struct task_struct *task, enum process_event_type type)
+{
+    struct process_event_fork_enter_t *ev = bpf_ringbuf_reserve(&g_ringbuf, sizeof(struct process_event_fork_enter_t), 0);
+    if (!ev)
+        return -1;
+
+    ev->header.pid = (pid_t)(bpf_get_current_pid_tgid() >> 32);
+    ev->header.type = type;
+
+    bpf_get_current_comm(&ev->comm, sizeof(ev->comm));
+
+    bpf_ringbuf_submit(ev, 0);
+    return 0;
+}
+
+__attribute__((always_inline)) int generic_sys_exit(struct trace_event_raw_sys_exit *ctx, enum process_event_type type)
+{
+    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+
+    struct process_event_retval_t *ev = bpf_ringbuf_reserve(&g_ringbuf, sizeof(struct process_event_retval_t), 0);
+    if (!ev)
+        return 0;
+
+    ev->header.pid = (pid_t)(bpf_get_current_pid_tgid() >> 32);
+    ev->header.type = type;
+    
+    ev->retval = BPF_CORE_READ(ctx, ret);
+
+    bpf_ringbuf_submit(ev, 0);
+
+    return 0;
+}
+
 SEC("tracepoint/syscalls/sys_enter_execve")
 int sys_enter_execve(struct trace_event_raw_sys_enter *ctx)
 {
     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
 
-    pid_t pid = issue_process_start(task);
+    pid_t pid = issue_execve_enter(task);
     if (pid == (pid_t)-1)
         return 0;
 
@@ -102,20 +135,39 @@ int sys_enter_execve(struct trace_event_raw_sys_enter *ctx)
 SEC("tracepoint/syscalls/sys_exit_execve")
 int sys_exit_execve(struct trace_event_raw_sys_exit *ctx)
 {
+    return generic_sys_exit(ctx, PROCESS_EVENT_EXECVE_RETVAL);
+}
+
+SEC("tracepoint/syscalls/sys_enter_fork")
+int sys_enter_fork(struct trace_event_raw_sys_enter *ctx)
+{
     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
 
-    struct process_event_retval_t *ev = bpf_ringbuf_reserve(&g_ringbuf, sizeof(struct process_event_retval_t), 0);
-    if (!ev)
-        return 0;
-
-    ev->header.pid = (pid_t)(bpf_get_current_pid_tgid() >> 32);
-    ev->header.type = PROCESS_EVENT_RETVAL;
+    issue_fork_enter(task, PROCESS_EVENT_FORK_ENTER);
     
-    ev->retval = BPF_CORE_READ(ctx, ret);
-
-    bpf_ringbuf_submit(ev, 0);
-
     return 0;
+}
+
+SEC("tracepoint/syscalls/sys_exit_fork")
+int sys_exit_fork(struct trace_event_raw_sys_exit *ctx)
+{
+    return generic_sys_exit(ctx, PROCESS_EVENT_FORK_RETVAL);
+}
+
+SEC("tracepoint/syscalls/sys_enter_vfork")
+int sys_enter_vfork(struct trace_event_raw_sys_enter *ctx)
+{
+    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+
+    issue_fork_enter(task, PROCESS_EVENT_VFORK_ENTER);
+    
+    return 0;
+}
+
+SEC("tracepoint/syscalls/sys_exit_vfork")
+int sys_exit_vfork(struct trace_event_raw_sys_exit *ctx)
+{
+    return generic_sys_exit(ctx, PROCESS_EVENT_VFORK_RETVAL);
 }
 
 SEC("tp/sched/sched_process_exit")

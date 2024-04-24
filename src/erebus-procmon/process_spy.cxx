@@ -90,11 +90,15 @@ int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
             auto header = static_cast<const process_event_header_t*>(data);
             switch (header->type)
             {
-            case PROCESS_EVENT_START: return this_->handleStart(static_cast<const process_event_start_t*>(data));
-            case PROCESS_EVENT_RETVAL: return this_->handleRetval(static_cast<const process_event_retval_t*>(data));
-            case PROCESS_EVENT_FILENAME: return this_->handleFilename(static_cast<const process_event_data_t*>(data));
-            case PROCESS_EVENT_ARG: return this_->handleArg(static_cast<const process_event_data_t*>(data));
+            case PROCESS_EVENT_EXECVE_ENTER: return this_->handleExecveEnter(static_cast<const process_event_execve_enter_t*>(data));
+            case PROCESS_EVENT_EXECVE_RETVAL: return this_->handleExecveRetval(static_cast<const process_event_retval_t*>(data));
+            case PROCESS_EVENT_EXECVE_FILENAME: return this_->handleExecveFilename(static_cast<const process_event_data_t*>(data));
+            case PROCESS_EVENT_EXECVE_ARG: return this_->handleExecveArg(static_cast<const process_event_data_t*>(data));
             case PROCESS_EVENT_EXIT: return this_->handleExit(static_cast<const process_event_exit_t*>(data));
+            case PROCESS_EVENT_FORK_ENTER: return this_->handleForkEnter(static_cast<const process_event_fork_enter_t*>(data));
+            case PROCESS_EVENT_FORK_RETVAL: return this_->handleForkRetval(static_cast<const process_event_retval_t*>(data));
+            case PROCESS_EVENT_VFORK_ENTER: return this_->handleVForkEnter(static_cast<const process_event_fork_enter_t*>(data));
+            case PROCESS_EVENT_VFORK_RETVAL: return this_->handleVForkRetval(static_cast<const process_event_retval_t*>(data));
             }
 
             LogError(this_->m_log, LogComponent("ProcessSpy"), "Unknown process event type %d", header->type);
@@ -103,7 +107,7 @@ int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
     );
 }
 
-int ProcessSpy::handleStart(const process_event_start_t* ev)
+int ProcessSpy::handleExecveEnter(const process_event_execve_enter_t* ev)
 {
     auto process = std::make_shared<ProcessInfo>(ev);
     auto r = m_runningProcesses.insert({ uint64_t(ev->header.pid), process });
@@ -114,16 +118,24 @@ int ProcessSpy::handleStart(const process_event_start_t* ev)
     return 0;
 }
 
-int ProcessSpy::handleRetval(const process_event_retval_t* ev)
+int ProcessSpy::handleExecveRetval(const process_event_retval_t* ev)
 {
     auto current = lookupCurrent(ev->header.pid);
     if (current) [[likely]]
     {
-        current->retVal = ev->retval;
         auto p = current;
         current.reset();
 
-        issueProcessStart(p);
+        if (ev->retval < 0)
+        {
+            // execve() failed, don't expect exit()
+            auto it = m_runningProcesses.find(ev->header.pid);
+            if (it != m_runningProcesses.end())
+                m_runningProcesses.erase(it);
+        
+        }
+
+        issueExecve(p, ev->retval);
     }
 
     return 0;
@@ -155,7 +167,7 @@ std::shared_ptr<ProcessSpy::ProcessInfo> ProcessSpy::lookupCurrent(uint64_t pid)
     return current;
 }
 
-int ProcessSpy::handleFilename(const process_event_data_t* ev)
+int ProcessSpy::handleExecveFilename(const process_event_data_t* ev)
 {
     auto current = lookupCurrent(ev->header.pid);
     if (current) [[likely]]
@@ -166,7 +178,7 @@ int ProcessSpy::handleFilename(const process_event_data_t* ev)
     return 0;
 }
 
-int ProcessSpy::handleArg(const process_event_data_t* ev)
+int ProcessSpy::handleExecveArg(const process_event_data_t* ev)
 {
     auto current = lookupCurrent(ev->header.pid);
     if (current) [[likely]]
@@ -193,10 +205,30 @@ int ProcessSpy::handleExit(const process_event_exit_t* ev)
 
     return 0;
 }
-    
-void ProcessSpy::issueProcessStart(std::shared_ptr<ProcessInfo> info)
+
+int ProcessSpy::handleForkEnter(const process_event_fork_enter_t* ev)
 {
-    LogInfo(m_log, LogNowhere(), "%d EXECVE pid=%zu; ppid=%zu; uid=%zu; sid=%zu; [%s] [%s] %s", int(info->retVal.value_or(-1)), info->pid, info->ppid, info->uid, info->sid, info->comm.c_str(), info->fileName.c_str(), info->argv.c_str());
+    return 0;
+}
+
+int ProcessSpy::handleForkRetval(const process_event_retval_t* ev)
+{
+    return 0;
+}
+
+int ProcessSpy::handleVForkEnter(const process_event_fork_enter_t* ev)
+{
+    return 0;
+}
+
+int ProcessSpy::handleVForkRetval(const process_event_retval_t* ev)
+{
+    return 0;
+}
+    
+void ProcessSpy::issueExecve(std::shared_ptr<ProcessInfo> info, uint64_t retVal)
+{
+    LogInfo(m_log, LogNowhere(), "%d EXECVE pid=%zu; ppid=%zu; uid=%zu; sid=%zu; [%s] [%s] %s", int(retVal), info->pid, info->ppid, info->uid, info->sid, info->comm.c_str(), info->fileName.c_str(), info->argv.c_str());
 }
 
 void ProcessSpy::issueTaskExit(std::shared_ptr<ProcessInfo> info, int32_t exitCode, uint64_t pid, uint64_t tid)

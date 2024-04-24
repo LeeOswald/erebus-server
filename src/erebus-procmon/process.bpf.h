@@ -5,10 +5,14 @@ extern "C" {
 #endif
 
 enum process_event_type {
-    PROCESS_EVENT_START,
-    PROCESS_EVENT_FILENAME,
-    PROCESS_EVENT_ARG,
-    PROCESS_EVENT_RETVAL,
+    PROCESS_EVENT_EXECVE_ENTER,
+    PROCESS_EVENT_EXECVE_FILENAME,
+    PROCESS_EVENT_EXECVE_ARG,
+    PROCESS_EVENT_EXECVE_RETVAL,
+    PROCESS_EVENT_FORK_ENTER,
+    PROCESS_EVENT_FORK_RETVAL,
+    PROCESS_EVENT_VFORK_ENTER,
+    PROCESS_EVENT_VFORK_RETVAL,
     PROCESS_EVENT_EXIT
 };
 
@@ -19,7 +23,7 @@ struct process_event_header_t {
 } __attribute__((__packed__));
 
 
-struct process_event_start_t {
+struct process_event_execve_enter_t {
     struct process_event_header_t header;
     pid_t ppid;
     __u32 uid;
@@ -45,6 +49,12 @@ struct process_event_exit_t {
     struct process_event_header_t header;
     pid_t tid;
     __s32 exit_code;
+} __attribute__((__packed__));
+
+
+struct process_event_fork_enter_t {
+    struct process_event_header_t header;
+    char comm[16];
 } __attribute__((__packed__));
 
 

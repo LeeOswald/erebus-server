@@ -58,7 +58,7 @@ private:
         
         ProcessInfo() noexcept = default;
 
-        ProcessInfo(const process_event_start_t* ev)
+        ProcessInfo(const process_event_execve_enter_t* ev)
             : pid(ev->header.pid)
             , ppid(ev->ppid)
             , uid(ev->uid)
@@ -70,13 +70,18 @@ private:
 
     static int staticHandleEvent(void* ctx, void* data, size_t size) noexcept;
     std::shared_ptr<ProcessInfo> lookupCurrent(uint64_t pid);
-    int handleStart(const process_event_start_t* ev);
-    int handleRetval(const process_event_retval_t* ev);
-    int handleFilename(const process_event_data_t* ev);
-    int handleArg(const process_event_data_t* ev);
+    int handleExecveEnter(const process_event_execve_enter_t* ev);
+    int handleExecveRetval(const process_event_retval_t* ev);
+    int handleExecveFilename(const process_event_data_t* ev);
+    int handleExecveArg(const process_event_data_t* ev);
     int handleExit(const process_event_exit_t* ev);
+    int handleForkEnter(const process_event_fork_enter_t* ev);
+    int handleForkRetval(const process_event_retval_t* ev);
+    int handleVForkEnter(const process_event_fork_enter_t* ev);
+    int handleVForkRetval(const process_event_retval_t* ev);
     void worker(std::stop_token stop) noexcept;
-    void issueProcessStart(std::shared_ptr<ProcessInfo> info);
+    void issueExecve(std::shared_ptr<ProcessInfo> info, uint64_t retVal);
+    
     void issueTaskExit(std::shared_ptr<ProcessInfo> info, int32_t exitCode, uint64_t pid, uint64_t tid);
 
     static constexpr int PollTimeoutMs = 1000;
