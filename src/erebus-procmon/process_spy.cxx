@@ -208,21 +208,79 @@ int ProcessSpy::handleExit(const process_event_exit_t* ev)
 
 int ProcessSpy::handleForkEnter(const process_event_fork_enter_t* ev)
 {
+    std::shared_ptr<ProcessInfo> process;
+    auto it = m_runningProcesses.find(ev->header.pid);
+    if (it != m_runningProcesses.end())
+    {
+        process = it->second;
+    }
+    else
+    {
+        process = std::make_shared<ProcessInfo>(ev);
+        auto r = m_runningProcesses.insert({ uint64_t(ev->header.pid), process });
+        if (!r.second)
+        {
+            LogWarning(m_log, LogComponent("ProcessSpy"), "Reusing existing PID %zu", ev->header.pid);
+            process = r.first->second;
+        }
+    }
+
+    m_currentFork = process;
+
     return 0;
 }
 
 int ProcessSpy::handleForkRetval(const process_event_retval_t* ev)
 {
+    if (m_currentFork)
+    {
+        LogInfo(m_log, LogNowhere(), "%d FORK pid=%zu BY pid=%zu; [%s] %s", int(ev->retval), ev->header.pid, m_currentFork->pid, m_currentFork->comm.c_str(), m_currentFork->argv.c_str());
+        m_currentFork.reset();
+    }
+    else
+    {
+        LogInfo(m_log, LogNowhere(), "%d FORK pid=%zu", int(ev->retval), ev->header.pid);
+    }
+
     return 0;
 }
 
 int ProcessSpy::handleVForkEnter(const process_event_fork_enter_t* ev)
 {
+    std::shared_ptr<ProcessInfo> process;
+    auto it = m_runningProcesses.find(ev->header.pid);
+    if (it != m_runningProcesses.end())
+    {
+        process = it->second;
+    }
+    else
+    {
+        process = std::make_shared<ProcessInfo>(ev);
+        auto r = m_runningProcesses.insert({ uint64_t(ev->header.pid), process });
+        if (!r.second)
+        {
+            LogWarning(m_log, LogComponent("ProcessSpy"), "Reusing existing PID %zu", ev->header.pid);
+            process = r.first->second;
+        }
+    }
+
+    m_currentFork = process;
+
     return 0;
 }
 
 int ProcessSpy::handleVForkRetval(const process_event_retval_t* ev)
 {
+    if (m_currentFork)
+    {
+        LogInfo(m_log, LogNowhere(), "%d VFORK pid=%zu BY pid=%zu; [%s] %s", int(ev->retval), ev->header.pid, m_currentFork->pid, m_currentFork->comm.c_str(), m_currentFork->argv.c_str());
+        m_currentFork.reset();
+    }
+    else
+    {
+        LogInfo(m_log, LogNowhere(), "%d VFORK pid=%zu", int(ev->retval), ev->header.pid);
+    }
+
     return 0;
 }
     

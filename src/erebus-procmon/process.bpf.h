@@ -54,6 +54,10 @@ struct process_event_exit_t {
 
 struct process_event_fork_enter_t {
     struct process_event_header_t header;
+    pid_t ppid;
+    __u32 uid;
+    __u32 sid;
+    __u64 start_time;
     char comm[16];
 } __attribute__((__packed__));
 

@@ -92,6 +92,10 @@ __attribute__((always_inline)) int issue_fork_enter(struct task_struct *task, en
 
     ev->header.pid = (pid_t)(bpf_get_current_pid_tgid() >> 32);
     ev->header.type = type;
+    ev->ppid = (pid_t)BPF_CORE_READ(task, real_parent, tgid);
+    ev->uid = bpf_get_current_uid_gid() & 0xffffffff;
+    ev->sid = (__u32)BPF_CORE_READ(task, sessionid);
+    ev->start_time = (__u64)BPF_CORE_READ(task, se.exec_start);
 
     bpf_get_current_comm(&ev->comm, sizeof(ev->comm));
 
