@@ -155,11 +155,6 @@ public:
 };
 
 
-struct PropertyValueTag
-{
-};
-
-
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
 class PropertyValue final
     : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
@@ -170,7 +165,6 @@ public:
     using Id = Base::Id;
     using Comparator = ComparatorT;
     using Formatter = typename Base::Formatter;
-    using Tag = PropertyValueTag;
 
     PropertyValue() noexcept(noexcept(ValueType())) = default;
 
@@ -205,12 +199,12 @@ concept IsPropertyValue =
     typename T::Comparator;
     typename T::Formatter;
 
-    requires std::same_as<typename T::Tag, PropertyValueTag>;
     requires std::same_as<std::decay_t<typename T::Id::value_type>, PropId>;
     { T::type_info() } -> std::same_as<const std::type_info&>;
     { T::id() } -> std::same_as<PropId>;
     { T::id_str() } -> std::same_as<const char*>;
     { T::name() } -> std::same_as<const char*>;
+    requires std::same_as<std::remove_reference_t<decltype(std::declval<T>().value())>, typename T::ValueType>;
 };
 
 
