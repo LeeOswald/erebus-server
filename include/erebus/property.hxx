@@ -200,6 +200,7 @@ concept IsPropertyValue =
     typename T::Formatter;
 
     requires std::same_as<std::decay_t<typename T::Id::value_type>, PropId>;
+    { T::type() } -> std::same_as<PropertyType>;
     { T::type_info() } -> std::same_as<const std::type_info&>;
     { T::id() } -> std::same_as<PropId>;
     { T::id_str() } -> std::same_as<const char*>;
