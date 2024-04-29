@@ -41,18 +41,14 @@ struct SourceLocation
 
     template <typename FileT>
     SourceLocation(FileT&& file, uint32_t line)
-        : m_savedFile(std::forward<FileT>(file))
-        , m_file("")
+        : m_file(std::forward<FileT>(file))
         , m_line(line)
     {
     }
 
     const char* file() const noexcept
     {
-        if (!m_savedFile.empty())
-            return m_savedFile.c_str();
-
-        return m_file;
+        return m_file.c_str();
     }
 
     constexpr uint32_t line() const noexcept
@@ -61,8 +57,7 @@ struct SourceLocation
     }
 
 private:
-    std::string m_savedFile;
-    const char* m_file = "???";
+    std::string m_file;
     uint32_t m_line = 0;
 };
 
