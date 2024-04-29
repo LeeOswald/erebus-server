@@ -84,26 +84,7 @@ __attribute__((always_inline)) int issue_process_args(struct trace_event_raw_sys
     return 0;
 }
 
-__attribute__((always_inline)) int issue_fork_enter(struct task_struct *task, enum process_event_type type)
-{
-    struct process_event_fork_enter_t *ev = bpf_ringbuf_reserve(&g_ringbuf, sizeof(struct process_event_fork_enter_t), 0);
-    if (!ev)
-        return -1;
-
-    ev->header.pid = (pid_t)(bpf_get_current_pid_tgid() >> 32);
-    ev->header.type = type;
-    ev->ppid = (pid_t)BPF_CORE_READ(task, real_parent, tgid);
-    ev->uid = bpf_get_current_uid_gid() & 0xffffffff;
-    ev->sid = (__u32)BPF_CORE_READ(task, sessionid);
-    ev->start_time = (__u64)BPF_CORE_READ(task, se.exec_start);
-
-    bpf_get_current_comm(&ev->comm, sizeof(ev->comm));
-
-    bpf_ringbuf_submit(ev, 0);
-    return 0;
-}
-
-__attribute__((always_inline)) int generic_sys_exit(struct trace_event_raw_sys_exit *ctx, enum process_event_type type)
+__attribute__((always_inline))  int generic_sys_exit(struct trace_event_raw_sys_exit *ctx, enum process_event_type type)
 {
     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
 
@@ -142,36 +123,30 @@ int sys_exit_execve(struct trace_event_raw_sys_exit *ctx)
     return generic_sys_exit(ctx, PROCESS_EVENT_EXECVE_RETVAL);
 }
 
-SEC("tracepoint/syscalls/sys_enter_fork")
-int sys_enter_fork(struct trace_event_raw_sys_enter *ctx)
+SEC("tp/sched/sched_process_fork")
+int sched_process_fork(struct trace_event_raw_sched_process_fork *ctx) 
 {
     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
 
-    issue_fork_enter(task, PROCESS_EVENT_FORK_ENTER);
+    u64 id = bpf_get_current_pid_tgid();
+    pid_t pid = id >> 32;
+    pid_t tid = (u32)id;
+
+    struct process_event_fork_t *ev = bpf_ringbuf_reserve(&g_ringbuf, sizeof(struct process_event_fork_t), 0);
+    if (!ev)
+        return 0;
+
+    ev->header.pid = pid;
+    ev->header.type = PROCESS_EVENT_FORK;
+
+    ev->parent_pid = (pid_t)BPF_CORE_READ(ctx, parent_pid);
+    bpf_core_read_str(ev->parent_comm, sizeof(ev->parent_comm), &ctx->parent_comm);
+    ev->child_pid = (pid_t)BPF_CORE_READ(ctx, child_pid);
+    bpf_core_read_str(ev->child_comm, sizeof(ev->child_comm), &ctx->child_comm);
+
+    bpf_ringbuf_submit(ev, 0);
     
     return 0;
-}
-
-SEC("tracepoint/syscalls/sys_exit_fork")
-int sys_exit_fork(struct trace_event_raw_sys_exit *ctx)
-{
-    return generic_sys_exit(ctx, PROCESS_EVENT_FORK_RETVAL);
-}
-
-SEC("tracepoint/syscalls/sys_enter_vfork")
-int sys_enter_vfork(struct trace_event_raw_sys_enter *ctx)
-{
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-
-    issue_fork_enter(task, PROCESS_EVENT_VFORK_ENTER);
-    
-    return 0;
-}
-
-SEC("tracepoint/syscalls/sys_exit_vfork")
-int sys_exit_vfork(struct trace_event_raw_sys_exit *ctx)
-{
-    return generic_sys_exit(ctx, PROCESS_EVENT_VFORK_RETVAL);
 }
 
 SEC("tp/sched/sched_process_exit")

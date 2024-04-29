@@ -65,15 +65,6 @@ private:
             , startTime(ev->start_time)
             , comm(ev->comm)
         {}
-
-        ProcessInfo(const process_event_fork_enter_t* ev)
-            : pid(ev->header.pid)
-            , ppid(ev->ppid)
-            , uid(ev->uid)
-            , sid(ev->sid)
-            , startTime(ev->start_time)
-            , comm(ev->comm)
-        {}
     };
 
     static int staticHandleEvent(void* ctx, void* data, size_t size) noexcept;
@@ -83,10 +74,7 @@ private:
     int handleExecveFilename(const process_event_data_t* ev);
     int handleExecveArg(const process_event_data_t* ev);
     int handleExit(const process_event_exit_t* ev);
-    int handleForkEnter(const process_event_fork_enter_t* ev);
-    int handleForkRetval(const process_event_retval_t* ev);
-    int handleVForkEnter(const process_event_fork_enter_t* ev);
-    int handleVForkRetval(const process_event_retval_t* ev);
+    int handleFork(const process_event_fork_t* ev);
     
     void worker(std::stop_token stop) noexcept;
     
@@ -101,7 +89,6 @@ private:
     std::unique_ptr<std::jthread> m_worker;
     std::unordered_map<uint64_t, std::shared_ptr<ProcessInfo>> m_runningProcesses;
     std::shared_ptr<ProcessInfo> m_currentExecve;
-    std::shared_ptr<ProcessInfo> m_currentFork;
 };
 
 

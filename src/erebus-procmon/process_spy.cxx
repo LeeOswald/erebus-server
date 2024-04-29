@@ -95,10 +95,7 @@ int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
             case PROCESS_EVENT_EXECVE_FILENAME: return this_->handleExecveFilename(static_cast<const process_event_data_t*>(data));
             case PROCESS_EVENT_EXECVE_ARG: return this_->handleExecveArg(static_cast<const process_event_data_t*>(data));
             case PROCESS_EVENT_EXIT: return this_->handleExit(static_cast<const process_event_exit_t*>(data));
-            case PROCESS_EVENT_FORK_ENTER: return this_->handleForkEnter(static_cast<const process_event_fork_enter_t*>(data));
-            case PROCESS_EVENT_FORK_RETVAL: return this_->handleForkRetval(static_cast<const process_event_retval_t*>(data));
-            case PROCESS_EVENT_VFORK_ENTER: return this_->handleVForkEnter(static_cast<const process_event_fork_enter_t*>(data));
-            case PROCESS_EVENT_VFORK_RETVAL: return this_->handleVForkRetval(static_cast<const process_event_retval_t*>(data));
+            case PROCESS_EVENT_FORK: return this_->handleFork(static_cast<const process_event_fork_t*>(data));
             }
 
             LogError(this_->m_log, LogComponent("ProcessSpy"), "Unknown process event type %d", header->type);
@@ -206,81 +203,11 @@ int ProcessSpy::handleExit(const process_event_exit_t* ev)
     return 0;
 }
 
-int ProcessSpy::handleForkEnter(const process_event_fork_enter_t* ev)
+int ProcessSpy::handleFork(const process_event_fork_t* ev)
 {
-    std::shared_ptr<ProcessInfo> process;
-    auto it = m_runningProcesses.find(ev->header.pid);
-    if (it != m_runningProcesses.end())
-    {
-        process = it->second;
-    }
-    else
-    {
-        process = std::make_shared<ProcessInfo>(ev);
-        auto r = m_runningProcesses.insert({ uint64_t(ev->header.pid), process });
-        if (!r.second)
-        {
-            LogWarning(m_log, LogComponent("ProcessSpy"), "Reusing existing PID %zu", ev->header.pid);
-            process = r.first->second;
-        }
-    }
 
-    m_currentFork = process;
-
-    return 0;
-}
-
-int ProcessSpy::handleForkRetval(const process_event_retval_t* ev)
-{
-    if (m_currentFork)
-    {
-        LogInfo(m_log, LogNowhere(), "%d FORK pid=%zu BY pid=%zu; [%s] %s", int(ev->retval), ev->header.pid, m_currentFork->pid, m_currentFork->comm.c_str(), m_currentFork->argv.c_str());
-        m_currentFork.reset();
-    }
-    else
-    {
-        LogInfo(m_log, LogNowhere(), "%d FORK pid=%zu", int(ev->retval), ev->header.pid);
-    }
-
-    return 0;
-}
-
-int ProcessSpy::handleVForkEnter(const process_event_fork_enter_t* ev)
-{
-    std::shared_ptr<ProcessInfo> process;
-    auto it = m_runningProcesses.find(ev->header.pid);
-    if (it != m_runningProcesses.end())
-    {
-        process = it->second;
-    }
-    else
-    {
-        process = std::make_shared<ProcessInfo>(ev);
-        auto r = m_runningProcesses.insert({ uint64_t(ev->header.pid), process });
-        if (!r.second)
-        {
-            LogWarning(m_log, LogComponent("ProcessSpy"), "Reusing existing PID %zu", ev->header.pid);
-            process = r.first->second;
-        }
-    }
-
-    m_currentFork = process;
-
-    return 0;
-}
-
-int ProcessSpy::handleVForkRetval(const process_event_retval_t* ev)
-{
-    if (m_currentFork)
-    {
-        LogInfo(m_log, LogNowhere(), "%d VFORK pid=%zu BY pid=%zu; [%s] %s", int(ev->retval), ev->header.pid, m_currentFork->pid, m_currentFork->comm.c_str(), m_currentFork->argv.c_str());
-        m_currentFork.reset();
-    }
-    else
-    {
-        LogInfo(m_log, LogNowhere(), "%d VFORK pid=%zu", int(ev->retval), ev->header.pid);
-    }
-
+    LogInfo(m_log, LogNowhere(), "FORK parent_pid=%zu; parent_comm=[%s]; child_pid=%zu; child_comm=[%s]", ev->parent_pid, ev->parent_comm, ev->child_pid, ev->child_comm);
+    
     return 0;
 }
     

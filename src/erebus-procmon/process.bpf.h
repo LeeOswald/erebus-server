@@ -9,10 +9,7 @@ enum process_event_type {
     PROCESS_EVENT_EXECVE_FILENAME,
     PROCESS_EVENT_EXECVE_ARG,
     PROCESS_EVENT_EXECVE_RETVAL,
-    PROCESS_EVENT_FORK_ENTER,
-    PROCESS_EVENT_FORK_RETVAL,
-    PROCESS_EVENT_VFORK_ENTER,
-    PROCESS_EVENT_VFORK_RETVAL,
+    PROCESS_EVENT_FORK,
     PROCESS_EVENT_EXIT
 };
 
@@ -52,13 +49,12 @@ struct process_event_exit_t {
 } __attribute__((__packed__));
 
 
-struct process_event_fork_enter_t {
+struct process_event_fork_t {
     struct process_event_header_t header;
-    pid_t ppid;
-    __u32 uid;
-    __u32 sid;
-    __u64 start_time;
-    char comm[16];
+    pid_t parent_pid;
+    char parent_comm[16];
+    pid_t child_pid;
+    char child_comm[16];
 } __attribute__((__packed__));
 
 
