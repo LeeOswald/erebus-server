@@ -72,17 +72,31 @@ public:
     Exception() = default;
 
     template <typename MessageT>
-    explicit Exception(Location&& location, MessageT&& message)
-        : m_context(std::make_shared<Context>(std::forward<MessageT>(message)))
+    explicit Exception(Location&& location, MessageT&& message) noexcept
     {
-        m_context->setLocation(std::move(location));
+        try
+        {
+            m_context.reset(new Context(std::forward<MessageT>(message)));
+            m_context->setLocation(std::move(location));
+        }
+        catch (...)
+        {
+            // avoid throwing from the exception constructor
+        }
     }
 
     template <typename MessageT, typename PropT, typename... ExceptionProps>
-    explicit Exception(Location&& location, MessageT&& message, PropT&& prop, ExceptionProps&&... props)
-        : m_context(std::make_shared<Context>(std::forward<MessageT>(message), std::forward<PropT>(prop), std::forward<ExceptionProps>(props)...))
+    explicit Exception(Location&& location, MessageT&& message, PropT&& prop, ExceptionProps&&... props) noexcept
     {
-        m_context->setLocation(std::move(location));
+        try
+        {
+            m_context = std::make_shared<Context>(std::forward<MessageT>(message), std::forward<PropT>(prop), std::forward<ExceptionProps>(props)...);
+            m_context->setLocation(std::move(location));
+        }
+        catch (...)
+        {
+            // avoid throwing from the exception constructor
+        }
     }
 
     const char* what() const noexcept override

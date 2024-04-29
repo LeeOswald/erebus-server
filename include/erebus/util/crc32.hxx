@@ -11,7 +11,7 @@ namespace Er
 namespace Util
 {
 
-namespace
+namespace Private
 {
 
 static constexpr uint32_t g_Crc32Table[256] =
@@ -274,14 +274,14 @@ static constexpr uint32_t g_Crc32Table[256] =
     0x2d02ef8d
 };
 
-} // namespace {}
+} // namespace Private {}
 
 inline constexpr uint32_t crc32(const char* str) noexcept
 {
     uint32_t c = 0xFFFFFFFF;
     while (*str)
     {
-        c = g_Crc32Table[(c ^ *str) & 0xFF] ^ (c >> 8);
+        c = Private::g_Crc32Table[(c ^ *str) & 0xFF] ^ (c >> 8);
         ++str;
     }
 

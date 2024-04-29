@@ -12,8 +12,9 @@ namespace Util
 constexpr std::array<uint32_t, 64> Sha256::K;
 
 Sha256::Sha256() noexcept
-    : m_blocklen(0)
-    , m_bitlen(0) 
+    : m_data{}
+    , m_blocklen(0)
+    , m_bitlen(0)
 {
     m_state[0] = 0x6a09e667;
     m_state[1] = 0xbb67ae85;
