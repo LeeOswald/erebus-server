@@ -504,7 +504,7 @@ struct PropertyInfoWrapper
     {
         if (v.type == PropertyType::Invalid)
         {
-            s << "<???>";
+            s << "<\?\?\?>";
             return;
         }
 

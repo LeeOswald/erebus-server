@@ -23,6 +23,7 @@ struct ServerConfig final
     {        
         std::string path;
         std::vector<Er::Server::PluginParams::Arg> args;
+        bool enabled = false;
     };
 
     int verbose = 0;

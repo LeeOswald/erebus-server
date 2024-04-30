@@ -249,6 +249,12 @@ int main(int argc, char* argv[], char* env[])
         Er::Private::PluginMgr pluginMgr(pluginParams);
         for (auto& plugin: cfg.plugins)
         {
+            if (!plugin.enabled)
+            {
+                logger->write(Er::Log::Level::Info, LogNowhere(), "Skipping plugin [%s]", plugin.path.c_str());
+                continue;
+            }
+            
             try
             {
                 pluginMgr.load(plugin.path, plugin.args);

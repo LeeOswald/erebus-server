@@ -84,8 +84,12 @@ R"(
                                 }
                             }
                         }
+                    },
+                    "enabled": {
+                        "type": "boolean"
                     }
-                }
+                },
+                "required": ["path"]
             }
         }
     },
@@ -199,6 +203,10 @@ ServerConfig loadConfig(const std::string& path)
                     if (!std::strcmp(name, "path"))
                     {
                         plugin.path = m->value.GetString();
+                    }
+                    else if (!std::strcmp(name, "enabled"))
+                    {
+                        plugin.enabled = m->value.GetBool();
                     }
                     else if (!std::strcmp(name, "args"))
                     {
