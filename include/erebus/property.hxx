@@ -222,15 +222,8 @@ concept IsPropertyValue =
     requires
 {
     typename T::ValueType;
-    typename T::Comparator;
-    typename T::Formatter;
 
-    requires std::same_as<typename T::Id::value_type, PropId>;
-    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().type)>, PropertyType>;
-    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().type_info)>, std::type_info>;
     requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().id)>, PropId>;
-    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().id_str)>, const char*>;
-    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().name)>, const char*>;
     requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().value)>, typename T::ValueType>;
 };
 
