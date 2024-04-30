@@ -120,38 +120,18 @@ struct PropertyTypeFrom<Bytes>
 
 
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
-class PropertyInfo
+struct PropertyInfo
 {
-public:
     using ValueType = std::decay_t<ValueT>;
     using Id = std::integral_constant<PropId, PrId>;
     using Comparator = ComparatorT;
     using Formatter = FormatterT;
     
-    static constexpr PropertyType type() noexcept
-    {
-        return PropertyTypeFrom<ValueType>::type;
-    }
-
-    static constexpr const std::type_info& type_info() noexcept
-    {
-        return typeid(ValueT);
-    }
-
-    static constexpr PropId id() noexcept
-    {
-        return Id::value;
-    }
-
-    static constexpr const char* id_str() noexcept
-    {
-        return fromStringLiteral<PrIdStr>();
-    }
-    
-    static constexpr const char* name() noexcept
-    {
-        return fromStringLiteral<PrName>();
-    }
+    static constexpr PropertyType type = PropertyTypeFrom<ValueType>::type;
+    static constexpr const std::type_info& type_info = typeid(ValueT);
+    static constexpr PropId id = Id::value;
+    static constexpr const char* id_str = fromStringLiteral<PrIdStr>();
+    static constexpr const char* name = fromStringLiteral<PrName>();
 
     static void format(const PropertyValueStorage& v, std::ostream& s)
     {
@@ -218,34 +198,22 @@ public:
 
 
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
-class PropertyValue final
+struct PropertyValue final
     : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
 {
-public:
     PropertyValue() noexcept(noexcept(std::is_nothrow_constructible_v<ValueT>))
-        : m_value()
+        : value()
     {}
 
     constexpr PropertyValue(const ValueT& value) noexcept(std::is_nothrow_copy_constructible_v<ValueT>)
-        : m_value(value)
+        : value(value)
     {}
 
     constexpr PropertyValue(ValueT&& value) noexcept(std::is_nothrow_move_constructible_v<ValueT>)
-        : m_value(std::move(value))
+        : value(std::move(value))
     {}
 
-    constexpr ValueT&& value() && noexcept
-    {
-        return std::move(m_value);
-    }
-
-    constexpr const ValueT& value() const& noexcept
-    {
-        return m_value;
-    }
-
-private:
-    ValueT m_value;
+    ValueT value;
 };
 
 
@@ -257,13 +225,13 @@ concept IsPropertyValue =
     typename T::Comparator;
     typename T::Formatter;
 
-    requires std::same_as<std::decay_t<typename T::Id::value_type>, PropId>;
-    { T::type() } -> std::same_as<PropertyType>;
-    { T::type_info() } -> std::same_as<const std::type_info&>;
-    { T::id() } -> std::same_as<PropId>;
-    { T::id_str() } -> std::same_as<const char*>;
-    { T::name() } -> std::same_as<const char*>;
-    requires std::same_as<std::remove_reference_t<decltype(std::declval<T>().value())>, typename T::ValueType>;
+    requires std::same_as<typename T::Id::value_type, PropId>;
+    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().type)>, PropertyType>;
+    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().type_info)>, std::type_info>;
+    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().id)>, PropId>;
+    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().id_str)>, const char*>;
+    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().name)>, const char*>;
+    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().value)>, typename T::ValueType>;
 };
 
 
@@ -277,8 +245,8 @@ struct EREBUS_EXPORT Property
 
     template <IsPropertyValue PropertyValueT>
     Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
-        : id(pv.id())
-        , value(pv.value())
+        : id(pv.id)
+        , value(pv.value)
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
     {
 #if ER_DEBUG
@@ -288,8 +256,8 @@ struct EREBUS_EXPORT Property
 
     template <IsPropertyValue PropertyValueT>
     Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
-        : id(pv.id())
-        , value(std::move(pv).value())
+        : id(pv.id)
+        , value(std::move(pv.value))
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
     {
 #if ER_DEBUG
@@ -477,27 +445,27 @@ struct PropertyInfoWrapper
 
     PropertyType type() const noexcept override
     {
-        return PropertyInfo::type();
+        return PropertyInfo::type;
     }
 
     const std::type_info& type_info() const noexcept override
     {
-        return PropertyInfo::type_info();
+        return PropertyInfo::type_info;
     }
 
     PropId id() const noexcept override
     {
-        return PropertyInfo::id();
+        return PropertyInfo::id;
     }
 
     const char* id_str() const noexcept override
     {
-        return PropertyInfo::id_str();
+        return PropertyInfo::id_str;
     }
 
     const char* name() const noexcept override
     {
-        return PropertyInfo::name();
+        return PropertyInfo::name;
     }
 
     void format(const Property& v, std::ostream& s) const override
