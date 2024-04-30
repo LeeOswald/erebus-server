@@ -152,6 +152,68 @@ public:
     {
         return fromStringLiteral<PrName>();
     }
+
+    static void format(const PropertyValueStorage& v, std::ostream& s)
+    {
+        auto p = std::get_if<ValueType>(&v);
+        assert(p);
+        if (p)
+        {
+            Formatter f;
+            f(*p, s);
+        }
+    }
+
+    static bool equal(const PropertyValueStorage& a, const PropertyValueStorage& b) noexcept
+    {
+        auto pa = std::get_if<ValueType>(&a);
+        if (!pa)
+            return false;
+
+        auto pb = std::get_if<ValueType>(&b);
+        if (!pb)
+            return false;
+
+        Comparator c;
+        return c(*pa, *pb);
+    }
+
+    static constexpr const void* data(const PropertyValueStorage& v) noexcept
+    {
+        if constexpr (std::is_same_v<ValueType, std::string>)
+        {
+            auto s = std::get_if<std::string>(&v);
+            return s ? s->data() : nullptr;
+        }
+        else if constexpr (std::is_same_v<ValueType, Bytes>)
+        {
+            auto b = std::get_if<Bytes>(&v);
+            return b ? b->data() : nullptr;
+        }
+        else
+        {
+            return std::get_if<ValueType>(&v);
+        }
+    }
+
+    static constexpr std::size_t size(const PropertyValueStorage& v) noexcept
+    {
+        if constexpr (std::is_same_v<ValueType, std::string>)
+        {
+            auto s = std::get_if<std::string>(&v);
+            return s ? s->size() : 0;
+        }
+        else if constexpr (std::is_same_v<ValueType, Bytes>)
+        {
+            auto b = std::get_if<Bytes>(&v);
+            return b ? b->size() : 0;
+        }
+        else
+        {
+            auto p = std::get_if<ValueType>(&v);
+            return p ? sizeof(ValueType) : 0;
+        }
+    }
 };
 
 
@@ -160,34 +222,30 @@ class PropertyValue final
     : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
 {
 public:
-    using Base = PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>;
-    using ValueType = typename Base::ValueType;
-    using Id = Base::Id;
-    using Comparator = ComparatorT;
-    using Formatter = typename Base::Formatter;
+    PropertyValue() noexcept(noexcept(std::is_nothrow_constructible_v<ValueT>))
+        : m_value()
+    {}
 
-    PropertyValue() noexcept(noexcept(ValueType())) = default;
-
-    constexpr PropertyValue(const ValueT& value) noexcept(std::is_nothrow_constructible_v<ValueType, const ValueT&>)
+    constexpr PropertyValue(const ValueT& value) noexcept(std::is_nothrow_copy_constructible_v<ValueT>)
         : m_value(value)
     {}
 
-    constexpr PropertyValue(ValueT&& value) noexcept(std::is_nothrow_constructible_v<ValueType, ValueT&&>)
+    constexpr PropertyValue(ValueT&& value) noexcept(std::is_nothrow_move_constructible_v<ValueT>)
         : m_value(std::move(value))
     {}
 
-    constexpr ValueType&& value() && noexcept
+    constexpr ValueT&& value() && noexcept
     {
         return std::move(m_value);
     }
 
-    constexpr ValueType& value() & noexcept
+    constexpr const ValueT& value() const& noexcept
     {
         return m_value;
     }
 
 private:
-    ValueType m_value;
+    ValueT m_value;
 };
 
 
@@ -218,9 +276,20 @@ struct EREBUS_EXPORT Property
     Property() noexcept = default;
 
     template <IsPropertyValue PropertyValueT>
-    Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, decltype(std::forward<PropertyValueT>(pv).value())>))
+    Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
         : id(pv.id())
-        , value(std::forward<PropertyValueT>(pv).value())
+        , value(pv.value())
+        , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
+    {
+#if ER_DEBUG
+        checkProperty();
+#endif
+    }
+
+    template <IsPropertyValue PropertyValueT>
+    Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
+        : id(pv.id())
+        , value(std::move(pv).value())
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
     {
 #if ER_DEBUG
@@ -229,9 +298,9 @@ struct EREBUS_EXPORT Property
     }
 
     template <SupportedPropertyType ValueT>
-    Property(PropId id, ValueT&& value, IPropertyInfo* info = nullptr) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, decltype(std::forward<ValueT>(value))>))
+    Property(PropId id, const ValueT& value, std::shared_ptr<IPropertyInfo> info = std::shared_ptr<IPropertyInfo>()) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const ValueT&>))
         : id(id)
-        , value(std::forward<ValueT>(value))
+        , value(value)
         , type(static_cast<PropertyType>(this->value.index()))
         , info(info)
     {
@@ -240,10 +309,68 @@ struct EREBUS_EXPORT Property
 #endif
     }
 
+    template <SupportedPropertyType ValueT>
+    Property(PropId id, ValueT&& value, std::shared_ptr<IPropertyInfo> info = std::shared_ptr<IPropertyInfo>()) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, ValueT&&>))
+        : id(id)
+        , value(std::move(value))
+        , type(static_cast<PropertyType>(this->value.index()))
+        , info(info)
+    {
+#if ER_DEBUG
+        checkProperty();
+#endif
+    }
+
+    friend void swap(Property& a, Property& b) noexcept(noexcept(std::is_nothrow_swappable_v<PropertyValueStorage>))
+    {
+        using std::swap;
+        swap(a.id, b.id);
+        a.value.swap(b.value);
+        swap(a.type, b.type);
+        a.info.swap(b.info);
+    }
+
+    Property(const Property& o)
+        : id(o.id)
+        , value(o.value)
+        , type(o.type)
+        , info(o.info)
+    {
+    }
+
+    Property& operator=(const Property& o)
+    {
+        Property tmp(o);
+        swap(*this, tmp);
+        return *this;
+    }
+
+    Property(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
+        : id(o.id)
+        , value(std::move(o.value))
+        , type(o.type)
+        , info(o.info)
+    {
+        // make 'o' empty
+        o.type = PropertyType::Invalid;
+    }
+
+    Property& operator=(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
+    {
+        Property tmp(std::move(o));
+        swap(*this, tmp);
+        return *this;
+    }
+
+    constexpr bool empty() const noexcept
+    {
+        return type == PropertyType::Invalid;
+    }
+
     PropId id = InvalidPropId;
     PropertyValueStorage value;
     PropertyType type = PropertyType::Invalid;
-    mutable IPropertyInfo* info = nullptr;
+    mutable std::shared_ptr<IPropertyInfo> info;
 
 private:
 #if ER_DEBUG
@@ -252,49 +379,41 @@ private:
 };
 
 
-struct AlwaysEqualPropertyComparator
-{
-    bool operator()(const Property& a, const Property& b) { return true; }
-};
-
-struct NeverEqualPropertyComparator
-{
-    bool operator()(const Property& a, const Property& b) { return false; }
-};
-
-struct BytesComparator
-{
-    bool operator()(const Property& a, const Property& b) { return std::get<Bytes>(a.value) == std::get<Bytes>(b.value); }
-};
-
 template <std::equality_comparable T>
 struct PropertyComparator<T>
 {
-    bool operator()(const Property& a, const Property& b) { return std::get<T>(a.value) == std::get<T>(b.value); }
+    bool operator()(const T& a, const T& b) { return a == b; }
 };
 
 
 struct NullPropertyFormatter
 {
-    void operator()([[maybe_unused]] const Property& v, [[maybe_unused]] std::ostream& s) {  }
+    template <typename T>
+    void operator()([[maybe_unused]] const T& v, [[maybe_unused]] std::ostream& s) {  }
 };
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, bool>::value>>
 {
-    void operator()(const Property& v, std::ostream& s) { s << std::boolalpha << std::get<T>(v.value); }
+    void operator()(const T& v, std::ostream& s) { s << std::boolalpha << v; }
 };
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>>
 {
-    void operator()(const Property& v, std::ostream& s) { s << std::get<T>(v.value); }
+    void operator()(const T& v, std::ostream& s) { s << v; }
+};
+
+template <typename T>
+struct PropertyFormatter<T, std::enable_if_t<std::is_floating_point<T>::value>>
+{
+    void operator()(const T& v, std::ostream& s) { s << std::fixed << std::setprecision(3) << v; }
 };
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value>>
 {
-    void operator()(const Property& v, std::ostream& s) { s << std::get<T>(v.value); }
+    void operator()(const T& v, std::ostream& s) { s << v; }
 };
 
 
@@ -309,14 +428,13 @@ struct TimeFormatter
 {
     static constexpr const char* format = fromStringLiteral<Format>();
 
-    void operator()(const Property& v, std::ostream& s) 
+    void operator()(uint64_t v, std::ostream& s) 
     {
-        auto packed = std::get<uint64_t>(v.value);
         Er::System::Time unpacked;
         if constexpr (Zone == TimeZone::Utc)
-            unpacked = Er::System::Time::gmt(packed);
+            unpacked = Er::System::Time::gmt(v);
         else
-            unpacked = Er::System::Time::local(packed);
+            unpacked = Er::System::Time::local(v);
 
         struct tm t = {};
         t.tm_year = unpacked.year;
@@ -341,6 +459,8 @@ struct IPropertyInfo
     virtual const char* name() const noexcept = 0;
     virtual void format(const Property& v, std::ostream& s) const = 0;
     virtual bool equal(const Property& a, const Property& b) const noexcept = 0;
+    virtual const void* data(const Property& p) const noexcept = 0;
+    virtual std::size_t size(const Property& p) const noexcept = 0;
 
 protected:
     virtual ~IPropertyInfo() {}
@@ -382,14 +502,42 @@ struct PropertyInfoWrapper
 
     void format(const Property& v, std::ostream& s) const override
     {
-        Formatter f;
-        f(v, s);
+        if (v.type == PropertyType::Invalid)
+        {
+            s << "<???>";
+            return;
+        }
+
+        PropertyInfo::format(v.value, s);
     }
 
     bool equal(const Property& a, const Property& b) const noexcept override
     {
-        Comparator c;
-        return c(a, b);
+        if (a.type == PropertyType::Invalid || b.type == PropertyType::Invalid)
+            return false;
+
+        if (a.id != b.id)
+            return false;
+
+        assert(a.type == b.type);
+
+        return PropertyInfo::equal(a.value, b.value);
+    }
+
+    const void* data(const Property& p) const noexcept override
+    {
+        if (p.type == PropertyType::Invalid)
+            return nullptr;
+
+        return PropertyInfo::data(p.value);
+    }
+
+    std::size_t size(const Property& p) const noexcept override
+    {
+        if (p.type == PropertyType::Invalid)
+            return 0;
+
+        return PropertyInfo::size(p.value);
     }
 };
 

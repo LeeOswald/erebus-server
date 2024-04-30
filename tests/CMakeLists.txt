@@ -24,6 +24,7 @@ add_executable(
     log.cpp
     lrucache.cpp
     main.cpp
+    property.cpp
     stringutil.cpp
     tree.cpp
     ${PLATFORM_SOURCES}

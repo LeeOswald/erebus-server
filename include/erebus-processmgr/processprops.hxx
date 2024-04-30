@@ -24,9 +24,8 @@ static const std::string_view KillProcess = "KillProcess";
 
 struct IconFormatter
 {
-    void operator()(const Property& v, std::ostream& s) 
+    void operator()(const Bytes& ico, std::ostream& s) 
     { 
-        auto ico = std::get<Bytes>(v.value); 
         if (ico.empty())
             s << "[null icon]";
         else
@@ -36,18 +35,16 @@ struct IconFormatter
 
 struct CpuTimeFormatter
 {
-    void operator()(const Property& v, std::ostream& s) 
+    void operator()(double val, std::ostream& s) 
     { 
-        auto val = std::get<double>(v.value); 
         s << std::fixed << std::setprecision(2) << val << std::dec;
     }
 };
 
 struct CpuLoadFormatter
 {
-    void operator()(const Property& v, std::ostream& s) 
+    void operator()(double val, std::ostream& s) 
     { 
-        auto val = std::get<double>(v.value);
         val *= 100; 
         val = std::clamp(val, 0.0, 100.0);
         s << std::fixed << std::setprecision(2) << static_cast<unsigned>(val) << std::dec;
@@ -56,9 +53,8 @@ struct CpuLoadFormatter
 
 struct MemUnitFormatter
 {
-    void operator()(const Property& v, std::ostream& s) 
+    void operator()(uint64_t val, std::ostream& s)
     { 
-        auto val = std::get<uint64_t>(v.value);
         if (val < 10ULL * 1024)
             s << val << " B";
         else if (val < 10ULL * 1024 * 1024)
@@ -93,7 +89,7 @@ using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Comman
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable">;
 using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
 using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
-using Icon = PropertyValue<Bytes, ER_PROPID("process.icon"), "Icon", BytesComparator, IconFormatter>;
+using Icon = PropertyValue<Bytes, ER_PROPID("process.icon"), "Icon", PropertyComparator<Bytes>, IconFormatter>;
 using ThreadCount = PropertyValue<int64_t, ER_PROPID("process.nthreads"), "Thread Count">;
 using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
 using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;

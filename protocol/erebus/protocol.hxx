@@ -92,21 +92,21 @@ inline Property getProperty(const erebus::Property& source)
     {
         auto type = info->type();
         if (type == PropertyType::Bool)
-            return Property(id, source.v_bool(), info.get());
+            return Property(id, source.v_bool(), info);
         else if (type == PropertyType::Int32)
-            return Property(id, source.v_int32(), info.get());
+            return Property(id, source.v_int32(), info);
         else if (type == PropertyType::UInt32)
-            return Property(id, source.v_uint32(), info.get());
+            return Property(id, source.v_uint32(), info);
         else if (type == PropertyType::Int64)
-            return Property(id, source.v_int64(), info.get());
+            return Property(id, source.v_int64(), info);
         else if (type == PropertyType::UInt64)
-            return Property(id, source.v_uint64(), info.get());
+            return Property(id, source.v_uint64(), info);
         else if (type == PropertyType::Double)
-            return Property(id, source.v_double(), info.get());
+            return Property(id, source.v_double(), info);
         else if (type == PropertyType::String)
-            return Property(id, source.v_string(), info.get());
+            return Property(id, source.v_string(), info);
         else if (type == PropertyType::Bytes)
-            return Property(id, Bytes(source.v_bytes()), info.get());
+            return Property(id, Bytes(source.v_bytes()), info);
         else
             throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->id_str(), info->type_info().name()));
     }

@@ -114,7 +114,7 @@ EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id) noexcept
 #if ER_DEBUG
 void Property::checkProperty()
 {
-    auto info_ = info ? info : Er::lookupProperty(id).get();
+    auto info_ = info ? info.get() : Er::lookupProperty(id).get();
     assert(info_);
     auto& type_ = info_->type_info();
     if (type_ == typeid(bool))

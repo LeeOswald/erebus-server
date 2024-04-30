@@ -11,6 +11,9 @@
 #include <crtdbg.h>
 #endif
 
+Er::Log::ILog* g_log = nullptr;
+
+
 class Logger
     : public Er::Log::LogBase
 {
@@ -73,6 +76,7 @@ int main(int argc, char** argv)
     int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
     tmpFlag |= _CRTDBG_LEAK_CHECK_DF;
     _CrtSetDbgFlag(tmpFlag);
+    //_CrtSetBreakAlloc(2127);
 #endif
 
 #if ER_WINDOWS
@@ -81,21 +85,36 @@ int main(int argc, char** argv)
 
     ::testing::InitGoogleTest(&argc, argv);
 
+    int ret = EXIT_FAILURE;
 
-    Logger log(Er::Log::Level::Debug);
-    Er::LibScope er(&log);
+    try
+    {
+        Logger log(Er::Log::Level::Debug);
+        g_log = &log;
+        Er::LibScope er(&log);
+
 
 #if ER_POSIX
-    // unblock signals in the test thread
-    ::sigemptyset(&mask);
-    ::sigaddset(&mask, SIGTERM);
-    ::sigaddset(&mask, SIGINT);
-    ::sigaddset(&mask, SIGUSR1);
-    ::sigaddset(&mask, SIGUSR2);
-    ::sigprocmask(SIG_UNBLOCK, &mask, nullptr);
+        // unblock signals in the test thread
+        ::sigemptyset(&mask);
+        ::sigaddset(&mask, SIGTERM);
+        ::sigaddset(&mask, SIGINT);
+        ::sigaddset(&mask, SIGUSR1);
+        ::sigaddset(&mask, SIGUSR2);
+        ::sigprocmask(SIG_UNBLOCK, &mask, nullptr);
 #endif
 
-    auto ret = RUN_ALL_TESTS();
+        TestProps::registerAll(&log);
+    
+        ret = RUN_ALL_TESTS();
+
+        TestProps::unregisterAll(&log);
+        g_log = nullptr;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Unexpected error: " << e.what() << "\n";
+    }
 
     return ret;
 }
