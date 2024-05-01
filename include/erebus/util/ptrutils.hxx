@@ -6,6 +6,9 @@
 namespace Er
 {
 
+namespace Util
+{
+
 template <typename T>
 struct IsUniquePtrType
     : std::false_type
@@ -124,5 +127,7 @@ auto getPlainPtr(T& t) -> decltype(&t)
 {
     return &t;
 }
+
+} // namespace Util {}
 
 } // namespace Er{}

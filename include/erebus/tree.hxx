@@ -2,7 +2,7 @@
 
 #include <erebus/empty.hxx>
 #include <erebus/exception.hxx>
-#include <erebus/ptrutils.hxx>
+#include <erebus/util/ptrutils.hxx>
 
 
 namespace Er
@@ -28,7 +28,7 @@ concept Treeable =
 
 
 template <class ItemT, class ItemPtrT = std::shared_ptr<ItemT>, class NodeDataT = Empty>
-    requires Treeable<ItemT> && IsSharedPtrType<ItemPtrT>::value
+    requires Treeable<ItemT> && Util::IsSharedPtrType<ItemPtrT>::value
 class Tree final
     : public NonCopyable
 {
@@ -60,12 +60,12 @@ public:
 
         const Item* data() const noexcept
         {
-            return getPlainPtr(m_data);
+            return Util::getPlainPtr(m_data);
         }
 
         Item* data() noexcept
         {
-            return getPlainPtr(m_data);
+            return Util::getPlainPtr(m_data);
         }
 
         const Node* parent() const noexcept
@@ -145,13 +145,13 @@ public:
                 auto& parentNodePtr = parentIt->second;
                 assert(parentNodePtr);
 
-                nodePtr->m_parent = getPlainPtr(parentNodePtr);
-                parentNodePtr->m_children.push_back(getPlainPtr(nodePtr));
+                nodePtr->m_parent = Util::getPlainPtr(parentNodePtr);
+                parentNodePtr->m_children.push_back(Util::getPlainPtr(nodePtr));
             }
             else
             {
                 nodePtr->m_parent = &m_root;
-                m_root.m_children.push_back(getPlainPtr(nodePtr));
+                m_root.m_children.push_back(Util::getPlainPtr(nodePtr));
             }
         }
     }
@@ -227,10 +227,10 @@ public:
                 auto& parentNodePtr = parentIt->second;
                 assert(parentNodePtr);
 
-                beginInsert(node, getPlainPtr(parentNodePtr), parentNodePtr->m_children.size());
+                beginInsert(node, Util::getPlainPtr(parentNodePtr), parentNodePtr->m_children.size());
 
                 parentNodePtr->m_children.push_back(node);
-                node->m_parent = getPlainPtr(parentNodePtr);
+                node->m_parent = Util::getPlainPtr(parentNodePtr);
 
                 endInsert();
             }
