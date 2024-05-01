@@ -77,38 +77,38 @@ TEST(Er_LogWrapper, simple)
     Logger log(Er::Log::Level::Info);
 
     // char
-    Er::Log::Warning(&log, LogNowhere()) << 'f' << 'a' << 'c' << 't';
+    Er::Log::Warning(&log, ErLogNowhere()) << 'f' << 'a' << 'c' << 't';
     // const char*
-    Er::Log::Warning(&log, LogNowhere()) << "hello " << "world";
+    Er::Log::Warning(&log, ErLogNowhere()) << "hello " << "world";
     // std::string_view
-    Er::Log::Warning(&log, LogNowhere()) << std::string_view("string_") << std::string_view("view");
+    Er::Log::Warning(&log, ErLogNowhere()) << std::string_view("string_") << std::string_view("view");
     // std::string
-    Er::Log::Warning(&log, LogNowhere()) << std::string("std::") << std::string("string");
+    Er::Log::Warning(&log, ErLogNowhere()) << std::string("std::") << std::string("string");
     // bool
-    Er::Log::Error(&log, LogNowhere()) << std::boolalpha << true << false;
+    Er::Log::Error(&log, ErLogNowhere()) << std::boolalpha << true << false;
     // const void*
 #if ER_64
     auto pvoid = reinterpret_cast<const void*>(uintptr_t(0xBABAEBA0FFFFFFFF));
 #else
     auto pvoid = reinterpret_cast<const void*>(uintptr_t(0xBABAEBA0));
 #endif
-    Er::Log::Error(&log, LogNowhere()) << pvoid;
+    Er::Log::Error(&log, ErLogNowhere()) << pvoid;
     // int16_t
-    Er::Log::Info(&log, LogNowhere()) << int16_t(10) << std::hex << std::setw(4) << std::setfill('0') << int16_t(0xad) << int16_t(0x2020);
+    Er::Log::Info(&log, ErLogNowhere()) << int16_t(10) << std::hex << std::setw(4) << std::setfill('0') << int16_t(0xad) << int16_t(0x2020);
     // uint16_t
-    Er::Log::Info(&log, LogNowhere()) << uint16_t(10) << std::hex << std::setw(4) << std::setfill('0') << uint16_t(0xad) << uint16_t(0x2020);
+    Er::Log::Info(&log, ErLogNowhere()) << uint16_t(10) << std::hex << std::setw(4) << std::setfill('0') << uint16_t(0xad) << uint16_t(0x2020);
     // int32_t
-    Er::Log::Info(&log, LogNowhere()) << int32_t(333) << std::hex << std::setw(8) << std::setfill('0') << int32_t(0xfdad) << int32_t(0xdeaa2020);
+    Er::Log::Info(&log, ErLogNowhere()) << int32_t(333) << std::hex << std::setw(8) << std::setfill('0') << int32_t(0xfdad) << int32_t(0xdeaa2020);
     // uint32_t
-    Er::Log::Info(&log, LogNowhere()) << uint32_t(333) << std::hex << std::setw(8) << std::setfill('0') << uint32_t(0xfdad) << uint32_t(0xdeaa2020);
+    Er::Log::Info(&log, ErLogNowhere()) << uint32_t(333) << std::hex << std::setw(8) << std::setfill('0') << uint32_t(0xfdad) << uint32_t(0xdeaa2020);
     // int64_t
-    Er::Log::Info(&log, LogNowhere()) << int64_t(4444) << std::hex << std::setw(16) << std::setfill('0') << int64_t(0x77778888) << int64_t(0x7fffffff55664455);
+    Er::Log::Info(&log, ErLogNowhere()) << int64_t(4444) << std::hex << std::setw(16) << std::setfill('0') << int64_t(0x77778888) << int64_t(0x7fffffff55664455);
     // uint64_t
-    Er::Log::Info(&log, LogNowhere()) << uint64_t(4444) << std::hex << std::setw(16) << std::setfill('0') << uint64_t(0x77778888) << uint64_t(0x7fffffff55664455);
+    Er::Log::Info(&log, ErLogNowhere()) << uint64_t(4444) << std::hex << std::setw(16) << std::setfill('0') << uint64_t(0x77778888) << uint64_t(0x7fffffff55664455);
     // float
-    Er::Log::Info(&log, LogNowhere()) << std::fixed << std::setprecision(3) << float(0.1233);
+    Er::Log::Info(&log, ErLogNowhere()) << std::fixed << std::setprecision(3) << float(0.1233);
     // double
-    Er::Log::Info(&log, LogNowhere()) << std::fixed << std::setprecision(3) << double(0.1233);
+    Er::Log::Info(&log, ErLogNowhere()) << std::fixed << std::setprecision(3) << double(0.1233);
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     auto& q = log.queue();

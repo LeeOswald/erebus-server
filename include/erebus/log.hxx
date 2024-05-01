@@ -238,22 +238,23 @@ public:
 
 
 
-#define LogDebug(log, ...) \
+#define ErLogDebug(log, ...) \
     (log->level() <= ::Er::Log::Level::Debug) && log->write(::Er::Log::Level::Debug, __VA_ARGS__)
 
-#define LogInfo(log, ...) \
+#define ErLogInfo(log, ...) \
     (log->level() <= ::Er::Log::Level::Info) && log->write(::Er::Log::Level::Info, __VA_ARGS__)
 
-#define LogWarning(log, ...) \
+#define ErLogWarning(log, ...) \
     (log->level() <= ::Er::Log::Level::Warning) && log->write(::Er::Log::Level::Warning, __VA_ARGS__)
 
-#define LogError(log, ...) \
+#define ErLogError(log, ...) \
     (log->level() <= ::Er::Log::Level::Error) && log->write(::Er::Log::Level::Error, __VA_ARGS__)
 
-#define LogFatal(log, ...) \
+#define ErLogFatal(log, ...) \
     (log->level() <= ::Er::Log::Level::Fatal) && log->write(::Er::Log::Level::Fatal, __VA_ARGS__)
 
 
-#define  LogNowhere() ::Er::Log::Location()
-#define LogComponent(component) ::Er::Log::Location(component)
-#define LogInstance(component) ::Er::Log::Location(component, this)
+#define ErLogNowhere() ::Er::Log::Location()
+#define ErLogComponent(component) ::Er::Log::Location(component)
+#define ErLogInstance(component) ::Er::Log::Location(component, this)
+

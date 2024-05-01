@@ -48,7 +48,7 @@ void version(Er::Client::IClient* client, Er::Log::ILog* log)
         {
             auto ver = client->version();
 
-            log->write(Er::Log::Level::Info, LogNowhere(), "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
+            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
         }
     );
 }
@@ -84,7 +84,7 @@ void addUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::st
 
             client->addUser(name, password);
 
-            Er::Log::Info(log, LogNowhere()) << "User " << name << " created successfully";
+            Er::Log::Info(log, ErLogNowhere()) << "User " << name << " created successfully";
         }
     );
 }
@@ -99,7 +99,7 @@ void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::str
 
             client->removeUser(name);
 
-            Er::Log::Info(log, LogNowhere()) << "User " << name << " deleted successfully";
+            Er::Log::Info(log, ErLogNowhere()) << "User " << name << " deleted successfully";
         }
     );
 }
@@ -116,7 +116,7 @@ void listUsers(Er::Log::ILog* log, const Er::Client::Params& params)
 
             for (auto& u : users)
             {
-                log->write(Er::Log::Level::Info, LogNowhere(), "Found user: %s", u.name.c_str());
+                log->write(Er::Log::Level::Info, ErLogNowhere(), "Found user: %s", u.name.c_str());
             }
         }
     );
@@ -132,7 +132,7 @@ void exit(Er::Log::ILog* log, const Er::Client::Params& params)
 
             client->exit(false);
 
-            log->write(Er::Log::Level::Info, LogNowhere(), "Server shutdown requested");
+            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server shutdown requested");
         }
     );
 }
@@ -147,7 +147,7 @@ void restart(Er::Log::ILog* log, const Er::Client::Params& params)
 
             client->exit(true);
 
-            log->write(Er::Log::Level::Info, LogNowhere(), "Server restart requested");
+            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server restart requested");
         }
     );
 }
@@ -159,14 +159,14 @@ void dumpPropertyBag(const Er::PropertyBag& info, Er::Log::ILog* log)
         auto propInfo = Er::lookupProperty(it->second.id).get();
         if (!propInfo)
         {
-            log->write(Er::Log::Level::Warning, LogNowhere(), "0x%08x: ???", it->second.id);
+            log->write(Er::Log::Level::Warning, ErLogNowhere(), "0x%08x: ???", it->second.id);
         }
         else
         {
             std::ostringstream ss;
             propInfo->format(it->second, ss);
 
-            log->write(Er::Log::Level::Info, LogNowhere(), "%s: %s", propInfo->name(), ss.str().c_str());
+            log->write(Er::Log::Level::Info, ErLogNowhere(), "%s: %s", propInfo->name(), ss.str().c_str());
         }
     }
 }
@@ -179,7 +179,7 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
         it = info.find(Er::ProcessProps::Pid::Id::value);
         if (it == info.end())
         {
-            log->write(Er::Log::Level::Error, LogNowhere(), "<invalid process>");
+            log->write(Er::Log::Level::Error, ErLogNowhere(), "<invalid process>");
             return;
         }
 
@@ -188,14 +188,14 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
         it = info.find(Er::ProcessProps::IsDeleted::Id::value);
         if (it != info.end())
         {
-            log->write(Er::Log::Level::Error, LogNowhere(), "%zu { exited }", pid);
+            log->write(Er::Log::Level::Error, ErLogNowhere(), "%zu { exited }", pid);
             return;
         }
 
         it = info.find(Er::ProcessProps::Valid::Id::value);
         if (it == info.end())
         {
-            log->write(Er::Log::Level::Error, LogNowhere(), "No data for PID %zu", pid);
+            log->write(Er::Log::Level::Error, ErLogNowhere(), "No data for PID %zu", pid);
             return;
         }
 
@@ -204,18 +204,18 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
         {
             it = info.find(Er::ProcessProps::Error::Id::value);
             if (it != info.end())
-                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu", pid);
+                log->write(Er::Log::Level::Error, ErLogNowhere(), "Invalid stat for PID %zu", pid);
             else
-                log->write(Er::Log::Level::Error, LogNowhere(), "Invalid stat for PID %zu: %s", pid, std::get<std::string>(it->second.value).c_str());
+                log->write(Er::Log::Level::Error, ErLogNowhere(), "Invalid stat for PID %zu: %s", pid, std::get<std::string>(it->second.value).c_str());
 
             return;
         }
         
-        log->write(Er::Log::Level::Info, LogNowhere(), "%zu {", pid);
+        log->write(Er::Log::Level::Info, ErLogNowhere(), "%zu {", pid);
     }
     else
     {
-        log->write(Er::Log::Level::Info, LogNowhere(), "Global {");
+        log->write(Er::Log::Level::Info, ErLogNowhere(), "Global {");
     }
 
     for (auto it = info.begin(); it != info.end(); ++it)
@@ -229,19 +229,19 @@ void dumpProcess(const Er::PropertyBag& info, Er::Log::ILog* log)
             auto propInfo = Er::lookupProperty(it->second.id).get();
             if (!propInfo)
             {
-                log->write(Er::Log::Level::Warning, LogNowhere(), "   0x%08x: ???", it->second.id);
+                log->write(Er::Log::Level::Warning, ErLogNowhere(), "   0x%08x: ???", it->second.id);
             }
             else
             {
                 std::ostringstream ss;
                 propInfo->format(it->second, ss);
 
-                log->write(Er::Log::Level::Info, LogNowhere(), "   %s: %s", propInfo->name(), ss.str().c_str());
+                log->write(Er::Log::Level::Info, ErLogNowhere(), "   %s: %s", propInfo->name(), ss.str().c_str());
             }
         }
     }
 
-    log->write(Er::Log::Level::Info, LogNowhere(), "}");
+    log->write(Er::Log::Level::Info, ErLogNowhere(), "}");
 }
 
 void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
@@ -273,7 +273,7 @@ void dumpProcess(Er::Log::ILog* log, const Er::Client::Params& params, int pid, 
                 if (interval <= 0)
                     break;
 
-                log->write(Er::Log::Level::Info, LogNowhere(), "------------------------------------------------------");
+                log->write(Er::Log::Level::Info, ErLogNowhere(), "------------------------------------------------------");
 
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
             }
@@ -312,7 +312,7 @@ void dumpProcesses(Er::Log::ILog* log, const Er::Client::Params& params, int int
                 if (interval <= 0)
                     break;
 
-                log->write(Er::Log::Level::Info, LogNowhere(), "------------------------------------------------------");
+                log->write(Er::Log::Level::Info, ErLogNowhere(), "------------------------------------------------------");
 
                 // globals
                 {
@@ -360,7 +360,7 @@ void dumpProcessesDiff(Er::Log::ILog* log, const Er::Client::Params& params, int
                 if (interval <= 0)
                     break;
 
-                log->write(Er::Log::Level::Info, LogNowhere(), "------------------------------------------------------");
+                log->write(Er::Log::Level::Info, ErLogNowhere(), "------------------------------------------------------");
 
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
             }

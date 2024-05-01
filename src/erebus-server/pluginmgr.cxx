@@ -66,7 +66,7 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<
         m_plugins.push_back(info);
     }
 
-    m_params.log->write(Er::Log::Level::Info, LogNowhere(), "Loaded plugin [%s]", params.binary.c_str());
+    m_params.log->write(Er::Log::Level::Info, ErLogNowhere(), "Loaded plugin [%s]", params.binary.c_str());
 
     return info->ref;
 }

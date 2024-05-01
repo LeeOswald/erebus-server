@@ -43,7 +43,7 @@ void terminateHandler()
     ss << boost::stacktrace::stacktrace();
 
     if (g_log)
-        LogFatal(g_log, LogNowhere(), "std::terminate() called from\n%s", ss.str().c_str());
+        ErLogFatal(g_log, ErLogNowhere(), "std::terminate() called from\n%s", ss.str().c_str());
     else
         std::cerr << "std::terminate() called from\n" << ss.str();
 
@@ -192,7 +192,7 @@ int main(int argc, char* argv[], char* env[])
     try
     {
         auto user = Er::System::User::current();
-        logger->write(Er::Log::Level::Info, LogNowhere(), "Starting as user %s", user.name.c_str());
+        logger->write(Er::Log::Level::Info, ErLogNowhere(), "Starting as user %s", user.name.c_str());
 
         std::string root;
         std::string certificate;
@@ -217,7 +217,7 @@ int main(int argc, char* argv[], char* env[])
         servers.reserve(cfg.endpoints.size());
         for (auto& ep: cfg.endpoints)
         {
-            logger->write(Er::Log::Level::Info, LogNowhere(), "Creating a server instance at [%s]", ep.endpoint.c_str());
+            logger->write(Er::Log::Level::Info, ErLogNowhere(), "Creating a server instance at [%s]", ep.endpoint.c_str());
 
             try
             {
@@ -251,7 +251,7 @@ int main(int argc, char* argv[], char* env[])
         {
             if (!plugin.enabled)
             {
-                logger->write(Er::Log::Level::Info, LogNowhere(), "Skipping plugin [%s]", plugin.path.c_str());
+                logger->write(Er::Log::Level::Info, ErLogNowhere(), "Skipping plugin [%s]", plugin.path.c_str());
                 continue;
             }
             
@@ -270,12 +270,12 @@ int main(int argc, char* argv[], char* env[])
         }
 
         // now just sit around and wait
-        logger->write(Er::Log::Level::Info, LogNowhere(), "Waiting for client connections...");
+        logger->write(Er::Log::Level::Info, ErLogNowhere(), "Waiting for client connections...");
 
         g_exitCondition.waitValue(true);
 
         // cleanup
-        logger->write(Er::Log::Level::Info, LogNowhere(), "Stopping server instances...");
+        logger->write(Er::Log::Level::Info, ErLogNowhere(), "Stopping server instances...");
         
         // we must explicitly stop the server to make the listening endpoint addresses available again
         // before we spawn a copy of us during the restart command 
@@ -284,15 +284,15 @@ int main(int argc, char* argv[], char* env[])
         
         if (g_signalReceived)
         {
-            logger->write(Er::Log::Level::Warning, LogNowhere(), "Exiting due to signal %d", *g_signalReceived);
+            logger->write(Er::Log::Level::Warning, ErLogNowhere(), "Exiting due to signal %d", *g_signalReceived);
         }
         else if (!g_restartRequired)
         {
-            logger->write(Er::Log::Level::Warning, LogNowhere(), "Shutting down...");
+            logger->write(Er::Log::Level::Warning, ErLogNowhere(), "Shutting down...");
         }
         else
         {
-            logger->write(Er::Log::Level::Warning, LogNowhere(), "Restarting...");
+            logger->write(Er::Log::Level::Warning, ErLogNowhere(), "Restarting...");
             g_log = nullptr;
             // force logger destruction to unlock the logfile
             logger.reset();

@@ -63,7 +63,7 @@ EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log)
         throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->id_str()));
     }
 
-    LogDebug(log, LogNowhere(), "Registered property %08x (%s)", pi->id(), pi->id_str());
+    ErLogDebug(log, ErLogNowhere(), "Registered property %08x (%s)", pi->id(), pi->id_str());
 }
 
 EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log) noexcept
@@ -85,7 +85,7 @@ EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log)
         s_registry->propsByName.erase(it2);
     }
 
-    LogDebug(log, LogNowhere(), "Unregistered property %08x (%s)", pi->id(), pi->id_str());
+    ErLogDebug(log, ErLogNowhere(), "Unregistered property %08x (%s)", pi->id(), pi->id_str());
 }
 
 EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id) noexcept

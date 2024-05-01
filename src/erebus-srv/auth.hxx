@@ -25,13 +25,13 @@ class AuthMetadataProcessor
 public:
     ~AuthMetadataProcessor()
     {
-        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "~AuthMetadataProcessor()");
+        ErLogDebug(m_log, ErLogInstance("AuthMetadataProcessor"), "~AuthMetadataProcessor()");
     }
 
     explicit AuthMetadataProcessor(Er::Log::ILog* log)
         : m_log(log)
     {
-        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "AuthMetadataProcessor()");
+        ErLogDebug(m_log, ErLogInstance("AuthMetadataProcessor"), "AuthMetadataProcessor()");
     }
 
     grpc::Status Process(const InputMetadata& authMetadata, grpc::AuthContext* context, OutputMetadata* consumedMetadata, OutputMetadata* responseMetadata) override
@@ -42,7 +42,7 @@ public:
         auto dispatch = authMetadata.find(":path");
         if (dispatch == authMetadata.end())
         {
-            LogError(m_log, LogInstance("AuthMetadataProcessor"), "No method path in metadata");
+            ErLogError(m_log, ErLogInstance("AuthMetadataProcessor"), "No method path in metadata");
             return grpc::Status(grpc::StatusCode::INTERNAL, "Internal Error");
         }
 
@@ -50,7 +50,7 @@ public:
         auto dispatchValue = std::string(dispatch->second.data(), dispatch->second.length());
         if (std::find(m_noAuthMethods.begin(), m_noAuthMethods.end(), dispatchValue) != m_noAuthMethods.end())
         {
-            LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "No auth required for [%s]", dispatchValue.c_str());
+            ErLogDebug(m_log, ErLogInstance("AuthMetadataProcessor"), "No auth required for [%s]", dispatchValue.c_str());
             return grpc::Status::OK;
         }
 
@@ -58,7 +58,7 @@ public:
         auto ticket = authMetadata.find("ticket");
         if (ticket == authMetadata.end())
         {
-            LogError(m_log, LogInstance("AuthMetadataProcessor"), "No ticket in metadata");
+            ErLogError(m_log, ErLogInstance("AuthMetadataProcessor"), "No ticket in metadata");
             return grpc::Status(grpc::StatusCode::UNAUTHENTICATED, "Missing Ticket");
         }
 
@@ -67,13 +67,13 @@ public:
         auto it = m_tickets.find(ticketValue);
         if (it == m_tickets.end())
         {
-            LogError(m_log, LogInstance("AuthMetadataProcessor"), "Invalid ticket");
+            ErLogError(m_log, ErLogInstance("AuthMetadataProcessor"), "Invalid ticket");
             return grpc::Status(grpc::StatusCode::UNAUTHENTICATED, "Invalid Ticket");
         }
 
         it->second.touched = std::chrono::steady_clock::now();
 
-        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Found ticket [%s] -> [%s]", ticketValue.c_str(), it->second.user.c_str());
+        ErLogDebug(m_log, ErLogInstance("AuthMetadataProcessor"), "Found ticket [%s] -> [%s]", ticketValue.c_str(), it->second.user.c_str());
 
         // once verified, mark as consumed and store user for later retrieval
         consumedMetadata->insert(std::make_pair("ticket", ticketValue));     // required
@@ -86,7 +86,7 @@ public:
 
     void addTicket(const std::string& user, const std::string& ticket)
     {
-        LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Added ticket [%s] -> [%s]", ticket.c_str(), user.c_str());
+        ErLogDebug(m_log, ErLogInstance("AuthMetadataProcessor"), "Added ticket [%s] -> [%s]", ticket.c_str(), user.c_str());
 
         std::unique_lock l(m_mutex);
 
@@ -101,12 +101,12 @@ public:
         auto it = m_tickets.find(ticket);
         if (it == m_tickets.end())
         {
-            LogWarning(m_log, LogInstance("AuthMetadataProcessor"), "Ticket [%s] not found", ticket.c_str());
+            ErLogWarning(m_log, ErLogInstance("AuthMetadataProcessor"), "Ticket [%s] not found", ticket.c_str());
         }
         else
         {
             m_tickets.erase(it);
-            LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Ticket [%s] removed", ticket.c_str());
+            ErLogDebug(m_log, ErLogInstance("AuthMetadataProcessor"), "Ticket [%s] removed", ticket.c_str());
         }
     }
 
@@ -141,7 +141,7 @@ private:
             if (d.count() > kTicketDurationSeconds)
             {
                 auto next = std::next(it);
-                LogDebug(m_log, LogInstance("AuthMetadataProcessor"), "Stale ticket [%s] dropped", it->second.ticket.c_str());
+                ErLogDebug(m_log, ErLogInstance("AuthMetadataProcessor"), "Stale ticket [%s] dropped", it->second.ticket.c_str());
                 m_tickets.erase(it);
                 it = next;
             }
