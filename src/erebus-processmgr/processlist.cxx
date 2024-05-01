@@ -29,7 +29,7 @@ double rtime() noexcept // current time, sec
 
 ProcessList::~ProcessList()
 {
-    LogDebug(m_log, LogInstance("ProcessList"), "~ProcessList()");
+    ErLogDebug(m_log, ErLogInstance("ProcessList"), "~ProcessList()");
 }
 
 ProcessList::ProcessList(Er::Log::ILog* log, IconManager* iconManager)
@@ -37,7 +37,7 @@ ProcessList::ProcessList(Er::Log::ILog* log, IconManager* iconManager)
     , m_iconManager(iconManager)
     , m_procFs(log)
 {
-    LogDebug(m_log, LogInstance("ProcessList"), "ProcessList()");
+    ErLogDebug(m_log, ErLogInstance("ProcessList"), "ProcessList()");
 }
 
 void ProcessList::registerService(Er::Server::IServiceContainer* container)
@@ -60,7 +60,7 @@ ProcessList::SessionId ProcessList::allocateSession()
 
     m_sessions.insert({ id, std::make_unique<Session>(id) });
 
-    LogDebug(m_log, LogInstance("ProcessList"), "Started session %d", id);
+    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Started session %d", id);
 
     return id;
 }
@@ -77,7 +77,7 @@ void ProcessList::deleteSession(SessionId id)
 
     dropStaleSessions();
 
-    LogDebug(m_log, LogInstance("ProcessList"), "Ended session %d", id);    
+    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Ended session %d", id);    
 }
 
 ProcessList::Session* ProcessList::getSession(std::optional<SessionId> id)
@@ -134,7 +134,7 @@ void ProcessList::endStream(StreamId id, std::optional<SessionId> sessionId)
 
     dropStaleStreams();
 #if 0
-    LogDebug(m_log, LogInstance("ProcessList"), "Ended stream %d", id);    
+    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Ended stream %d", id);    
 #endif
 }
 
@@ -307,7 +307,7 @@ void ProcessList::dropStaleStreams() noexcept
         if (d.count() > kStreamTimeoutSeconds)
         {
             auto next = std::next(it);
-            LogWarning(m_log, LogInstance("ProcessList"), "Dropping stale stream %d", it->first);
+            ErLogWarning(m_log, ErLogInstance("ProcessList"), "Dropping stale stream %d", it->first);
             m_streams.erase(it);
             it = next;
         }
@@ -328,7 +328,7 @@ void ProcessList::dropStaleSessions() noexcept
         if (d.count() > kSessionTimeoutSeconds)
         {
             auto next = std::next(it);
-            LogWarning(m_log, LogInstance("ProcessList"), "Dropping stale session %d", it->first);
+            ErLogWarning(m_log, ErLogInstance("ProcessList"), "Dropping stale session %d", it->first);
             m_sessions.erase(it);
             it = next;
         }
@@ -350,7 +350,7 @@ ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& arg
     auto stream = std::make_unique<ProcessListStream>(streamId, required, std::move(pids));
     m_streams.insert({ streamId, std::move(stream) });
 #if 0
-    LogDebug(m_log, LogInstance("ProcessList"), "Started process stream %d", streamId);
+    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Started process stream %d", streamId);
 #endif
     return streamId;
 }
@@ -373,7 +373,7 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
         }
     }
 #if 0
-    Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
+    Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
 #endif
     ++stream->next;
 
@@ -395,7 +395,7 @@ ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag&
     m_streams.insert({ streamId, std::move(stream) });
 
 #if 0
-    LogDebug(m_log, LogInstance("ProcessList"), "Started process diff stream %d", streamId);
+    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Started process diff stream %d", streamId);
 #endif
 
     return streamId;
@@ -423,7 +423,7 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         Er::addProperty<Er::ProcessProps::Pid>(bag, stream->diff.removed[stream->next]);
         Er::addProperty<Er::ProcessProps::IsDeleted>(bag, true);
 #if 0
-        Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next removed PID " << stream->diff.removed[stream->next] << " on stream " << stream->id;
+        Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next removed PID " << stream->diff.removed[stream->next] << " on stream " << stream->id;
 #endif
         ++stream->next;
     }
@@ -447,7 +447,7 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         Er::addProperty<Er::ProcessProps::Valid>(bag, true);
 
 #if 0
-        Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next modified PID " << modified.pid << " on stream " << stream->id;
+        Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next modified PID " << modified.pid << " on stream " << stream->id;
 #endif
         
         ++stream->next;
@@ -472,9 +472,9 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
 
 #if 0
         if (added->isNew)
-            Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next new PID " << added->pid << " on stream " << stream->id;
+            Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next new PID " << added->pid << " on stream " << stream->id;
         else
-            Er::Log::Debug(m_log, LogInstance("ProcessList")) << "Next existing PID " << added->pid << " on stream " << stream->id;
+            Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next existing PID " << added->pid << " on stream " << stream->id;
 #endif
         
         ++stream->next;

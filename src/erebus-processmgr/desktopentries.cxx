@@ -96,7 +96,7 @@ void DesktopEntries::addXdgDataDirs()
     auto xdgDirs = std::getenv("XDG_DATA_DIRS");
     if (!xdgDirs)
     {
-        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "XDG_DATA_DIRS is not set";
+        Er::Log::Warning(m_log, ErLogComponent("DesktopEntries")) << "XDG_DATA_DIRS is not set";
         return;
     }
 
@@ -112,11 +112,11 @@ void DesktopEntries::addXdgDataDirs()
         auto pathStr = path.string();
         if (::access(pathStr.c_str(), R_OK) == -1)
         {
-            Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "failed to access " << pathStr;
+            Er::Log::Warning(m_log, ErLogComponent("DesktopEntries")) << "failed to access " << pathStr;
             continue;
         }
 
-        Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "including " << pathStr;
+        Er::Log::Debug(m_log, ErLogComponent("DesktopEntries")) << "including " << pathStr;
 
         {
             std::unique_lock l(m_dirsLock);
@@ -135,7 +135,7 @@ void DesktopEntries::addUserDirs()
 
         if (::access(u.homeDir.c_str(), R_OK) == -1)
         {
-            Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "failed to access " << u.homeDir;
+            Er::Log::Warning(m_log, ErLogComponent("DesktopEntries")) << "failed to access " << u.homeDir;
             continue;
         }
 
@@ -147,7 +147,7 @@ void DesktopEntries::addUserDirs()
             continue;
 
         auto pathStr = path.string();
-        Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "including " << pathStr;
+        Er::Log::Debug(m_log, ErLogComponent("DesktopEntries")) << "including " << pathStr;
         
         {
             std::unique_lock l(m_dirsLock);
@@ -169,7 +169,7 @@ void DesktopEntries::parseFiles(const std::string& dir)
         { 
             if (std::regex_match(path, DesktopFilePattern))
             {
-                Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << "adding " << path;
+                Er::Log::Debug(m_log, ErLogComponent("DesktopEntries")) << "adding " << path;
                 return true;
             }
             return false;
@@ -180,7 +180,7 @@ void DesktopEntries::parseFiles(const std::string& dir)
     {
         Er::protectedCall<void>(
             m_log, 
-            LogComponent("DesktopEntries"),
+            ErLogComponent("DesktopEntries"),
             [this](const std::string& file)
             {
                 auto result = parseFile(file);
@@ -212,14 +212,14 @@ std::shared_ptr<DesktopEntries::Entry> DesktopEntries::parseFile(const std::stri
     auto exeName = extractExeNameFromCommand(*exe);
     if (exeName.empty())
     {
-        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "invalid executable name [" << *exe << "] in " << path;
+        Er::Log::Warning(m_log, ErLogComponent("DesktopEntries")) << "invalid executable name [" << *exe << "] in " << path;
         return std::shared_ptr<DesktopEntries::Entry>();
     }
 
     auto exePath = resolveExePath(exeName);
     if (!exePath)
     {
-        Er::Log::Warning(m_log, LogComponent("DesktopEntries")) << "failed to find executable [" << *exe << "] for " << path;
+        Er::Log::Warning(m_log, ErLogComponent("DesktopEntries")) << "failed to find executable [" << *exe << "] for " << path;
         return std::shared_ptr<DesktopEntries::Entry>();
     }
 
@@ -231,7 +231,7 @@ std::shared_ptr<DesktopEntries::Entry> DesktopEntries::parseFile(const std::stri
 
     e->icon = std::move(*ico);
 
-    Er::Log::Debug(m_log, LogComponent("DesktopEntries")) << e->exec << " -> " << e->icon;
+    Er::Log::Debug(m_log, ErLogComponent("DesktopEntries")) << e->exec << " -> " << e->icon;
 
     return e;
 }

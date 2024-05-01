@@ -193,7 +193,7 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
 {
     return Er::protectedCall<int>(
         m_log,
-        LogComponent("IconCache"),
+        ErLogComponent("IconCache"),
         [this, size, stop, sourceFile, iconNames]()
         {
             std::ostringstream cmd;
@@ -230,10 +230,10 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
             while (agent.running()) 
             {
                 if (std::getline(outPipe, line) && !line.empty())
-                    m_log->write(std::make_shared<Er::Log::Record>(Er::Log::Level::Info, Er::System::Time::gmt(), agent.id(), agent.id(), LogComponent("IconCacheAgent"), std::move(line)));
+                    m_log->write(std::make_shared<Er::Log::Record>(Er::Log::Level::Info, Er::System::Time::gmt(), agent.id(), agent.id(), ErLogComponent("IconCacheAgent"), std::move(line)));
                 
                 if (std::getline(errPipe, line) && !line.empty())
-                    m_log->write(std::make_shared<Er::Log::Record>(Er::Log::Level::Error, Er::System::Time::gmt(), agent.id(), agent.id(), LogComponent("IconCacheAgent"), std::move(line)));
+                    m_log->write(std::make_shared<Er::Log::Record>(Er::Log::Level::Error, Er::System::Time::gmt(), agent.id(), agent.id(), ErLogComponent("IconCacheAgent"), std::move(line)));
                 
                 if (stop)
                 {
@@ -247,10 +247,10 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
             }
 
             while (std::getline(outPipe, line) && !line.empty())
-                m_log->write(std::make_shared<Er::Log::Record>(Er::Log::Level::Info, Er::System::Time::gmt(), agent.id(), agent.id(), LogComponent("IconCacheAgent"), std::move(line)));
+                m_log->write(std::make_shared<Er::Log::Record>(Er::Log::Level::Info, Er::System::Time::gmt(), agent.id(), agent.id(), ErLogComponent("IconCacheAgent"), std::move(line)));
                 
             while (std::getline(errPipe, line) && !line.empty())
-                m_log->write(std::make_shared<Er::Log::Record>(Er::Log::Level::Error, Er::System::Time::gmt(), agent.id(), agent.id(), LogComponent("IconCacheAgent"), std::move(line)));
+                m_log->write(std::make_shared<Er::Log::Record>(Er::Log::Level::Error, Er::System::Time::gmt(), agent.id(), agent.id(), ErLogComponent("IconCacheAgent"), std::move(line)));
             
 
             agent.wait();

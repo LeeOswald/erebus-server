@@ -20,6 +20,7 @@ class Logger
 public:
     ~Logger()
     {
+        Er::Log::LogBase::flush();
         Er::Log::LogBase::removeDelegate("this");
     }
 

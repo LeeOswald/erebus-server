@@ -72,7 +72,7 @@ struct SourceLocation
         return *this;
     }
 
-    SourceLocation& operator=(SourceLocation&& o) noexcept(noexcept(std::is_nothrow_swappable_v<SourceLocation>))
+    SourceLocation& operator=(SourceLocation&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<std::string> && std::is_nothrow_swappable_v<std::string>))
     {
         SourceLocation tmp(std::move(o));
         swap(*this, tmp);

@@ -53,7 +53,7 @@ private:
         else if (level == LIBBPF_WARN)
             l = Er::Log::Level::Warning;
 
-        g_log->writev(l, LogComponent("eBPF"), format, args);
+        g_log->writev(l, ErLogComponent("eBPF"), format, args);
 
         return 0;
     }

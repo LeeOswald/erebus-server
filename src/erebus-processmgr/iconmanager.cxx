@@ -79,7 +79,7 @@ std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::strin
         auto cached = cache->find(name);
         if (cached != cache->end())
         {
-            LogDebug(m_log, LogComponent("IconManager"), "Found cached default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
+            ErLogDebug(m_log, ErLogComponent("IconManager"), "Found cached default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
             return cached->second;
         }
     }
@@ -91,14 +91,14 @@ std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::strin
         std::unique_lock l(m_mutex);
         auto dummy = std::make_shared<IconData>();
         cache->insert({ name, dummy });
-        LogWarning(m_log, LogComponent("IconManager"), "No default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
+        ErLogWarning(m_log, ErLogComponent("IconManager"), "No default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
         return dummy;
     }
 
     // load from the disk cache
     auto data = Er::protectedCall<Bytes>(
         m_log,
-        LogComponent("IconManager"),
+        ErLogComponent("IconManager"),
         [this, cachePath]()
         {
             return Er::Util::loadBinaryFile(*cachePath);
@@ -110,7 +110,7 @@ std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::strin
         std::unique_lock l(m_mutex);
         auto dummy = std::make_shared<IconData>();
         cache->insert({ name, dummy });
-        LogWarning(m_log, LogComponent("IconManager"), "Default icon [%s] could not be loaded", name.c_str());
+        ErLogWarning(m_log, ErLogComponent("IconManager"), "Default icon [%s] could not be loaded", name.c_str());
         return dummy;
     }
 
@@ -118,7 +118,7 @@ std::shared_ptr<IconManager::IconData> IconManager::defaultIcon(const std::strin
     std::unique_lock l(m_mutex);
     auto result = std::make_shared<IconData>(std::move(data.bytes()));
     cache->insert({ name, result });
-    LogDebug(m_log, LogComponent("IconManager"), "Using default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
+    ErLogDebug(m_log, ErLogComponent("IconManager"), "Using default icon [%s] for [%s] [%s]", name.c_str(), comm.c_str(), exe.c_str());
 
     return result;
 }
@@ -132,7 +132,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& co
         auto cached = cache->get(exe);
         if (cached)
         {
-            LogDebug(m_log, LogComponent("IconManager"), "Found cached icon for [%s] [%s]", comm.c_str(), exe.c_str());
+            ErLogDebug(m_log, ErLogComponent("IconManager"), "Found cached icon for [%s] [%s]", comm.c_str(), exe.c_str());
             return *cached;
         }
     }
@@ -156,7 +156,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& co
     // load from the disk cache
     auto data = Er::protectedCall<Bytes>(
         m_log,
-        LogComponent("IconManager"),
+        ErLogComponent("IconManager"),
         [this, cachePath]()
         {
             return Er::Util::loadBinaryFile(*cachePath);
@@ -173,7 +173,7 @@ std::shared_ptr<IconManager::IconData> IconManager::lookup(const std::string& co
     auto ico = std::make_shared<IconData>(std::move(data));
     std::unique_lock l(m_mutex);
     cache->put(exe, ico);
-    LogDebug(m_log, LogComponent("IconManager"), "Found icon for [%s] [%s]", comm.c_str(), exe.c_str());
+    ErLogDebug(m_log, ErLogComponent("IconManager"), "Found icon for [%s] [%s]", comm.c_str(), exe.c_str());
 
     return ico;
 }

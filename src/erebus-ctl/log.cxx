@@ -11,15 +11,15 @@ namespace ErCtl
 
 Log::~Log()
 {
-    flush();
-    removeDelegate("console");
+    Er::Log::LogBase::flush();
+    Er::Log::LogBase::removeDelegate("console");
 }
 
 Log::Log(Er::Log::Level level)
     : Er::Log::LogBase(level, 65536)
 {
-    addDelegate("console", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
-    unmute();
+    Er::Log::LogBase::addDelegate("console", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
+    Er::Log::LogBase::unmute();
 }
 
 void Log::delegate(std::shared_ptr<Er::Log::Record> r)

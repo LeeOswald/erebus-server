@@ -55,7 +55,7 @@ public:
         if (!args.iconCacheAgent.empty())
             m_iconCache.reset(new Er::Private::IconCache(params.log, args.iconTheme, args.iconCacheAgent, args.iconCacheDir));
         else
-            params.log->write(Er::Log::Level::Warning, LogComponent("ProcessMgrPlugin"), "Starting without icon cache");
+            params.log->write(Er::Log::Level::Warning, ErLogComponent("ProcessMgrPlugin"), "Starting without icon cache");
 
         m_desktopEntries.reset(new Er::Private::DesktopEntries(params.log));
 

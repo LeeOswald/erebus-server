@@ -62,8 +62,8 @@ LogRotator::LogRotator(Er::Log::Level level, const char* fileName)
 Logger::~Logger()
 {
     // we have to flush here before we remove our delegate
-    flush();
-    removeDelegate("this");
+    Er::Log::LogBase::flush();
+    Er::Log::LogBase::removeDelegate("this");
 }
 
 Logger::Logger(Er::Log::Level level, const char* fileName)
@@ -105,7 +105,7 @@ Logger::Logger(Er::Log::Level level, const char* fileName)
     }
 #endif
 
-    addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
+    Er::Log::LogBase::addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
 }
 
 void Logger::delegate(std::shared_ptr<Er::Log::Record> r) 
