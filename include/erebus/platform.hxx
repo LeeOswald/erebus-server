@@ -45,7 +45,6 @@
 
 // often-used std headers
 #include <algorithm>
-#include <cassert>
 #include <climits>
 #include <concepts>
 #include <cstdarg>

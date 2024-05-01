@@ -39,7 +39,7 @@ void doAssert(Location&& location, const char* expression, PredT pred)
     static_cast<void>(::Er::Private::doAssert( \
         ::Er::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace(0, static_cast<std::size_t>(-1))), \
         #expr, \
-        [&]() noexcept { return expr; } \
+        [&]() noexcept { return static_cast<bool>(expr); } \
     ))
 
 

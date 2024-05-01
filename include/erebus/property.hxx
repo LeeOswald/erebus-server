@@ -136,7 +136,7 @@ struct PropertyInfo
     static void format(const PropertyValueStorage& v, std::ostream& s)
     {
         auto p = std::get_if<ValueType>(&v);
-        assert(p);
+        ErAssert(p);
         if (p)
         {
             Formatter f;
@@ -480,7 +480,7 @@ struct PropertyInfoWrapper
         if (a.id != b.id)
             return false;
 
-        assert(a.type == b.type);
+        ErAssert(a.type == b.type);
 
         return PropertyInfo::equal(a.value, b.value);
     }

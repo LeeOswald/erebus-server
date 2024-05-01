@@ -313,7 +313,7 @@ private:
     {
         if (m_autorized)
         {
-            assert(!m_ticket.empty());
+            ErAssert(!m_ticket.empty());
             auto creds = grpc::MetadataCredentialsFromPlugin(std::unique_ptr<grpc::MetadataCredentialsPlugin>(new MetadataCredentialsPlugin("ticket", m_ticket)));
             context.set_credentials(creds);
         }

@@ -74,19 +74,19 @@ struct AutoPtr final
 
     [[nodiscard]] constexpr ConstPointer operator->() const noexcept
     {
-        assert(m_ptr);
+        ErAssert(m_ptr);
         return m_ptr;
     }
 
     [[nodiscard]] constexpr Pointer operator->() noexcept
     {
-        assert(m_ptr);
+        ErAssert(m_ptr);
         return m_ptr;
     }
 
     [[nodiscard]] Pointer* writeable() noexcept
     {
-        assert(!m_ptr);
+        ErAssert(!m_ptr);
         return &m_ptr;
     }
 

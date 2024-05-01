@@ -53,7 +53,7 @@ rapidjson::Document loadAndValidate(const std::string& path)
 {
     rapidjson::Document schemaDocument;
     schemaDocument.Parse(kSchema.data(), kSchema.length());
-    assert(!schemaDocument.HasParseError());
+    ErAssert(!schemaDocument.HasParseError());
 
     valijson::Schema schema;
     valijson::SchemaParser parser;

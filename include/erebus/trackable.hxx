@@ -68,7 +68,7 @@ public:
 
     void markDeleted(TimePoint t) noexcept
     {
-        assert(m_state != State::Deleted);
+        ErAssert(m_state != State::Deleted);
         
         m_state = State::Deleted;
         m_timeTracked = t;

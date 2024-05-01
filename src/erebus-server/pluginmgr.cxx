@@ -49,10 +49,10 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<
     }
 
     info->disposeFn = info->dll.get<Er::Server::disposePlugin>("disposePlugin");
-    assert(info->disposeFn);
+    ErAssert(info->disposeFn);
 
     auto entry = info->dll.get<Er::Server::createPlugin>("createPlugin");
-    assert(entry);
+    ErAssert(entry);
 
 
     info->ref = entry(params);

@@ -54,7 +54,7 @@ public:
         constexpr explicit Node(ItemPtr data)
             : m_data(data)
         {
-            assert(data);
+            ErAssert(data);
             m_data->context() = this;
         }
 
@@ -122,28 +122,28 @@ public:
             auto dataPtr = getItem<ContainerT>(sourceIt);
             auto& key = dataPtr->key();
 
-            assert(dataPtr);
+            ErAssert(dataPtr);
 
             auto r = m_nodes.emplace(key, std::make_unique<Node>(dataPtr));
             if (!r.second)
                 throw Exception(ER_HERE(), "Duplicate tree item key");
         }
 
-        assert(m_nodes.size() == source.size());
+        ErAssert(m_nodes.size() == source.size());
 
         // look for parents and children
         for (auto nodeIt = m_nodes.begin(); nodeIt != m_nodes.end(); ++nodeIt)
         {
             auto& key = nodeIt->first;
             auto& nodePtr = nodeIt->second;
-            assert(nodePtr);
+            ErAssert(nodePtr);
             auto dataPtr = nodePtr->m_data;
-            assert(dataPtr);
+            ErAssert(dataPtr);
             auto parentIt = m_nodes.find(dataPtr->parentKey());
             if ((parentIt != m_nodes.end()) && !dataPtr->isRoot())
             {
                 auto& parentNodePtr = parentIt->second;
-                assert(parentNodePtr);
+                ErAssert(parentNodePtr);
 
                 nodePtr->m_parent = Util::getPlainPtr(parentNodePtr);
                 parentNodePtr->m_children.push_back(Util::getPlainPtr(nodePtr));
@@ -225,7 +225,7 @@ public:
             else
             {
                 auto& parentNodePtr = parentIt->second;
-                assert(parentNodePtr);
+                ErAssert(parentNodePtr);
 
                 beginInsert(node, Util::getPlainPtr(parentNodePtr), parentNodePtr->m_children.size());
 
@@ -288,7 +288,7 @@ public:
             return;
 
         auto node = it->second.get();
-        assert(node != &m_root);
+        ErAssert(node != &m_root);
 
         // root adopts this node's children
         for (auto childIt = node->m_children.begin(); childIt != node->m_children.end(); ++childIt)
@@ -303,9 +303,9 @@ public:
 
         // orphan this node
         auto parent = node->m_parent;
-        assert(parent);
+        ErAssert(parent);
         auto parentIt = std::find(parent->m_children.begin(), parent->m_children.end(), node);
-        assert(parentIt != parent->m_children.end());
+        ErAssert(parentIt != parent->m_children.end());
 
         beginRemove(node, parent, std::distance(parent->m_children.begin(), parentIt));
 

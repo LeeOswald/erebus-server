@@ -52,7 +52,7 @@ public:
     explicit MutexPool(std::size_t count)
         : m_mutices(count)
     {
-        assert(count > 0);
+        ErAssert(count > 0);
     }
 
     [[nodiscard]] MutexType& mutex() noexcept

@@ -126,7 +126,7 @@ public:
     explicit ObjectLock(ObjectType* o) noexcept
         : m_object(o)
     {
-        assert(m_object);
+        ErAssert(m_object);
         m_object->mutex().lock();
     }
 
@@ -142,13 +142,13 @@ public:
 
     [[nodiscard]] constexpr const ObjectType* operator->() const noexcept
     {
-        assert(m_object);
+        ErAssert(m_object);
         return m_object;
     }
 
     [[nodiscard]] constexpr ObjectType* operator->() noexcept
     {
-        assert(m_object);
+        ErAssert(m_object);
         return m_object;
     }
 
@@ -182,7 +182,7 @@ public:
     explicit SharedObjectLock(const SharedObjectLock* o) noexcept
         : m_object(o)
     {
-        assert(m_object);
+        ErAssert(m_object);
         m_object->mutex().lock_shared();
     }
 
@@ -193,7 +193,7 @@ public:
 
     [[nodiscard]] constexpr const ObjectType* operator->() const noexcept
     {
-        assert(m_object);
+        ErAssert(m_object);
         return m_object;
     }
 

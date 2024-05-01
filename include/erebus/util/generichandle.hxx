@@ -64,7 +64,7 @@ public:
 
     [[nodiscard]] constexpr HandleT* writeable() noexcept
     {
-        assert(!valid());
+        ErAssert(!valid());
         return &m_h;
     }
 

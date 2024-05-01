@@ -380,7 +380,7 @@ private:
         try
         {
             auto list = m_params.userDb->enumerate();
-            assert(!list.empty());
+            ErAssert(!list.empty());
 
             auto users = response.mutable_users();
             users->Reserve(list.size());

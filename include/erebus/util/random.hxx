@@ -28,7 +28,7 @@ public:
         while (length--)
         {
             auto c = *(range.data() + distrib(m_generator));
-            assert(c);
+            ErAssert(c);
             ss << c;
         }
 

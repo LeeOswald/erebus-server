@@ -49,7 +49,7 @@ public:
             return;
 
         const auto SrcSize = representation.size();
-        assert(SrcSize <= Size);
+        ErAssert(SrcSize <= Size);
 
         auto index = std::min(SrcSize, Size);
         do
@@ -65,14 +65,14 @@ public:
 
     FlagsBase& set(Flag f, bool value = true) noexcept
     {
-        assert(f < Size);
+        ErAssert(f < Size);
         m_bits.set(f, value);
         return *this;
     }
 
     FlagsBase& reset(Flag f) noexcept
     {
-        assert(f < Size);
+        ErAssert(f < Size);
         set(f, false);
         return *this;
     }
@@ -85,7 +85,7 @@ public:
 
     bool operator[](Flag f) const noexcept
     {
-        assert(f < Size);
+        ErAssert(f < Size);
         return m_bits[f];
     }
 

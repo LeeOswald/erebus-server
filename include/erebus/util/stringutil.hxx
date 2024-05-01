@@ -43,7 +43,7 @@ std::vector<StringT> split(StringT source, StringViewT delimiters, ModeT mode, s
         }
         else
         {
-            assert(!"Unsupported split mode");
+            ErAssert(!"Unsupported split mode");
         }
 
         if (second == StringViewT::npos)
@@ -70,7 +70,7 @@ StringT ltrim(const StringT& s)
     }
     else
     {
-        assert(!"Unsupported string type");
+        ErAssert(!"Unsupported string type");
     }
 }
 
@@ -89,7 +89,7 @@ StringT rtrim(const StringT& s)
     }
     else
     {
-        assert(!"Unsupported string type");
+        ErAssert(!"Unsupported string type");
     }
 }
 

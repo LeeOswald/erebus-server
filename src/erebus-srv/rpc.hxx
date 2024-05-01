@@ -245,7 +245,7 @@ private:
     {
         auto response = static_cast<const ResponseTypeT*>(responseMsg);
 
-        assert(response);// If no response is available, use RpcBase::finishWithError.
+        ErAssert(response);// If no response is available, use RpcBase::finishWithError.
         if (!response)
             return false;
 
@@ -279,7 +279,7 @@ private:
             }
             else
             {
-                assert(ok);
+                ErAssert(ok);
             }
         }
     }

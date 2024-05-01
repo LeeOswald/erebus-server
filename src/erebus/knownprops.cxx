@@ -29,7 +29,7 @@ namespace Private
 
 EREBUS_EXPORT void initializeKnownProps()
 {
-    assert(!s_registry);
+    ErAssert(!s_registry);
     s_registry = new Registry;
 }
 
@@ -115,26 +115,26 @@ EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id) noexcept
 void Property::checkProperty()
 {
     auto info_ = info ? info.get() : Er::lookupProperty(id).get();
-    assert(info_);
+    ErAssert(info_);
     auto& type_ = info_->type_info();
     if (type_ == typeid(bool))
-        assert(type == PropertyType::Bool);
+        ErAssert(type == PropertyType::Bool);
     else if (type_ == typeid(int32_t))
-        assert(type == PropertyType::Int32);
+        ErAssert(type == PropertyType::Int32);
     else if (type_ == typeid(uint32_t))
-        assert(type == PropertyType::UInt32);
+        ErAssert(type == PropertyType::UInt32);
     else if (type_ == typeid(int64_t))
-        assert(type == PropertyType::Int64);
+        ErAssert(type == PropertyType::Int64);
     else if (type_ == typeid(uint64_t))
-        assert(type == PropertyType::UInt64);
+        ErAssert(type == PropertyType::UInt64);
     else if (type_ == typeid(double))
-        assert(type == PropertyType::Double);
+        ErAssert(type == PropertyType::Double);
     else if (type_ == typeid(std::string))
-        assert(type == PropertyType::String);
+        ErAssert(type == PropertyType::String);
     else if (type_ == typeid(Bytes))
-        assert(type == PropertyType::Bytes);
+        ErAssert(type == PropertyType::Bytes);
     else
-        assert(!"Mismatched property type");
+        ErAssert(!"Mismatched property type");
 }
 #endif
 
