@@ -8,10 +8,12 @@ namespace Er
 
 using PropertyBag = std::unordered_map<PropId, Property>;
 
-
-inline bool propertyPresent(const PropertyBag& bag, PropId id) noexcept
+template <IsPropertyValue PropT>
+inline bool propertyPresent(const PropertyBag& bag) noexcept
 {
-    auto it = bag.find(id);
+    using Id = typename PropT::Id;
+
+    auto it = bag.find(Id::value);
     return (it != bag.end());
 }
 
@@ -63,15 +65,17 @@ typename PropT::ValueType getPropertyOr(const PropertyBag& bag, typename PropT::
 }
 
 template <IsPropertyValue PropT>
-void addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
+bool addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
 {
-    bag.insert({ PropT::id, Er::Property(PropT::id, v) });
+    auto r = bag.insert({ PropT::id, Er::Property(PropT::id, v) });
+    return r.second;
 }
 
 template <IsPropertyValue PropT>
-void addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
+bool addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
 {
-    bag.insert({ PropT::id, Er::Property(PropT::id, std::move(v)) });
+    auto r = bag.insert({ PropT::id, Er::Property(PropT::id, std::move(v)) });
+    return r.second;
 }
 
 

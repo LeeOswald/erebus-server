@@ -160,7 +160,7 @@ Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint6
         if (required[Er::ProcessProps::PropIndices::Icon])
         {
             // if we have an icon already
-            if (propertyPresent(existing, Er::ProcessProps::Icon::Id::value))
+            if (propertyPresent<Er::ProcessProps::Icon>(existing))
             {
                 if (!exeChanged)
                     filtered.reset(Er::ProcessProps::PropIndices::Icon);
