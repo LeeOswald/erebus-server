@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/propertybag.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 #include <erebus-processmgr/processprops.hxx>
 

@@ -164,14 +164,14 @@ Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionI
 Er::ProcessProps::PropMask ProcessList::getProcessPropMask(const Er::PropertyBag& args)
 {
     // default mask is 'everything included'
-    auto mask = Er::getProperty<Er::ProcessProps::RequiredFields>(args, 0xffffffffffffffff);
+    auto mask = Er::getPropertyOr<Er::ProcessProps::RequiredFields>(args, 0xffffffffffffffff);
     return Er::ProcessProps::PropMask(mask, Er::ProcessProps::PropMask::FromBits);
 }
 
 Er::ProcessesGlobal::PropMask ProcessList::getProcessesGlobalPropMask(const Er::PropertyBag& args)
 {
     // default mask is 'everything included'
-    auto mask = Er::getProperty<Er::ProcessesGlobal::RequiredFields>(args, 0xffffffffffffffff);
+    auto mask = Er::getPropertyOr<Er::ProcessesGlobal::RequiredFields>(args, 0xffffffffffffffff);
     return Er::ProcessesGlobal::PropMask(mask, Er::ProcessesGlobal::PropMask::FromBits);
 }
 

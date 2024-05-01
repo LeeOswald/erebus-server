@@ -145,7 +145,7 @@ Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint6
     // almost all props get changed when exec() is called
     // compare /proc/[pid]/exe contents to detect that exec() has occurred 
     
-    auto exeOld = Er::getProperty<Er::ProcessProps::Exe>(existing, std::string());
+    auto exeOld = Er::getPropertyOr<Er::ProcessProps::Exe>(existing, std::string());
     auto exeCurrent = source.readExePath(pid);
     auto exeChanged = (exeCurrent != exeOld);
     if (exeChanged)

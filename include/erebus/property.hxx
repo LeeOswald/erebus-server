@@ -503,53 +503,6 @@ struct PropertyInfoWrapper
 };
 
 
-using PropertyBag = std::unordered_map<PropId, Property>;
-
-
-inline bool propertyPresent(const PropertyBag& bag, PropId id) noexcept
-{
-    auto it = bag.find(id);
-    return (it != bag.end());
-}
-
-
-template <IsPropertyValue PropT>
-std::optional<typename PropT::ValueType> getProperty(const PropertyBag& bag)
-{
-    using Id = typename PropT::Id;
-    auto it = bag.find(Id::value);
-    if (it == bag.end())
-        return std::nullopt;
-
-    return std::optional<typename PropT::ValueType>(std::get<typename PropT::ValueType>(it->second.value));
-} 
-
-
-template <IsPropertyValue PropT>
-typename PropT::ValueType getProperty(const PropertyBag& bag, typename PropT::ValueType&& defaultValue)
-{
-    using Id = typename PropT::Id;
-    auto it = bag.find(Id::value);
-    if (it == bag.end())
-        return typename PropT::ValueType(std::forward<typename PropT::ValueType>(defaultValue));
-
-    return std::get<typename PropT::ValueType>(it->second.value);
-}
-
-
-template <IsPropertyValue PropT>
-void addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
-{
-    bag.insert({ PropT::id, Er::Property(PropT::id, v) });
-}
-
-template <IsPropertyValue PropT>
-void addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
-{
-    bag.insert({ PropT::id, Er::Property(PropT::id, std::move(v)) });
-}
-
-
 } // namespace Er {}
 
 

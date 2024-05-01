@@ -1,7 +1,7 @@
 #pragma once
 
 #include <erebus/log.hxx>
-#include <erebus/property.hxx>
+#include <erebus/propertybag.hxx>
 
 
 namespace Er

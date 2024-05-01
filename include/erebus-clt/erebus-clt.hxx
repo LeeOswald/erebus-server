@@ -2,7 +2,7 @@
 
 #include <erebus/exception.hxx>
 #include <erebus/log.hxx>
-#include <erebus/property.hxx>
+#include <erebus/propertybag.hxx>
 
 #include <vector>
 
