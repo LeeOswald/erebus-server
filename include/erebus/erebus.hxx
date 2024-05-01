@@ -127,3 +127,5 @@ auto saturatingSub(T a, T b) noexcept
 }
 
 } // namespace Er {}
+
+#include <erebus/assert.hxx>

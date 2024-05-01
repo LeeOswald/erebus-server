@@ -383,7 +383,7 @@ private:
             else
                 message = "Unknown exception";
 
-            Er::Exception::Location location;
+            Er::Location location;
             if (exception.has_source())
             {
                 auto& source = exception.source();

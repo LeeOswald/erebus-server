@@ -26,12 +26,14 @@ elseif(ER_WINDOWS)
 endif()
 
 add_library(${EREBUS_LIB} SHARED
+    ../../include/erebus/assert.hxx
     ../../include/erebus/condition.hxx
     ../../include/erebus/empty.hxx
     ../../include/erebus/erebus.hxx
     ../../include/erebus/exception.hxx
     ../../include/erebus/flags.hxx
     ../../include/erebus/knownprops.hxx
+    ../../include/erebus/location.hxx
     ../../include/erebus/lockable.hxx
     ../../include/erebus/log.hxx
     ../../include/erebus/lrucache.hxx
@@ -62,6 +64,7 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/util/random.hxx
     ../../include/erebus/util/sha256.hxx
     ../../include/erebus/util/stringutil.hxx
+    assert.cxx
     exception.cxx
     init.cxx
     knownprops.cxx

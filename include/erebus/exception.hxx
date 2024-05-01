@@ -2,8 +2,6 @@
 
 #include <erebus/log.hxx>
 #include <erebus/property.hxx>
-#include <erebus/sourcelocation.hxx>
-#include <erebus/stacktrace.hxx>
 #include <erebus/util/crc32.hxx>
 
 //
@@ -26,9 +24,10 @@ void unregisterAll(Er::Log::ILog* log);
 } // namespace Private {}
 
 
-using DecodedError = PropertyValue<std::string, ER_PROPID("decoded_error"), "Error message", PropertyComparator<std::string>, PropertyFormatter<std::string>>;
-using PosixErrorCode = PropertyValue<int32_t, ER_PROPID("posix_error_code"), "POSIX error code", PropertyComparator<int32_t>, PropertyFormatter<int32_t>>;
-using Win32ErrorCode = PropertyValue<uint32_t, ER_PROPID("win32_error_code"), "WIN32 error code", PropertyComparator<uint32_t>, PropertyFormatter<uint32_t>>;
+using FailedAssertion = PropertyValue<std::string, ER_PROPID("failed_assertion"), "Failed assertion">;
+using DecodedError = PropertyValue<std::string, ER_PROPID("decoded_error"), "Error message">;
+using PosixErrorCode = PropertyValue<int32_t, ER_PROPID("posix_error_code"), "POSIX error code">;
+using Win32ErrorCode = PropertyValue<uint32_t, ER_PROPID("win32_error_code"), "WIN32 error code">;
 
 
 } // ExceptionProps {}
@@ -43,32 +42,6 @@ class EREBUS_EXPORT Exception
     : public std::exception
 {
 public:
-    struct Location final
-    {
-        std::optional<SourceLocation> source;
-        std::optional<StackTrace> stack;
-        std::optional<DecodedStackTrace> decoded;
-
-        Location() noexcept = default;
-
-        template <typename SourceLocationT>
-        Location(SourceLocationT&& source) noexcept
-            : source(std::forward<SourceLocationT>(source))
-        {}
-
-        Location(SourceLocation&& source, StackTrace&& stack) noexcept
-            : source(std::move(source))
-            , stack(std::move(stack))
-        {
-        }
-
-        Location(SourceLocation&& source, DecodedStackTrace&& decoded) noexcept
-            : source(std::move(source))
-            , decoded(std::move(decoded))
-        {
-        }
-    };
-
     Exception() = default;
 
     template <typename MessageT>
@@ -226,9 +199,6 @@ private:
 } // namespace Er {}
 
 
-#define ER_HERE() ::Er::Exception::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace())
-#define ER_HERE2(skip) ::Er::Exception::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace(skip, static_cast<std::size_t>(-1)))
-#define ER_SOURCE() ::Er::Exception::Location(::Er::SourceLocationImpl::current())
 
 
 

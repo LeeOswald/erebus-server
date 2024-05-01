@@ -23,7 +23,17 @@ void formatException(const std::exception& e, std::ostringstream& out, int level
     std::string indent(level * kIndentSize, ' ');
 
     if (level > 0)
-        out << '\n' << indent << "------------------------------------------------\n";
+    {
+        if (level > 1)
+        {
+            std::string indent0((level - 1) * kIndentSize, ' ');
+            out << '\n' << indent0 << "------------------------------------------------\n";
+        }
+        else
+        {
+            out << '\n' << indent << "------------------------------------------------\n";
+        }
+    }
 
     auto message = e.what();
     if (!message || !*message)
@@ -51,10 +61,20 @@ void formatException(const std::exception& e, std::ostringstream& out, int level
 void formatException(const Er::Exception& e, std::ostringstream& out, int level)
 {
     std::string indent(level * kIndentSize, ' ');
-    std::string smallIndent(level * kIndentSize / 2, ' ');
+    std::string smallIndent(kIndentSize / 2, ' ');
 
     if (level > 0)
-        out << '\n' << indent << "------------------------------------------------\n";
+    {
+        if (level > 1)
+        {
+            std::string indent0((level - 1) * kIndentSize, ' ');
+            out << '\n' << indent0 << "------------------------------------------------\n";
+        }
+        else
+        {
+            out << '\n' << indent << "------------------------------------------------\n";
+        }
+    }
 
     auto message = e.message();
     if (message)
@@ -64,6 +84,26 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
     else
     {
         out << indent << e.what();
+    }
+
+    auto properties = e.properties();
+    if (properties)
+    {
+        for (auto& prop: *properties)
+        {
+            out << "\n" << indent << smallIndent;
+
+            auto pi = lookupProperty(prop.id);
+            if (pi)
+            {
+                out << pi->name() << ": ";
+                pi->format(prop, out);
+            }
+            else
+            {
+                out << Util::format("0x%08x: ???", prop.id);
+            }
+        }
     }
 
     auto location = e.location();
@@ -89,34 +129,14 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
 
         if (stack && !stack->empty())
         {
-            out << "\n" << indent <<  smallIndent << "Call Stack:";
+            out << "\n" << indent << smallIndent << "Call Stack:";
             for (auto& frame : *stack)
             {
-                out << "\n" << indent << smallIndent << " ";
+                out << "\n" << indent << smallIndent << smallIndent;
                 if (!frame.empty())
                     out << frame;
                 else
                     out << "???";
-            }
-        }
-    }
-
-    auto properties = e.properties();
-    if (properties)
-    {
-        for (auto& prop: *properties)
-        {
-            out << "\n" << indent << smallIndent;
-
-            auto pi = lookupProperty(prop.id);
-            if (pi)
-            {
-                out << pi->name() << ": ";
-                pi->format(prop, out);
-            }
-            else
-            {
-                out << Util::format("0x%08x: ???", prop.id);
             }
         }
     }
