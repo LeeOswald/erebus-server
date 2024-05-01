@@ -540,13 +540,13 @@ typename PropT::ValueType getProperty(const PropertyBag& bag, typename PropT::Va
 template <IsPropertyValue PropT>
 void addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
 {
-    bag.insert({ PropT::id(), Er::Property(PropT::id(), v) });
+    bag.insert({ PropT::id, Er::Property(PropT::id, v) });
 }
 
 template <IsPropertyValue PropT>
 void addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
 {
-    bag.insert({ PropT::id(), Er::Property(PropT::id(), std::move(v)) });
+    bag.insert({ PropT::id, Er::Property(PropT::id, std::move(v)) });
 }
 
 
