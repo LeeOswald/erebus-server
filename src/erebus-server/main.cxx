@@ -4,6 +4,7 @@
 
 #include <erebus/condition.hxx>
 #include <erebus/knownprops.hxx>
+#include <erebus/syncstream.hxx>
 #include <erebus/system/process.hxx>
 #include <erebus/system/thread.hxx>
 #include <erebus/system/user.hxx>
@@ -45,7 +46,7 @@ void terminateHandler()
     if (g_log)
         ErLogFatal(g_log, ErLogNowhere(), "std::terminate() called from\n%s", ss.str().c_str());
     else
-        std::cerr << "std::terminate() called from\n" << ss.str();
+        Er::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str();
 
     std::abort();
 }

@@ -9,28 +9,7 @@ message Void {
 }
 
 message GenericReply {
-  ResultCode code = 1;
-  optional Exception exception = 2;  
-}
-
-enum ResultCode {
-  Success = 0;
-  Failure = 1;
-  Cancelled = 2;
-  InvalidArgument = 3;
-  DeadlineExceeded = 4;
-  NotFound = 5;
-  AlreadyExists = 6;
-  PermissionDenied = 7;
-  Unauthenticated = 8;
-  ResourceExhausted = 9;
-  FailedPrecondition = 10;
-  Aborted = 11;
-  OutOfRange = 12;
-  Unimplemented = 13;
-  Internal = 14;
-  Unavailable = 15;
-  DataLoss = 16;
+  optional Exception exception = 1;  
 }
 
 message Property {
@@ -47,18 +26,7 @@ message Property {
   }
 }
 
-message SourceLocation {
-  uint32 line = 1;
-  string file = 2;
-}
-
-message DecodedStack {
-  repeated string frames = 1;
-}
-
 message Exception {
-  optional SourceLocation source = 1;
-  optional DecodedStack stack = 2;
   optional string message = 3;
   repeated Property props = 4;
 }

@@ -47,6 +47,7 @@ protected:
 
     static void marshalException(erebus::GenericReply* reply, const std::exception& e);
     static void marshalException(erebus::GenericReply* reply, const Er::Exception& e);
+    static void marshalException(erebus::GenericReply* reply, Result code, std::string_view message);
 
     static Er::PropertyBag unmarshalArgs(const erebus::ServiceRequest* request);
     static void marshalReplyProps(const Er::PropertyBag& props, erebus::ServiceReply* reply);

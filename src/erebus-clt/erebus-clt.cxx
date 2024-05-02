@@ -1,4 +1,5 @@
 #include <erebus/knownprops.hxx>
+#include <erebus/result.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus/util/random.hxx>
 #include <erebus/util/sha256.hxx>
@@ -325,28 +326,28 @@ private:
         return r.generate(kSaltLength, kSaltChars);
     }
 
-    static ResultCode mapGrpcStatus(grpc::StatusCode status) noexcept
+    static Result mapGrpcStatus(grpc::StatusCode status) noexcept
     {
         switch (status)
         {
-        case grpc::OK: return ResultCode::Success;
-        case grpc::CANCELLED: return ResultCode::Cancelled;
-        case grpc::UNKNOWN: return ResultCode::Failure;
-        case grpc::INVALID_ARGUMENT: return ResultCode::InvalidArgument;
-        case grpc::DEADLINE_EXCEEDED: return ResultCode::DeadlineExceeded;
-        case grpc::NOT_FOUND: return ResultCode::NotFound;
-        case grpc::ALREADY_EXISTS: return ResultCode::AlreadyExists;
-        case grpc::PERMISSION_DENIED: return ResultCode::PermissionDenied;
-        case grpc::UNAUTHENTICATED: return ResultCode::Unauthenticated;
-        case grpc::RESOURCE_EXHAUSTED: return ResultCode::ResourceExhausted;
-        case grpc::FAILED_PRECONDITION: return ResultCode::FailedPrecondition;
-        case grpc::ABORTED: return ResultCode::Aborted;
-        case grpc::OUT_OF_RANGE: return ResultCode::OutOfRange;
-        case grpc::UNIMPLEMENTED: return ResultCode::Unimplemented;
-        case grpc::INTERNAL: return ResultCode::Internal;
-        case grpc::UNAVAILABLE: return ResultCode::Unavailable;
-        case grpc::DATA_LOSS: return ResultCode::DataLoss;
-        default: return ResultCode::Failure;
+        case grpc::OK: return Result::Success;
+        case grpc::CANCELLED: return Result::Cancelled;
+        case grpc::UNKNOWN: return Result::Failure;
+        case grpc::INVALID_ARGUMENT: return Result::InvalidArgument;
+        case grpc::DEADLINE_EXCEEDED: return Result::DeadlineExceeded;
+        case grpc::NOT_FOUND: return Result::NotFound;
+        case grpc::ALREADY_EXISTS: return Result::AlreadyExists;
+        case grpc::PERMISSION_DENIED: return Result::PermissionDenied;
+        case grpc::UNAUTHENTICATED: return Result::Unauthenticated;
+        case grpc::RESOURCE_EXHAUSTED: return Result::ResourceExhausted;
+        case grpc::FAILED_PRECONDITION: return Result::FailedPrecondition;
+        case grpc::ABORTED: return Result::Aborted;
+        case grpc::OUT_OF_RANGE: return Result::OutOfRange;
+        case grpc::UNIMPLEMENTED: return Result::Unimplemented;
+        case grpc::INTERNAL: return Result::Internal;
+        case grpc::UNAVAILABLE: return Result::Unavailable;
+        case grpc::DATA_LOSS: return Result::DataLoss;
+        default: return Result::Failure;
         }
     }
 
@@ -355,25 +356,13 @@ private:
         if (!status.ok())
         {
             auto mappedStatus = mapGrpcStatus(status.error_code());
-            throw Er::Exception(ER_HERE(), "RPC call failed", ::Er::Client::Props::ResultCode(static_cast<int32_t>(mappedStatus)), ::Er::ExceptionProps::DecodedError(status.error_message()));
+            throw Er::Exception(ER_HERE(), "RPC call failed", ::Er::ExceptionProps::ResultCode(static_cast<int32_t>(mappedStatus)), ::Er::ExceptionProps::DecodedError(status.error_message()));
         }
 
         if (!reply)
             return;
 
-        if (!reply->has_exception())
-        {
-            // no exceptions, check the returned error code
-            auto code = ResultCode(reply->code());
-            if (code != ResultCode::Success)
-            {
-                std::ostringstream ss;
-                ss << code;
-                
-                throw Er::Exception(ER_HERE(), "RPC call failed", ::Er::Client::Props::ResultCode(static_cast<int32_t>(code)), ::Er::ExceptionProps::DecodedError(ss.str()));
-            }
-        }
-        else
+        if (reply->has_exception())
         {
             // unmarshal and throw the exception
             auto& exception = reply->exception();
@@ -383,30 +372,7 @@ private:
             else
                 message = "Unknown exception";
 
-            Er::Location location;
-            if (exception.has_source())
-            {
-                auto& source = exception.source();
-                location.source = Er::SourceLocation(source.file(), source.line());
-            }
-
-            if (exception.has_stack())
-            {
-                auto& stack = exception.stack();
-                auto frameCount = stack.frames_size();
-                if (frameCount)
-                {
-                    location.decoded = Er::DecodedStackTrace();
-                    location.decoded->reserve(frameCount);
-
-                    for (int i = 0; i < frameCount; ++i)
-                    {
-                        location.decoded->emplace_back(stack.frames(i));
-                    }
-                }
-            }
-
-            Er::Exception unmarshaledException(std::move(location), std::move(message));
+            Er::Exception unmarshaledException(ER_HERE(), std::move(message));
 
             auto propCount = exception.props_size();
             
@@ -457,8 +423,6 @@ EREBUSCLT_EXPORT void initialize(const LibParams& params)
     {
         g_libParams = params;
         
-        registerProperty(std::make_shared<PropertyInfoWrapper<::Er::Client::Props::ResultCode>>(), params.log);
-
         ::grpc_init();
 
         if (params.level == Log::Level::Debug)
@@ -477,8 +441,6 @@ EREBUSCLT_EXPORT void finalize()
     {
         ::grpc_shutdown();
         
-        unregisterProperty(lookupProperty(ER_PROPID_("erebus.ResultCode")), g_libParams.log);
-
         g_libParams = LibParams();
     }
 }

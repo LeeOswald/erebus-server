@@ -190,40 +190,6 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
     auto exception = reply->mutable_exception();
     *exception->mutable_message() = what;
 
-    auto location = e.location();
-    if (location)
-    {
-        if (location->source)
-        {
-            exception->mutable_source()->set_file(location->source->file());
-            exception->mutable_source()->set_line(location->source->line());
-        }
-
-        DecodedStackTrace ds;
-        const DecodedStackTrace* stack = nullptr;
-        if (location->decoded)
-        {
-            stack = &(*location->decoded);
-        }
-        else if (location->stack)
-        {
-            ds = decodeStackTrace(*location->stack);
-            stack = &ds;
-        }
-
-        if (stack && !stack->empty())
-        {
-            auto mutableStack = exception->mutable_stack();
-            for (auto& frame : *stack)
-            {
-                if (!frame.empty())
-                    mutableStack->add_frames(frame.c_str());
-                else
-                    mutableStack->add_frames("???");
-            }
-        }
-    }
-
     auto properties = e.properties();
     if (properties && !properties->empty())
     {
@@ -236,6 +202,19 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
             Er::Protocol::assignProperty(*mutableProp, property);
         }
     }
+}
+
+void ServiceBase::marshalException(erebus::GenericReply* reply, Result code, std::string_view message)
+{
+    auto exception = reply->mutable_exception();
+    
+    if (!message.empty())
+        *exception->mutable_message() = message;
+
+    auto mutableProps = exception->mutable_props();
+    auto mutableProp = mutableProps->Add();
+
+    Er::Protocol::assignProperty(*mutableProp, Er::Property(ExceptionProps::ResultCode(static_cast<int32_t>(code))));
 }
 
 Er::PropertyBag ServiceBase::unmarshalArgs(const erebus::ServiceRequest* request)

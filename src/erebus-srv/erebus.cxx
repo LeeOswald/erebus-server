@@ -138,7 +138,6 @@ private:
         auto request = static_cast<const erebus::Void*>(message);
 
         erebus::ServerVersionReply response;
-        response.mutable_header()->set_code(erebus::Success);
         response.set_major(ER_VERSION_MAJOR);
         response.set_minor(ER_VERSION_MINOR);
         response.set_patch(ER_VERSION_PATCH);
@@ -170,8 +169,6 @@ private:
         auto request = static_cast<const erebus::Void*>(message);
 
         erebus::ServerVersionReply response;
-        response.mutable_header()->set_code(erebus::Success);
-     
         rpc.sendResponse(&response);
 
         if (!tickets.empty())
@@ -202,11 +199,10 @@ private:
         if (!u)
         {
             Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Trying to log in an unknown user " << user;
-            response.mutable_header()->set_code(erebus::Unauthenticated);
+            marshalException(response.mutable_header(), Result::NotFound, "User not found");
         }
         else
         {
-            response.mutable_header()->set_code(erebus::Success);
             response.set_salt(u->pwdSalt);
         }
 
@@ -237,19 +233,18 @@ private:
         if (!u)
         {
             Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Trying to log in an unknown user " << user;
-            response.mutable_header()->set_code(erebus::Unauthenticated);
+            marshalException(response.mutable_header(), Result::NotFound, "User not found");
         }
         else
         {
             if (request->pwd() != u->pwdHash)
             {
                 Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Failed to log in user " << user;
-                response.mutable_header()->set_code(erebus::Unauthenticated);
+                marshalException(response.mutable_header(), Result::Unauthenticated, "Wrong password");
             }
             else
             {
                 Er::Log::Info(m_params.log, ErLogInstance("ErebusService")) << "Logged in user " << user;
-                response.mutable_header()->set_code(erebus::Success);
 
                 auto ticket = makeTicket();
                 response.set_ticket(ticket);
@@ -289,19 +284,18 @@ private:
             m_params.userDb->add(Er::Server::Private::User(name, request->salt(), request->pwd()));
             m_params.userDb->save();
 
-            response.set_code(erebus::Success);
             Er::Log::Info(m_params.log, ErLogInstance("ErebusService")) << "Created user " << name;
         }
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.set_code(erebus::Failure);
+            
             marshalException(&response, e);
         }
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.set_code(erebus::Failure);
+            
             marshalException(&response, e);
         }
 
@@ -336,19 +330,18 @@ private:
             m_params.userDb->remove(name);
             m_params.userDb->save();
 
-            response.set_code(erebus::Success);
             Er::Log::Info(m_params.log, ErLogInstance("ErebusService")) << "Deleted user " << name;
         }
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.set_code(erebus::Failure);
+
             marshalException(&response, e);
         }
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.set_code(erebus::Failure);
+
             marshalException(&response, e);
         }
 
@@ -391,18 +384,17 @@ private:
                 u->set_name(user.name);
             }
 
-            response.mutable_header()->set_code(erebus::Success);
         }
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.mutable_header()->set_code(erebus::Failure);
+
             marshalException(response.mutable_header(), e);
         }
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.mutable_header()->set_code(erebus::Failure);
+
             marshalException(response.mutable_header(), e);
         }
 
@@ -438,8 +430,7 @@ private:
         else
             Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Server shutdown requested by " << rpc.getServerContext().peer();
 
-        response.set_code(erebus::ResultCode::Success);
-        
+       
         rpc.sendResponse(&response);
         // give the gRPC a chance to send back a reply before we die
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -487,18 +478,17 @@ private:
         {
             auto sessionId = service->allocateSession();
             response.set_sessionid(sessionId);
-            response.mutable_header()->set_code(erebus::Success);
         }
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.mutable_header()->set_code(erebus::Failure);
+
             marshalException(response.mutable_header(), e);
         }
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.mutable_header()->set_code(erebus::Failure);
+
             marshalException(response.mutable_header(), e);
         }
         
@@ -546,18 +536,17 @@ private:
             auto sessionId = request->sessionid();
             service->deleteSession(sessionId);
             
-            response.set_code(erebus::Success);
         }
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.set_code(erebus::Failure);
+
             marshalException(&response, e);
         }
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.set_code(erebus::Failure);
+
             marshalException(&response, e);
         }
         
@@ -611,19 +600,17 @@ private:
             auto args = unmarshalArgs(request);
             auto result = service->request(id, args, sessionId);
             marshalReplyProps(result, &response);
-
-            response.mutable_header()->set_code(erebus::Success);
         }
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.mutable_header()->set_code(erebus::Failure);
+
             marshalException(response.mutable_header(), e);
         }
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            response.mutable_header()->set_code(erebus::Failure);
+
             marshalException(response.mutable_header(), e);
         }
         
@@ -694,19 +681,18 @@ private:
                 catch (Er::Exception& e)
                 {
                     Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-                    response.mutable_header()->set_code(erebus::Failure);
+
                     marshalException(response.mutable_header(), e);
                     stop = true;
                 }
                 catch (std::exception& e)
                 {
                     Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-                    response.mutable_header()->set_code(erebus::Failure);
+
                     marshalException(response.mutable_header(), e);
                     stop = true;
                 }
 
-                response.mutable_header()->set_code(erebus::Success);
                 rpc.sendResponse(&response);
 
             } while (!stop);
@@ -716,16 +702,16 @@ private:
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
+
             erebus::ServiceReply response;
-            response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
             rpc.sendResponse(&response);
         }
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
+
             erebus::ServiceReply response;
-            response.mutable_header()->set_code(erebus::Failure);
             marshalException(response.mutable_header(), e);
             rpc.sendResponse(&response);
         }

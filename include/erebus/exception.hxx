@@ -2,10 +2,11 @@
 
 #include <erebus/log.hxx>
 #include <erebus/property.hxx>
+#include <erebus/result.hxx>
 #include <erebus/util/crc32.hxx>
 
 //
-// exception class with arbitrary properties
+// exception class with (almost) arbitrary properties
 // that can be marshaled through RPC
 //
 
@@ -24,6 +25,7 @@ void unregisterAll(Er::Log::ILog* log);
 } // namespace Private {}
 
 
+using ResultCode = PropertyValue<int32_t, ER_PROPID("erebus_result_code"), "Erebus error code", PropertyComparator<int32_t>, ResultFormatter>;
 using FailedAssertion = PropertyValue<std::string, ER_PROPID("failed_assertion"), "Failed assertion">;
 using DecodedError = PropertyValue<std::string, ER_PROPID("decoded_error"), "Error message">;
 using PosixErrorCode = PropertyValue<int32_t, ER_PROPID("posix_error_code"), "POSIX error code">;
