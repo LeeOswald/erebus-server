@@ -101,8 +101,20 @@ class EREBUS_EXPORT LogBase
     , public Er::NonCopyable
 {
 public:
+    struct SyncLogT
+    {
+    };
+
+    struct AsyncLogT
+    {
+    };
+
+    static constexpr SyncLogT SyncLog{};
+    static constexpr AsyncLogT AsyncLog{};
+
     ~LogBase();
-    explicit LogBase(Level level, size_t maxQueue = std::numeric_limits<size_t>::max()) noexcept;
+    explicit LogBase(AsyncLogT, Level level, size_t maxQueue = std::numeric_limits<size_t>::max()) noexcept;
+    explicit LogBase(SyncLogT, Level level) noexcept;
 
     Level level() const noexcept override;
     bool writev(Level l, const Location& location, const char* format, va_list args) noexcept override;
@@ -121,6 +133,7 @@ private:
     void _flush() noexcept;
     void run(std::stop_token stop) noexcept;
 
+    bool m_sync;
     Level m_level;
     size_t m_maxQueue;
     std::mutex m_mutex;

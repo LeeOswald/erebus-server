@@ -1,10 +1,27 @@
+#pragma once
+
 #include <gtest/gtest.h>
 
 
 #include <erebus/erebus.hxx>
 #include <erebus/knownprops.hxx>
+#include <erebus/syncstream.hxx>
+
+#include <iostream>
+#include <syncstream>
 
 extern Er::Log::ILog* g_log;
+
+
+struct StdErr : public Er::osyncstream
+{
+    StdErr() : Er::osyncstream(std::cerr) {}
+};
+
+struct StdOut : public Er::osyncstream
+{
+    StdOut() : Er::osyncstream(std::cout) {}
+};
 
 
 namespace TestProps

@@ -16,7 +16,7 @@ Log::~Log()
 }
 
 Log::Log(Er::Log::Level level)
-    : Er::Log::LogBase(level, 65536)
+    : Er::Log::LogBase(Er::Log::LogBase::AsyncLog, level, 65536)
 {
     Er::Log::LogBase::addDelegate("console", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
     Er::Log::LogBase::unmute();

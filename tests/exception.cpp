@@ -12,7 +12,7 @@ class Logger
 {
 public:
     explicit Logger(Er::Log::Level level)
-        : Er::Log::LogBase(level, 65536)
+        : Er::Log::LogBase(Er::Log::LogBase::SyncLog, level)
     {
         Er::Log::LogBase::addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
         Er::Log::LogBase::unmute();

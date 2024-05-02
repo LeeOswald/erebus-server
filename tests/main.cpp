@@ -25,7 +25,7 @@ public:
     }
 
     explicit Logger(Er::Log::Level level)
-        : Er::Log::LogBase(level, 65536)
+        : Er::Log::LogBase(Er::Log::LogBase::SyncLog, level)
     {
         Er::Log::LogBase::addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
         Er::Log::LogBase::unmute();
@@ -34,15 +34,11 @@ public:
 private:
     void delegate(std::shared_ptr<Er::Log::Record> r)
     {
-        std::lock_guard l(m_mutex);
-
         if (r->level < Er::Log::Level::Warning)
-            std::cout << r->message << std::endl;
+            StdOut() << r->message << std::endl;
         else 
-            std::cerr << r->message << std::endl;
+            StdErr() << r->message << std::endl;
     }
-
-    std::mutex m_mutex;
 };
 
 void terminateHandler()
@@ -50,7 +46,7 @@ void terminateHandler()
     std::ostringstream ss;
     ss << boost::stacktrace::stacktrace();
 
-    std::cerr << "std::terminate() called from\n" << ss.str();
+    StdErr() << "std::terminate() called from\n" << ss.str();
 
     std::abort();
 }
@@ -114,7 +110,7 @@ int main(int argc, char** argv)
     }
     catch (std::exception& e)
     {
-        std::cerr << "Unexpected error: " << e.what() << "\n";
+        StdErr() << "Unexpected error: " << e.what() << "\n";
     }
 
     return ret;

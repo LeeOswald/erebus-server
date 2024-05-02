@@ -30,7 +30,7 @@ namespace Private
 {
 
 LogRotator::LogRotator(Er::Log::Level level, const char* fileName)
-    : Er::Log::LogBase(level, 65536)
+    : Er::Log::LogBase(Er::Log::LogBase::AsyncLog, level, 65536)
 {
     int i = kKeep;
     while (i >= 0)

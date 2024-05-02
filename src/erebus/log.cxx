@@ -12,10 +12,19 @@ LogBase::~LogBase()
 {
 }
 
-LogBase::LogBase(Level level, size_t maxQueue) noexcept
-    : m_level(level)
+LogBase::LogBase(AsyncLogT mode, Level level, size_t maxQueue) noexcept
+    : m_sync(false)
+    , m_level(level)
     , m_maxQueue(maxQueue)
     , m_worker([this](std::stop_token stop) { run(stop); })
+{
+}
+
+LogBase::LogBase(SyncLogT mode, Level level) noexcept
+    : m_sync(true)
+    , m_level(level)
+    , m_maxQueue(1024) // ignored
+    , m_worker()
 {
 }
 
@@ -122,6 +131,20 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
     if (!r)
         return true;
     
+    if (m_sync)
+    {
+        for (auto it = m_delegates.begin(); it != m_delegates.end(); ++it)
+        {
+            try
+            {
+                it->second(r);
+            }
+            catch (...)
+            {
+            }
+        }
+    }
+    else
     {
         std::lock_guard g(m_mutex);
 
@@ -140,8 +163,11 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
 
     }
 
-    // do this outside the lock
-    m_event.notify_one();
+    if (!m_sync)
+    {
+        // do this outside the lock
+        m_event.notify_one();
+    }
 
     return true;
 }
