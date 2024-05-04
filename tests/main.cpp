@@ -35,9 +35,9 @@ private:
     void delegate(std::shared_ptr<Er::Log::Record> r)
     {
         if (r->level < Er::Log::Level::Warning)
-            StdOut() << r->message << std::endl;
+            Er::osyncstream(std::cout) << r->message << std::endl;
         else 
-            StdErr() << r->message << std::endl;
+            Er::osyncstream(std::cerr) << r->message << std::endl;
     }
 };
 
@@ -46,7 +46,7 @@ void terminateHandler()
     std::ostringstream ss;
     ss << boost::stacktrace::stacktrace();
 
-    StdErr() << "std::terminate() called from\n" << ss.str();
+    Er::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str();
 
     std::abort();
 }
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     }
     catch (std::exception& e)
     {
-        StdErr() << "Unexpected error: " << e.what() << "\n";
+        Er::osyncstream(std::cerr) << "Unexpected error: " << e.what() << "\n";
     }
 
     return ret;

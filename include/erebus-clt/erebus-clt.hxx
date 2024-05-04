@@ -28,9 +28,9 @@ struct ServerInfo
     std::string version;
     std::string platform;
 
-    constexpr ServerInfo() noexcept = default;
+    ServerInfo() noexcept = default;
     
-    constexpr explicit ServerInfo(std::string_view version, std::string_view platform)
+    explicit ServerInfo(std::string_view version, std::string_view platform)
         : version(version)
         , platform(platform)
     {}
@@ -41,9 +41,9 @@ struct UserInfo
 {
     std::string name;
 
-    constexpr UserInfo() noexcept = default;
+    UserInfo() noexcept = default;
     
-    constexpr explicit UserInfo(std::string_view name)
+    explicit UserInfo(std::string_view name)
         : name(name)
     {}
 };

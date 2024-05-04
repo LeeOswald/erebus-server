@@ -8,20 +8,9 @@
 #include <erebus/syncstream.hxx>
 
 #include <iostream>
-#include <syncstream>
 
 extern Er::Log::ILog* g_log;
 
-
-struct StdErr : public Er::osyncstream
-{
-    StdErr() : Er::osyncstream(std::cerr) {}
-};
-
-struct StdOut : public Er::osyncstream
-{
-    StdOut() : Er::osyncstream(std::cout) {}
-};
 
 
 namespace TestProps

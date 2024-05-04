@@ -9,27 +9,20 @@
 
     namespace Er
     {
-        class osyncstream final
-            : public Er::NonCopyable
+        class osyncstream
+            : public std::ostringstream
         {
         public:
             ~osyncstream()
             {
                 std::lock_guard l(mutex());
-                m_stream << m_ss.str();
+                m_stream << str();
             }
 
             explicit osyncstream(std::ostream& stream) noexcept
                 : m_stream(stream)
             {}
-
-            template <typename T>
-            osyncstream& operator<<(T&& v)
-            {
-                m_ss << std::forward<T>(v);
-                return *this;
-            }
-
+            
         private:
             static std::mutex& mutex() noexcept
             {
@@ -38,7 +31,6 @@
             }
 
             std::ostream& m_stream;
-            std::ostringstream m_ss;
         };
 
     } // namespace Er {}

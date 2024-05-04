@@ -69,7 +69,12 @@ Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
 #if ER_WINDOWS
     std::string platform("Windows");
 #elif ER_LINUX
-    std::string platform("Linux");
+    std::string platform;
+    struct utsname u = {};
+    if (::uname(&u) == 0)
+    {
+        platform = Er::Util::format("%s %s", u.sysname, u.release);
+    }
 #endif
 
     auto version = Er::Util::format("%s %d.%d.%d %s", ER_APPLICATION_NAME, ER_VERSION_MAJOR, ER_VERSION_MINOR, ER_VERSION_PATCH, ER_COPYRIGHT);
