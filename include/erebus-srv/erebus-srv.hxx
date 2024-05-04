@@ -86,10 +86,8 @@ struct Params
 {
     std::string endpoint;
     Er::Log::ILog* log = nullptr;
-    Er::Event* exitCondition = nullptr;
-    bool* needRestart = nullptr;
     bool ssl = false;
-    std::string root;
+    std::string rootCA;
     std::string certificate;
     std::string key;
     IUserDb* userDb = nullptr;
@@ -99,20 +97,16 @@ struct Params
     explicit Params(
         std::string_view endpoint,
         Er::Log::ILog* log,
-        Er::Event* exitCondition,
-        bool* needRestart,
         bool ssl,
-        std::string_view root,
+        std::string_view rootCA,
         std::string_view certificate,
         std::string_view key,
         IUserDb* userDb
     )
         : endpoint(endpoint)
         , log(log)
-        , exitCondition(exitCondition)
-        , needRestart(needRestart)
         , ssl(ssl)
-        , root(root)
+        , rootCA(rootCA)
         , certificate(certificate)
         , key(key)
         , userDb(userDb)

@@ -157,7 +157,7 @@ Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionI
     else if (stream->type == StreamType::ProcessListDiff)
         return nextProcessDiff(static_cast<ProcessListDiffStream*>(stream), getSession(sessionId));
 
-    assert(!"Unknown stream type");
+    ErAssert(!"Unknown stream type");
     return Er::PropertyBag();
 }
 

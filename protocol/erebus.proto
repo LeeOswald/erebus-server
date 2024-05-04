@@ -9,11 +9,6 @@ service Erebus {
   rpc Init(InitialRequest) returns(InitialReply) {}
   rpc Authorize(AuthRequest) returns(AuthReply) {}
   rpc Disconnect(Void) returns(Void) {}
-  rpc AddUser(AddUserRequest) returns(GenericReply) {}
-  rpc ListUsers(Void) returns(ListUsersReply) {}
-  rpc RemoveUser(RemoveUserRequest) returns(GenericReply) {}
-  rpc Exit(ExitRequest) returns(GenericReply) {}
-  rpc Version(Void) returns(ServerVersionReply) {}
   rpc AllocateSession(AllocateSessionRequest) returns(AllocateSessionReply) {}
   rpc DeleteSession(DeleteSessionRequest) returns(GenericReply) {}
   rpc GenericRpc(ServiceRequest) returns(ServiceReply) {}
@@ -38,36 +33,6 @@ message AuthRequest {
 message AuthReply {
   GenericReply header = 1;
   string ticket = 3;
-}
-
-message AddUserRequest {
-  string name = 1;
-  string salt = 2;
-  string pwd = 3;
-}
-
-message RemoveUserRequest {
-  string name = 1;
-}
-
-message UserInfo {
-  string name = 1;
-}
-
-message ListUsersReply {
-  GenericReply header = 1;
-  repeated UserInfo users = 2;
-}
-
-message ServerVersionReply {
-  GenericReply header = 1;
-  uint32 major = 2;
-  uint32 minor = 3;
-  uint32 patch = 4;
-}
-
-message ExitRequest {
-  bool restart = 1;
 }
 
 message AllocateSessionRequest {

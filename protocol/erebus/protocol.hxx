@@ -1,7 +1,9 @@
 #pragma once
 
 
+#include <erebus/exception.hxx>
 #include <erebus/property.hxx>
+#include <erebus/knownprops.hxx>
 #include <erebus/util/format.hxx>
 
 #include <erebus/erebus.pb.h>
@@ -111,6 +113,55 @@ inline Property getProperty(const erebus::Property& source)
             throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->id_str(), info->type_info().name()));
     }
 }
+
+namespace Props
+{
+
+using User = PropertyValue<std::string, ER_PROPID("erebus_user"), "User">;
+using Salt = PropertyValue<std::string, ER_PROPID("erebus_salt"), "Salt">;
+using Password = PropertyValue<std::string, ER_PROPID("erebus_password"), "Password hash">;
+
+using RemoteSystemDesc = PropertyValue<std::string, ER_PROPID("erebus_remote_sys"), "Remote system">;
+using ServerVersionString = PropertyValue<std::string, ER_PROPID("erebus_server_version"), "Erebus server version">;
+
+namespace Private
+{
+
+inline void registerAll(Er::Log::ILog* log)
+{
+    registerProperty(std::make_shared<PropertyInfoWrapper<User>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Salt>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<Password>>(), log);
+
+    registerProperty(std::make_shared<PropertyInfoWrapper<RemoteSystemDesc>>(), log);
+    registerProperty(std::make_shared<PropertyInfoWrapper<ServerVersionString>>(), log);
+}
+
+inline void unregisterAll(Er::Log::ILog* log)
+{
+    unregisterProperty(lookupProperty(User::Id::value), log);
+    unregisterProperty(lookupProperty(Salt::Id::value), log);
+    unregisterProperty(lookupProperty(Password::Id::value), log);
+
+    unregisterProperty(lookupProperty(RemoteSystemDesc::Id::value), log);
+    unregisterProperty(lookupProperty(ServerVersionString::Id::value), log);
+}
+
+} // namespace Private {}
+
+} // namespace Props {}
+
+namespace GenericRequests
+{
+
+static const std::string_view AddUser = "AddUser";
+static const std::string_view RemoveUser = "RemoveUser";
+static const std::string_view ListUsers = "ListUsers";
+
+static const std::string_view GetVersion = "GetVersion";
+
+} // namespace GenericRequests {}
+
 
 } // namespace Protocol {}
     

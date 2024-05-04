@@ -49,6 +49,7 @@ private:
 
 class ClientImpl final
     : public Er::Client::IClient
+    , public Er::Client::IServerCtl
     , public Er::NonCopyable
 {
 public:
@@ -64,90 +65,65 @@ public:
         checkAuth();
     }
 
+    ServerInfo serverInfo() override
+    {
+        Er::PropertyBag req;
+        auto reply = request(Er::Protocol::GenericRequests::GetVersion, req, std::nullopt);
+        
+        auto systemName = Er::getPropertyOr<Er::Protocol::Props::RemoteSystemDesc>(reply, std::string());
+        auto serverVer = Er::getPropertyOr<Er::Protocol::Props::ServerVersionString>(reply, std::string());
+
+        return ServerInfo(std::move(serverVer), std::move(systemName));
+    }
+
     void addUser(std::string_view name, std::string_view password) override
     {
         auto salt = makeSalt();
         Er::Util::Sha256 sha;
         sha.update(salt);
         sha.update(password);
+        auto hash = sha.str(sha.digest());
 
-        erebus::AddUserRequest request;
-        request.set_name(std::string(name));
-        request.set_salt(salt);
-        request.set_pwd(sha.str(sha.digest()));
+        Er::PropertyBag req;
+        Er::addProperty<Er::Protocol::Props::User>(req, std::string(name));
+        Er::addProperty<Er::Protocol::Props::Salt>(req, std::move(salt));
+        Er::addProperty<Er::Protocol::Props::Password>(req, std::move(hash));
 
-        erebus::GenericReply reply;
-        grpc::ClientContext context;
-        makeClientContext(context);
-
-        grpc::Status status = m_stub->AddUser(&context, request, &reply);
-        throwIfFailed(status, &reply);
+        request(Er::Protocol::GenericRequests::AddUser, req, std::nullopt);
     }
 
     void removeUser(std::string_view name) override
     {
-        erebus::RemoveUserRequest request;
-        request.set_name(std::string(name));
+        Er::PropertyBag req;
+        Er::addProperty<Er::Protocol::Props::User>(req, std::string(name));
 
-        erebus::GenericReply reply;
-        grpc::ClientContext context;
-        makeClientContext(context);
-
-        grpc::Status status = m_stub->RemoveUser(&context, request, &reply);
-        throwIfFailed(status, &reply);
+        request(Er::Protocol::GenericRequests::RemoveUser, req, std::nullopt);
     }
 
     std::vector<UserInfo> listUsers() override
     {
-        erebus::Void request;
+        Er::PropertyBag req;
 
-        erebus::ListUsersReply reply;
-        grpc::ClientContext context;
-        makeClientContext(context);
-
-        grpc::Status status = m_stub->ListUsers(&context, request, &reply);
-        throwIfFailed(status, &reply.header());
-
+        auto result = requestStream(Er::Protocol::GenericRequests::ListUsers, req, std::nullopt);
         std::vector<UserInfo> v;
-        auto userCount = reply.users_size();
-        if (userCount)
+        if (!result.empty())
         {
-            v.reserve(userCount);
-            for (int i = 0; i < userCount; ++i)
+            v.reserve(result.size());
+
+            for (auto& u : result)
             {
-                auto& u = reply.users(i);
-                v.emplace_back(u.name());
+                auto name = Er::getProperty<Er::Protocol::Props::User>(u);
+                
+                v.emplace_back(name ? *name : "<\?\?\?>");
             }
         }
 
         return v;
     }
 
-    void exit(bool restart) override
+    IServerCtl* getCtl() override
     {
-        erebus::ExitRequest request;
-        request.set_restart(restart);
-
-        erebus::GenericReply reply;
-        grpc::ClientContext context;
-        makeClientContext(context);
-        
-        grpc::Status status = m_stub->Exit(&context, request, &reply);
-        throwIfFailed(status, &reply);
-    }
-
-    Version version() override
-    {
-        erebus::Void request;
-
-        erebus::ServerVersionReply reply;
-        grpc::ClientContext context;
-        makeClientContext(context);
-
-        grpc::Status status = m_stub->Version(&context, request, &reply);
-        throwIfFailed(status, &reply.header());
-
-        return Version(reply.major(), reply.minor(), reply.patch());
+        return this;
     }
 
     SessionId beginSession(std::string_view req) override
@@ -422,6 +398,7 @@ EREBUSCLT_EXPORT void initialize(const LibParams& params)
     if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
     {
         g_libParams = params;
+        Er::Protocol::Props::Private::registerAll(params.log);
         
         ::grpc_init();
 
@@ -441,6 +418,7 @@ EREBUSCLT_EXPORT void finalize()
     {
         ::grpc_shutdown();
         
+        Er::Protocol::Props::Private::unregisterAll(g_libParams.log);
         g_libParams = LibParams();
     }
 }

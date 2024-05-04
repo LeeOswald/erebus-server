@@ -1,4 +1,5 @@
 #include <erebus-srv/erebus-srv.hxx>
+#include <erebus/protocol.hxx>
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -47,6 +48,8 @@ EREBUSSRV_EXPORT void initialize(const LibParams& params)
 {
     if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
     {
+        Er::Protocol::Props::Private::registerAll(params.log);
+
         g_libParams = params;
 
         ::grpc_init();
@@ -68,6 +71,8 @@ EREBUSSRV_EXPORT void finalize()
     if (g_initialized.fetch_sub(1, std::memory_order_acq_rel) == 1)
     {
         ::grpc_shutdown();
+
+        Er::Protocol::Props::Private::unregisterAll(g_libParams.log);
 
         g_libParams = LibParams();
     }

@@ -51,7 +51,7 @@ void ServiceBase::start()
     {
         grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { m_params.key, m_params.certificate };
         grpc::SslServerCredentialsOptions sslOps;
-        sslOps.pem_root_certs = m_params.root;
+        sslOps.pem_root_certs = m_params.rootCA;
         sslOps.pem_key_cert_pairs.push_back(keycert);
         auto creds = grpc::SslServerCredentials(sslOps);
         creds->SetAuthMetadataProcessor(m_authProcessor);

@@ -7,4 +7,4 @@
 #define ER_ORGANIZATION_NAME "Lee Oswald"
 #define ER_APPLICATION_NAME "Erebus"
 
-#define ER_COPYRIGHT "Copyright © 2023 Lee Oswald"
+#define ER_COPYRIGHT "Copyright © 2023-2024 Lee Oswald"

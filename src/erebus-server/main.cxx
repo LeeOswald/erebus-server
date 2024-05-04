@@ -19,6 +19,7 @@
 #include <erebus-srv/erebus-srv.hxx>
 
 #include "config.hxx"
+#include "coreservice.hxx"
 #include "logger.hxx"
 #include "pluginmgr.hxx"
 #include "users.hxx"
@@ -34,7 +35,6 @@ namespace
 
 Er::Log::ILog* g_log = nullptr;
 Er::Event g_exitCondition(false);
-bool g_restartRequired = false;
 std::optional<int> g_signalReceived;
 
 
@@ -57,18 +57,6 @@ void signalHandler(int signo)
     g_exitCondition.setAndNotifyAll(true);
 }
 
-void restart(int argc, char* argv[], char* env[])
-{
-    std::vector<std::string> args;
-    args.reserve(argc);
-    args.push_back(Er::System::CurrentProcess::exe());
-    for (int i = 1; i < argc; ++i)
-    {
-        args.push_back(std::string(argv[i]));
-    }
-
-    boost::process::spawn(std::move(args));
-}
 
 } // namespace {}
 
@@ -222,7 +210,7 @@ int main(int argc, char* argv[], char* env[])
 
             try
             {
-                Er::Server::Private::Params params(ep.endpoint, g_log, &g_exitCondition, &g_restartRequired, ep.ssl, root, certificate, key, &userDb);
+                Er::Server::Private::Params params(ep.endpoint, g_log, ep.ssl, root, certificate, key, &userDb);
                 auto server = Er::Server::Private::create(&params);
                 servers.push_back(server);
             }
@@ -238,6 +226,12 @@ int main(int argc, char* argv[], char* env[])
 
         if (servers.empty())
             throw Er::Exception(ER_HERE(), "Could not create any server instances");
+
+        Er::Private::CoreService coreService(g_log, &userDb);
+        for (auto srv : servers)
+        {
+            coreService.registerService(srv->serviceContainer());
+        }
 
         // load plugins
         Er::Server::PluginParams pluginParams;
@@ -278,8 +272,11 @@ int main(int argc, char* argv[], char* env[])
         // cleanup
         logger->write(Er::Log::Level::Info, ErLogNowhere(), "Stopping server instances...");
         
-        // we must explicitly stop the server to make the listening endpoint addresses available again
-        // before we spawn a copy of us during the restart command 
+        for (auto srv : servers)
+        {
+            coreService.unregisterService(srv->serviceContainer());
+        }
+
         pluginMgr.unloadAll();
         servers.clear();
         
@@ -287,19 +284,6 @@ int main(int argc, char* argv[], char* env[])
         {
             logger->write(Er::Log::Level::Warning, ErLogNowhere(), "Exiting due to signal %d", *g_signalReceived);
         }
-        else if (!g_restartRequired)
-        {
-            logger->write(Er::Log::Level::Warning, ErLogNowhere(), "Shutting down...");
-        }
-        else
-        {
-            logger->write(Er::Log::Level::Warning, ErLogNowhere(), "Restarting...");
-            g_log = nullptr;
-            // force logger destruction to unlock the logfile
-            logger.reset();
-            restart(argc, argv, env);
-        }
-
     }
     catch (Er::Exception& e)
     {

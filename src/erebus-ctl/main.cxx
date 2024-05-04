@@ -1,5 +1,6 @@
 #include "log.hxx"
 
+#include <erebus/protocol.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
@@ -46,9 +47,11 @@ void version(Er::Client::IClient* client, Er::Log::ILog* log)
         log,
         [client, log]()
         {
-            auto ver = client->version();
+            auto ctl = client->getCtl();
+            auto info = ctl->serverInfo();
 
-            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server version %d.%d.%d", ver.major, ver.minor, ver.patch);
+            log->write(Er::Log::Level::Info, ErLogNowhere(), "Remote system: %s", info.platform.c_str());
+            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server version: %s", info.version.c_str());
         }
     );
 }
@@ -81,8 +84,9 @@ void addUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::st
         [log, &params, &name, &password]()
         {
             auto client = Er::Client::create(params);
+            auto ctl = client->getCtl();
 
-            client->addUser(name, password);
+            ctl->addUser(name, password);
 
             Er::Log::Info(log, ErLogNowhere()) << "User " << name << " created successfully";
         }
@@ -96,8 +100,9 @@ void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::str
         [log, &params, &name]()
         {
             auto client = Er::Client::create(params);
+            auto ctl = client->getCtl();
 
-            client->removeUser(name);
+            ctl->removeUser(name);
 
             Er::Log::Info(log, ErLogNowhere()) << "User " << name << " deleted successfully";
         }
@@ -111,43 +116,14 @@ void listUsers(Er::Log::ILog* log, const Er::Client::Params& params)
         [log, &params]()
         {
             auto client = Er::Client::create(params);
+            auto ctl = client->getCtl();
 
-            auto users = client->listUsers();
+            auto users = ctl->listUsers();
 
             for (auto& u : users)
             {
                 log->write(Er::Log::Level::Info, ErLogNowhere(), "Found user: %s", u.name.c_str());
             }
-        }
-    );
-}
-
-void exit(Er::Log::ILog* log, const Er::Client::Params& params)
-{
-    protectedCall(
-        log,
-        [log, &params]()
-        {
-            auto client = Er::Client::create(params);
-
-            client->exit(false);
-
-            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server shutdown requested");
-        }
-    );
-}
-
-void restart(Er::Log::ILog* log, const Er::Client::Params& params)
-{
-    protectedCall(
-        log,
-        [log, &params]()
-        {
-            auto client = Er::Client::create(params);
-
-            client->exit(true);
-
-            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server restart requested");
         }
     );
 }
@@ -421,8 +397,6 @@ int main(int argc, char* argv[])
             ("root", po::value<std::string>(&rootFile), "root certificate file path")
             ("user", po::value<std::string>(&creds), "user <name>:<password>")
             ("version", "display server version")
-            ("exit", "shutdown server")
-            ("restart", "restart server")
             ("adduser", po::value<std::string>(), "add user <name>:<password>")
             ("rmuser", po::value<std::string>(), "delete user <name>")
             ("listusers", "list existing users")
@@ -487,14 +461,6 @@ int main(int argc, char* argv[])
         if (vm.count("version"))
         {
             version(&console, params, interval);
-        }
-        else if (vm.count("exit"))
-        {
-            exit(&console, params);
-        }
-        else if (vm.count("restart"))
-        {
-            restart(&console, params);
         }
         else if (vm.count("adduser"))
         {

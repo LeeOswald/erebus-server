@@ -152,6 +152,9 @@ void UserDb::remove(const std::string& name)
     if (it == m_users.end())
         throw Er::Exception(ER_HERE(), Util::format("User DB contains no user [%s]", name.c_str()));
 
+    if (m_users.size() == 1)
+        throw Er::Exception(ER_HERE(), "Cannot remove the last user: the server would become inaccessible.");
+
     m_users.erase(it);
     m_dirty = true;
 }

@@ -92,13 +92,8 @@ private:
     void createRpcs() override
     {
         createDisconnectRpc();
-        createVersionRpc();
         createInitRpc();
         createAuthorizeRpc();
-        createAddUserRpc();
-        createRemoveUserRpc();
-        createListUsersRpc();
-        createExitRpc();
         createAllocateSessionRpc();
         createDeleteSessionRpc();
         createGenericRpc();
@@ -114,35 +109,6 @@ private:
         }
 
         return true;
-    }
-
-    void createVersionRpc()
-    {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::Void, erebus::ServerVersionReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createVersionRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processVersionRpc(rpc, message); };
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestVersion;
-
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::Void, erebus::ServerVersionReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processVersionRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        if (!checkAuth(rpc))
-            return;
-
-        auto request = static_cast<const erebus::Void*>(message);
-
-        erebus::ServerVersionReply response;
-        response.set_major(ER_VERSION_MAJOR);
-        response.set_minor(ER_VERSION_MINOR);
-        response.set_patch(ER_VERSION_PATCH);
-
-        rpc.sendResponse(&response);
     }
 
     void createDisconnectRpc()
@@ -168,7 +134,7 @@ private:
 
         auto request = static_cast<const erebus::Void*>(message);
 
-        erebus::ServerVersionReply response;
+        erebus::Void response;
         rpc.sendResponse(&response);
 
         if (!tickets.empty())
@@ -254,188 +220,6 @@ private:
         }
 
         rpc.sendResponse(&response);
-    }
-
-    void createAddUserRpc()
-    {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::AddUserRequest, erebus::GenericReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createAddUserRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processAddUserRpc(rpc, message); };
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestAddUser;
-
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::AddUserRequest, erebus::GenericReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processAddUserRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        auto request = static_cast<const erebus::AddUserRequest*>(message);
-        erebus::GenericReply response;
-
-        if (!checkAuth(rpc))
-            return;
-
-        try
-        {
-            auto& name = request->name();
-            m_params.userDb->add(Er::Server::Private::User(name, request->salt(), request->pwd()));
-            m_params.userDb->save();
-
-            Er::Log::Info(m_params.log, ErLogInstance("ErebusService")) << "Created user " << name;
-        }
-        catch (Er::Exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            
-            marshalException(&response, e);
-        }
-        catch (std::exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-            
-            marshalException(&response, e);
-        }
-
-        rpc.sendResponse(&response);
-    }
-
-    void createRemoveUserRpc()
-    {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::RemoveUserRequest, erebus::GenericReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createRemoveUserRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processRemoveUserRpc(rpc, message); };
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestRemoveUser;
-
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::RemoveUserRequest, erebus::GenericReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processRemoveUserRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        auto request = static_cast<const erebus::RemoveUserRequest*>(message);
-        erebus::GenericReply response;
-
-        if (!checkAuth(rpc))
-            return;
-
-        try
-        {
-            auto& name = request->name();
-            m_params.userDb->remove(name);
-            m_params.userDb->save();
-
-            Er::Log::Info(m_params.log, ErLogInstance("ErebusService")) << "Deleted user " << name;
-        }
-        catch (Er::Exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-
-            marshalException(&response, e);
-        }
-        catch (std::exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-
-            marshalException(&response, e);
-        }
-
-        rpc.sendResponse(&response);
-    }
-
-    void createListUsersRpc()
-    {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::Void, erebus::ListUsersReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createListUsersRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processListUsersRpc(rpc, message); };
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestListUsers;
-
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::Void, erebus::ListUsersReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processListUsersRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        auto request = static_cast<const erebus::Void*>(message);
-        erebus::ListUsersReply response;
-
-        if (!checkAuth(rpc))
-            return;
-
-        try
-        {
-            auto list = m_params.userDb->enumerate();
-            ErAssert(!list.empty());
-
-            auto users = response.mutable_users();
-            users->Reserve(list.size());
-
-            for (auto& user : list)
-            {
-                auto u = users->Add();
-                u->set_name(user.name);
-            }
-
-        }
-        catch (Er::Exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-
-            marshalException(response.mutable_header(), e);
-        }
-        catch (std::exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-
-            marshalException(response.mutable_header(), e);
-        }
-
-        rpc.sendResponse(&response);
-    }
-
-    void createExitRpc()
-    {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::ExitRequest, erebus::GenericReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createExitRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processExitRpc(rpc, message); };
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestExit;
-
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::ExitRequest, erebus::GenericReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processExitRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        auto request = static_cast<const erebus::ExitRequest*>(message);
-        erebus::GenericReply response;
-
-        if (!checkAuth(rpc))
-            return;
-
-        *m_params.needRestart = request->restart();
-
-        if (*m_params.needRestart)
-            Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Server restart requested by " << rpc.getServerContext().peer();
-        else
-            Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Server shutdown requested by " << rpc.getServerContext().peer();
-
-       
-        rpc.sendResponse(&response);
-        // give the gRPC a chance to send back a reply before we die
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-        m_params.exitCondition->set(true);
     }
 
     void createAllocateSessionRpc()

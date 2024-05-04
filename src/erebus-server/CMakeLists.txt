@@ -1,6 +1,8 @@
 add_executable(${EREBUS_SERVER}
     config.cxx
     config.hxx
+    coreservice.cxx
+    coreservice.hxx
     logger.cxx
     logger.hxx
     main.cxx
