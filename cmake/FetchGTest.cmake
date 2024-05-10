@@ -1,5 +1,3 @@
-include(FetchContent)
-
 FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
@@ -15,5 +13,3 @@ endif()
 # prevent GoogleTest from overriding our compiler/linker options
 # when building with Visual Studio
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-message(STATUS "GTest binaries are at ${googletest_BINARY_DIR}")

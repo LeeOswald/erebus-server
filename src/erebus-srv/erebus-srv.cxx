@@ -1,11 +1,11 @@
-#include <erebus-srv/erebus-srv.hxx>
-#include <erebus/protocol.hxx>
-
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
 #include <erebus/erebus.grpc.pb.h>
+#include <erebus-srv/erebus-srv.hxx>
+#include <erebus/protocol.hxx>
+
 
 #include <atomic>
 

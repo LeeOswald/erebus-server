@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 
 include(ExternalProject)
+include(FetchContent)
+set(FETCHCONTENT_QUIET OFF)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -9,26 +11,16 @@ get_version_from_file("version.txt")
 
 project(erebus-server VERSION ${ER_VERSION})
 
-if(NOT CMAKE_BUILD_TYPE)
-    message(WARNING "CMAKE_BUILD_TYPE isn't defined. Debug value will be used by default.")
-    set(CMAKE_BUILD_TYPE Debug)
-else()
-    if(${CMAKE_BUILD_TYPE} MATCHES "^[Rr][Ee][Ll][Ee][Aa][Ss][Ee]$")
-        set(CMAKE_BUILD_TYPE Release)
-    elseif(${CMAKE_BUILD_TYPE} MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
-        set(CMAKE_BUILD_TYPE Debug)
-    elseif(${CMAKE_BUILD_TYPE} MATCHES "^[Rr][Ee][Ll][Ww][Ii][Tt][Hh][Dd][Ee][Bb][Ii][Nn][Ff][Oo]$")
-        set(CMAKE_BUILD_TYPE RelWithDebInfo)    
-    else()
-        message(WARNING "CMAKE_BUILD_TYPE isn't Release or Debug. Debug value will be used by default.")
-        set(CMAKE_BUILD_TYPE Debug)
-    endif()
-endif()
+
+set(CMAKE_CXX_STANDARD 20)
+set(ER_CXX_FEATURES cxx_std_20)
+
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
+                       
 # help debugging concepts
 if(NOT MSVC)
     add_compile_options(-fconcepts-diagnostics-depth=2)
@@ -47,8 +39,7 @@ set(ER_LINUX 0)
 set(ER_WINDOWS 0)
 set(ER_POSIX 0)
 
-set(CMAKE_CXX_STANDARD 20)
-set(ER_CXX_FEATURES cxx_std_20)
+
 
 if(WIN32)
     set(ER_WINDOWS 1)
@@ -123,14 +114,8 @@ if(ER_LINUX)
 endif()
 
 
-# require gRPC & protobuf
-if(NOT MSVC)
-    find_package(utf8_range REQUIRED)
-endif()
-find_package(Protobuf REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
+include(FetchGRPC)
 
-include_directories(${Protobuf_INCLUDE_DIRS})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/erebus-version.h.in erebus-version.h)
 
@@ -146,24 +131,6 @@ include_directories(
 
 set(EREBUS_PROTOLIB erebus-proto)
 
-# fix poorly linked gRPC dependencies on linux
-if(NOT MSVC)
-    set(GRPC_DEPS
-        absl::flags 
-        absl::flags_parse 
-        absl::log absl::log_internal_check_op 
-        utf8_range::utf8_validity
-    )
-endif()
-
-set(GRPC_LIBS
-    gRPC::grpc++ 
-    gRPC::grpc++_reflection 
-    gRPC::gpr 
-    gRPC::grpc 
-    protobuf::libprotoc 
-    protobuf::libprotobuf 
-)
 
 # require Boost
 if(MSVC)

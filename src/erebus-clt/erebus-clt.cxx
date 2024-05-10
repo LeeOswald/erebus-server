@@ -1,13 +1,13 @@
+#include <erebus/erebus.grpc.pb.h>
+#include <grpcpp/grpcpp.h>
+
 #include <erebus/knownprops.hxx>
+#include <erebus/protocol.hxx>
 #include <erebus/result.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus/util/random.hxx>
 #include <erebus/util/sha256.hxx>
 #include <erebus-clt/erebus-clt.hxx>
-
-#include <erebus/protocol.hxx>
-#include <grpcpp/grpcpp.h>
-#include <erebus/erebus.grpc.pb.h>
 
 #include <atomic>
 #include <sstream>

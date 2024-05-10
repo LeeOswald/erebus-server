@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include <erebus/erebus.grpc.pb.h>
+
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
 #include <erebus/util/random.hxx>
@@ -7,8 +10,6 @@
 
 #include "auth.hxx"
 #include "rpc.hxx"
-
-#include <erebus/erebus.grpc.pb.h>
 
 #include <condition_variable>
 #include <mutex>
