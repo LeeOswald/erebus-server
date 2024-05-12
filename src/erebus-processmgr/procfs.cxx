@@ -41,8 +41,8 @@ ProcFs::ProcFs(Er::Log::ILog* log)
     , m_clkTck(::sysconf(_SC_CLK_TCK))
     , m_cpusMax(::get_nprocs_conf())
 {
-    assert(m_clkTck > 0);
-    assert(m_cpusMax > 0);
+    ErAssert(m_clkTck > 0);
+    ErAssert(m_cpusMax > 0);
 
     auto rootPath = root();
     if (::access(rootPath.c_str(), R_OK) == -1)
@@ -60,7 +60,7 @@ std::string ProcFs::root()
 
 Stat ProcFs::readStat(uintptr_t pid) noexcept
 {
-    assert(pid != KernelPid);
+    ErAssert(pid != KernelPid);
 
     Stat result;
     result.pid = pid; // Stat::pid is always valid

@@ -18,13 +18,13 @@ SignalHandler::SignalHandler(const std::initializer_list<int>& signals) noexcept
     {
         if (::sigaddset(&m_signals, signum) != 0)
         {
-            assert(!"Invalid signal");
+            ErAssert(!"Invalid signal");
         }
     }
 
     if (::pthread_sigmask(SIG_BLOCK, &m_signals, nullptr) != 0)
     {
-        assert("!Signal could not be blocked");
+        ErAssert("!Signal could not be blocked");
     }
 }
 
@@ -37,7 +37,7 @@ int SignalHandler::wait() const
 {
     int signum = 0;
     int ret = ::sigwait(&m_signals, &signum);
-    assert(ret == 0);
+    ErAssert(ret == 0);
 
     return signum;
 }

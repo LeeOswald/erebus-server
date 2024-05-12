@@ -12,7 +12,7 @@ namespace Private
 PathResolver::PathResolver(const char* paths)
 {
     std::string src = paths ? paths : std::getenv("PATH");
-    assert(!src.empty());
+    ErAssert(!src.empty());
     m_paths = Er::Util::split(src, std::string_view(":"), Er::Util::SplitSkipEmptyParts);
 }
 

@@ -41,7 +41,7 @@ std::string_view extractExeNameFromCommand(std::string_view command) noexcept
         if (p == end)
             return std::string_view();
 
-        assert(*p == '\"');
+        ErAssert(*p == '\"');
         return std::string_view(start, p - start);
     }
 

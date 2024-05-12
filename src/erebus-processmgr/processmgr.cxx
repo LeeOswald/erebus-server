@@ -148,7 +148,7 @@ ER_PROCESSMGR_EXPORT void disposePlugin(Er::Server::IPlugin* plugin)
         return;
 
     auto realPlugin = dynamic_cast<Er::ProcessMgrPlugin*>(plugin);
-    assert(realPlugin);
+    ErAssert(realPlugin);
     delete realPlugin;
 }
 

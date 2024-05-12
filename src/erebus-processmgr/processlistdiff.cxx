@@ -17,7 +17,7 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
     Er::PropertyBag bag(std::move(previous));
 
     auto stat = source.readStat(pid);
-    assert(stat.pid != ProcFs::InvalidPid); // PID is always valid
+    ErAssert(stat.pid != ProcFs::InvalidPid); // PID is always valid
 
     if (!stat.valid)
     {
@@ -228,7 +228,7 @@ static void updateDiffAndCollectionForProcess(ProcessCollection::Container::iter
         // new one
         auto data = std::make_unique<ProcessData>(pid, !firstRun, now, std::move(newProps));
         auto item = collection.processes.insert({ pid, std::move(data) });
-        assert(item.second); // really a new item
+        ErAssert(item.second); // really a new item
         diff.added.push_back(item.first->second.get());
     }
     else

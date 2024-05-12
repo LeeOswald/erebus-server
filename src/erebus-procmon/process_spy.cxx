@@ -37,7 +37,7 @@ ProcessSpy::ProcessSpy(Er::Log::ILog* log)
 
 void ProcessSpy::attach()
 {
-    assert(!m_attached);
+    ErAssert(!m_attached);
     
     auto err = process_bpf::attach(m_bpf);
     if (err)
@@ -80,7 +80,7 @@ void ProcessSpy::worker(std::stop_token stop) noexcept
 int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
 {
     auto this_ = static_cast<ProcessSpy*>(ctx);
-    assert(this_);
+    ErAssert(this_);
 
     return Er::protectedCall<int>(
         this_->m_log,

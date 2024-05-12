@@ -89,7 +89,7 @@ ER_PROCMON_EXPORT void disposePlugin(Er::Server::IPlugin* plugin)
         return;
 
     auto realPlugin = dynamic_cast<Er::ProcMonPlugin*>(plugin);
-    assert(realPlugin);
+    ErAssert(realPlugin);
     delete realPlugin;
 }
 
