@@ -9,7 +9,7 @@
 #include <queue>
 #include <sstream>
 #include <thread>
-#include <unordered_map>
+#include <vector>
 
 namespace Er
 {
@@ -133,11 +133,25 @@ private:
     void _flush() noexcept;
     void run(std::stop_token stop) noexcept;
 
+    struct DelegateInfo
+    {
+        std::string id;
+        Delegate d;
+
+        DelegateInfo() noexcept = default;
+
+        DelegateInfo(std::string_view id, Delegate d)
+            : id(id)
+            , d(d)
+        {}
+    };
+
     bool m_sync;
     Level m_level;
     size_t m_maxQueue;
-    std::mutex m_mutex;
-    std::unordered_map<std::string, Delegate> m_delegates;
+    std::mutex m_delegatesMutex;
+    std::vector<DelegateInfo> m_delegates;
+    std::mutex m_queueMutex;
     std::queue<std::shared_ptr<Record>> m_queue;
     std::condition_variable_any m_event;
     std::jthread m_worker;

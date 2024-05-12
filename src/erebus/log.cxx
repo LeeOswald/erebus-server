@@ -32,9 +32,9 @@ void LogBase::addDelegate(std::string_view id, Delegate d) noexcept
 {
     try
     {
-        std::lock_guard g(m_mutex);
+        std::lock_guard g(m_delegatesMutex);
 
-        m_delegates.insert({ std::string(id), d });
+        m_delegates.emplace_back(id, d);
     }
     catch (...)
     {
@@ -45,9 +45,9 @@ void LogBase::removeDelegate(std::string_view id) noexcept
 {
     try
     {
-        std::lock_guard g(m_mutex);
+        std::lock_guard g(m_delegatesMutex);
 
-        auto it = m_delegates.find(std::string(id));
+        auto it = std::find_if(m_delegates.begin(), m_delegates.end(), [id](const DelegateInfo& d) { return d.id == id; });
         if (it != m_delegates.end())
         {
             m_delegates.erase(it);
@@ -66,7 +66,7 @@ void LogBase::run(std::stop_token stop) noexcept
         
         while (!stop.stop_requested())
         {
-            std::unique_lock l(m_mutex);
+            std::unique_lock l(m_queueMutex);
 
             m_event.wait(l, stop, [this]() { return !m_queue.empty(); });
 
@@ -83,14 +83,17 @@ void LogBase::_flush() noexcept
     if (m_mute)
         return;
 
+    std::lock_guard l(m_delegatesMutex);
+
     while (!m_queue.empty())
     {
         for (auto it = m_delegates.begin(); it != m_delegates.end(); ++it)
         {
+            auto record = m_queue.front();
+
             try
             {
-                auto record = m_queue.front();
-                it->second(record);
+                it->d(record);
             }
             catch (...)
             {
@@ -113,7 +116,7 @@ void LogBase::unmute() noexcept
 
 void LogBase::flush() noexcept
 {
-    std::lock_guard g(m_mutex);
+    std::unique_lock l(m_queueMutex);
 
     _flush();
 }
@@ -133,11 +136,13 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
     
     if (m_sync)
     {
+        std::lock_guard l(m_delegatesMutex);
+
         for (auto it = m_delegates.begin(); it != m_delegates.end(); ++it)
         {
             try
             {
-                it->second(r);
+                it->d(r);
             }
             catch (...)
             {
@@ -146,7 +151,7 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
     }
     else
     {
-        std::lock_guard g(m_mutex);
+        std::unique_lock l(m_queueMutex);
 
         try
         {
