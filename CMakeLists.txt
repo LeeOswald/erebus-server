@@ -46,12 +46,13 @@ endif()
 
 if(ER_LINUX)
     # Build libbpf
-
     ExternalProject_Add(libbpf
         PREFIX libbpf
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/libbpf/src
+        GIT_REPOSITORY "https://github.com/libbpf/libbpf.git"
+        GIT_TAG "master"
+        SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/libbpf_src/src
         CONFIGURE_COMMAND ""
-        BUILD_COMMAND make
+        BUILD_COMMAND cd ./src && make
             OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
             DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
             INCLUDEDIR=
@@ -67,27 +68,16 @@ if(ER_LINUX)
     # Build bpftool
     ExternalProject_Add(bpftool
         PREFIX bpftool
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/bpftool/src
+        GIT_REPOSITORY "https://github.com/libbpf/bpftool.git"
+        GIT_TAG "main"
+        SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bpftool_src/src
         CONFIGURE_COMMAND ""
-        BUILD_COMMAND make bootstrap
+        BUILD_COMMAND cd ./src && make bootstrap
             OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/bpftool/
         BUILD_IN_SOURCE TRUE
         INSTALL_COMMAND ""
         STEP_TARGETS build
     )
-
-    find_program(CARGO_EXISTS cargo)
-    if(CARGO_EXISTS)
-    ExternalProject_Add(blazesym
-        PREFIX blazesym
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/blazesym
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND cargo build --verbose --package=blazesym-c --release
-        BUILD_IN_SOURCE TRUE
-        INSTALL_COMMAND ""
-        STEP_TARGETS build
-    )
-    endif()
 
     set(BPFOBJECT_BPFTOOL_EXE ${CMAKE_CURRENT_BINARY_DIR}/bpftool/bootstrap/bpftool)
     set(BPFOBJECT_VMLINUX_H ${CMAKE_CURRENT_BINARY_DIR}/vmlinux.h)
