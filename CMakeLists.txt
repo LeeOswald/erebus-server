@@ -4,7 +4,7 @@ include(ExternalProject)
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(version)
 get_version_from_file("version.txt")
