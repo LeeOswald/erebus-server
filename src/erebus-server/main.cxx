@@ -22,7 +22,6 @@
 #include "coreservice.hxx"
 #include "logger.hxx"
 #include "pluginmgr.hxx"
-#include "users.hxx"
 
 #include <filesystem>
 #include <future>
@@ -128,12 +127,6 @@ int main(int argc, char* argv[], char* env[])
         return EXIT_FAILURE;
     }
         
-    if (cfg.userDb.empty())
-    {
-        std::cerr << "User DB path expected\n";
-        return EXIT_FAILURE;
-    }
-
     if (cfg.endpoints.empty())
     {
         std::cerr << "No server endpoints specified.\n";
@@ -196,8 +189,6 @@ int main(int argc, char* argv[], char* env[])
         if (!cfg.privateKey.empty())
             key = Er::Util::loadTextFile(cfg.privateKey);
     
-        Er::Private::UserDb userDb(cfg.userDb);
-
         Er::Server::Private::LibParams srvLibParams(g_log, g_log->level());
         Er::Server::Private::LibScope ss(srvLibParams);
 
@@ -210,7 +201,7 @@ int main(int argc, char* argv[], char* env[])
 
             try
             {
-                Er::Server::Private::Params params(ep.endpoint, g_log, ep.ssl, root, certificate, key, &userDb);
+                Er::Server::Private::Params params(ep.endpoint, g_log, ep.ssl, root, certificate, key);
                 auto server = Er::Server::Private::create(&params);
                 servers.push_back(server);
             }
@@ -227,7 +218,7 @@ int main(int argc, char* argv[], char* env[])
         if (servers.empty())
             throw Er::Exception(ER_HERE(), "Could not create any server instances");
 
-        Er::Private::CoreService coreService(g_log, &userDb);
+        Er::Private::CoreService coreService(g_log);
         for (auto srv : servers)
         {
             coreService.registerService(srv->serviceContainer());

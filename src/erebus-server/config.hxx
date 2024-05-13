@@ -32,7 +32,6 @@ struct ServerConfig final
     std::string certificate;
     std::string privateKey;
     std::string rootCA;
-    std::string userDb;
     std::vector<Plugin> plugins;
 };
 

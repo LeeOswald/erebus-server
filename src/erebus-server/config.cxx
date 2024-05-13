@@ -45,9 +45,6 @@ R"(
         "root": {
             "type": "string"
         },
-        "userdb": {
-            "type": "string"
-        },
         "endpoints": {
             "type": "array",
             "items": {
@@ -93,7 +90,7 @@ R"(
             }
         }
     },
-    "required": ["logfile", "userdb", "endpoints", "plugins"]
+    "required": ["logfile", "endpoints", "plugins"]
 }
 )";
 
@@ -167,8 +164,6 @@ ServerConfig loadConfig(const std::string& path)
             cfg.privateKey = m->value.GetString();
         else if (!std::strcmp(name, "root"))
             cfg.rootCA = m->value.GetString();
-        else if (!std::strcmp(name, "userdb"))
-            cfg.userDb = m->value.GetString();
         else if (!std::strcmp(name, "endpoints"))
         {
             for (size_t index = 0; index < m->value.Size(); ++index)

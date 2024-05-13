@@ -5,10 +5,8 @@
 
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
-#include <erebus/util/random.hxx>
 #include <erebus-srv/erebus-srv.hxx>
 
-#include "auth.hxx"
 #include "rpc.hxx"
 
 #include <condition_variable>
@@ -43,9 +41,6 @@ protected:
 
     static void genericDone(Er::Server::Private::Rpc::RpcBase& rpc, bool rpcCancelled);
 
-    std::string getContextUserMapping(grpc::ServerContext* context) const;
-    std::string makeTicket() const;
-
     static void marshalException(erebus::GenericReply* reply, const std::exception& e);
     static void marshalException(erebus::GenericReply* reply, const Er::Exception& e);
     static void marshalException(erebus::GenericReply* reply, Result code, std::string_view message);
@@ -53,13 +48,9 @@ protected:
     static Er::PropertyBag unmarshalArgs(const erebus::ServiceRequest* request);
     static void marshalReplyProps(const Er::PropertyBag& props, erebus::ServiceReply* reply);
 
-    const size_t kTicketLength = 64;
-    const std::string_view kTicketChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
-
     bool m_stop = false;
     Params m_params;
     bool m_local;
-    std::shared_ptr<AuthMetadataProcessor> m_authProcessor;
     std::unique_ptr<grpc::ServerCompletionQueue> m_queue;
     std::unique_ptr<grpc::Server> m_server;
     std::mutex m_mutex;

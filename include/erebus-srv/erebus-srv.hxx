@@ -55,32 +55,6 @@ protected:
 namespace Private
 {
 
-struct User
-{
-    std::string name;
-    std::string pwdSalt;
-    std::string pwdHash;
-
-    explicit User(std::string_view name, std::string_view pwdSalt, std::string_view pwdHash)
-        : name(name)
-        , pwdSalt(pwdSalt)
-        , pwdHash(pwdHash)
-    {}
-};
-
-
-struct IUserDb
-{
-    virtual void add(const User& u) = 0;
-    virtual void remove(const std::string& name) = 0;
-    virtual std::vector<User> enumerate() const = 0;
-    virtual std::optional<User> lookup(const std::string& name) const = 0;
-    virtual void save() = 0;
-
-protected:
-    virtual ~IUserDb() {}
-};
-
 
 struct Params
 {
@@ -90,7 +64,6 @@ struct Params
     std::string rootCertificate;
     std::string certificate;
     std::string key;
-    IUserDb* userDb = nullptr;
 
     Params() noexcept = default;
 
@@ -100,8 +73,7 @@ struct Params
         bool ssl,
         std::string_view rootCertificate,
         std::string_view certificate,
-        std::string_view key,
-        IUserDb* userDb
+        std::string_view key
     )
         : endpoint(endpoint)
         , log(log)
@@ -109,7 +81,6 @@ struct Params
         , rootCertificate(rootCertificate)
         , certificate(certificate)
         , key(key)
-        , userDb(userDb)
     {
     }
 };

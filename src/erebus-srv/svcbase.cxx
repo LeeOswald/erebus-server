@@ -38,7 +38,6 @@ ServiceBase::~ServiceBase()
 ServiceBase::ServiceBase(const Params* params)
     : m_params(*params)
     , m_local(params->endpoint.starts_with("unix:"))
-    , m_authProcessor(std::make_shared<AuthMetadataProcessor>(params->log))
 {
 
 }
@@ -54,7 +53,6 @@ void ServiceBase::start()
         sslOps.pem_root_certs = m_params.rootCertificate;
         sslOps.pem_key_cert_pairs.push_back(keycert);
         auto creds = grpc::SslServerCredentials(sslOps);
-        creds->SetAuthMetadataProcessor(m_authProcessor);
         builder.AddListeningPort(m_params.endpoint, creds);
     }
     else
@@ -158,17 +156,6 @@ void ServiceBase::processRpcs()
 void ServiceBase::genericDone(Er::Server::Private::Rpc::RpcBase& rpc, bool rpcCancelled)
 {
     delete (&rpc);
-}
-
-std::string ServiceBase::getContextUserMapping(grpc::ServerContext* context) const
-{
-    return context->auth_context()->GetPeerIdentity()[0].data();
-}
-
-std::string ServiceBase::makeTicket() const
-{
-    Er::Util::Random r;
-    return r.generate(kTicketLength, kTicketChars);
 }
 
 void ServiceBase::marshalException(erebus::GenericReply* reply, const std::exception& e)

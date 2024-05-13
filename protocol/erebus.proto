@@ -6,33 +6,10 @@ package erebus;
 
 
 service Erebus {
-  rpc Init(InitialRequest) returns(InitialReply) {}
-  rpc Authorize(AuthRequest) returns(AuthReply) {}
-  rpc Disconnect(Void) returns(Void) {}
   rpc AllocateSession(AllocateSessionRequest) returns(AllocateSessionReply) {}
   rpc DeleteSession(DeleteSessionRequest) returns(GenericReply) {}
   rpc GenericRpc(ServiceRequest) returns(ServiceReply) {}
   rpc GenericStream(ServiceRequest) returns(stream ServiceReply) {}
-}
-
-
-message InitialRequest {
-  string user = 1;
-}
-
-message InitialReply {
-  GenericReply header = 1;
-  string salt = 2;  
-}
-
-message AuthRequest {
-  string user = 1;
-  string pwd = 2;
-}
-
-message AuthReply {
-  GenericReply header = 1;
-  string ticket = 3;
 }
 
 message AllocateSessionRequest {

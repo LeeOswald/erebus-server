@@ -66,9 +66,6 @@ struct IClient
 struct IServerCtl
 {
     virtual ServerInfo serverInfo() = 0;
-    virtual void addUser(std::string_view name, std::string_view password) = 0;
-    virtual void removeUser(std::string_view name) = 0;
-    virtual std::vector<UserInfo> listUsers() = 0;
 };
 
 struct LibParams
@@ -112,8 +109,6 @@ struct Params
     std::string rootCertificate;
     std::string certificate;
     std::string key;
-    std::string user;
-    std::string password;
 
     Params() noexcept = default;
 
@@ -123,9 +118,7 @@ struct Params
         bool ssl,
         std::string_view rootCertificate,
         std::string_view certificate,
-        std::string_view key,
-        std::string_view user,
-        std::string_view password
+        std::string_view key
     )
         : log(log)
         , endpoint(endpoint)
@@ -133,8 +126,6 @@ struct Params
         , rootCertificate(rootCertificate)
         , certificate(certificate)
         , key(key)
-        , user(user)
-        , password(password)
     {
     }
 };

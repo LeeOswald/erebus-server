@@ -77,57 +77,6 @@ void version(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
     );
 }
 
-void addUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::string& name, const std::string& password)
-{
-    protectedCall(
-        log,
-        [log, &params, &name, &password]()
-        {
-            auto client = Er::Client::create(params);
-            auto ctl = client->getCtl();
-
-            ctl->addUser(name, password);
-
-            Er::Log::Info(log, ErLogNowhere()) << "User " << name << " created successfully";
-        }
-    );
-}
-
-void rmUser(Er::Log::ILog* log, const Er::Client::Params& params, const std::string& name)
-{
-    protectedCall(
-        log,
-        [log, &params, &name]()
-        {
-            auto client = Er::Client::create(params);
-            auto ctl = client->getCtl();
-
-            ctl->removeUser(name);
-
-            Er::Log::Info(log, ErLogNowhere()) << "User " << name << " deleted successfully";
-        }
-    );
-}
-
-void listUsers(Er::Log::ILog* log, const Er::Client::Params& params)
-{
-    protectedCall(
-        log,
-        [log, &params]()
-        {
-            auto client = Er::Client::create(params);
-            auto ctl = client->getCtl();
-
-            auto users = ctl->listUsers();
-
-            for (auto& u : users)
-            {
-                log->write(Er::Log::Level::Info, ErLogNowhere(), "Found user: %s", u.name.c_str());
-            }
-        }
-    );
-}
-
 void dumpPropertyBag(const Er::PropertyBag& info, Er::Log::ILog* log)
 {
     for (auto it = info.begin(); it != info.end(); ++it)
@@ -384,7 +333,6 @@ int main(int argc, char* argv[])
     std::string rootFile;
     std::string certFile;
     std::string keyFile;
-    std::string creds;
     int interval = 0;
 
     try
@@ -399,11 +347,7 @@ int main(int argc, char* argv[])
             ("root", po::value<std::string>(&rootFile), "root certificate file path")
             ("cert", po::value<std::string>(&certFile), "client certificate file path")
             ("key", po::value<std::string>(&keyFile), "client certificate key file path")
-            ("user", po::value<std::string>(&creds), "user <name>:<password>")
             ("version", "display server version")
-            ("adduser", po::value<std::string>(), "add user <name>:<password>")
-            ("rmuser", po::value<std::string>(), "delete user <name>")
-            ("listusers", "list existing users")
             ("loop", po::value<int>(&interval)->default_value(0), "repeat the request with an interval")
             ("process", po::value<int>(), "view process info for PID")
             ("processes", "view process list")
@@ -452,49 +396,11 @@ int main(int argc, char* argv[])
         if (!keyFile.empty())
             key = Er::Util::loadTextFile(keyFile);
 
-        std::string user;
-        std::string password;
-        if (vm.count("user"))
-        {
-            std::vector<std::string> parts;
-            boost::split(parts, creds, boost::is_any_of(":"));
-            if (parts.size() != 2)
-            {
-                std::cerr << "Expected <user>:<password> pair specified for \"user\" arg\n";
-                return EXIT_FAILURE;
-            }
-
-            user = std::move(parts[0]);
-            password = std::move(parts[1]);
-        }
-        
-        Er::Client::Params params(&console, ep, ssl, root, cert, key, user, password);
+        Er::Client::Params params(&console, ep, ssl, root, cert, key);
         
         if (vm.count("version"))
         {
             version(&console, params, interval);
-        }
-        else if (vm.count("adduser"))
-        {
-            auto namePwd = vm["adduser"].as<std::string>();
-            std::vector<std::string> parts;
-            boost::split(parts, namePwd, boost::is_any_of(":"));
-            if (parts.size() != 2)
-            {
-                std::cerr << "Expected <user>:<password> pair specified for \"adduser\" command\n";
-                return EXIT_FAILURE;
-            }
-
-            addUser(&console, params, parts[0], parts[1]);
-        }
-        else if (vm.count("rmuser"))
-        {
-            auto name = vm["rmuser"].as<std::string>();
-            rmUser(&console, params, name);
-        }
-        else if (vm.count("listusers"))
-        {
-            listUsers(&console, params);
         }
         else if (vm.count("process"))
         {

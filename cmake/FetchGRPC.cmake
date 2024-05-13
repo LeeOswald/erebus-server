@@ -5,7 +5,7 @@ set(utf8_range_ENABLE_INSTALL OFF)
 FetchContent_Declare(
   gRPC
   GIT_REPOSITORY https://github.com/grpc/grpc
-  GIT_TAG        master
+  GIT_TAG        v1.63.0
 )
 
 FetchContent_GetProperties(gRPC)

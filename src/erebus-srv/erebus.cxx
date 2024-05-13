@@ -34,9 +34,6 @@ public:
     explicit ErebusService(const Params* params)
         : ServiceBase(params)
     {
-        m_authProcessor->addNoAuthMethod("/erebus.Erebus/Init");
-        m_authProcessor->addNoAuthMethod("/erebus.Erebus/Authorize");
-
         ErLogDebug(m_params.log, ErLogInstance("ErebusService"), "ErebusService()");
     }
 
@@ -91,135 +88,10 @@ private:
 
     void createRpcs() override
     {
-        createDisconnectRpc();
-        createInitRpc();
-        createAuthorizeRpc();
         createAllocateSessionRpc();
         createDeleteSessionRpc();
         createGenericRpc();
         createGenericStream();
-    }
-
-    bool checkAuth(Er::Server::Private::Rpc::RpcBase& rpc)
-    {
-        if (!rpc.getServerContext().auth_context()->IsPeerAuthenticated())
-        {
-            rpc.finishWithError(grpc::Status(grpc::UNAUTHENTICATED, "Unauthenticated"));
-            return false;
-        }
-
-        return true;
-    }
-
-    void createDisconnectRpc()
-    {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::Void, erebus::Void> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createDisconnectRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processDisconnectRpc(rpc, message); };
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestDisconnect;
-
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::Void, erebus::Void>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processDisconnectRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        if (!checkAuth(rpc))
-            return;
-
-        auto tickets = rpc.getServerContext().auth_context()->FindPropertyValues("ticket");
-
-        auto request = static_cast<const erebus::Void*>(message);
-
-        erebus::Void response;
-        rpc.sendResponse(&response);
-
-        if (!tickets.empty())
-            m_authProcessor->removeTicket(tickets.front().data());
-    }
-
-    void createInitRpc()
-    {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::InitialRequest, erebus::InitialReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createInitRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processInitRpc(rpc, message); };
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestInit;
-
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::InitialRequest, erebus::InitialReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processInitRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        auto request = static_cast<const erebus::InitialRequest*>(message);
-
-        erebus::InitialReply response;
-        auto& user = request->user();
-        auto u = m_params.userDb->lookup(user);
-        if (!u)
-        {
-            Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Trying to log in an unknown user " << user;
-            marshalException(response.mutable_header(), Result::NotFound, "User not found");
-        }
-        else
-        {
-            response.set_salt(u->pwdSalt);
-        }
-
-        rpc.sendResponse(&response);
-    }
-
-    void createAuthorizeRpc()
-    {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::AuthRequest, erebus::AuthReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createAuthorizeRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processAuthorizeRpc(rpc, message); };
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestAuthorize;
-
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::AuthRequest, erebus::AuthReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processAuthorizeRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        auto request = static_cast<const erebus::AuthRequest*>(message);
-
-        erebus::AuthReply response;
-        auto& user = request->user();
-        auto u = m_params.userDb->lookup(user);
-        if (!u)
-        {
-            Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Trying to log in an unknown user " << user;
-            marshalException(response.mutable_header(), Result::NotFound, "User not found");
-        }
-        else
-        {
-            if (request->pwd() != u->pwdHash)
-            {
-                Er::Log::Warning(m_params.log, ErLogInstance("ErebusService")) << "Failed to log in user " << user;
-                marshalException(response.mutable_header(), Result::Unauthenticated, "Wrong password");
-            }
-            else
-            {
-                Er::Log::Info(m_params.log, ErLogInstance("ErebusService")) << "Logged in user " << user;
-
-                auto ticket = makeTicket();
-                response.set_ticket(ticket);
-
-                m_authProcessor->addTicket(user, ticket);
-            }
-        }
-
-        rpc.sendResponse(&response);
     }
 
     void createAllocateSessionRpc()
@@ -240,9 +112,6 @@ private:
     {
         auto request = static_cast<const erebus::AllocateSessionRequest*>(message);
         erebus::AllocateSessionReply response;
-
-        if (!checkAuth(rpc))
-            return;
 
         std::shared_lock l(m_servicesLock);
         
@@ -298,9 +167,6 @@ private:
         auto request = static_cast<const erebus::DeleteSessionRequest*>(message);
         erebus::GenericReply response;
 
-        if (!checkAuth(rpc))
-            return;
-
         std::shared_lock l(m_servicesLock);
         
         auto& serviceId = request->request();
@@ -355,9 +221,6 @@ private:
     {
         auto request = static_cast<const erebus::ServiceRequest*>(message);
         erebus::ServiceReply response;
-
-        if (!checkAuth(rpc))
-            return;
 
         auto& id = request->request();
         std::optional<uint32_t> sessionId;
@@ -419,9 +282,6 @@ private:
     {
         auto request = static_cast<const erebus::ServiceRequest*>(message);
         
-        if (!checkAuth(rpc))
-            return;
-
         auto& id = request->request();
         std::optional<uint32_t> sessionId;
         if (request->has_sessionid())

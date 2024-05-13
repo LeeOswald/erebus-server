@@ -62,7 +62,6 @@ add_library(${EREBUS_LIB} SHARED
     ../../include/erebus/util/generichandle.hxx
     ../../include/erebus/util/inifile.hxx
     ../../include/erebus/util/ptrutils.hxx
-    ../../include/erebus/util/random.hxx
     ../../include/erebus/util/sha256.hxx
     ../../include/erebus/util/stringutil.hxx
     assert.cxx

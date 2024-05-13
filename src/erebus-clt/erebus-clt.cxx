@@ -5,8 +5,6 @@
 #include <erebus/protocol.hxx>
 #include <erebus/result.hxx>
 #include <erebus/util/format.hxx>
-#include <erebus/util/random.hxx>
-#include <erebus/util/sha256.hxx>
 #include <erebus-clt/erebus-clt.hxx>
 
 #include <atomic>
@@ -21,31 +19,6 @@ namespace Client
 namespace
 {
 
-class MetadataCredentialsPlugin final
-    : public grpc::MetadataCredentialsPlugin
-{
-public:
-    MetadataCredentialsPlugin(const grpc::string_ref& metadataKey, const grpc::string_ref& metadataValue)
-        : m_metadataKey(metadataKey.data(), metadataKey.length())
-        , m_metadataValue(metadataValue.data(), metadataValue.length())
-    {}
-
-    grpc::Status GetMetadata(grpc::string_ref serviceUrl, grpc::string_ref methodName, const grpc::AuthContext& channelAuthContext, std::multimap<std::string, std::string>* metadata) override
-    {
-        metadata->insert(std::make_pair(m_metadataKey, m_metadataValue));
-        return grpc::Status::OK;
-    }
-
-    std::string DebugString() override
-    {
-        return Er::Util::format("MetadataCredentials{key:%s,value:%s}", m_metadataKey.c_str(), m_metadataValue.c_str());
-    }
-
-private:
-    std::string m_metadataKey;
-    std::string m_metadataValue;
-};
-
 
 class ClientImpl final
     : public Er::Client::IClient
@@ -55,14 +28,12 @@ class ClientImpl final
 public:
     ~ClientImpl()
     {
-        disconnect();
     }
 
     explicit ClientImpl(std::shared_ptr<grpc::Channel> channel, const Params& params)
         : m_stub(erebus::Erebus::NewStub(channel))
         , m_params(params)
     {
-        checkAuth();
     }
 
     ServerInfo serverInfo() override
@@ -74,51 +45,6 @@ public:
         auto serverVer = Er::getPropertyOr<Er::Protocol::Props::ServerVersionString>(reply, std::string());
 
         return ServerInfo(std::move(serverVer), std::move(systemName));
-    }
-
-    void addUser(std::string_view name, std::string_view password) override
-    {
-        auto salt = makeSalt();
-        Er::Util::Sha256 sha;
-        sha.update(salt);
-        sha.update(password);
-        auto hash = sha.str(sha.digest());
-
-        Er::PropertyBag req;
-        Er::addProperty<Er::Protocol::Props::User>(req, std::string(name));
-        Er::addProperty<Er::Protocol::Props::Salt>(req, std::move(salt));
-        Er::addProperty<Er::Protocol::Props::Password>(req, std::move(hash));
-
-        request(Er::Protocol::GenericRequests::AddUser, req, std::nullopt);
-    }
-
-    void removeUser(std::string_view name) override
-    {
-        Er::PropertyBag req;
-        Er::addProperty<Er::Protocol::Props::User>(req, std::string(name));
-
-        request(Er::Protocol::GenericRequests::RemoveUser, req, std::nullopt);
-    }
-
-    std::vector<UserInfo> listUsers() override
-    {
-        Er::PropertyBag req;
-
-        auto result = requestStream(Er::Protocol::GenericRequests::ListUsers, req, std::nullopt);
-        std::vector<UserInfo> v;
-        if (!result.empty())
-        {
-            v.reserve(result.size());
-
-            for (auto& u : result)
-            {
-                auto name = Er::getProperty<Er::Protocol::Props::User>(u);
-                
-                v.emplace_back(name ? *name : "<\?\?\?>");
-            }
-        }
-
-        return v;
     }
 
     IServerCtl* getCtl() override
@@ -133,8 +59,6 @@ public:
 
         erebus::AllocateSessionReply reply;
         grpc::ClientContext context;
-        makeClientContext(context);
-
         grpc::Status status = m_stub->AllocateSession(&context, request, &reply);
         throwIfFailed(status, &reply.header());
 
@@ -148,8 +72,6 @@ public:
 
         erebus::GenericReply reply;
         grpc::ClientContext context;
-        makeClientContext(context);
-
         grpc::Status status = m_stub->DeleteSession(&context, request, &reply);
         throwIfFailed(status, &reply);
     }
@@ -170,8 +92,6 @@ public:
 
         erebus::ServiceReply reply;
         grpc::ClientContext context;
-        makeClientContext(context);
-
         grpc::Status status = m_stub->GenericRpc(&context, request, &reply);
         throwIfFailed(status, &reply.header());
 
@@ -203,7 +123,6 @@ public:
         }
 
         grpc::ClientContext context;
-        makeClientContext(context);
         std::shared_ptr<grpc::ClientReader<erebus::ServiceReply>> stream(m_stub->GenericStream(&context, request));
         
         std::vector<Er::PropertyBag> out;
@@ -230,78 +149,6 @@ public:
     }
 
 private:
-    void disconnect()
-    {
-        if (!m_stub)
-            return;
-
-        erebus::Void request;
-
-        erebus::Void reply;
-        grpc::ClientContext context;
-        makeClientContext(context);
-
-        grpc::Status status = m_stub->Disconnect(&context, request, &reply);
-    }
-
-    void checkAuth()
-    {
-        if (!m_params.ssl || m_autorized)
-            return;
-
-        // request salt
-        std::string salt;
-        {
-            erebus::InitialRequest request;
-            request.set_user(m_params.user);
-
-            erebus::InitialReply reply;
-            grpc::ClientContext context;
-
-            grpc::Status status = m_stub->Init(&context, request, &reply);
-            throwIfFailed(status, &reply.header());
-            salt = reply.salt();
-        }
-
-        // request ticket
-        {
-            Er::Util::Sha256 sha;
-            sha.update(salt);
-            sha.update(m_params.password);
-            auto hash = sha.digest();
-            auto hashStr = sha.str(hash);
-
-            erebus::AuthRequest request;
-            request.set_user(m_params.user);
-            request.set_pwd(hashStr);
-
-            erebus::AuthReply reply;
-            grpc::ClientContext context;
-
-            grpc::Status status = m_stub->Authorize(&context, request, &reply);
-            throwIfFailed(status, &reply.header());
-
-            m_ticket = reply.ticket();
-            m_autorized = true;
-        }
-    }
-
-    void makeClientContext(grpc::ClientContext& context)
-    {
-        if (m_autorized)
-        {
-            ErAssert(!m_ticket.empty());
-            auto creds = grpc::MetadataCredentialsFromPlugin(std::unique_ptr<grpc::MetadataCredentialsPlugin>(new MetadataCredentialsPlugin("ticket", m_ticket)));
-            context.set_credentials(creds);
-        }
-    }
-
-    std::string makeSalt()
-    {
-        Er::Util::Random r;
-        return r.generate(kSaltLength, kSaltChars);
-    }
-
     static Result mapGrpcStatus(grpc::StatusCode status) noexcept
     {
         switch (status)

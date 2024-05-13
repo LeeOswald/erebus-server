@@ -8,8 +8,6 @@ add_executable(${EREBUS_SERVER}
     main.cxx
     pluginmgr.cxx
     pluginmgr.hxx
-    users.cxx
-    users.hxx
 )
 
 
