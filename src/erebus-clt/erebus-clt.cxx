@@ -426,18 +426,23 @@ EREBUSCLT_EXPORT void finalize()
 EREBUSCLT_EXPORT std::shared_ptr<IClient> create(const Params& params)
 {
     bool local = params.endpoint.starts_with("unix:");
-    
+
     grpc::ChannelArguments args;
 #if !ER_DEBUG
-    args.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, 20 * 1000);
-    args.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 10 * 1000);
-    args.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
+    if (!local)
+    {
+        args.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, 20 * 1000);
+        args.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 10 * 1000);
+        args.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
+    }
 #endif
 
     if (!local && params.ssl)
     {
         grpc::SslCredentialsOptions opts;
-        opts.pem_root_certs = params.rootCA;
+        opts.pem_root_certs = params.rootCertificate;
+        opts.pem_cert_chain = params.certificate;
+        opts.pem_private_key = params.key;
 
         auto channelCreds = grpc::SslCredentials(opts);
         auto channel = grpc::CreateCustomChannel(params.endpoint, channelCreds, args);

@@ -87,7 +87,7 @@ struct Params
     std::string endpoint;
     Er::Log::ILog* log = nullptr;
     bool ssl = false;
-    std::string rootCA;
+    std::string rootCertificate;
     std::string certificate;
     std::string key;
     IUserDb* userDb = nullptr;
@@ -98,7 +98,7 @@ struct Params
         std::string_view endpoint,
         Er::Log::ILog* log,
         bool ssl,
-        std::string_view rootCA,
+        std::string_view rootCertificate,
         std::string_view certificate,
         std::string_view key,
         IUserDb* userDb
@@ -106,7 +106,7 @@ struct Params
         : endpoint(endpoint)
         , log(log)
         , ssl(ssl)
-        , rootCA(rootCA)
+        , rootCertificate(rootCertificate)
         , certificate(certificate)
         , key(key)
         , userDb(userDb)

@@ -50,8 +50,8 @@ void ServiceBase::start()
     if (!m_local && m_params.ssl)
     {
         grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { m_params.key, m_params.certificate };
-        grpc::SslServerCredentialsOptions sslOps;
-        sslOps.pem_root_certs = m_params.rootCA;
+        grpc::SslServerCredentialsOptions sslOps(GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY);
+        sslOps.pem_root_certs = m_params.rootCertificate;
         sslOps.pem_key_cert_pairs.push_back(keycert);
         auto creds = grpc::SslServerCredentials(sslOps);
         creds->SetAuthMetadataProcessor(m_authProcessor);
@@ -59,7 +59,7 @@ void ServiceBase::start()
     }
     else
     {
-        // listen on the given address without any authentication mechanism
+        // no authentication
         builder.AddListeningPort(m_params.endpoint, grpc::InsecureServerCredentials());
     }
 
@@ -69,11 +69,14 @@ void ServiceBase::start()
     m_queue = builder.AddCompletionQueue();
 
 #if !ER_DEBUG
-    builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 1 * 60 * 1000);
-    builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 20 * 1000);
-    builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
-    builder.AddChannelArgument(GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, 10 * 1000);
-    builder.AddChannelArgument(GRPC_ARG_HTTP2_MAX_PING_STRIKES, 5);
+    if (!m_local)
+    {
+        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 1 * 60 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 20 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
+        builder.AddChannelArgument(GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, 10 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_HTTP2_MAX_PING_STRIKES, 5);
+    }
 #endif
 
     // finally assemble the server

@@ -382,6 +382,8 @@ int main(int argc, char* argv[])
 #endif
 
     std::string rootFile;
+    std::string certFile;
+    std::string keyFile;
     std::string creds;
     int interval = 0;
 
@@ -395,6 +397,8 @@ int main(int argc, char* argv[])
             ("endpoint", po::value<std::string>(), "server endpoint")
             ("ssl", "enable SSL")
             ("root", po::value<std::string>(&rootFile), "root certificate file path")
+            ("cert", po::value<std::string>(&certFile), "client certificate file path")
+            ("key", po::value<std::string>(&keyFile), "client certificate key file path")
             ("user", po::value<std::string>(&creds), "user <name>:<password>")
             ("version", "display server version")
             ("adduser", po::value<std::string>(), "add user <name>:<password>")
@@ -436,9 +440,17 @@ int main(int argc, char* argv[])
                 
         bool ssl = (vm.count("ssl") > 0);
         std::string root;
+        std::string cert;
+        std::string key;
         
         if (!rootFile.empty())
             root = Er::Util::loadTextFile(rootFile);
+
+        if (!certFile.empty())
+            cert = Er::Util::loadTextFile(certFile);
+
+        if (!keyFile.empty())
+            key = Er::Util::loadTextFile(keyFile);
 
         std::string user;
         std::string password;
@@ -456,7 +468,7 @@ int main(int argc, char* argv[])
             password = std::move(parts[1]);
         }
         
-        Er::Client::Params params(&console, ep, ssl, root, user, password);
+        Er::Client::Params params(&console, ep, ssl, root, cert, key, user, password);
         
         if (vm.count("version"))
         {

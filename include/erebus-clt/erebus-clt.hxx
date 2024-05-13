@@ -109,7 +109,9 @@ struct Params
     Log::ILog* log = nullptr;
     std::string endpoint;
     bool ssl;
-    std::string rootCA;
+    std::string rootCertificate;
+    std::string certificate;
+    std::string key;
     std::string user;
     std::string password;
 
@@ -119,14 +121,18 @@ struct Params
         Log::ILog* log,
         std::string_view endpoint,
         bool ssl,
-        std::string_view rootCA,
+        std::string_view rootCertificate,
+        std::string_view certificate,
+        std::string_view key,
         std::string_view user,
         std::string_view password
     )
         : log(log)
         , endpoint(endpoint)
         , ssl(ssl)
-        , rootCA(rootCA)
+        , rootCertificate(rootCertificate)
+        , certificate(certificate)
+        , key(key)
         , user(user)
         , password(password)
     {
