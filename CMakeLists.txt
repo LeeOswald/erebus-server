@@ -92,6 +92,7 @@ set(EREBUS_CLTLIB erebus-clt)
 set(EREBUS_SERVER erebus-server)
 set(EREBUS_CTL erebus-ctl)
 
+
 # components
 add_subdirectory(src/erebus)
 add_subdirectory(protocol)
