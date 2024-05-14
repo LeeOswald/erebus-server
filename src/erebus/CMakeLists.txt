@@ -1,5 +1,5 @@
 if(ER_POSIX)
-    set(PLATFORM_FILES
+    set(PLATFORM_SOURCES
         ../../include/erebus/util/posixerror.hxx
         ../../include/erebus/util/signalhandler.hxx
         system/user_linux.cxx
@@ -7,7 +7,7 @@ if(ER_POSIX)
         util/signalhandler_posix.cxx
     )
 elseif(ER_WINDOWS)
-    set(PLATFORM_FILES
+    set(PLATFORM_SOURCES
         ../../include/erebus/util/utf16.hxx
         ../../include/erebus/util/win32error.hxx
         system/user_win32.cxx
@@ -17,15 +17,12 @@ elseif(ER_WINDOWS)
 endif()
 
 if(ER_LINUX)
-    set(PLATFORM_LIBS
-        pthread
-        dl
-    )
+    set(PLATFORM_LIBS pthread dl)
 elseif(ER_WINDOWS)
     set(PLATFORM_LIBS secur32)
 endif()
 
-add_library(${EREBUS_LIB} SHARED
+add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/assert.hxx
     ../../include/erebus/condition.hxx
     ../../include/erebus/empty.hxx
@@ -79,12 +76,10 @@ add_library(${EREBUS_LIB} SHARED
     util/format.cxx
     util/inifile.cxx
     util/sha256.cxx
-    ${PLATFORM_FILES}
+    ${PLATFORM_SOURCES}
 )
 
 
 add_compile_definitions(EREBUS_EXPORTS=1)
 
-target_compile_features(${EREBUS_LIB} PUBLIC ${ER_CXX_FEATURES})
-
-target_link_libraries(${EREBUS_LIB} PRIVATE ${Boost_LIBRARIES} ${PLATFORM_LIBS})
+target_link_libraries(${EREBUS_RTLLIB} PRIVATE ${Boost_LIBRARIES} ${PLATFORM_LIBS})

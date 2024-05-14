@@ -5,6 +5,7 @@ add_executable(${EREBUS_CTL}
 )
 
 
-target_link_libraries(${EREBUS_CTL} PRIVATE Boost::program_options ${EREBUS_LIB} ${EREBUS_CLTLIB} ${PLATFORM_LIBS})
+target_link_libraries(${EREBUS_CTL} PRIVATE ${Boost_LIBRARIES} ${EREBUS_RTLLIB} ${EREBUS_CLTLIB})
 
-target_compile_features(${EREBUS_CTL} PUBLIC ${ER_CXX_FEATURES})
+# help improve stacktraces
+set_property(TARGET ${EREBUS_CTL} PROPERTY ENABLE_EXPORTS ON)

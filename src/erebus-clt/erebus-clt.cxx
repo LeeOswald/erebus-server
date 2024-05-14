@@ -22,7 +22,6 @@ namespace
 
 class ClientImpl final
     : public Er::Client::IClient
-    , public Er::Client::IServerCtl
     , public Er::NonCopyable
 {
 public:
@@ -34,22 +33,6 @@ public:
         : m_stub(erebus::Erebus::NewStub(channel))
         , m_params(params)
     {
-    }
-
-    ServerInfo serverInfo() override
-    {
-        Er::PropertyBag req;
-        auto reply = request(Er::Protocol::GenericRequests::GetVersion, req, std::nullopt);
-        
-        auto systemName = Er::getPropertyOr<Er::Protocol::Props::RemoteSystemDesc>(reply, std::string());
-        auto serverVer = Er::getPropertyOr<Er::Protocol::Props::ServerVersionString>(reply, std::string());
-
-        return ServerInfo(std::move(serverVer), std::move(systemName));
-    }
-
-    IServerCtl* getCtl() override
-    {
-        return this;
     }
 
     SessionId beginSession(std::string_view req) override

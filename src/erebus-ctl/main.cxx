@@ -47,11 +47,14 @@ void version(Er::Client::IClient* client, Er::Log::ILog* log)
         log,
         [client, log]()
         {
-            auto ctl = client->getCtl();
-            auto info = ctl->serverInfo();
+            Er::PropertyBag req;
+            auto reply = client->request(Er::Protocol::GenericRequests::GetVersion, req, std::nullopt);
 
-            log->write(Er::Log::Level::Info, ErLogNowhere(), "Remote system: %s", info.platform.c_str());
-            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server version: %s", info.version.c_str());
+            auto systemName = Er::getPropertyOr<Er::Protocol::Props::RemoteSystemDesc>(reply, std::string());
+            auto serverVer = Er::getPropertyOr<Er::Protocol::Props::ServerVersionString>(reply, std::string());
+
+            log->write(Er::Log::Level::Info, ErLogNowhere(), "Remote system: %s", systemName.c_str());
+            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server version: %s", serverVer.c_str());
         }
     );
 }

@@ -11,6 +11,7 @@ add_executable(${EREBUS_SERVER}
 )
 
 
-target_link_libraries(${EREBUS_SERVER} PRIVATE ${PLATFORM_LIBRARIES} ${Boost_LIBRARIES} ${EREBUS_LIB} ${EREBUS_SRVLIB} ${PLATFORM_LIBS})
+target_link_libraries(${EREBUS_SERVER} PRIVATE ${Boost_LIBRARIES} ${EREBUS_RTLLIB} ${EREBUS_SRVLIB})
 
-target_compile_features(${EREBUS_SERVER} PUBLIC ${ER_CXX_FEATURES})
+# help improve stacktraces
+set_property(TARGET ${EREBUS_SERVER} PROPERTY ENABLE_EXPORTS ON)

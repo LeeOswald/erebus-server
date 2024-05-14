@@ -12,6 +12,4 @@ add_library(${EREBUS_SRVLIB} SHARED
 
 add_compile_definitions(EREBUSSRV_EXPORTS=1)
 
-target_compile_features(${EREBUS_SRVLIB} PUBLIC ${ER_CXX_FEATURES})
-
-target_link_libraries(${EREBUS_SRVLIB} PRIVATE ${EREBUS_LIB} ${GRPC_LIBS} ${EREBUS_PROTOLIB} ${PLATFORM_LIBS})
+target_link_libraries(${EREBUS_SRVLIB} PRIVATE ${EREBUS_RTLLIB} ${GRPC_LIBS} ${EREBUS_PROTOLIB})
