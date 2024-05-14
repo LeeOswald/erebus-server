@@ -1,5 +1,4 @@
 - make use of Er::ResultCode where possible
-- implement JSON to C++ objects mapping
 - use {fmt} lib
 - format log messages in background?
 - prlimit() to read processes' rlimits

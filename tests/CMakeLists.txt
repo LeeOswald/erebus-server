@@ -32,8 +32,6 @@ add_executable(
     ${PLATFORM_SOURCES}
 )
 
-target_link_libraries(${ER_TESTS} gtest_main ${EREBUS_LIB})
-
-target_compile_features(${ER_TESTS} PUBLIC ${ER_CXX_FEATURES})
+target_link_libraries(${ER_TESTS} gtest_main ${EREBUS_RTLLIB})
 
 gtest_discover_tests(${ER_TESTS})

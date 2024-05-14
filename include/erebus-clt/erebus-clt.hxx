@@ -23,49 +23,17 @@ namespace Er
 namespace Client
 {
 
-struct ServerInfo
-{
-    std::string version;
-    std::string platform;
-
-    ServerInfo() noexcept = default;
-    
-    explicit ServerInfo(std::string_view version, std::string_view platform)
-        : version(version)
-        , platform(platform)
-    {}
-};
-
-
-struct UserInfo
-{
-    std::string name;
-
-    UserInfo() noexcept = default;
-    
-    explicit UserInfo(std::string_view name)
-        : name(name)
-    {}
-};
-
-struct IServerCtl;
 
 struct IClient
 {
     using SessionId = uint32_t;
 
-    virtual IServerCtl* getCtl() = 0;
     virtual SessionId beginSession(std::string_view request) = 0;
     virtual void endSession(std::string_view request, SessionId id) = 0;
     virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId = std::nullopt) = 0;
     virtual std::vector<Er::PropertyBag> requestStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId = std::nullopt) = 0;
 
     virtual ~IClient() {}
-};
-
-struct IServerCtl
-{
-    virtual ServerInfo serverInfo() = 0;
 };
 
 struct LibParams
