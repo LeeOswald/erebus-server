@@ -12,9 +12,9 @@ FetchContent_GetProperties(gRPC)
 
 if(NOT grpc_POPULATED)
     FetchContent_Populate(gRPC)
-    add_subdirectory(${grpc_SOURCE_DIR} ${grpc_BINARY_DIR})
+    add_subdirectory("${grpc_SOURCE_DIR}" "${grpc_BINARY_DIR}")
     
-    include_directories(${absl_SOURCE_DIR} ${grpc_SOURCE_DIR}/include ${protobuf_SOURCE_DIR}/src)
+    include_directories("${absl_SOURCE_DIR}" "${grpc_SOURCE_DIR}/include" "${protobuf_SOURCE_DIR}/src")
 endif()
 
 
