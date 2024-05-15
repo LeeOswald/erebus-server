@@ -151,9 +151,11 @@ private:
     size_t m_maxQueue;
     std::mutex m_delegatesMutex;
     std::vector<DelegateInfo> m_delegates;
-    std::mutex m_queueMutex;
-    std::queue<std::shared_ptr<Record>> m_queue;
+    std::mutex m_wQueueMutex;
+    std::queue<std::shared_ptr<Record>> m_wQueue;
     std::condition_variable_any m_event;
+    std::mutex m_rQueueMutex;
+    std::queue<std::shared_ptr<Record>> m_rQueue;
     std::jthread m_worker;
     bool m_mute = true;
 };

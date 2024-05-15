@@ -66,11 +66,25 @@ void LogBase::run(std::stop_token stop) noexcept
         
         while (!stop.stop_requested())
         {
-            std::unique_lock l(m_queueMutex);
+            // wait on write queue
+            {
+                std::unique_lock lw(m_wQueueMutex);
 
-            m_event.wait(l, stop, [this]() { return !m_queue.empty(); });
+                m_event.wait(lw, stop, [this]() { return !m_wQueue.empty(); });
 
-            _flush();
+                // swap read and write queues
+                {
+                    std::unique_lock lr(m_rQueueMutex);
+                    m_rQueue.swap(m_wQueue);
+                }
+            }
+
+            // write queue is now unlocked
+            // drain the read queue
+            {
+                std::unique_lock lr(m_rQueueMutex);
+                _flush();
+            }
         }
     }
     catch (...)
@@ -85,11 +99,11 @@ void LogBase::_flush() noexcept
 
     std::lock_guard l(m_delegatesMutex);
 
-    while (!m_queue.empty())
+    while (!m_rQueue.empty())
     {
         for (auto it = m_delegates.begin(); it != m_delegates.end(); ++it)
         {
-            auto record = m_queue.front();
+            auto record = m_rQueue.front();
 
             try
             {
@@ -100,7 +114,7 @@ void LogBase::_flush() noexcept
             }
         }
 
-        m_queue.pop();
+        m_rQueue.pop();
     }
 }
 
@@ -116,9 +130,30 @@ void LogBase::unmute() noexcept
 
 void LogBase::flush() noexcept
 {
-    std::unique_lock l(m_queueMutex);
+    // drain the read queue
+    {
+        std::unique_lock l(m_rQueueMutex);
 
-    _flush();
+        _flush();
+    }
+
+    {
+        std::unique_lock lw(m_wQueueMutex);
+
+        // swap read and write queues
+        {
+            std::unique_lock lr(m_rQueueMutex);
+            m_rQueue.swap(m_wQueue);
+        }
+    }
+
+    // flush everything that was in the former write queue
+    {
+        std::unique_lock l(m_rQueueMutex);
+
+        _flush();
+    }
+
 }
 
 Level LogBase::level() const noexcept
@@ -151,11 +186,11 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
     }
     else
     {
-        std::unique_lock l(m_queueMutex);
+        std::unique_lock l(m_wQueueMutex);
 
         try
         {
-            m_queue.push(r);
+            m_wQueue.push(r);
         }
         catch (...)
         {
@@ -163,8 +198,8 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
         }
 
         // drop the older events to avoid the queue overflow
-        while (m_queue.size() > m_maxQueue)
-            m_queue.pop();
+        while (m_wQueue.size() > m_maxQueue)
+            m_wQueue.pop();
 
     }
 
