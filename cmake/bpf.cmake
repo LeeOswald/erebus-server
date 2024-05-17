@@ -6,8 +6,8 @@ ExternalProject_Add(libbpf
     SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libbpf_src/src"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND cd ./src && make
-        OBJDIR="${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf"
-        DESTDIR="${CMAKE_CURRENT_BINARY_DIR}/libbpf"
+        OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
+        DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
         INCLUDEDIR=
         LIBDIR=
         UAPIDIR=
@@ -26,7 +26,7 @@ ExternalProject_Add(bpftool
     SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/bpftool_src/src"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND cd ./src && make bootstrap
-        OUTPUT="${CMAKE_CURRENT_BINARY_DIR}/bpftool/"
+        OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/bpftool/
     BUILD_IN_SOURCE TRUE
     INSTALL_COMMAND ""
     STEP_TARGETS build
