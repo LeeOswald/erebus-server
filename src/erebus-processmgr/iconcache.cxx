@@ -197,7 +197,9 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
         [this, size, stop, sourceFile, iconNames]()
         {
             std::ostringstream cmd;
-            cmd << m_iconCacheAgent << " --cache " << m_iconCacheDir << " --size " << size << " --theme " << m_iconTheme;
+            cmd << m_iconCacheAgent << " --cache " << m_iconCacheDir << " --size " << size;
+            if (!m_iconTheme.empty()) 
+                cmd << " --theme " << m_iconTheme;
             
             if (sourceFile)
             {
@@ -218,13 +220,9 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
                 }
             }
 
-            // icon cache agent relies on XCB and needs a valid $DISPLAY
-            auto env = boost::this_process::environment();
-            env["DISPLAY"] = ":0.0";
-
             boost::process::ipstream outPipe;
             boost::process::ipstream errPipe;
-            boost::process::child agent(cmd.str(), env, boost::process::std_out > outPipe, boost::process::std_err > errPipe);
+            boost::process::child agent(cmd.str(), boost::process::std_out > outPipe, boost::process::std_err > errPipe);
             
             std::string line;
             while (agent.running()) 
