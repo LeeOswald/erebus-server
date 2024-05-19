@@ -77,12 +77,6 @@ EREBUS_EXPORT void daemonize() noexcept
     ::dup2(null, STDERR_FILENO);
     ::close(null);
 
-    // A process inherits its working directory from its parent. This could be
-    // on a mounted filesystem, which means that the running daemon would
-    // prevent this filesystem from being unmounted. Changing to the root
-    // directory avoids this problem.
-    ::chdir("/");
-
     ::signal(SIGCHLD, SIG_IGN);
     ::signal(SIGHUP, SIG_IGN);
 
@@ -94,11 +88,6 @@ EREBUS_EXPORT void daemonize() noexcept
 
     if (pid > 0)
         ::exit(EXIT_SUCCESS);
-
-    // The file mode creation mask is also inherited from the parent process.
-    // We don't want to restrict the permissions on files created by the
-    // daemon, so the mask is cleared.
-    ::umask(0);
 }
 #endif
 

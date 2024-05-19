@@ -3,6 +3,8 @@
 
 #include "process_spy.hxx"
 
+#include "erebus-version.h"
+
 #include <atomic>
 
 namespace Er
@@ -24,6 +26,15 @@ public:
         g_instances--;
         ::libbpf_set_print(nullptr);
         g_log = nullptr;
+    }
+
+    Er::Server::IPlugin::Info info() const override
+    {
+        return Er::Server::IPlugin::Info(
+            "Process Monitor",
+            "Process & thread events",
+            Er::Server::IPlugin::Info::Version(ER_VERSION_MAJOR, ER_VERSION_MINOR, ER_VERSION_PATCH)
+        );
     }
 
     explicit ProcMonPlugin(const Er::Server::PluginParams& params)
@@ -81,16 +92,6 @@ extern "C"
 ER_PROCMON_EXPORT Er::Server::IPlugin* createPlugin(const Er::Server::PluginParams& params)
 {
     return new Er::ProcMonPlugin(params);
-}
-
-ER_PROCMON_EXPORT void disposePlugin(Er::Server::IPlugin* plugin)
-{
-    if (!plugin)
-        return;
-
-    auto realPlugin = dynamic_cast<Er::ProcMonPlugin*>(plugin);
-    ErAssert(realPlugin);
-    delete realPlugin;
 }
 
 } // extern "C" {}

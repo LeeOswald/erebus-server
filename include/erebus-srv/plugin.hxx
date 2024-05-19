@@ -37,14 +37,38 @@ struct PluginParams
 
 struct IPlugin
 {
-protected:
+    struct Info
+    {
+        struct Version
+        {
+            unsigned major;
+            unsigned minor;
+            unsigned patch;
+
+            Version(unsigned major, unsigned minor, unsigned patch)
+                : major(major)
+                , minor(minor)
+                , patch(patch)
+            {}
+        };
+
+        std::string name;
+        std::string description;
+        Version version;
+
+        Info(std::string_view name, std::string_view description, const Version& version)
+            : name(name)
+            , description(description)
+            , version(version)
+        {}
+    };
+
     virtual ~IPlugin() {}
+    virtual Info info() const = 0;
 };
 
 
-// the only symbols any plugin must export
 typedef IPlugin* (createPlugin)(const PluginParams&);
-typedef void (disposePlugin)(IPlugin*);
 
 
 

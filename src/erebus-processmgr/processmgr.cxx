@@ -8,6 +8,8 @@
 #include "processdetails.hxx"
 #include "processlist.hxx"
 
+#include "erebus-version.h"
+
 #include <atomic>
 
 namespace Er
@@ -40,6 +42,15 @@ public:
         Er::ProcessesGlobal::Private::unregisterAll(m_params.log);
 
         g_instances--;
+    }
+
+    Er::Server::IPlugin::Info info() const override
+    {
+        return Er::Server::IPlugin::Info(
+            "Process Tree",
+            "Process tree and properties",
+            Er::Server::IPlugin::Info::Version(ER_VERSION_MAJOR, ER_VERSION_MINOR, ER_VERSION_PATCH)
+        );
     }
 
     explicit ProcessMgrPlugin(const Er::Server::PluginParams& params)
@@ -140,16 +151,6 @@ extern "C"
 ER_PROCESSMGR_EXPORT Er::Server::IPlugin* createPlugin(const Er::Server::PluginParams& params)
 {
     return new Er::ProcessMgrPlugin(params);
-}
-
-ER_PROCESSMGR_EXPORT void disposePlugin(Er::Server::IPlugin* plugin)
-{
-    if (!plugin)
-        return;
-
-    auto realPlugin = dynamic_cast<Er::ProcessMgrPlugin*>(plugin);
-    ErAssert(realPlugin);
-    delete realPlugin;
 }
 
 } // extern "C" {}

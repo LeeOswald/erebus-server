@@ -32,14 +32,10 @@ private:
         std::string path;
         Er::Log::ILog* log = nullptr;
         boost::dll::shared_library dll;
-        Er::Server::IPlugin* ref = nullptr;
-        Er::Server::disposePlugin* disposeFn = nullptr;
-        
+        std::unique_ptr<Er::Server::IPlugin> ref;
+       
         ~PluginInfo()
         {
-            if (disposeFn)
-                disposeFn(ref);
-                
             if (dll.is_loaded())
                 log->write(Er::Log::Level::Info, ErLogNowhere(), "Unloading plugin [%s]", path.c_str());
         }

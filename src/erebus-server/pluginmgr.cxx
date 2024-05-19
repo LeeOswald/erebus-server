@@ -43,19 +43,10 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<
         throw Er::Exception(ER_HERE(), Er::Util::format("No createPlugin symbol found in [%s]", params.binary.c_str()));
     }
 
-    if (!info->dll.has("disposePlugin"))
-    {
-        throw Er::Exception(ER_HERE(), Er::Util::format("No disposePlugin symbol found in [%s]", params.binary.c_str()));
-    }
-
-    info->disposeFn = info->dll.get<Er::Server::disposePlugin>("disposePlugin");
-    ErAssert(info->disposeFn);
-
     auto entry = info->dll.get<Er::Server::createPlugin>("createPlugin");
     ErAssert(entry);
 
-
-    info->ref = entry(params);
+    info->ref.reset(entry(params));
     if (!info->ref)
     {
         throw Er::Exception(ER_HERE(), Er::Util::format("createPlugin of [%s] returned NULL", params.binary.c_str()));
@@ -66,9 +57,21 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<
         m_plugins.push_back(info);
     }
 
-    m_params.log->write(Er::Log::Level::Info, ErLogNowhere(), "Loaded plugin [%s]", params.binary.c_str());
+    auto pi = info->ref->info();
 
-    return info->ref;
+    m_params.log->write(
+        Er::Log::Level::Info, 
+        ErLogNowhere(), 
+        "Loaded plugin %s ver %u.%u.%u [%s] from [%s]", 
+        pi.name.c_str(), 
+        pi.version.major,
+        pi.version.minor,
+        pi.version.patch,
+        pi.description.c_str(), 
+        params.binary.c_str()
+    );
+
+    return info->ref.get();
 }
 
 void PluginMgr::unloadAll()

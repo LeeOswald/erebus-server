@@ -66,14 +66,6 @@ int main(int argc, char* argv[], char* env[])
     ::SetConsoleOutputCP(CP_UTF8);
 #endif
 
-#if ER_POSIX
-    if (::geteuid() != 0)
-    {
-        std::cerr << "Root privileges required\n";
-        return EXIT_FAILURE;
-    }
-#endif
-
     // set current dir the same as exe dir
     {
         std::filesystem::path exe(Er::System::CurrentProcess::exe());
@@ -96,6 +88,7 @@ int main(int argc, char* argv[], char* env[])
             ("config", po::value<std::string>(&cfgFile)->default_value("erebus-server.cfg"), "configuration file path")
 #if ER_POSIX
             ("daemon,d", "run as a daemon")
+            ("noroot", "don't require root privileges")
 #endif
             ;
 
@@ -103,11 +96,20 @@ int main(int argc, char* argv[], char* env[])
         po::store(po::parse_command_line(argc, argv, cmdOpts), vm);
         po::notify(vm);
 
-        if (vm.count("help"))
+        if (vm.contains("help"))
         {
             std::cout << cmdOpts << "\n";
             return EXIT_SUCCESS;
         }
+
+#if ER_POSIX
+        if (!vm.contains("noroot") && (::geteuid() != 0))
+        {
+            std::cerr << "Root privileges required\n";
+            return EXIT_FAILURE;
+        }
+#endif
+        
     }
     catch (std::exception& e)
     {
