@@ -1,4 +1,4 @@
-if(CMAKE_CROSSCOMPILING)
+if(ER_USE_SYSTEM_GRPC)
     find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
     find_program(PROTOC protoc)
 else()

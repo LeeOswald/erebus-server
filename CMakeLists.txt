@@ -16,6 +16,7 @@ message(STATUS "Determined Erebus server version ${ER_VERSION}")
 
 project(erebus-server VERSION ${ER_VERSION})
 
+option(ER_USE_SYSTEM_GRPC "Use system-provided gRPC" OFF)
 
 include(ExternalProject)
 include(FetchContent)
@@ -44,7 +45,6 @@ if(ER_LINUX AND NOT ER_BUILD_CLIENT_LIBS_ONLY)
 endif()
 
 include(FetchGRPC)
-
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/erebus-version.h.in" erebus-version.h)
 
