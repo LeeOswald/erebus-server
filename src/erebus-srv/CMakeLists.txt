@@ -12,4 +12,6 @@ add_library(${EREBUS_SRVLIB} SHARED
 
 add_compile_definitions(EREBUSSRV_EXPORTS=1)
 
+set_property(TARGET ${EREBUS_SRVLIB} PROPERTY PREFIX "")
+
 target_link_libraries(${EREBUS_SRVLIB} PRIVATE ${EREBUS_RTLLIB} ${GRPC_LIBS} ${EREBUS_PROTOLIB})

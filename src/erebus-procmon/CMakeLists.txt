@@ -13,6 +13,8 @@ add_library(${EREBUS_PROCMON} SHARED
 
 add_compile_definitions(ER_PROCMON_EXPORTS=1)
 
+set_property(TARGET ${EREBUS_PROCMON} PROPERTY PREFIX "")
+
 target_link_libraries(${EREBUS_PROCMON} PRIVATE process_skel ${EREBUS_RTLLIB}) 
 
 add_subdirectory(tests)

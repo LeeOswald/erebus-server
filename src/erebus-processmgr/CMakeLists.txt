@@ -22,4 +22,6 @@ add_library(${EREBUS_PROCESSMGR} SHARED
 
 add_compile_definitions(ER_PROCESSMGR_EXPORTS=1)
 
+set_property(TARGET ${EREBUS_PROCESSMGR} PROPERTY PREFIX "")
+
 target_link_libraries(${EREBUS_PROCESSMGR} PRIVATE ${EREBUS_RTLLIB}) 
