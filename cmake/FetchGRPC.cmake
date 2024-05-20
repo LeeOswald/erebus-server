@@ -1,12 +1,13 @@
 if(ER_USE_SYSTEM_GRPC)
 
-    if(NOT MSVC)
+    if(NOT ER_WINDOWS)
         find_package(utf8_range REQUIRED)
     endif()
+    
     find_package(Protobuf REQUIRED)
     find_package(gRPC CONFIG REQUIRED)
 
-    include_directories("${gRPC_DIR}/../../../include") 
+    include_directories("${gRPC_DIR}/../../../include" "${Protobuf_INCLUDE_DIR}") 
 
     set(GRPC_LIBS
         gRPC::grpc++ 
@@ -18,8 +19,11 @@ if(ER_USE_SYSTEM_GRPC)
         absl::flags 
         absl::flags_parse 
         absl::log absl::log_internal_check_op 
-        utf8_range::utf8_validity    
     )
+    
+    if(NOT ER_WINDOWS)
+        list(APPEND GRPC_LIBS utf8_range::utf8_validity)
+    endif()
 
 else()
     set(protobuf_INSTALL OFF)

@@ -96,7 +96,7 @@ int main(int argc, char* argv[], char* env[])
         po::store(po::parse_command_line(argc, argv, cmdOpts), vm);
         po::notify(vm);
 
-        if (vm.contains("help"))
+        if (vm.count("help"))
         {
             std::cout << cmdOpts << "\n";
             return EXIT_SUCCESS;
