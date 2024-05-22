@@ -13,7 +13,11 @@ PathResolver::PathResolver(const char* paths)
 {
     std::string src = paths ? paths : std::getenv("PATH");
     ErAssert(!src.empty());
-    m_paths = Er::Util::split(src, std::string_view(":;"), Er::Util::SplitSkipEmptyParts);
+#if ER_WINDOWS
+    m_paths = Er::Util::split(src, std::string_view(";"), Er::Util::SplitSkipEmptyParts);
+#else
+    m_paths = Er::Util::split(src, std::string_view(":"), Er::Util::SplitSkipEmptyParts);
+#endif
 }
 
 std::optional<std::string> PathResolver::resolve(std::string_view name) const
