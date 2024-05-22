@@ -1,9 +1,9 @@
 #pragma once
 
 #include <erebus/log.hxx>
-#include <erebus-processmgr/processmgr.hxx>
+#include <erebus/system/pathresolver.hxx>
 
-#include "pathresolver.hxx"
+#include <erebus-processmgr/processmgr.hxx>
 
 #include <shared_mutex>
 #include <unordered_map>
@@ -41,7 +41,7 @@ private:
     std::optional<std::string> resolveExePath(std::string_view exe) const;
 
     Er::Log::ILog* const m_log;
-    PathResolver m_pathResolver;
+    Er::System::PathResolver m_pathResolver;
     mutable std::shared_mutex m_dirsLock;
     std::vector<std::string> m_dirs;
     mutable std::shared_mutex m_entriesLock;

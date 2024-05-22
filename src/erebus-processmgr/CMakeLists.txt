@@ -8,8 +8,6 @@ add_library(${EREBUS_PROCESSMGR} SHARED
     iconcache.cxx
     iconmanager.hxx
     iconmanager.cxx
-    pathresolver.hxx
-    pathresolver.cxx
     processdetails.cxx
     processdetails.hxx
     processlist.cxx

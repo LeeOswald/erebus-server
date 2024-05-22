@@ -1,19 +1,19 @@
+#include <erebus/system/pathresolver.hxx>
 #include <erebus/util/stringutil.hxx>
-#include "pathresolver.hxx"
 
 #include <filesystem>
 
 namespace Er
 {
     
-namespace Private
+namespace System
 {
 
 PathResolver::PathResolver(const char* paths)
 {
     std::string src = paths ? paths : std::getenv("PATH");
     ErAssert(!src.empty());
-    m_paths = Er::Util::split(src, std::string_view(":"), Er::Util::SplitSkipEmptyParts);
+    m_paths = Er::Util::split(src, std::string_view(":;"), Er::Util::SplitSkipEmptyParts);
 }
 
 std::optional<std::string> PathResolver::resolve(std::string_view name) const
@@ -57,6 +57,6 @@ std::optional<std::string> PathResolver::resolve(std::string_view name) const
 }
 
 
-} // namespace Private {}
+} // namespace System {}
 
 } // namespace Er {}

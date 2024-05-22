@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus-processmgr/processmgr.hxx>
+#include <erebus/erebus.hxx>
 
 
 #include <vector>
@@ -8,10 +8,10 @@
 namespace Er
 {
     
-namespace Private
+namespace System
 {
 
-class PathResolver final
+class EREBUS_EXPORT PathResolver final
     : public Er::NonCopyable
 {
 public:
@@ -23,6 +23,6 @@ private:
     std::vector<std::string> m_paths;
 };
 
-} // namespace Private {}
+} // namespace System {}
 
 } // namespace Er {}
