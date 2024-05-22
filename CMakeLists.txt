@@ -87,6 +87,7 @@ endif()
 # component names
 set(EREBUS_PROTOLIB erebus-proto)
 set(EREBUS_RTLLIB erebus-rtl)
+set(EREBUS_DESKTOPLIB erebus-desktop)
 set(EREBUS_PROCESSMGR processmgr)
 set(EREBUS_PROCMON procmon)
 set(EREBUS_SRVLIB erebus-srv)
@@ -97,6 +98,9 @@ set(EREBUS_CTL erebus-ctl)
 
 # components
 add_subdirectory(src/erebus)
+if(ER_LINUX)
+    add_subdirectory(src/erebus-desktop)
+endif()
 add_subdirectory(protocol)
 add_subdirectory(src/erebus-srv)
 add_subdirectory(src/erebus-clt)

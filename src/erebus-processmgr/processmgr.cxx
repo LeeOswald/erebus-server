@@ -1,8 +1,8 @@
 #include <erebus/exception.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 #include <erebus-processmgr/processprops.hxx>
+#include <erebus-desktop/desktopentries.hxx>
 
-#include "desktopentries.hxx"
 #include "iconcache.hxx"
 #include "iconmanager.hxx"
 #include "processdetails.hxx"
@@ -68,7 +68,7 @@ public:
         else
             params.log->write(Er::Log::Level::Warning, ErLogComponent("ProcessMgrPlugin"), "Starting without icon cache");
 
-        m_desktopEntries.reset(new Er::Private::DesktopEntries(params.log));
+        m_desktopEntries.reset(new Er::Desktop::DesktopEntries(params.log));
 
         if (m_iconCache)
         {
@@ -131,7 +131,7 @@ private:
 
     Er::Server::PluginParams m_params;
     std::unique_ptr<Er::Private::IconCache> m_iconCache;
-    std::unique_ptr<Er::Private::DesktopEntries> m_desktopEntries;
+    std::unique_ptr<Er::Desktop::DesktopEntries> m_desktopEntries;
     std::unique_ptr<Er::Private::IconManager> m_iconManager;
     std::unique_ptr<Er::Private::ProcessList> m_processList;
     std::unique_ptr<Er::Private::ProcessDetails> m_processDetails;

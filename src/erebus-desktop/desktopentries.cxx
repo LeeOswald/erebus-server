@@ -4,7 +4,7 @@
 #include <erebus/util/inifile.hxx>
 #include <erebus/util/stringutil.hxx>
 
-#include "desktopentries.hxx"
+#include <erebus-desktop/desktopentries.hxx>
 
 #include <filesystem>
 #include <regex>
@@ -13,7 +13,7 @@
 namespace Er
 {
 
-namespace Private
+namespace Desktop
 {
 
 namespace
@@ -245,6 +245,6 @@ std::optional<std::string> DesktopEntries::resolveExePath(std::string_view exe) 
     return m_pathResolver.resolve(exe);
 }
 
-} // Private {}
+} // namespace Desktop {}
 
 } // namespace Er {}

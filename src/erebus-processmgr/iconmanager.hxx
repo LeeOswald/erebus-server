@@ -9,11 +9,17 @@
 namespace Er
 {
 
+namespace Desktop
+{
+
+class DesktopEntries;
+
+} // namespace Desktop {}
+
 namespace Private
 {
 
 class IconCache;
-class DesktopEntries;
 
 enum class IconSize : unsigned
 {
@@ -42,7 +48,7 @@ public:
         {}
     };
 
-    explicit IconManager(Er::Log::ILog* log, IconCache* iconCache, DesktopEntries* desktopEntries, size_t cacheSize);
+    explicit IconManager(Er::Log::ILog* log, IconCache* iconCache, Er::Desktop::DesktopEntries* desktopEntries, size_t cacheSize);
 
     void prefetch(IconSize size);
     std::shared_ptr<IconData> lookup(const std::string& comm, const std::string& exe, IconSize size) const noexcept;
@@ -51,7 +57,7 @@ public:
 private:
     Er::Log::ILog* const m_log;
     IconCache* m_iconCache;
-    DesktopEntries* m_desktopEntries;
+    Er::Desktop::DesktopEntries* m_desktopEntries;
     std::string const DefaultExeIcon;
     mutable std::shared_mutex m_mutex;
     mutable Er::LruCache<std::string, std::shared_ptr<IconData>> m_cache16; // exec -> icon

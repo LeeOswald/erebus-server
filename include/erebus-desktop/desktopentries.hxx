@@ -1,9 +1,8 @@
 #pragma once
 
+#include <erebus-desktop/erebus-desktop.hxx>
 #include <erebus/log.hxx>
 #include <erebus/system/pathresolver.hxx>
-
-#include <erebus-processmgr/processmgr.hxx>
 
 #include <shared_mutex>
 #include <unordered_map>
@@ -13,11 +12,11 @@
 namespace Er
 {
 
-namespace Private
+namespace Desktop
 {
 
 
-class DesktopEntries final
+class EREBUSDESKTOP_EXPORT DesktopEntries final
     : public Er::NonCopyable
 {
 public:
@@ -49,6 +48,6 @@ private:
 };
 
 
-} // Private {}
+} // namespace Desktop {}
 
 } // namespace Er {}

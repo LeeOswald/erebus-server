@@ -1,7 +1,7 @@
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
+#include <erebus-desktop/desktopentries.hxx>
 
-#include "desktopentries.hxx"
 #include "iconcache.hxx"
 #include "iconmanager.hxx"
 
@@ -41,7 +41,7 @@ std::optional<std::string> findKnownAppIcon(const std::string& app)
 
 }
 
-IconManager::IconManager(Er::Log::ILog* log, IconCache* iconCache, DesktopEntries* desktopEntries, size_t cacheSize)
+IconManager::IconManager(Er::Log::ILog* log, IconCache* iconCache, Er::Desktop::DesktopEntries* desktopEntries, size_t cacheSize)
     : m_log(log)
     , m_iconCache(iconCache)
     , m_desktopEntries(desktopEntries)

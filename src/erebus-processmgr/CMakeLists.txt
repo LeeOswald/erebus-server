@@ -2,8 +2,6 @@ add_library(${EREBUS_PROCESSMGR} SHARED
     ../../include/erebus-processmgr/processmgr.hxx
     ../../include/erebus-processmgr/processprops.hxx
     ../../include/erebus-processmgr/procfs.hxx
-    desktopentries.hxx
-    desktopentries.cxx
     iconcache.hxx
     iconcache.cxx
     iconmanager.hxx
@@ -22,4 +20,4 @@ add_compile_definitions(ER_PROCESSMGR_EXPORTS=1)
 
 set_property(TARGET ${EREBUS_PROCESSMGR} PROPERTY PREFIX "")
 
-target_link_libraries(${EREBUS_PROCESSMGR} PRIVATE ${EREBUS_RTLLIB}) 
+target_link_libraries(${EREBUS_PROCESSMGR} PRIVATE ${EREBUS_RTLLIB} ${EREBUS_DESKTOPLIB}) 
