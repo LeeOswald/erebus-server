@@ -1,7 +1,6 @@
 add_library(${EREBUS_DESKTOPLIB} SHARED
     ../../include/erebus-desktop/erebus-desktop.hxx
-    ../../include/erebus-desktop/desktopentries.hxx
-    desktopentries.cxx
+    appentrymonitor.cxx
 )
 
 

@@ -1,3 +1,4 @@
+#include <erebus/system/thread.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/generichandle.hxx>
 #include <erebus/util/sha256.hxx>
@@ -41,23 +42,23 @@ IconCache::IconCache(Er::Log::ILog* log, const std::string& iconTheme, const std
 {
 }
 
-std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector<std::string>& iconNames, unsigned size) const
+std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector<std::shared_ptr<Er::Desktop::AppEntry>>& icons, unsigned size) const
 {
     std::unordered_map<std::string, std::string> cachedPaths;
 
     std::vector<std::string> iconsToRequest;
-    iconsToRequest.reserve(iconNames.size());
+    iconsToRequest.reserve(icons.size());
 
     // maybe it's already in cache
-    for (auto& name: iconNames)
+    for (auto& icon: icons)
     {
-        auto iconPath = makeCachePath(name, size);
+        auto iconPath = makeCachePath(icon->icon, size);
         
         std::filesystem::path path(iconPath);
         if (std::filesystem::exists(path))
-            cachedPaths.insert({ name, std::move(iconPath) });
+            cachedPaths.insert({ icon->icon, std::move(iconPath) });
         else
-            iconsToRequest.push_back(std::move(name));
+            iconsToRequest.push_back(icon->icon);
     }
 
     // cache what's missing
@@ -66,13 +67,13 @@ std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector
         auto ret = callCacheAgent(nullptr, &iconsToRequest, size, nullptr);
 
         // check if icons have been cached successfully
-        for (auto& name: iconsToRequest)
+        for (auto& icon: iconsToRequest)
         {
-            auto iconPath = makeCachePath(name, size);
+            auto iconPath = makeCachePath(icon, size);
             
             std::filesystem::path path(iconPath);
             if (std::filesystem::exists(path))
-                cachedPaths.insert({ name, std::move(iconPath) });
+                cachedPaths.insert({ icon, std::move(iconPath) });
             
         }
     }
@@ -96,7 +97,7 @@ std::optional<std::string> IconCache::lookup(const std::string& iconName, unsign
     return std::nullopt;
 }
 
-void IconCache::prefetch(const std::vector<std::string>& iconNames, unsigned size)
+void IconCache::prefetch(const std::vector<std::shared_ptr<Er::Desktop::AppEntry>>& icons, unsigned size)
 {
     std::lock_guard l(m_mutex);
 
@@ -116,15 +117,15 @@ void IconCache::prefetch(const std::vector<std::string>& iconNames, unsigned siz
     }
 
     std::vector<std::string> iconsToRequest;
-    iconsToRequest.reserve(iconNames.size());
+    iconsToRequest.reserve(icons.size());
 
-    for (auto& name: iconNames)
+    for (auto& icon: icons)
     {
-        auto iconPath = makeCachePath(name, size);
+        auto iconPath = makeCachePath(icon->icon, size);
         // maybe it's already in cache
         std::filesystem::path path(iconPath);
         if (!std::filesystem::exists(path))
-            iconsToRequest.push_back(std::move(name));
+            iconsToRequest.push_back(std::move(icon->icon));
     }
 
     if (!iconsToRequest.empty())
@@ -133,9 +134,9 @@ void IconCache::prefetch(const std::vector<std::string>& iconNames, unsigned siz
         char tempFileName[PATH_MAX] = "/tmp/erebus_cache_agent_XXXXXX";
         {
             Er::Util::GenericHandle<int, int, -1, FileCloser> tempFile(::mkstemp(tempFileName));
-            for (auto& ico: iconNames)
+            for (auto& icon: icons)
             {
-                ::write(tempFile, ico.data(), ico.size());
+                ::write(tempFile, icon->icon.data(), icon->icon.size());
                 ::write(tempFile, "\n", 1);
             }
         }
@@ -145,6 +146,8 @@ void IconCache::prefetch(const std::vector<std::string>& iconNames, unsigned siz
         m_worker = std::make_unique<std::jthread>(
             [this, tmpName, size](std::stop_token stop)
             {
+                Er::System::CurrentThread::setName("iconcache");
+                
                 callCacheAgent(&tmpName, nullptr, size, &stop);
 
                 m_workerExited.store(1, std::memory_order_release);
@@ -189,12 +192,12 @@ std::string IconCache::makeCachePath(const std::string& name, unsigned size) con
     return path.string();
 }
 
-int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<std::string>* iconNames, unsigned size, std::stop_token* stop) const noexcept
+int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<std::string>* icons, unsigned size, std::stop_token* stop) const noexcept
 {
     return Er::protectedCall<int>(
         m_log,
         ErLogComponent("IconCache"),
-        [this, size, stop, sourceFile, iconNames]()
+        [this, size, stop, sourceFile, icons]()
         {
             std::ostringstream cmd;
             cmd << m_iconCacheAgent << " --cache " << m_iconCacheDir << " --size " << size;
@@ -205,18 +208,18 @@ int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<s
             {
                 cmd << " --source " << *sourceFile;
             }
-            else if (iconNames)
+            else if (icons)
             {
                 cmd << " --icons ";
                 bool first = true;
-                for (auto& name: *iconNames)
+                for (auto& icon: *icons)
                 {
                     if (!first)
                         cmd << ":";
                     else
                         first = false;
 
-                    cmd << name;
+                    cmd << icon;
                 }
             }
 
