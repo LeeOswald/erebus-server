@@ -88,6 +88,7 @@ struct IIconCacheIpc
 
 EREBUSDESKTOP_EXPORT std::shared_ptr<IIconCacheIpc> createIconCacheIpc(const char* queueNameIn, const char* queueNameOut, size_t queueLimit);
 
+EREBUSDESKTOP_EXPORT std::string makeIconCachePath(const std::string& cacheDir, const std::string& name, unsigned size, std::string_view ext);
 
 } // namespace Desktop {}
 

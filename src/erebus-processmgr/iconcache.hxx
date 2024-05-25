@@ -28,7 +28,6 @@ public:
     std::optional<std::string> lookup(const std::string& iconName, unsigned size) const;
 
 private:
-    std::string makeCachePath(const std::string& name, unsigned size) const;
     int callCacheAgent(const std::string* sourceFile, const std::vector<std::string>* icons, unsigned size, std::stop_token* stop) const noexcept;
 
     Er::Log::ILog* const m_log;

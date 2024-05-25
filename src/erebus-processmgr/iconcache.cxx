@@ -1,12 +1,11 @@
+#include <erebus-desktop/erebus-desktop.hxx>
 #include <erebus/system/thread.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/generichandle.hxx>
-#include <erebus/util/sha256.hxx>
 
 #include "iconcache.hxx"
 
 #include <filesystem>
-#include <sstream>
 
 #include <boost/process.hpp>
 
@@ -52,7 +51,7 @@ std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector
     // maybe it's already in cache
     for (auto& icon: icons)
     {
-        auto iconPath = makeCachePath(icon->icon, size);
+        auto iconPath = Er::Desktop::makeIconCachePath(m_iconCacheDir, icon->icon, size, ".png");
         
         std::filesystem::path path(iconPath);
         if (std::filesystem::exists(path))
@@ -69,7 +68,7 @@ std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector
         // check if icons have been cached successfully
         for (auto& icon: iconsToRequest)
         {
-            auto iconPath = makeCachePath(icon, size);
+            auto iconPath = Er::Desktop::makeIconCachePath(m_iconCacheDir, icon, size, ".png");
             
             std::filesystem::path path(iconPath);
             if (std::filesystem::exists(path))
@@ -83,7 +82,7 @@ std::unordered_map<std::string, std::string> IconCache::lookup(const std::vector
 
 std::optional<std::string> IconCache::lookup(const std::string& iconName, unsigned size) const
 {
-    auto iconPath = makeCachePath(iconName, size);
+    auto iconPath = Er::Desktop::makeIconCachePath(m_iconCacheDir, iconName, size, ".png");
         
     std::filesystem::path path(iconPath);
     if (std::filesystem::exists(path))
@@ -121,7 +120,7 @@ void IconCache::prefetch(const std::vector<std::shared_ptr<Er::Desktop::AppEntry
 
     for (auto& icon: icons)
     {
-        auto iconPath = makeCachePath(icon->icon, size);
+        auto iconPath = Er::Desktop::makeIconCachePath(m_iconCacheDir, icon->icon, size, ".png");
         // maybe it's already in cache
         std::filesystem::path path(iconPath);
         if (!std::filesystem::exists(path))
@@ -154,42 +153,6 @@ void IconCache::prefetch(const std::vector<std::shared_ptr<Er::Desktop::AppEntry
             }
         );
     }
-}
-
-std::string IconCache::makeCachePath(const std::string& name, unsigned size) const
-{
-    std::filesystem::path path(m_iconCacheDir);
-    auto sz = std::to_string(size);
-    if (std::filesystem::path(name).is_absolute())
-    {
-        // make path like /tmp/iconcache/39534cecc15cd261e9eb3c8cd3544d4f839db599979a9348bf54afc896a25ce8_32x32.png
-        Er::Util::Sha256 hash;
-        hash.update(name);
-        auto hashStr = hash.str(hash.digest());
-
-        std::string fileName(std::move(hashStr));
-        fileName.append("_");
-        fileName.append(sz);
-        fileName.append("x");
-        fileName.append(sz);
-        fileName.append(".png");
-
-        path.append(fileName);
-
-        return path.string();
-    }
-
-    // make path like /tmp/iconcache/mtapp_32x32.png
-    std::string fileName(name);
-    fileName.append("_");
-    fileName.append(sz);
-    fileName.append("x");
-    fileName.append(sz);
-    fileName.append(".png");
-
-    path.append(fileName);
-
-    return path.string();
 }
 
 int IconCache::callCacheAgent(const std::string* sourceFile, const std::vector<std::string>* icons, unsigned size, std::stop_token* stop) const noexcept
