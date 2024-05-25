@@ -46,12 +46,12 @@ struct IIconCacheIpc
 {
     struct IconRequest
     {
-        std::string name; 
+        std::string name;
+        uint16_t size; 
 
-        IconRequest() noexcept = default;
-        
-        IconRequest(std::string_view name)
+        IconRequest(std::string_view name, uint16_t size)
             : name(name)
+            , size(size)
         {}
     };
 
@@ -63,26 +63,27 @@ struct IIconCacheIpc
             NotFound
         };
 
+        IconRequest request;
         Result result;
-        std::string name; // icon name
         std::string path; // cached icon path
 
-        IconResponse(Result result) noexcept
-            : result(result)
+        IconResponse(std::string_view name, uint16_t size, Result result) noexcept
+            : request(name, size)
+            , result(result)
         {}
 
-        IconResponse(Result result, std::string_view name, std::string_view path)
-            : result(result)
-            , name(name)
+        IconResponse(std::string_view name, uint16_t size, Result result, std::string_view path)
+            : request(name, size)
+            , result(result)
             , path(path)
         {}
     };
 
     virtual ~IIconCacheIpc() {}
 
-    virtual bool requestIcon(std::string_view name, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
+    virtual bool requestIcon(const IconRequest& request, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
     virtual std::optional<IconRequest> pullIconRequest(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
-    virtual bool sendIcon(IconResponse::Result result, std::string_view name, std::string_view path, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
+    virtual bool sendIcon(const IconResponse& response, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
     virtual std::optional<IconResponse> pullIcon(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
 };
 
