@@ -79,10 +79,10 @@ struct IIconCacheIpc
 
     virtual ~IIconCacheIpc() {}
 
-    virtual bool requestIcon(std::string_view name) = 0;
-    virtual std::vector<IconRequest> pullIconRequests() = 0;
-    virtual bool sendIcon(IconResponse::Result result, std::string_view name, std::string_view path) = 0;
-    virtual std::vector<IconResponse> pullIcons() = 0;
+    virtual bool requestIcon(std::string_view name, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
+    virtual std::optional<IconRequest> pullIconRequest(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
+    virtual bool sendIcon(IconResponse::Result result, std::string_view name, std::string_view path, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
+    virtual std::optional<IconResponse> pullIcon(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
 };
 
 

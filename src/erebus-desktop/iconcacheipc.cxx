@@ -2,6 +2,7 @@
 #include <erebus-desktop/erebus-desktop.hxx>
 
 #include <boost/interprocess/ipc/message_queue.hpp>
+#include <boost/thread/thread_time.hpp>
 
 namespace Er
 {
@@ -26,7 +27,7 @@ public:
         , m_queueOut(boost::interprocess::open_or_create, queueNameOut, queueLimit, std::max(sizeof(IconRequestRaw), sizeof(IconResponseRaw)))
     {}
 
-    bool requestIcon(std::string_view name) override
+    bool requestIcon(std::string_view name, std::chrono::milliseconds timeout) override
     {
         if (name.length() > MaxIconName)
             throw Er::Exception(ER_HERE(), "Icon name too long");
@@ -36,31 +37,30 @@ public:
         r.name[name.length()] = '\0';
         r.nameLen = name.length();
 
-        return m_queueOut.try_send(&r, sizeof(r), 0);
+        auto then = toAbsolute(timeout);
+        return m_queueOut.timed_send(&r, sizeof(r), 0, then);
     }
 
-    std::vector<IconRequest> pullIconRequests() override
+    std::optional<IconRequest> pullIconRequest(std::chrono::milliseconds timeout) override
     {
-        std::vector<IconRequest> v;
-
         IconRequestRaw r;
         unsigned long rd = 0;
         unsigned int priority = 0;
-        while (m_queueIn.try_receive(&r, sizeof(r), rd, priority))
-        {
-            if (rd != sizeof(IconRequestRaw))
-                throw Er::Exception(ER_HERE(), "Invalid icon cache request");
 
-            if (r.nameLen > MaxIconName)
-                throw Er::Exception(ER_HERE(), "Invalid icon cache request");
+        auto then = toAbsolute(timeout);
+        if (!m_queueIn.timed_receive(&r, sizeof(r), rd, priority, then))
+            return std::nullopt;
 
-            v.emplace_back(std::string_view(r.name, r.nameLen));
-        }
+        if (rd != sizeof(IconRequestRaw))
+            throw Er::Exception(ER_HERE(), "Invalid icon cache request");
 
-        return v;
+        if (r.nameLen > MaxIconName)
+            throw Er::Exception(ER_HERE(), "Invalid icon cache request");
+
+        return std::make_optional<IconRequest>(std::string_view(r.name, r.nameLen));
     }
 
-    bool sendIcon(IconResponse::Result result, std::string_view name, std::string_view path) override
+    bool sendIcon(IconResponse::Result result, std::string_view name, std::string_view path, std::chrono::milliseconds timeout) override
     {
         if (name.length() > MaxIconName)
             throw Er::Exception(ER_HERE(), "Icon name too long");
@@ -79,34 +79,39 @@ public:
         r.path[path.length()] = '\0';
         r.pathLen = path.length();
 
-        return m_queueOut.try_send(&r, sizeof(r), 0);
+        auto then = toAbsolute(timeout);
+        return m_queueOut.timed_send(&r, sizeof(r), 0, then);
     }
 
-    std::vector<IconResponse> pullIcons() override
+    std::optional<IconResponse> pullIcon(std::chrono::milliseconds timeout) override
     {
-        std::vector<IconResponse> v;
-
         IconResponseRaw r;
         unsigned long rd = 0;
         unsigned int priority = 0;
-        while (m_queueIn.try_receive(&r, sizeof(r), rd, priority))
-        {
-            if (rd != sizeof(IconResponseRaw))
-                throw Er::Exception(ER_HERE(), "Invalid icon cache response");
+        
+        auto then = toAbsolute(timeout);
 
-            if (r.nameLen > MaxIconName)
-                throw Er::Exception(ER_HERE(), "Invalid icon cache response");
+        if (!m_queueIn.timed_receive(&r, sizeof(r), rd, priority, then))
+            return std::nullopt;
 
-            if (r.pathLen > MaxIconName)
-                throw Er::Exception(ER_HERE(), "Invalid icon cache response");
+        if (rd != sizeof(IconResponseRaw))
+            throw Er::Exception(ER_HERE(), "Invalid icon cache response");
 
-            v.emplace_back(static_cast<IconResponse::Result>(r.result), std::string_view(r.name, r.nameLen), std::string_view(r.path, r.pathLen));
-        }
+        if (r.nameLen > MaxIconName)
+            throw Er::Exception(ER_HERE(), "Invalid icon cache response");
 
-        return v;
+        if (r.pathLen > MaxIconName)
+            throw Er::Exception(ER_HERE(), "Invalid icon cache response");
+
+        return std::make_optional<IconResponse>(static_cast<IconResponse::Result>(r.result), std::string_view(r.name, r.nameLen), std::string_view(r.path, r.pathLen));
     }
 
 private:
+    static boost::posix_time::ptime toAbsolute(std::chrono::milliseconds milliseconds)
+    {
+        return boost::posix_time::ptime(boost::get_system_time() + boost::posix_time::milliseconds(milliseconds.count()));
+    }
+
     static constexpr size_t MaxIconName = 256;
     static constexpr size_t MaxIconPath = 260;
     
