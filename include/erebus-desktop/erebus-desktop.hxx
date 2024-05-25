@@ -60,15 +60,16 @@ struct IIconCacheIpc
         enum class Result: uint8_t
         {
             Ok,
-            NotFound,
-            Invalid
+            NotFound
         };
 
         Result result;
         std::string name; // icon name
         std::string path; // cached icon path
 
-        IconResponse() noexcept = default;
+        IconResponse(Result result) noexcept
+            : result(result)
+        {}
 
         IconResponse(Result result, std::string_view name, std::string_view path)
             : result(result)
