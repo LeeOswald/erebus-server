@@ -23,8 +23,8 @@ public:
     }
 
     explicit IconCacheIpcImpl(const char* queueNameIn, const char* queueNameOut, size_t queueLimit)
-        : m_queueIn(boost::interprocess::open_or_create, queueNameIn, queueLimit, sizeof(IconResponseRaw))
-        , m_queueOut(boost::interprocess::open_or_create, queueNameOut, queueLimit, sizeof(IconResponseRaw))
+        : m_queueIn(boost::interprocess::open_or_create, queueNameIn, queueLimit, MessageSize)
+        , m_queueOut(boost::interprocess::open_or_create, queueNameOut, queueLimit, MessageSize)
     {}
 
     bool requestIcon(const IconRequest& request, std::chrono::milliseconds timeout) override
@@ -44,21 +44,23 @@ public:
 
     std::optional<IconRequest> pullIconRequest(std::chrono::milliseconds timeout) override
     {
-        IconRequestRaw r;
+        char buffer[MessageSize];
+        auto r = reinterpret_cast<IconRequestRaw*>(&buffer[0]);
+
         unsigned long rd = 0;
         unsigned int priority = 0;
 
         auto then = toAbsolute(timeout);
-        if (!m_queueIn.timed_receive(&r, sizeof(r), rd, priority, then))
+        if (!m_queueIn.timed_receive(r, sizeof(buffer), rd, priority, then))
             return std::nullopt;
 
         if (rd != sizeof(IconRequestRaw))
             throw Er::Exception(ER_HERE(), "Invalid icon cache request");
 
-        if (r.nameLen > MaxIconName)
+        if (r->nameLen > MaxIconName)
             throw Er::Exception(ER_HERE(), "Invalid icon cache request");
 
-        return std::make_optional<IconRequest>(std::string_view(r.name, r.nameLen), uint16_t(r.size));
+        return std::make_optional<IconRequest>(std::string_view(r->name, r->nameLen), uint16_t(r->size));
     }
 
     bool sendIcon(const IconResponse& response, std::chrono::milliseconds timeout) override
@@ -87,25 +89,26 @@ public:
 
     std::optional<IconResponse> pullIcon(std::chrono::milliseconds timeout) override
     {
-        IconResponseRaw r;
+        char buffer[MessageSize];
+        auto r = reinterpret_cast<IconResponseRaw*>(&buffer[0]);
         unsigned long rd = 0;
         unsigned int priority = 0;
         
         auto then = toAbsolute(timeout);
 
-        if (!m_queueIn.timed_receive(&r, sizeof(r), rd, priority, then))
+        if (!m_queueIn.timed_receive(r, sizeof(buffer), rd, priority, then))
             return std::nullopt;
 
         if (rd != sizeof(IconResponseRaw))
             throw Er::Exception(ER_HERE(), "Invalid icon cache response");
 
-        if (r.request.nameLen > MaxIconName)
+        if (r->request.nameLen > MaxIconName)
             throw Er::Exception(ER_HERE(), "Invalid icon cache response");
 
-        if (r.pathLen > MaxIconName)
+        if (r->pathLen > MaxIconName)
             throw Er::Exception(ER_HERE(), "Invalid icon cache response");
 
-        return std::make_optional<IconResponse>(std::string_view(r.request.name, r.request.nameLen), uint16_t(r.request.size), static_cast<IconResponse::Result>(r.result), std::string_view(r.path, r.pathLen));
+        return std::make_optional<IconResponse>(std::string_view(r->request.name, r->request.nameLen), uint16_t(r->request.size), static_cast<IconResponse::Result>(r->result), std::string_view(r->path, r->pathLen));
     }
 
 private:
@@ -116,7 +119,7 @@ private:
 
     static constexpr size_t MaxIconName = 256;
     static constexpr size_t MaxIconPath = 260;
-    
+
     struct __attribute__((__packed__)) IconRequestRaw
     {
         uint16_t size;
@@ -131,6 +134,8 @@ private:
         uint16_t pathLen;
         char path[MaxIconPath + 1];
     };
+
+    static constexpr size_t MessageSize = sizeof(IconResponseRaw);
 
     boost::interprocess::message_queue m_queueIn;
     boost::interprocess::message_queue m_queueOut;
