@@ -2,8 +2,6 @@ add_library(${EREBUS_PROCESSMGR} SHARED
     ../../include/erebus-processmgr/processmgr.hxx
     ../../include/erebus-processmgr/processprops.hxx
     ../../include/erebus-processmgr/procfs.hxx
-    iconcache.hxx
-    iconcache.cxx
     iconmanager.hxx
     iconmanager.cxx
     processdetails.cxx

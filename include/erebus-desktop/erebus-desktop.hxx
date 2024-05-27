@@ -30,12 +30,23 @@ struct AppEntry
 };
 
 
+struct IAppEntryCallback
+{
+    virtual void appEntryAdded(std::shared_ptr<AppEntry> app) = 0;
+
+protected:
+    virtual ~IAppEntryCallback();
+};
+
+
 struct IAppEntryMonitor
 {
     virtual ~IAppEntryMonitor() {}
 
     virtual std::shared_ptr<AppEntry> lookup(const std::string& exe) const = 0;
     virtual std::vector<std::shared_ptr<AppEntry>> snapshot() const = 0;
+    virtual void registerCallback(IAppEntryCallback* c) = 0;
+    virtual void unregisterCallback(IAppEntryCallback* c) = 0;
 };
 
 

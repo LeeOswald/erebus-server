@@ -97,6 +97,22 @@ public:
         return v;
     }
 
+    void registerCallback(IAppEntryCallback* c) override
+    {
+        std::unique_lock l(m_callbackLock);
+        ErAssert(std::find(m_callbacks.begin(), m_callbacks.end(), c) == m_callbacks.end());
+
+        m_callbacks.push_back(c);
+    }
+
+    void unregisterCallback(IAppEntryCallback* c) override
+    {
+        std::unique_lock l(m_callbackLock);
+        auto it = std::find(m_callbacks.begin(), m_callbacks.end(), c);
+        if (it != m_callbacks.end())
+            m_callbacks.erase(it);
+    }
+
 private:
     void worker(std::stop_token stop)
     {
@@ -181,6 +197,17 @@ private:
         }
     }
 
+    void insert(std::shared_ptr<AppEntry> app)
+    {
+        std::unique_lock l(m_entriesLock);
+        auto existing = m_entries.find(app->exec);
+        if (existing != m_entries.end())
+            m_entries.erase(existing);
+
+        m_entries.insert({ app->exec, app });
+
+    }
+
     void parseFiles(const std::string& dir, std::stop_token stop)
     {
         std::vector<std::string> filePaths;
@@ -214,8 +241,8 @@ private:
                     auto result = parseFile(file);
                     if (result)
                     {
-                        std::unique_lock l(m_entriesLock);
-                        m_entries.insert({ result->exec, result });
+                        insert(result);                
+                        notifyAll(result);
                     }
                 },
                 file
@@ -273,6 +300,14 @@ private:
         return m_pathResolver.resolve(exe);
     }
 
+    void notifyAll(std::shared_ptr<AppEntry> app)
+    {
+        std::shared_lock l(m_callbackLock);
+        for (auto c: m_callbacks)
+        {
+            c->appEntryAdded(app);
+        }
+    }
 
     Er::Log::ILog* const m_log;
     std::jthread m_worker; 
@@ -281,6 +316,8 @@ private:
     std::vector<std::string> m_dirs;
     mutable std::shared_mutex m_entriesLock;
     std::unordered_map<std::string, std::shared_ptr<AppEntry>> m_entries; // exe -> AppEntry
+    mutable std::shared_mutex m_callbackLock;
+    std::vector<IAppEntryCallback*> m_callbacks;
 };
 
 

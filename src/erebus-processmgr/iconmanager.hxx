@@ -5,7 +5,14 @@
 #include <erebus-desktop/erebus-desktop.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <queue>
 #include <shared_mutex>
+#include <thread>
+#include <unordered_map>
+
 
 namespace Er
 {
@@ -22,42 +29,103 @@ enum class IconSize : unsigned
 };
 
 
+namespace KnownIcons
+{
+
+std::string defaultExeIcon();
+
+std::string knownAppIcon(const std::string& comm);
+
+} // namespace KnownIcons {}
+
+
 class IconManager final
-    : public Er::NonCopyable
+    : public Er::Desktop::IAppEntryCallback
+    , public Er::NonCopyable
 {
 public:
+    enum class IconState
+    {
+        Requested,
+        NotFound,
+        Found,
+        Cached,
+        Failure
+    };
+
     struct IconData
     {
-        bool valid; // no icon exists for this exe
-        Bytes data;
+        IconState state;
+        Bytes raw;
 
-        IconData() noexcept
-            : valid(false)
+        IconData(IconState state)
+            : state(state)
         {}
 
-        template <typename BytesT>
-        explicit IconData(BytesT&& data) noexcept
-            : valid(true)
-            , data(std::forward<BytesT>(data))
+        template <typename RawT>
+        IconData(RawT&& raw)
+            : state(IconState::Cached)
+            , raw(std::forward<RawT>(raw))
         {}
     };
 
-    explicit IconManager(Er::Log::ILog* log, IconCache* iconCache, std::shared_ptr<Er::Desktop::IAppEntryMonitor> desktopEntries, size_t cacheSize);
+    ~IconManager();
+    explicit IconManager(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCacheIpc> iconCacheIpc, std::shared_ptr<Er::Desktop::IAppEntryMonitor> appEntryMonitor, size_t cacheSize);
 
-    void prefetch(IconSize size);
-    std::shared_ptr<IconData> lookup(const std::string& comm, const std::string& exe, IconSize size) const noexcept;
-    std::shared_ptr<IconData> defaultIcon(const std::string& comm, const std::string& exe, IconSize size) const noexcept;
+    void appEntryAdded(std::shared_ptr<Er::Desktop::AppEntry> app) override;
 
+    std::shared_ptr<IconData> lookupByExe(const std::string& exe, IconSize size);
+    std::shared_ptr<IconData> lookupByName(const std::string& name, IconSize size);
+    
 private:
+    struct IconInfo
+    {
+        using Clock = std::chrono::steady_clock;
+
+        IconState state;
+        Clock::time_point timestamp;
+        std::string path;
+
+        explicit IconInfo(IconState state) noexcept
+            : state(state)
+            , timestamp(Clock::now())
+        {}
+
+        explicit IconInfo(std::string path) noexcept
+            : state(IconState::Found)
+            , timestamp(Clock::now())
+            , path(path)
+        {}
+    };
+
+
+    void appEntryWorker(std::stop_token stop) noexcept;
+    void iconWorker(std::stop_token stop) noexcept;
+    IconState requestIcon(const std::string& name, IconSize size) noexcept;
+    void receiveIcon() noexcept;
+
+    static constexpr size_t MaxAppQueue = 1024;
+    static constexpr std::chrono::milliseconds Timeout = std::chrono::milliseconds(1000);
+    static constexpr std::chrono::minutes IconRequestExpired = std::chrono::minutes(10);
+
     Er::Log::ILog* const m_log;
-    IconCache* m_iconCache;
-    std::shared_ptr<Er::Desktop::IAppEntryMonitor> m_desktopEntries;
-    std::string const DefaultExeIcon;
-    mutable std::shared_mutex m_mutex;
-    mutable Er::LruCache<std::string, std::shared_ptr<IconData>> m_cache16; // exec -> icon
-    mutable Er::LruCache<std::string, std::shared_ptr<IconData>> m_cache32;
-    mutable std::unordered_map<std::string, std::shared_ptr<IconData>> m_default16;
-    mutable std::unordered_map<std::string, std::shared_ptr<IconData>> m_default32;
+    std::shared_ptr<Er::Desktop::IIconCacheIpc> m_iconCacheIpc;
+    std::shared_ptr<Er::Desktop::IAppEntryMonitor> m_appEntryMonitor;
+    
+    std::mutex m_addedAppsLock;
+    std::queue<std::shared_ptr<Er::Desktop::AppEntry>> m_addedApps;
+    std::condition_variable_any m_addedAppsEvent;
+
+    std::shared_mutex m_appIconsLock;
+    std::unordered_map<std::string, std::shared_ptr<IconInfo>> m_appIcons16; // icon name -> icon path
+    std::unordered_map<std::string, std::shared_ptr<IconInfo>> m_appIcons32;
+
+    std::mutex m_cacheLock;
+    Er::LruCache<std::string, std::shared_ptr<IconData>> m_cache16; // icon path -> icon bytes
+    Er::LruCache<std::string, std::shared_ptr<IconData>> m_cache32;
+    
+    std::jthread m_appEntryWorker;
+    std::jthread m_iconWorker;
 };
     
 

@@ -3,7 +3,6 @@
 #include <erebus-processmgr/processprops.hxx>
 #include <erebus-desktop/erebus-desktop.hxx>
 
-#include "iconcache.hxx"
 #include "iconmanager.hxx"
 #include "processdetails.hxx"
 #include "processlist.hxx"
@@ -63,17 +62,26 @@ public:
         auto args = parseArgs(params);
 
         // cache desktop entries & icons for registered apps
-        if (!args.iconCacheAgent.empty())
-            m_iconCache.reset(new Er::Private::IconCache(params.log, args.iconTheme, args.iconCacheAgent, args.iconCacheDir));
+        if (!args.iconCacheMq.empty())
+        {
+            std::string mqIn(args.iconCacheMq);
+            mqIn.append("_resp");
+            std::string mqOut(args.iconCacheMq);
+            mqOut.append("_req");
+
+            m_iconCacheIpc = Er::Desktop::createIconCacheIpc(mqIn.c_str(), mqOut.c_str(), 256)
+        }
         else
+        {
             params.log->write(Er::Log::Level::Warning, ErLogComponent("ProcessMgrPlugin"), "Starting without icon cache");
+        }
 
         m_desktopEntries = Er::Desktop::createAppEntryMonitor(params.log);
 
-        if (m_iconCache)
+        if (m_iconCacheIpc)
         {
-            m_iconManager.reset(new Er::Private::IconManager(params.log, m_iconCache.get(), m_desktopEntries, args.iconCacheSize));
-            m_iconManager->prefetch(Er::Private::IconSize::Small);
+            m_iconManager.reset(new Er::Private::IconManager(params.log, m_iconCacheIpc, m_desktopEntries, args.iconCacheSize));
+            m_iconManager->requestIcon(Er::Private::IconSize::Small);
         }
 
         // create and register services
@@ -93,10 +101,8 @@ public:
 private:
     struct PluginArgs
     {
-        std::string iconCacheAgent;
-        std::string iconCacheDir;
+        std::string iconCacheMq;
         size_t iconCacheSize;
-        std::string iconTheme;
     };
 
     PluginArgs parseArgs(const Er::Server::PluginParams& params)
@@ -105,17 +111,9 @@ private:
 
         for (auto arg = params.args.begin(); arg != params.args.end(); ++arg)
         {
-            if (arg->name == "iconcacheagent")
+            if (arg->name == "iconcachemq")
             {
-                a.iconCacheAgent = arg->value;
-            }
-            else if (arg->name == "iconcachedir")
-            {
-                a.iconCacheDir = arg->value;
-            }
-            else if (arg->name == "icontheme")
-            {
-                a.iconTheme = arg->value;
+                a.iconCacheMq = arg->value;
             }
             else if (arg->name == "iconcachesize")
             {
@@ -132,6 +130,7 @@ private:
     Er::Server::PluginParams m_params;
     std::unique_ptr<Er::Private::IconCache> m_iconCache;
     std::shared_ptr<Er::Desktop::IAppEntryMonitor> m_desktopEntries;
+    std::shared_ptr<Er::Desktop::IIconCacheIpc> m_iconCacheIpc;
     std::unique_ptr<Er::Private::IconManager> m_iconManager;
     std::unique_ptr<Er::Private::ProcessList> m_processList;
     std::unique_ptr<Er::Private::ProcessDetails> m_processDetails;
