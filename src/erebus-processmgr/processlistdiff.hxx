@@ -70,9 +70,6 @@ Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProp
 
 Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current);
 
-class IconManager;
-void addProcessIcon(const std::string& comm, const std::string& exe, IconManager* iconCache, Er::PropertyBag& bag);
-
 ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, const Er::PropertyBag& prev, Er::PropertyBag& curr);
 
 struct ProcessStatistics
@@ -81,7 +78,7 @@ struct ProcessStatistics
     double uTimeTotal = 0.0;
 };
 
-ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconManager* iconCache, Er::ProcessProps::PropMask required, ProcessCollection& collection, ProcessStatistics& stats);
+ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required, ProcessCollection& collection, ProcessStatistics& stats);
 
 
 } // namespace Private {}

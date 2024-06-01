@@ -3,7 +3,7 @@
 #include <erebus/util/file.hxx>
 
 
-#include "iconmanager.hxx"
+#include "iconcache.hxx"
 
 #include <regex>
 

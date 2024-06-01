@@ -1,4 +1,3 @@
-#include "iconmanager.hxx"
 #include "processlistdiff.hxx"
 
 #include <erebus/exception.hxx>
@@ -157,28 +156,11 @@ Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint6
 
     if (!exeChanged)
     {
-        if (required[Er::ProcessProps::PropIndices::Icon])
-        {
-            // if we have an icon already
-            if (propertyPresent<Er::ProcessProps::Icon>(existing))
-            {
-                if (!exeChanged)
-                    filtered.reset(Er::ProcessProps::PropIndices::Icon);
-            }
-        }
-
         filtered.reset(Er::ProcessProps::PropIndices::User);
         filtered.reset(Er::ProcessProps::PropIndices::Ruid);
     }
 
     return filtered;
-}
-
-void addProcessIcon(const std::string& comm, const std::string& exe, IconManager* cache, Er::PropertyBag& bag)
-{
-    auto ico = cache->lookup(comm, exe, Er::Private::IconSize::Small);
-    if (ico && ico->valid)
-        Er::addProperty<Er::ProcessProps::Icon>(bag, ico->data);
 }
 
 ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, Er::PropertyBag&& newProps, Er::PropertyBag& existing)
@@ -246,7 +228,7 @@ static void updateDiffAndCollectionForProcess(ProcessCollection::Container::iter
     }
 }
 
-ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconManager* iconCache, Er::ProcessProps::PropMask required, ProcessCollection& collection, ProcessStatistics& stats)
+ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required, ProcessCollection& collection, ProcessStatistics& stats)
 {
     auto firstRun = collection.processes.empty();
     auto now = std::chrono::steady_clock::now();
@@ -269,23 +251,12 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, IconMa
             auto filtered = filterVolatileProps(source, pid, oldProps, required, newProps);
 
             auto process = collectProcessDetails(source, pid, filtered, std::move(newProps), cached);
-            
-            if (filtered[Er::ProcessProps::PropIndices::Icon])
-            {
-                if (iconCache)
-                    addProcessIcon(cached.comm, cached.exe, iconCache, process);
-            }
-
             updateDiffAndCollectionForProcess(existing, firstRun, diff, collection, now, pid, std::move(process));
         }
         else
         {
             // this is a new process
             auto process = collectProcessDetails(source, pid, required, Er::PropertyBag(), cached);
-
-            if (iconCache)
-                addProcessIcon(cached.comm, cached.exe, iconCache, process);
-
             updateDiffAndCollectionForProcess(collection.processes.end(), firstRun, diff, collection, now, pid, std::move(process));
         }
 

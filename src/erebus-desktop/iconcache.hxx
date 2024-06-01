@@ -20,7 +20,6 @@ namespace Er
 namespace Private
 {
 
-class IconCache;
 
 enum class IconSize : unsigned
 {

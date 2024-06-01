@@ -18,7 +18,6 @@ namespace Er
 namespace Private
 {
 
-class IconManager;
 
 class ProcessList final
     : public Er::Server::IService
@@ -26,7 +25,7 @@ class ProcessList final
 {
 public:
     ~ProcessList();
-    explicit ProcessList(Er::Log::ILog* log, IconManager* iconManager);
+    explicit ProcessList(Er::Log::ILog* log);
 
     void registerService(Er::Server::IServiceContainer* container);
     void unregisterService(Er::Server::IServiceContainer* container);
@@ -126,7 +125,6 @@ private:
     const unsigned kStreamTimeoutSeconds = 60;
 
     Er::Log::ILog* const m_log;
-    IconManager* m_iconManager;
     Er::ProcFs::ProcFs m_procFs;
    
     std::shared_mutex m_mutexSession;

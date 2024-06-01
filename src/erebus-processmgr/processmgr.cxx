@@ -1,9 +1,7 @@
 #include <erebus/exception.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 #include <erebus-processmgr/processprops.hxx>
-#include <erebus-desktop/erebus-desktop.hxx>
 
-#include "iconmanager.hxx"
 #include "processdetails.hxx"
 #include "processlist.hxx"
 
@@ -33,9 +31,6 @@ public:
 
         m_processList.reset();
         m_processDetails.reset();
-        m_iconManager.reset();
-        m_desktopEntries.reset();
-        m_iconCache.reset();
 
         Er::ProcessProps::Private::unregisterAll(m_params.log);
         Er::ProcessesGlobal::Private::unregisterAll(m_params.log);
@@ -59,33 +54,8 @@ public:
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
             throw Er::Exception(ER_HERE(), "Only one instance of erebus-processmgr plugin can be created");
 
-        auto args = parseArgs(params);
-
-        // cache desktop entries & icons for registered apps
-        if (!args.iconCacheMq.empty())
-        {
-            std::string mqIn(args.iconCacheMq);
-            mqIn.append("_resp");
-            std::string mqOut(args.iconCacheMq);
-            mqOut.append("_req");
-
-            m_iconCacheIpc = Er::Desktop::createIconCacheIpc(mqIn.c_str(), mqOut.c_str(), 256)
-        }
-        else
-        {
-            params.log->write(Er::Log::Level::Warning, ErLogComponent("ProcessMgrPlugin"), "Starting without icon cache");
-        }
-
-        m_desktopEntries = Er::Desktop::createAppEntryMonitor(params.log);
-
-        if (m_iconCacheIpc)
-        {
-            m_iconManager.reset(new Er::Private::IconManager(params.log, m_iconCacheIpc, m_desktopEntries, args.iconCacheSize));
-            m_iconManager->requestIcon(Er::Private::IconSize::Small);
-        }
-
         // create and register services
-        m_processList.reset(new Er::Private::ProcessList(m_params.log, m_iconManager.get()));
+        m_processList.reset(new Er::Private::ProcessList(m_params.log));
         m_processDetails.reset(new Er::Private::ProcessDetails(m_params.log));
         
         for (auto container: m_params.containers)
@@ -99,39 +69,9 @@ public:
     }
 
 private:
-    struct PluginArgs
-    {
-        std::string iconCacheMq;
-        size_t iconCacheSize;
-    };
-
-    PluginArgs parseArgs(const Er::Server::PluginParams& params)
-    {
-        PluginArgs a;
-
-        for (auto arg = params.args.begin(); arg != params.args.end(); ++arg)
-        {
-            if (arg->name == "iconcachemq")
-            {
-                a.iconCacheMq = arg->value;
-            }
-            else if (arg->name == "iconcachesize")
-            {
-                a.iconCacheSize = std::strtoul(arg->value.c_str(), nullptr, 10);
-            }
-        }
-
-        a.iconCacheSize = std::clamp(a.iconCacheSize, size_t(1024), size_t(65536));
-        return a;
-    }
-
     static std::atomic<long> g_instances;
 
     Er::Server::PluginParams m_params;
-    std::unique_ptr<Er::Private::IconCache> m_iconCache;
-    std::shared_ptr<Er::Desktop::IAppEntryMonitor> m_desktopEntries;
-    std::shared_ptr<Er::Desktop::IIconCacheIpc> m_iconCacheIpc;
-    std::unique_ptr<Er::Private::IconManager> m_iconManager;
     std::unique_ptr<Er::Private::ProcessList> m_processList;
     std::unique_ptr<Er::Private::ProcessDetails> m_processDetails;
 };

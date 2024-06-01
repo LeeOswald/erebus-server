@@ -22,16 +22,6 @@ static const std::string_view KillProcess = "KillProcess";
 } // namespace ProcessRequests {}
 
 
-struct IconFormatter
-{
-    void operator()(const Bytes& ico, std::ostream& s) 
-    { 
-        if (ico.empty())
-            s << "[null icon]";
-        else
-            s << "[icon (" << ico.size() << " bytes)]";
-    }
-};
 
 struct CpuTimeFormatter
 {
@@ -89,7 +79,6 @@ using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Comman
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable">;
 using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
 using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
-using Icon = PropertyValue<Bytes, ER_PROPID("process.icon"), "Icon", PropertyComparator<Bytes>, IconFormatter>;
 using ThreadCount = PropertyValue<int64_t, ER_PROPID("process.nthreads"), "Thread Count">;
 using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
 using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
@@ -109,12 +98,11 @@ constexpr PropId IndexToProp[] =
     /* 9*/ StartTime::Id::value,
     /*10*/ State::Id::value,
     /*11*/ User::Id::value,
-    /*12*/ Icon::Id::value,
-    /*13*/ ThreadCount::Id::value,
-    /*14*/ STime::Id::value,
-    /*15*/ UTime::Id::value,
-    /*16*/ CpuUsage::Id::value,
-    /*17*/ Tty::Id::value,
+    /*12*/ ThreadCount::Id::value,
+    /*13*/ STime::Id::value,
+    /*14*/ UTime::Id::value,
+    /*15*/ CpuUsage::Id::value,
+    /*16*/ Tty::Id::value,
 };
 
 
@@ -132,12 +120,11 @@ struct PropIndices
     static constexpr Flag StartTime = 9;
     static constexpr Flag State = 10;
     static constexpr Flag User = 11;
-    static constexpr Flag Icon = 12;
-    static constexpr Flag ThreadCount = 13;
-    static constexpr Flag STime = 14;
-    static constexpr Flag UTime = 15;
-    static constexpr Flag CpuUsage = 16;
-    static constexpr Flag Tty = 17;
+    static constexpr Flag ThreadCount = 12;
+    static constexpr Flag STime = 13;
+    static constexpr Flag UTime = 14;
+    static constexpr Flag CpuUsage = 15;
+    static constexpr Flag Tty = 16;
 
     static constexpr size_t FlagsCount = 64;
 };
@@ -168,7 +155,6 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<StartTime>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<State>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Icon>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<ThreadCount>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<STime>>(), log);
     registerProperty(std::make_shared<PropertyInfoWrapper<UTime>>(), log);
@@ -195,7 +181,6 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(lookupProperty(ProcessProps::Exe::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::StartTime::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::State::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Icon::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::ThreadCount::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::STime::Id::value), log);
     unregisterProperty(lookupProperty(ProcessProps::UTime::Id::value), log);
