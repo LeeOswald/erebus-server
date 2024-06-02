@@ -132,7 +132,6 @@ private:
     StreamId m_nextStreamId = 0;
     std::unordered_map<StreamId, std::unique_ptr<Session>> m_sessions;
     std::unordered_map<StreamId, std::unique_ptr<Stream>> m_streams;
-    
 };
 
 } // namespace Private {}

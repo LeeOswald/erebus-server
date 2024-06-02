@@ -4,6 +4,7 @@
 
 #include "erebus-version.h"
 #include "iconcache.hxx"
+#include "service.hxx"
 
 #include <atomic>
 
@@ -26,7 +27,10 @@ public:
         // unregister services
         for (auto container: m_params.containers)
         {
+            m_service->unregisterService(container);
         }
+
+        Props::Private::unregisterAll(m_params.log);
 
         g_instances--;
     }
@@ -46,6 +50,8 @@ public:
         long expected = 0;
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
             throw Er::Exception(ER_HERE(), "Only one instance of erebus-desktop plugin can be created");
+
+        Props::Private::registerAll(params.log);
 
         auto args = parseArgs(params);
 
@@ -67,15 +73,14 @@ public:
 
         if (m_iconCacheIpc)
         {
-            m_iconCache = std::make_shared<Er::Private::IconManager>(params.log, m_iconCacheIpc, m_appEntryMonitor, args.iconCacheSize);
+            m_iconCache = std::make_shared<Er::Private::IconCache>(params.log, m_iconCacheIpc, args.iconCacheSize);
         }
 
-        // create and register services
-        
+        m_service.reset(new Er::Desktop::Private::Service(m_params.log));
         for (auto container: m_params.containers)
         {
+            m_service->registerService(container);
         }
-
     }
 
 private:
@@ -116,7 +121,8 @@ private:
     Er::Server::PluginParams m_params;
     std::shared_ptr<IIconCacheIpc> m_iconCacheIpc;
     std::shared_ptr<IAppEntryMonitor> m_appEntryMonitor;
-    std::shared_ptr<Er::Private::IconManager> m_iconCache;
+    std::shared_ptr<Er::Private::IconCache> m_iconCache;
+    std::unique_ptr<Er::Desktop::Private::Service> m_service;
 };
 
 std::atomic<long> DesktopPlugin::g_instances = 0;

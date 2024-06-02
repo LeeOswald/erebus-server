@@ -5,6 +5,10 @@ add_library(${EREBUS_DESKTOPLIB} SHARED
     iconcacheipc.cxx
     iconcache.hxx
     iconcache.cxx
+    iconresolver.hxx
+    iconresolver.cxx
+    service.hxx
+    service.cxx
     util.cxx
 )
 
