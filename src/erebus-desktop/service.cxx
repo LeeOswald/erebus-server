@@ -1,3 +1,4 @@
+#include "iconcache.hxx"
 #include "service.hxx"
 
 #include <erebus/exception.hxx>
@@ -18,8 +19,9 @@ Service::~Service()
     ErLogDebug(m_log, ErLogInstance("Er::Desktop::Private::Service"), "~Service()");
 }
 
-Service::Service(Er::Log::ILog* log)
+Service::Service(Er::Log::ILog* log, std::shared_ptr<IconCache> iconCache)
     : m_log(log)
+    , m_iconCache(iconCache)
 {
     ErLogDebug(m_log, ErLogInstance("Er::Desktop::Private::Service"), "Service()");
 }
@@ -61,6 +63,45 @@ void Service::deleteSession(SessionId id)
 
     ErLogDebug(m_log, ErLogInstance("Er::Desktop::Private::Service"), "Ended session %d", id);    
 }
+
+Service::StreamId Service::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+{
+    
+
+    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+}
+
+void Service::endStream(StreamId id, std::optional<SessionId> sessionId)
+{
+    std::unique_lock l(m_mutexSession);
+
+    auto it = m_streams.find(id);
+    if (it == m_streams.end())
+        throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
+
+    m_streams.erase(it);
+
+    dropStaleStreams();
+}
+
+Er::PropertyBag Service::next(StreamId id, std::optional<SessionId> sessionId)
+{
+    Stream* stream = nullptr;
+    {
+        std::unique_lock l(m_mutexSession);
+        auto it = m_streams.find(id);
+        if (it == m_streams.end())
+            throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d", id));
+
+        stream = it->second.get();
+
+        stream->touched = std::chrono::steady_clock::now();
+    }
+
+    ErAssert(!"Unknown stream type");
+    return Er::PropertyBag();
+}
+
 
 Service::Session* Service::getSession(std::optional<SessionId> id)
 {
@@ -132,6 +173,21 @@ Er::PropertyBag Service::request(std::string_view request, const Er::PropertyBag
 
 Er::PropertyBag Service::queryIcon(const Er::PropertyBag& args, std::optional<SessionId> sessionId)
 {
+    auto session = getSession(sessionId);
+
+    auto iconSize = Er::getProperty<Er::Desktop::Props::IconSize>(args);
+    if (!iconSize)
+        throw Er::Exception(ER_HERE(), "Icon size not specified");
+
+    if ((*iconSize != uint32_t(IconSize::Large)) && (*iconSize != uint32_t(IconSize::Small)))
+        throw Er::Exception(ER_HERE(), "Unsupported icon size");
+
+    auto iconName = Er::getProperty<Er::Desktop::Props::IconName>(args);
+    if (iconName)
+    {
+        auto iconData = m_iconCache->lookupByName(*iconName, IconSize(*iconSize));
+    }
+
     return Er::PropertyBag();
 }
 

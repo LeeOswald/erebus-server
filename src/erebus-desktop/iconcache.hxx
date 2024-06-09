@@ -15,6 +15,9 @@
 namespace Er
 {
 
+namespace Desktop
+{
+
 namespace Private
 {
 
@@ -106,5 +109,7 @@ private:
     
 
 } // namespace Private {}
+
+} // namespace Desktop {}
 
 } // namespace Er {}

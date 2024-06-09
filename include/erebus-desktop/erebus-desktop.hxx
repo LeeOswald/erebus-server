@@ -35,7 +35,7 @@ struct IAppEntryCallback
     virtual void appEntryAdded(std::shared_ptr<AppEntry> app) = 0;
 
 protected:
-    virtual ~IAppEntryCallback();
+    virtual ~IAppEntryCallback() {};
 };
 
 
@@ -119,7 +119,7 @@ struct IconFormatter
 };    
 
 
-using Icon = PropertyValue<Bytes, ER_PROPID("app.icon.png"), "Icon", PropertyComparator<Bytes>, IconFormatter>;
+using Icon = PropertyValue<Bytes, ER_PROPID("app.icon.png"), "Icon Bytes", PropertyComparator<Bytes>, IconFormatter>;
 using IconName = PropertyValue<std::string, ER_PROPID("app.icon.name"), "Icon Name">;
 using IconSize = PropertyValue<uint32_t, ER_PROPID("app.icon.size"), "Icon Size">;
 using Comm = PropertyValue<std::string, ER_PROPID("app.comm"), "Process Name">;

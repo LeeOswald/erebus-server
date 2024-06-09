@@ -73,10 +73,10 @@ public:
 
         if (m_iconCacheIpc)
         {
-            m_iconCache = std::make_shared<Er::Private::IconCache>(params.log, m_iconCacheIpc, args.iconCacheSize);
+            m_iconCache = std::make_shared<Er::Desktop::Private::IconCache>(params.log, m_iconCacheIpc, args.iconCacheSize);
         }
 
-        m_service.reset(new Er::Desktop::Private::Service(m_params.log));
+        m_service.reset(new Er::Desktop::Private::Service(m_params.log, m_iconCache));
         for (auto container: m_params.containers)
         {
             m_service->registerService(container);
@@ -121,7 +121,7 @@ private:
     Er::Server::PluginParams m_params;
     std::shared_ptr<IIconCacheIpc> m_iconCacheIpc;
     std::shared_ptr<IAppEntryMonitor> m_appEntryMonitor;
-    std::shared_ptr<Er::Private::IconCache> m_iconCache;
+    std::shared_ptr<Er::Desktop::Private::IconCache> m_iconCache;
     std::unique_ptr<Er::Desktop::Private::Service> m_service;
 };
 

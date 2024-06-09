@@ -17,13 +17,16 @@ namespace Desktop
 namespace Private
 {
 
+class IconCache;
+
+
 class Service final
     : public Er::Server::IService
     , public Er::NonCopyable
 {
 public:
     ~Service();
-    explicit Service(Er::Log::ILog* log);
+    explicit Service(Er::Log::ILog* log, std::shared_ptr<IconCache> iconCache);
 
     void registerService(Er::Server::IServiceContainer* container);
     void unregisterService(Er::Server::IServiceContainer* container);
@@ -84,6 +87,7 @@ private:
     const unsigned kStreamTimeoutSeconds = 60;
 
     Er::Log::ILog* const m_log;
+    std::shared_ptr<IconCache> m_iconCache;
    
     std::mutex m_mutexSession;
     SessionId m_nextSessionId = 0;

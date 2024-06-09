@@ -9,6 +9,9 @@
 namespace Er
 {
 
+namespace Desktop
+{
+
 namespace Private
 {
 
@@ -195,5 +198,7 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
 
 
 } // namespace Private {}
+
+} // namespace Desktop {}
 
 } // namespace Er {}
