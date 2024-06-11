@@ -17,4 +17,4 @@ add_compile_definitions(EREBUSDESKTOP_EXPORTS=1)
 
 set_property(TARGET ${EREBUS_DESKTOPLIB} PROPERTY PREFIX "")
 
-target_link_libraries(${EREBUS_DESKTOPLIB} PRIVATE ${EREBUS_RTLLIB})
+target_link_libraries(${EREBUS_DESKTOPLIB} PRIVATE ${Boost_LIBRARIES} ${EREBUS_RTLLIB})
