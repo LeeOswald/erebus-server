@@ -1,5 +1,6 @@
 #include <erebus/exception.hxx>
 #include <erebus-desktop/erebus-desktop.hxx>
+#include <erebus-desktop/protocol.hxx>
 #include <erebus-srv/plugin.hxx>
 
 #include "erebus-version.h"

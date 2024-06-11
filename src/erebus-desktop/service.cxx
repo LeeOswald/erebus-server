@@ -1,6 +1,8 @@
 #include "iconcache.hxx"
 #include "service.hxx"
 
+#include <erebus-desktop/protocol.hxx>
+
 #include <erebus/exception.hxx>
 #include <erebus/util/format.hxx>
 
