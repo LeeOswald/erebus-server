@@ -1,5 +1,4 @@
 #include <erebus-desktop/erebus-desktop.hxx>
-#include <erebus/system/pathresolver.hxx>
 #include <erebus/system/thread.hxx>
 #include <erebus/system/user.hxx>
 #include <erebus/util/exceptionutil.hxx>
@@ -13,6 +12,8 @@
 #include <thread>
 #include <unordered_map>
 
+#include <boost/process/search_path.hpp>
+
 
 namespace Er
 {
@@ -25,35 +26,72 @@ namespace
 
 const std::regex DesktopFilePattern(".*\\.desktop$");
 
-std::string_view extractExeNameFromCommand(std::string_view command) noexcept
+std::string_view skipws(std::string_view str)
 {
-    auto start = command.data();
-    auto end = start + command.length();
+    auto start = str.data();
+    auto end = start + str.length();
     while ((start < end) && std::isspace(*start))
         ++start;
 
     if (start == end)
         return std::string_view();
 
-    if (*start == '\"') // exe path is quoted
+    return std::string_view(start, end - start);
+}
+
+std::string_view unquote(std::string_view str)
+{
+    if (str.empty())
+        return std::string_view();
+
+    char q = 0;
+    if (str[0] == '\'' || str[0] == '\"')
+        q = str[0];
+    else
+        return str;
+
+    size_t i = 1;
+    while (i < str.length())
     {
-        ++start;
-        auto p = start;
-        while ((p < end) && (*p != '\"'))
-            ++p;
+        if (str[i] == q)
+            return std::string_view(str.data() + 1, i - 1);
 
-        if (p == end)
-            return std::string_view();
-
-        ErAssert(*p == '\"');
-        return std::string_view(start, p - start);
+        ++i;
     }
 
-    auto p = start;
-    while ((p < end) && (*p != ' '))
-        ++p;
+    return std::string_view();
+}
 
-    return std::string_view(start, p - start);
+std::string extractExeNameFromCommand(std::string_view command) noexcept
+{
+    auto args = Er::Util::split(command, std::string_view(" "), Er::Util::SplitSkipEmptyParts, 10);
+    if (args.empty())
+        return std::string();
+
+    bool env = false;
+    for (auto& arg: args)
+    {
+        auto a = skipws(unquote(arg));
+        if (!a.empty())
+        {
+            if (a.find('=') != a.npos)
+            {
+                // env var
+            }
+            else if ((a == "env") && !env)
+            {
+                // env command
+                env = true;
+            }
+            else
+            {
+                // actual exe
+                return std::string(a);
+            }
+        }
+    }
+
+    return std::string();
 }
 
 
@@ -258,7 +296,7 @@ private:
         auto e = std::make_shared<AppEntry>();
         auto name = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Name"));
         if (name)
-            e->name = std::move(*name);
+            e->name = *name;
 
         auto exe = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Exec"));
         if (!exe)
@@ -284,20 +322,24 @@ private:
         if (!ico)
             return std::shared_ptr<AppEntry>();
 
-        e->icon = std::move(*ico);
+        e->icon = *ico;
 
         Er::Log::Debug(m_log, ErLogComponent("AppEntryMonitorImpl")) << e->exec << " -> " << e->icon;
 
         return e;
     }
 
-    std::optional<std::string> resolveExePath(std::string_view exe) const
+    std::optional<std::string> resolveExePath(const std::string& exe) const
     {
-        std::filesystem::path path(exe);
-        if (path.is_absolute())
-            return std::make_optional(std::string(exe));
+        boost::filesystem::path filename(exe);
+        if (filename.is_absolute())
+            return std::make_optional(exe);
 
-        return m_pathResolver.resolve(exe);
+        auto path = boost::process::search_path(filename, m_searchPaths);
+        if (path.empty())
+            return std::nullopt;
+
+        return std::make_optional(path.native());
     }
 
     void notifyAll(std::shared_ptr<AppEntry> app)
@@ -309,9 +351,9 @@ private:
         }
     }
 
+    std::vector<boost::filesystem::path> m_searchPaths = boost::this_process::path();
     Er::Log::ILog* const m_log;
     std::jthread m_worker; 
-    Er::System::PathResolver m_pathResolver;
     mutable std::shared_mutex m_dirsLock;
     std::vector<std::string> m_dirs;
     mutable std::shared_mutex m_entriesLock;

@@ -44,7 +44,6 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/stacktrace.hxx
     ../../include/erebus/stringliteral.hxx
     ../../include/erebus/syncstream.hxx
-    ../../include/erebus/system/pathresolver.hxx
     ../../include/erebus/system/process.hxx
     ../../include/erebus/system/thread.hxx
     ../../include/erebus/system/time.hxx
@@ -68,7 +67,6 @@ add_library(${EREBUS_RTLLIB} SHARED
     knownprops.cxx
     log.cxx
     stacktrace.cxx
-    system/pathresolver.cxx
     system/process.cxx
     system/thread.cxx
     system/time.cxx

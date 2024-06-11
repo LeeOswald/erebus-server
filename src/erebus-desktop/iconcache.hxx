@@ -90,7 +90,7 @@ private:
     void receiveIcon() noexcept;
 
     static constexpr size_t MaxAppQueue = 1024;
-    static constexpr std::chrono::milliseconds Timeout = std::chrono::milliseconds(1000);
+    static constexpr std::chrono::milliseconds Timeout = std::chrono::milliseconds(2000);
     static constexpr std::chrono::minutes IconRequestExpired = std::chrono::minutes(10);
 
     Er::Log::ILog* const m_log;

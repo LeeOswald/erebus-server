@@ -3,7 +3,7 @@
 #include <erebus/util/format.hxx>
 
 
-#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 
 namespace Er
@@ -14,9 +14,17 @@ namespace
 
 struct Registry
 {
-    std::mutex mutex;
-    std::unordered_map<PropId, IPropertyInfo::Ptr> propsById;
-    std::unordered_map<std::string, IPropertyInfo::Ptr> propsByName;
+    struct Entry
+    {
+        IPropertyInfo::Ptr ptr;
+        long ref = 1;
+
+        Entry(IPropertyInfo::Ptr ptr) : ptr(ptr) {}
+    };
+
+    std::shared_mutex mutex;
+    std::unordered_map<PropId, Entry> propsById;
+    std::unordered_map<std::string, Entry> propsByName;
 };
     
 Registry* s_registry = nullptr;
@@ -49,21 +57,40 @@ EREBUS_EXPORT void finalizeKnownProps()
 
 EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log)
 {
-    std::lock_guard l(s_registry->mutex);
+    std::unique_lock l(s_registry->mutex);
+
+    int success = 0;
 
     auto ret1 = s_registry->propsById.insert({ pi->id(), pi });
     if (!ret1.second)
     {
-        throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->id_str()));
+        if (std::strcmp(ret1.first->second.ptr->id_str(), pi->id_str()) != 0)
+            throw Exception(ER_HERE(), 
+                Util::format("Existing property %08x (%s) prevents %s from being registered", pi->id(), ret1.first->second.ptr->id_str(), pi->id_str()));
+
+        ret1.first->second.ref += 1;
+    }
+    else
+    {
+        ++success;
     }
 
     auto ret2 = s_registry->propsByName.insert({ pi->id_str(), pi });
     if (!ret2.second)
     {
-        throw Exception(ER_HERE(), Util::format("Property with ID %08x (%s) already registered", pi->id(), pi->id_str()));
+        if (ret1.first->second.ptr->id() != pi->id())
+            throw Exception(ER_HERE(), 
+                Util::format("Existing property %s (%08x) prevents %08x from being registered", ret1.first->second.ptr->id_str(), ret1.first->second.ptr->id(), pi->id()));
+
+        ret1.first->second.ref += 1;
+    }
+    else
+    {
+        ++success;
     }
 
-    ErLogDebug(log, ErLogNowhere(), "Registered property %08x (%s)", pi->id(), pi->id_str());
+    if (success > 0)
+        ErLogDebug(log, ErLogNowhere(), "Registered property %08x (%s)", pi->id(), pi->id_str());
 }
 
 EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log) noexcept
@@ -71,43 +98,54 @@ EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log)
     if (!pi)
         return;
         
-    std::lock_guard l(s_registry->mutex);
+    std::unique_lock l(s_registry->mutex);
+
+    int success = 0;
 
     auto it1 = s_registry->propsById.find(pi->id());
     if (it1 != s_registry->propsById.end())
     {
-        s_registry->propsById.erase(it1);
+        if (!--it1->second.ref)
+        {
+            s_registry->propsById.erase(it1);
+            ++success;
+        }
     }
 
     auto it2 = s_registry->propsByName.find(pi->id_str());
     if (it2 != s_registry->propsByName.end())
     {
-        s_registry->propsByName.erase(it2);
+        if (!--it2->second.ref)
+        {
+            s_registry->propsByName.erase(it2);
+            ++success;
+        }
     }
 
-    ErLogDebug(log, ErLogNowhere(), "Unregistered property %08x (%s)", pi->id(), pi->id_str());
+    if (success > 0)
+        ErLogDebug(log, ErLogNowhere(), "Unregistered property %08x (%s)", pi->id(), pi->id_str());
 }
 
 EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id) noexcept
 {
-    std::lock_guard l(s_registry->mutex);
+    std::shared_lock l(s_registry->mutex);
 
     auto it = s_registry->propsById.find(id);
     if (it == s_registry->propsById.end())
         return IPropertyInfo::Ptr();
 
-    return it->second;
+    return it->second.ptr;
 }
 
 EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id) noexcept
 {
-    std::lock_guard l(s_registry->mutex);
+    std::shared_lock l(s_registry->mutex);
 
     auto it = s_registry->propsByName.find(id);
     if (it == s_registry->propsByName.end())
         return IPropertyInfo::Ptr();
 
-    return it->second;
+    return it->second.ptr;
 }
 
 

@@ -131,8 +131,6 @@ void IconCache::receiveIcon() noexcept
     {
         Er::Util::logException(m_log, Er::Log::Level::Error, e);
     }
-
-    Er::Log::Warning(m_log) << "pullIcon() failed";
 }
 
 std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& name, IconSize size)
