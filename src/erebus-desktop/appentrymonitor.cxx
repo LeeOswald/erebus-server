@@ -11,7 +11,9 @@
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
+#include <vector>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/process/search_path.hpp>
 
 
@@ -64,7 +66,9 @@ std::string_view unquote(std::string_view str)
 
 std::string extractExeNameFromCommand(std::string_view command) noexcept
 {
-    auto args = Er::Util::split(command, std::string_view(" "), Er::Util::SplitSkipEmptyParts, 10);
+    std::vector<std::string> args;
+    args.reserve(10);
+    boost::split(args, command, [](char c) { return (c == ' '); });
     if (args.empty())
         return std::string();
 
@@ -173,7 +177,9 @@ private:
             return;
         }
 
-        auto dirs = Er::Util::split(std::string_view(xdgDirs), std::string_view(":"), Er::Util::SplitSkipEmptyParts);
+        std::vector<std::string> dirs;
+        boost::split(dirs, std::string_view(xdgDirs), [](char c) { return (c == ':'); });
+
         for (auto& d: dirs)
         {
             if (stop.stop_requested())

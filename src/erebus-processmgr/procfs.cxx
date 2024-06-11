@@ -4,10 +4,11 @@
 #include <erebus/util/autoptr.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/posixerror.hxx>
-#include <erebus/util/stringutil.hxx>
 
+#include <boost/algorithm/string.hpp>
 
 #include <fstream>
+#include <vector>
 
 #include <dirent.h>
 #include <sys/stat.h>
@@ -546,7 +547,10 @@ CpuTimesAll ProcFs::readCpuTimes() noexcept
 
         auto lineParser = [this](const std::string& line, CpuTimes& t)
         {
-            auto parts = Er::Util::split(line, std::string_view(" "), Er::Util::SplitSkipEmptyParts, 12);
+            std::vector<std::string> parts;
+            parts.reserve(13);
+            boost::split(parts, line, [](char c) { return (c == ' '); });
+    
             if (parts.size() > 1)
                 t.user = ::strtoull(parts[1].c_str(), nullptr, 10) / double(m_clkTck);
 
@@ -662,7 +666,9 @@ MemStats ProcFs::readMemStats() noexcept
         std::string line;
         while (std::getline(stream, line))
         {
-            auto parts = Er::Util::split(line, std::string_view(" "), Er::Util::SplitSkipEmptyParts, 3);
+            std::vector<std::string> parts;
+            parts.reserve(3);
+            boost::split(parts, line, [](char c) { return (c == ' '); });
             if (parts.size() < 3)
                 continue;
 

@@ -1,6 +1,9 @@
 #include <erebus/util/inifile.hxx>
 #include <erebus/util/stringutil.hxx>
 
+#include <boost/algorithm/string.hpp>
+
+#include <vector>
 
 namespace Er
 {
@@ -130,8 +133,9 @@ std::string_view detectSection(std::string_view line)
 EREBUS_EXPORT Sections parse(std::string_view raw)
 {
     // split into lines
-    auto lines = Er::Util::split(raw, std::string_view("\r\n"), Er::Util::SplitSkipEmptyParts);
-
+    std::vector<std::string> lines;
+    boost::split(lines, raw, [](char c) { return ((c == '\n') || (c == '\r')); });
+    
     Sections sections;
     Section currentSection;
     std::string currentSectionName;

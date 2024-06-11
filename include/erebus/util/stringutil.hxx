@@ -12,48 +12,6 @@ namespace Er
 namespace Util
 {
 
-struct SplitSkipEmptyPartsT {};
-constexpr SplitSkipEmptyPartsT SplitSkipEmptyParts;
-
-struct SplitKeepEmptyPartsT {};
-constexpr SplitKeepEmptyPartsT SplitKeepEmptyParts;
-
-
-template <class StringT, class StringViewT, class ModeT>
-std::vector<StringT> split(StringT source, StringViewT delimiters, ModeT mode, std::optional<std::size_t> countHint = std::nullopt)
-{
-    std::vector<StringT> output;
-    if (countHint && *countHint)
-        output.reserve(*countHint);
-        
-    size_t first = 0;
-
-    while (first < source.size())
-    {
-        const auto second = source.find_first_of(delimiters, first);
-
-        if constexpr (std::is_same_v<ModeT, SplitSkipEmptyPartsT>)
-        {
-            if (first != second)
-                output.emplace_back(source.substr(first, second - first));
-        }
-        else if constexpr (std::is_same_v<ModeT, SplitKeepEmptyPartsT>)
-        {
-            output.emplace_back(source.substr(first, second - first));
-        }
-        else
-        {
-            ErAssert(!"Unsupported split mode");
-        }
-
-        if (second == StringViewT::npos)
-            break;
-
-        first = second + 1;
-    }
-
-    return output;
-}
 
 template <class StringT>
 StringT ltrim(const StringT& s)
