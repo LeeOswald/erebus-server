@@ -1,3 +1,4 @@
+#include <erebus-desktop/protocol.hxx>
 #include <erebus/system/thread.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
@@ -30,7 +31,7 @@ IconCache::IconCache(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCache
     
 }
 
-IconCache::IconState IconCache::requestIcon(const std::string& name, IconSize size) noexcept
+std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& name, IconSize size) noexcept
 {
     auto& list = (size == IconSize::Large) ? m_appIcons32 : m_appIcons16;
     try
@@ -41,12 +42,12 @@ IconCache::IconState IconCache::requestIcon(const std::string& name, IconSize si
             auto existing = list.find(name);
             if (existing != list.end())
             {
-                if (existing->second->state == IconState::Requested)
+                if (existing->second->state == IconState::Pending)
                 { 
                     if (IconInfo::Clock::now() - existing->second->timestamp < IconRequestExpired)
                     {
                         Er::Log::Debug(m_log) << "Icon [" << name << "] has already been requested";
-                        return IconState::Requested; // already requested
+                        return existing->second; // already requested
                     }
                 }
                 
@@ -63,10 +64,11 @@ IconCache::IconState IconCache::requestIcon(const std::string& name, IconSize si
             {
                 std::unique_lock l(m_appIconsLock);
 
-                list.insert({ name, std::make_shared<IconInfo>(IconState::Requested) });
-            }
+                auto pending = std::make_shared<IconInfo>(IconState::Pending);
+                auto it = list.insert({ name, pending });
 
-            return IconState::Requested;
+                return it.first->second;
+            }
         }
     }
     catch (Er::Exception& e)
@@ -79,7 +81,7 @@ IconCache::IconState IconCache::requestIcon(const std::string& name, IconSize si
     }
 
     Er::Log::Warning(m_log) << "requestIcon() failed";
-    return IconState::Failure;
+    return std::make_shared<IconInfo>(IconState::NotPresent);
 }
 
 void IconCache::iconWorker(std::stop_token stop) noexcept
@@ -114,7 +116,7 @@ void IconCache::receiveIcon() noexcept
             if (response->result != Er::Desktop::IIconCacheIpc::IconResponse::Result::Ok)
             {
                 Er::Log::Info(m_log) << "Icon [" << response->request.name << "] was not found";
-                list.insert({ response->request.name, std::make_shared<IconInfo>(IconState::NotFound) });
+                list.insert({ response->request.name, std::make_shared<IconInfo>(IconState::NotPresent) });
             }
             else
             {
@@ -136,7 +138,7 @@ void IconCache::receiveIcon() noexcept
 std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& name, IconSize size)
 {
     // retrieve icon path
-    std::string path;
+    std::shared_ptr<IconInfo> iconInfo;
     {
         std::shared_lock l(m_appIconsLock);
 
@@ -144,26 +146,28 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
         auto existing = appIcons.find(name);
 
         if (existing != appIcons.end())
-            path = existing->second->path; 
+            iconInfo = existing->second; 
     }
 
-    if (path.empty())
-    {
-        // icon path yet unknown; request it now
-        auto state = requestIcon(name, size);
-        return std::make_shared<IconData>(state);
-    }
+    if (!iconInfo)
+        iconInfo = requestIcon(name, size); // icon path yet unknown; request it now
+        
+    if (!iconInfo)
+        return std::make_shared<IconData>(IconState::NotPresent);
+    
+    if (iconInfo->state != IconState::Found)
+        return std::make_shared<IconData>(iconInfo->state);
 
     // check if icon bytes are already cached
     {
         std::unique_lock l(m_cacheLock);
 
         auto& cache = (size == IconSize::Large) ? m_cache32 : m_cache16;
-        auto existing = cache.get(path);
+        auto existing = cache.get(iconInfo->path);
 
         if (existing)
         {
-            Er::Log::Debug(m_log) << "Found cached icon [" << path << "]";
+            Er::Log::Debug(m_log) << "Found cached icon [" << iconInfo->path << "]";
             return *existing;
         }
 
@@ -171,25 +175,25 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
         auto data = Er::protectedCall<Bytes>(
             m_log,
             ErLogComponent("IconCache"),
-            [this, &path]()
+            [this, iconInfo]()
             {
-                return Er::Util::loadBinaryFile(path);
+                return Er::Util::loadBinaryFile(iconInfo->path);
             }
         );
 
         if (data.empty())
         {
             // failed for whatever reason; don't try to load this icon file again
-            auto dummy = std::make_shared<IconData>(IconState::Failure);
-            cache.put(path, dummy);
-            Er::Log::Error(m_log) << "Could not load icon file [" << path << "]";
+            auto dummy = std::make_shared<IconData>(IconState::NotPresent);
+            cache.put(iconInfo->path, dummy);
+            Er::Log::Error(m_log) << "Could not load icon file [" << iconInfo->path << "]";
             return dummy;
         }
 
         // add to LRU cache
         auto icon = std::make_shared<IconData>(std::move(data));
-        cache.put(path, icon);
-        Er::Log::Info(m_log) << "Cached icon [" << path << "]";
+        cache.put(iconInfo->path, icon);
+        Er::Log::Info(m_log) << "Cached icon [" << iconInfo->path << "]";
         return icon;
     }
 }

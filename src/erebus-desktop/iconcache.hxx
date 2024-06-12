@@ -3,6 +3,7 @@
 #include <erebus/log.hxx>
 #include <erebus/lrucache.hxx>
 #include <erebus-desktop/erebus-desktop.hxx>
+#include <erebus-desktop/protocol.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
 #include <chrono>
@@ -33,15 +34,6 @@ class IconCache final
     : public Er::NonCopyable
 {
 public:
-    enum class IconState
-    {
-        Requested,
-        NotFound,
-        Found,
-        Cached,
-        Failure
-    };
-
     struct IconData
     {
         IconState state;
@@ -53,7 +45,7 @@ public:
 
         template <typename RawT>
         IconData(RawT&& raw)
-            : state(IconState::Cached)
+            : state(IconState::Found)
             , raw(std::forward<RawT>(raw))
         {}
     };
@@ -86,7 +78,7 @@ private:
 
 
     void iconWorker(std::stop_token stop) noexcept;
-    IconState requestIcon(const std::string& name, IconSize size) noexcept;
+    std::shared_ptr<IconInfo> requestIcon(const std::string& name, IconSize size) noexcept;
     void receiveIcon() noexcept;
 
     static constexpr size_t MaxAppQueue = 1024;

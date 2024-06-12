@@ -65,15 +65,32 @@ void version(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
 
 void iconByName(Er::Log::ILog* log, Er::Client::IClient* client, const std::string& iconName, uint32_t iconSize, const std::string& outFile)
 {
-    auto sessionId = client->beginSession(Er::Desktop::Requests::QueryIcon);
-
     Er::PropertyBag req;
     Er::addProperty<Er::Desktop::Props::IconName>(req, iconName);
     Er::addProperty<Er::Desktop::Props::IconSize>(req, iconSize);
     
-    auto reply = client->request(Er::Desktop::Requests::QueryIcon, req, sessionId);
+    ErLogInfo(log, ErLogNowhere(), "Requested icon by name [%s]...", iconName.c_str());
 
-    client->endSession(Er::Desktop::Requests::QueryIcon, sessionId);
+    auto reply = client->request(Er::Desktop::Requests::QueryIcon, req);
+    while (!g_signalReceived)
+    {
+        dumpPropertyBag(reply, log);
+
+        auto status = Er::getProperty<Er::Desktop::Props::IconState>(reply);
+        if (!status)
+        {
+            ErLogError(log, ErLogNowhere(), "No status returned");
+            break;
+        }
+
+        if (*status == static_cast<uint32_t>(Er::Desktop::IconState::Pending))
+        {
+            reply = client->request(Er::Desktop::Requests::QueryIcon, req);
+            continue;
+        }
+
+        break;
+    }    
 }
 
 void iconByName(Er::Log::ILog* log, const Er::Client::Params& params, const std::string& iconName, uint32_t iconSize, const std::string& outFile)
