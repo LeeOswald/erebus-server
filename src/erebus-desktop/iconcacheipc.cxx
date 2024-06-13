@@ -1,5 +1,5 @@
 #include <erebus/exception.hxx>
-#include <erebus-desktop/erebus-desktop.hxx>
+#include <erebus-desktop/ic.hxx>
 
 #include <boost/interprocess/ipc/message_queue.hpp>
 #include <boost/thread/thread_time.hpp>
@@ -13,19 +13,68 @@ namespace Desktop
 namespace
 {
 
+class IconCacheIpcImplBase
+    : public Er::NonCopyable
+{
+public:
+    struct Create_t { };
+    struct Open_t { };
+    static constexpr Create_t Create = Create_t{};
+    static constexpr Open_t Open = Open_t{};
+
+    ~IconCacheIpcImplBase()
+    {
+        if (m_own)
+        {
+            boost::interprocess::message_queue::remove(m_nameIn.c_str());
+            boost::interprocess::message_queue::remove(m_nameOut.c_str());
+        }
+    }
+
+    explicit IconCacheIpcImplBase(Create_t, const char* queueNameIn, const char* queueNameOut)
+        : m_own(true)
+        , m_nameIn(queueNameIn)
+        , m_nameOut(queueNameOut)
+    {
+        boost::interprocess::message_queue::remove(m_nameIn.c_str());
+        boost::interprocess::message_queue::remove(m_nameOut.c_str());
+    }
+
+    explicit IconCacheIpcImplBase(Open_t, const char* queueNameIn, const char* queueNameOut)
+        : m_own(false)
+        , m_nameIn(queueNameIn)
+        , m_nameOut(queueNameOut)
+    {}
+
+protected:
+    bool m_own;
+    std::string m_nameIn;
+    std::string m_nameOut;
+};
+
+
 class IconCacheIpcImpl final
     : public IIconCacheIpc
-    , public Er::NonCopyable
+    , public IconCacheIpcImplBase 
 {
 public:
     ~IconCacheIpcImpl()
     {
     }
 
-    explicit IconCacheIpcImpl(const char* queueNameIn, const char* queueNameOut, size_t queueLimit)
-        : m_queueIn(boost::interprocess::open_or_create, queueNameIn, queueLimit, MessageSize)
-        , m_queueOut(boost::interprocess::open_or_create, queueNameOut, queueLimit, MessageSize)
-    {}
+    explicit IconCacheIpcImpl(Create_t, const char* queueNameIn, const char* queueNameOut, size_t queueLimit)
+        : IconCacheIpcImplBase(Create, queueNameIn, queueNameOut)
+        , m_queueIn(boost::interprocess::create_only, queueNameIn, queueLimit, MessageSize, boost::interprocess::permissions(0666))
+        , m_queueOut(boost::interprocess::create_only, queueNameOut, queueLimit, MessageSize, boost::interprocess::permissions(0666))
+    {
+    }
+
+    explicit IconCacheIpcImpl(Open_t, const char* queueNameIn, const char* queueNameOut)
+        : IconCacheIpcImplBase(Create, queueNameIn, queueNameOut)
+        , m_queueIn(boost::interprocess::open_only, queueNameIn)
+        , m_queueOut(boost::interprocess::open_only, queueNameOut)
+    {
+    }
 
     bool requestIcon(const IconRequest& request, std::chrono::milliseconds timeout) override
     {
@@ -147,9 +196,13 @@ private:
 
 EREBUSDESKTOP_EXPORT std::shared_ptr<IIconCacheIpc> createIconCacheIpc(const char* queueNameIn, const char* queueNameOut, size_t queueLimit)
 {
-    return std::make_shared<IconCacheIpcImpl>(queueNameIn, queueNameOut, queueLimit);
+    return std::make_shared<IconCacheIpcImpl>(IconCacheIpcImpl::Create, queueNameIn, queueNameOut, queueLimit);
 }
 
+EREBUSDESKTOP_EXPORT std::shared_ptr<IIconCacheIpc> openIconCacheIpc(const char* queueNameIn, const char* queueNameOut)
+{
+    return std::make_shared<IconCacheIpcImpl>(IconCacheIpcImpl::Open, queueNameIn, queueNameOut);
+}
 
 } // namespace Desktop {}
 

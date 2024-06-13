@@ -1,5 +1,7 @@
 add_library(${EREBUS_DESKTOPLIB} SHARED
+    ../../include/erebus-desktop/appentry.hxx
     ../../include/erebus-desktop/erebus-desktop.hxx
+    ../../include/erebus-desktop/ic.hxx
     ../../include/erebus-desktop/protocol.hxx
     appentrymonitor.cxx
     erebus-desktop.cxx

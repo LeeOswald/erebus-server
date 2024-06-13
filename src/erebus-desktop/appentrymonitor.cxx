@@ -1,4 +1,4 @@
-#include <erebus-desktop/erebus-desktop.hxx>
+#include <erebus-desktop/appentry.hxx>
 #include <erebus/system/thread.hxx>
 #include <erebus/system/user.hxx>
 #include <erebus/util/exceptionutil.hxx>

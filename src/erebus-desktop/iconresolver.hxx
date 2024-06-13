@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus-desktop/erebus-desktop.hxx>
+#include <erebus-desktop/appentry.hxx>
 
 
 namespace Er

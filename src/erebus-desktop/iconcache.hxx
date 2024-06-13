@@ -1,8 +1,7 @@
 #pragma once
 
-#include <erebus/log.hxx>
 #include <erebus/lrucache.hxx>
-#include <erebus-desktop/erebus-desktop.hxx>
+#include <erebus-desktop/ic.hxx>
 #include <erebus-desktop/protocol.hxx>
 #include <erebus-processmgr/processmgr.hxx>
 
