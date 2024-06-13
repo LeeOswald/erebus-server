@@ -2,10 +2,12 @@
 #include <erebus/system/thread.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
-
+#include <erebus/util/format.hxx>
 
 #include "iconcache.hxx"
 
+#include <filesystem>
+#include <sys/stat.h>
 
 namespace Er
 {
@@ -21,14 +23,54 @@ IconCache::~IconCache()
 {
 }
 
-IconCache::IconCache(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCacheIpc> iconCacheIpc, size_t cacheSize)
+IconCache::IconCache(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCacheIpc> iconCacheIpc, const std::string& cacheDir, size_t cacheSize)
     : m_log(log)
     , m_iconCacheIpc(iconCacheIpc)
+    , m_cacheDir(cacheDir)
     , m_cache16(cacheSize)
     , m_cache32(cacheSize)
     , m_iconWorker([this](std::stop_token stop) { iconWorker(stop); })
 {
-    
+    std::filesystem::path path(m_cacheDir);
+    std::error_code ec;
+    if (std::filesystem::exists(path))
+    {
+        if (!std::filesystem::is_directory(path, ec) || ec)
+            throw Er::Exception(ER_HERE(), Er::Util::format("%s is not a directry", m_cacheDir.c_str()));
+
+        if (::access(m_cacheDir.c_str(), R_OK | W_OK) == -1)
+            throw Er::Exception(ER_HERE(), Er::Util::format("%s is inaccessible", m_cacheDir.c_str()));
+    }
+    else
+    {
+        if (!std::filesystem::create_directory(path, ec) || ec)
+            throw Er::Exception(ER_HERE(), Er::Util::format("Failed to create %s: %s", m_cacheDir.c_str(), ec.message().c_str()));
+    }
+}
+
+std::shared_ptr<IconCache::IconInfo> IconCache::searchCacheDir(const std::string& name, IconSize size) noexcept
+{
+    auto iconPath = Er::Desktop::makeIconCachePath(m_cacheDir, name, static_cast<unsigned>(size), ".png");
+
+    struct stat st = {};
+    if (::stat(iconPath.c_str(), &st) == -1)
+        return std::shared_ptr<IconCache::IconInfo>();
+
+    auto& list = (size == IconSize::Large) ? m_appIcons32 : m_appIcons16;
+        
+    std::unique_lock l(m_appIconsLock);
+    auto existing = list.find(name);
+    if (existing != list.end())
+    {
+        return existing->second;
+    }
+
+    Er::Log::Info(m_log) << "Found icon [" << name << "] -> [" << iconPath << "]";
+
+    auto info = std::make_shared<IconInfo>(std::move(iconPath));
+    list.insert({ name, info });
+
+    return info;
 }
 
 std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& name, IconSize size) noexcept
@@ -56,7 +98,7 @@ std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& n
             }
         }
 
-        if (m_iconCacheIpc->requestIcon(Er::Desktop::IIconCacheIpc::IconRequest(name, uint16_t(size))))
+        if (m_iconCacheIpc->requestIcon(Er::Desktop::IIconCacheIpc::IconRequest(name, uint16_t(size)), Timeout))
         {
             Er::Log::Debug(m_log) << "Requested icon [" << name << "]";
 
@@ -149,7 +191,10 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
             iconInfo = existing->second; 
     }
 
-    if (!iconInfo)
+    if (!iconInfo && !m_cacheDir.empty())
+        iconInfo = searchCacheDir(name, size); // maybe already in the file cache
+
+    if (!iconInfo && m_iconCacheIpc)
         iconInfo = requestIcon(name, size); // icon path yet unknown; request it now
         
     if (!iconInfo)

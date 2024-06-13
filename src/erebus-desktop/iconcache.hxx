@@ -50,7 +50,7 @@ public:
     };
 
     ~IconCache();
-    explicit IconCache(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCacheIpc> iconCacheIpc, size_t cacheSize);
+    explicit IconCache(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCacheIpc> iconCacheIpc, const std::string& cacheDir, size_t cacheSize);
 
     std::shared_ptr<IconData> lookupByName(const std::string& name, IconSize size);
     
@@ -68,15 +68,17 @@ private:
             , timestamp(Clock::now())
         {}
 
-        explicit IconInfo(std::string path) noexcept
+        template <typename PathT>
+        explicit IconInfo(PathT&& path) noexcept
             : state(IconState::Found)
             , timestamp(Clock::now())
-            , path(path)
+            , path(std::forward<PathT>(path))
         {}
     };
 
 
     void iconWorker(std::stop_token stop) noexcept;
+    std::shared_ptr<IconInfo> searchCacheDir(const std::string& name, IconSize size) noexcept;
     std::shared_ptr<IconInfo> requestIcon(const std::string& name, IconSize size) noexcept;
     void receiveIcon() noexcept;
 
@@ -86,6 +88,7 @@ private:
 
     Er::Log::ILog* const m_log;
     std::shared_ptr<Er::Desktop::IIconCacheIpc> m_iconCacheIpc;
+    std::string m_cacheDir;
     
     std::shared_mutex m_appIconsLock;
     std::unordered_map<std::string, std::shared_ptr<IconInfo>> m_appIcons16; // icon name -> icon path

@@ -70,7 +70,7 @@ public:
     }
 
     explicit IconCacheIpcImpl(Open_t, const char* queueNameIn, const char* queueNameOut)
-        : IconCacheIpcImplBase(Create, queueNameIn, queueNameOut)
+        : IconCacheIpcImplBase(Open, queueNameIn, queueNameOut)
         , m_queueIn(boost::interprocess::open_only, queueNameIn)
         , m_queueOut(boost::interprocess::open_only, queueNameOut)
     {

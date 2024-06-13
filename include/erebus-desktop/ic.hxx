@@ -52,10 +52,10 @@ struct IIconCacheIpc
 
     virtual ~IIconCacheIpc() {}
 
-    virtual bool requestIcon(const IconRequest& request, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
-    virtual std::optional<IconRequest> pullIconRequest(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
-    virtual bool sendIcon(const IconResponse& response, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
-    virtual std::optional<IconResponse> pullIcon(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) = 0;
+    virtual bool requestIcon(const IconRequest& request, std::chrono::milliseconds timeout) = 0;
+    virtual std::optional<IconRequest> pullIconRequest(std::chrono::milliseconds timeout) = 0;
+    virtual bool sendIcon(const IconResponse& response, std::chrono::milliseconds timeout) = 0;
+    virtual std::optional<IconResponse> pullIcon(std::chrono::milliseconds timeout) = 0;
 };
 
 

@@ -72,9 +72,9 @@ public:
 
         m_appEntryMonitor = Er::Desktop::createAppEntryMonitor(params.log);
 
-        if (m_iconCacheIpc)
+        if (m_iconCacheIpc || !args.iconCacheDir.empty())
         {
-            m_iconCache = std::make_shared<Er::Desktop::Private::IconCache>(params.log, m_iconCacheIpc, args.iconCacheSize);
+            m_iconCache = std::make_shared<Er::Desktop::Private::IconCache>(params.log, m_iconCacheIpc, args.iconCacheDir, args.iconCacheSize);
         }
 
         m_service.reset(new Er::Desktop::Private::Service(m_params.log, m_iconCache));
@@ -87,6 +87,7 @@ public:
 private:
     struct PluginArgs
     {
+        std::string iconCacheDir;
         std::string iconCacheMq;
         size_t iconCacheSize;
     };
@@ -104,6 +105,10 @@ private:
             else if (arg->name == "iconcachesize")
             {
                 a.iconCacheSize = std::strtoul(arg->value.c_str(), nullptr, 10);
+            }
+            else if (arg->name == "iconcachedir")
+            {
+                a.iconCacheDir = arg->value;
             }
             else
             {
