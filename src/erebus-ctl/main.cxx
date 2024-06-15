@@ -63,13 +63,44 @@ void version(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
     );
 }
 
-void iconByName(Er::Log::ILog* log, Er::Client::IClient* client, const std::string& iconName, uint32_t iconSize, const std::string& outFile)
+void iconBy(
+    Er::Log::ILog* log, 
+    Er::Client::IClient* client, 
+    std::optional<std::string> iconName,
+    std::optional<std::string> iconExe,
+    std::optional<std::string> iconComm,
+    std::optional<uint64_t> iconPid,  
+    uint32_t iconSize, 
+    const std::string& outFile
+    )
 {
     Er::PropertyBag req;
-    Er::addProperty<Er::Desktop::Props::IconName>(req, iconName);
     Er::addProperty<Er::Desktop::Props::IconSize>(req, iconSize);
     
-    ErLogInfo(log, ErLogNowhere(), "Requested icon by name [%s]...", iconName.c_str());
+    if (iconName)
+    {
+        Er::addProperty<Er::Desktop::Props::IconName>(req, *iconName);
+        ErLogInfo(log, ErLogNowhere(), "Requested icon by name [%s]...", iconName->c_str());
+    }
+
+    if (iconExe)
+    {
+        Er::addProperty<Er::Desktop::Props::Exe>(req, *iconExe);
+        ErLogInfo(log, ErLogNowhere(), "Requested icon by exe [%s]...", iconExe->c_str());
+    }
+
+    if (iconComm)
+    {
+        Er::addProperty<Er::Desktop::Props::Comm>(req, *iconComm);
+        ErLogInfo(log, ErLogNowhere(), "Requested icon by comm [%s]...", iconComm->c_str());
+    }
+
+    if (iconPid)
+    {
+        Er::addProperty<Er::Desktop::Props::Pid>(req, *iconPid);
+        ErLogInfo(log, ErLogNowhere(), "Requested icon by PID %zu...", *iconPid);
+    }
+        
 
     auto reply = client->request(Er::Desktop::Requests::QueryIcon, req);
     while (!g_signalReceived)
@@ -93,15 +124,24 @@ void iconByName(Er::Log::ILog* log, Er::Client::IClient* client, const std::stri
     }    
 }
 
-void iconByName(Er::Log::ILog* log, const Er::Client::Params& params, const std::string& iconName, uint32_t iconSize, const std::string& outFile)
+void iconBy(
+    Er::Log::ILog* log, 
+    const Er::Client::Params& params, 
+    std::optional<std::string> iconName,
+    std::optional<std::string> iconExe,
+    std::optional<std::string> iconComm,
+    std::optional<uint64_t> iconPid, 
+    uint32_t iconSize, 
+    const std::string& outFile
+    )
 {
     protectedCall(
         log,
-        [log, &params, iconName, iconSize, outFile]()
+        [log, &params, iconName, iconExe, iconComm, iconPid, iconSize, outFile]()
         {
             auto client = Er::Client::create(params);
 
-            iconByName(log, client.get(), iconName, iconSize, outFile);
+            iconBy(log, client.get(), iconName, iconExe, iconComm, iconPid, iconSize, outFile);
         }
     );
 }
@@ -147,6 +187,9 @@ int main(int argc, char* argv[])
             ("procdiff", "view process list (incremental)")
             ("kill", po::value<std::string>(), "kill <pid>:<signal>")
             ("icon", po::value<std::string>(), "retrieve icon by name")
+            ("iconcomm", po::value<std::string>(), "retrieve icon by process\'s comm")
+            ("iconexe", po::value<std::string>(), "retrieve icon by process\'s exe path")
+            ("iconpid", po::value<uint64_t>(), "retrieve icon by process\'s PID")
             ("iconsize", po::value<int>(), "icon size (16|32)")
             ("out", po::value<std::string>(&outFile), "output file name")
         ;
@@ -226,22 +269,32 @@ int main(int argc, char* argv[])
             auto pid = std::strtoull(parts[0].c_str(), nullptr, 10);
             killProcess(&console, params, pid, parts[1]);
         }
-        else if (vm.count("icon"))
-        {
-            auto iconName = vm["icon"].as<std::string>();
-            uint32_t iconSize = 16;
-            if (vm.count("iconsize"))
-            {
-                iconSize = static_cast<uint32_t>(vm["iconsize"].as<int>());
-                if ((iconSize != 16) && (iconSize != 32))
-                {
-                    std::cerr << "Unsupported icon size\n";
-                    return EXIT_FAILURE;
-                }
-            }
 
-            iconByName(&console, params, iconName, iconSize, outFile);
+        uint32_t iconSize = 16;
+        if (vm.count("iconsize"))
+        {
+            iconSize = static_cast<uint32_t>(vm["iconsize"].as<int>());
+            if ((iconSize != 16) && (iconSize != 32))
+            {
+                std::cerr << "Unsupported icon size\n";
+                return EXIT_FAILURE;
+            }
         }
+
+        std::optional<std::string> iconName;
+        std::optional<std::string> iconExe;
+        std::optional<std::string> iconComm;
+        std::optional<uint64_t> iconPid;
+        if (vm.count("icon"))
+            iconName = vm["icon"].as<std::string>();
+        if (vm.count("iconexe"))
+            iconExe = vm["iconexe"].as<std::string>();        
+        if (vm.count("iconcomm"))
+            iconComm = vm["iconcomm"].as<std::string>();
+        if (vm.count("iconpid"))
+            iconPid = vm["iconpid"].as<uint64_t>();
+
+        iconBy(&console, params, iconName, iconExe, iconComm, iconPid, iconSize, outFile);
         
         if (g_signalReceived)
         {

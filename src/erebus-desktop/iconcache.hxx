@@ -50,7 +50,12 @@ public:
     };
 
     ~IconCache();
-    explicit IconCache(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCacheIpc> iconCacheIpc, const std::string& cacheDir, size_t cacheSize);
+    explicit IconCache(
+        Er::Log::ILog* log, 
+        std::shared_ptr<Er::Desktop::IIconCacheIpc> iconCacheIpc, 
+        const std::string& cacheDir, 
+        size_t cacheSize
+        );
 
     std::shared_ptr<IconData> lookupByName(const std::string& name, IconSize size);
     

@@ -22,7 +22,8 @@ struct KnownApp
 
 const KnownApp g_KnownApps[] =
 {
-    { std::regex("^((ba|z|tc|c|k)?sh)$"), "utilities-terminal" }
+    { std::regex("^((ba|z|tc|c|k)?sh)$"), "utilities-terminal" },
+    { std::regex("^chrome$"), "google-chrome" }
 };
 
 std::string defaultExeIcon()

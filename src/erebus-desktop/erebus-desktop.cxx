@@ -5,6 +5,7 @@
 
 #include "erebus-version.h"
 #include "iconcache.hxx"
+#include "iconresolver.hxx"
 #include "service.hxx"
 
 #include <atomic>
@@ -72,12 +73,14 @@ public:
 
         m_appEntryMonitor = Er::Desktop::createAppEntryMonitor(params.log);
 
+        m_iconResolver = std::make_shared<Er::Desktop::Private::IconResolver>(params.log, m_appEntryMonitor);
+
         if (m_iconCacheIpc || !args.iconCacheDir.empty())
         {
             m_iconCache = std::make_shared<Er::Desktop::Private::IconCache>(params.log, m_iconCacheIpc, args.iconCacheDir, args.iconCacheSize);
         }
 
-        m_service.reset(new Er::Desktop::Private::Service(m_params.log, m_iconCache));
+        m_service.reset(new Er::Desktop::Private::Service(m_params.log, m_iconResolver, m_iconCache));
         for (auto container: m_params.containers)
         {
             m_service->registerService(container);
@@ -127,6 +130,7 @@ private:
     Er::Server::PluginParams m_params;
     std::shared_ptr<IIconCacheIpc> m_iconCacheIpc;
     std::shared_ptr<IAppEntryMonitor> m_appEntryMonitor;
+    std::shared_ptr<Er::Desktop::Private::IconResolver> m_iconResolver;
     std::shared_ptr<Er::Desktop::Private::IconCache> m_iconCache;
     std::unique_ptr<Er::Desktop::Private::Service> m_service;
 };

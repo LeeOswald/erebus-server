@@ -13,6 +13,7 @@ namespace Desktop
 namespace Private
 {
 
+class IconResolver;
 class IconCache;
 
 
@@ -22,7 +23,7 @@ class Service final
 {
 public:
     ~Service();
-    explicit Service(Er::Log::ILog* log, std::shared_ptr<IconCache> iconCache);
+    explicit Service(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::Private::IconResolver> iconResolver, std::shared_ptr<IconCache> iconCache);
 
     void registerService(Er::Server::IServiceContainer* container);
     void unregisterService(Er::Server::IServiceContainer* container);
@@ -39,6 +40,7 @@ private:
     Er::PropertyBag packIcon(std::shared_ptr<IconCache::IconData> icon);
 
     Er::Log::ILog* const m_log;
+    std::shared_ptr<Er::Desktop::Private::IconResolver> m_iconResolver;
     std::shared_ptr<IconCache> m_iconCache;
 };
 

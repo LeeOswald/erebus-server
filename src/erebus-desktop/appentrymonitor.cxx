@@ -322,7 +322,7 @@ private:
             return std::shared_ptr<AppEntry>();
         }
 
-        e->exec = *exePath;
+        e->exec = resolveSymlink(*exePath);
 
         auto ico = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Icon"));
         if (!ico)
@@ -339,13 +339,27 @@ private:
     {
         boost::filesystem::path filename(exe);
         if (filename.is_absolute())
+        {
             return std::make_optional(exe);
+        }
 
         auto path = boost::process::search_path(filename, m_searchPaths);
         if (path.empty())
             return std::nullopt;
 
         return std::make_optional(path.native());
+    }
+
+    static std::string resolveSymlink(const std::string& path) noexcept
+    {
+        std::filesystem::path fspath(path);
+        std::error_code ec;
+        while (std::filesystem::is_symlink(fspath, ec) && !ec)
+        {
+            fspath = std::filesystem::read_symlink(fspath, ec);
+        }
+
+        return fspath.native();
     }
 
     void notifyAll(std::shared_ptr<AppEntry> app)

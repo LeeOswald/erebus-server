@@ -1,4 +1,5 @@
 #include "iconcache.hxx"
+#include "iconresolver.hxx"
 #include "service.hxx"
 
 #include <erebus-desktop/protocol.hxx>
@@ -21,8 +22,9 @@ Service::~Service()
     ErLogDebug(m_log, ErLogInstance("Er::Desktop::Private::Service"), "~Service()");
 }
 
-Service::Service(Er::Log::ILog* log, std::shared_ptr<IconCache> iconCache)
+Service::Service(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::Private::IconResolver> iconResolver, std::shared_ptr<IconCache> iconCache)
     : m_log(log)
+    , m_iconResolver(iconResolver)
     , m_iconCache(iconCache)
 {
     ErLogDebug(m_log, ErLogInstance("Er::Desktop::Private::Service"), "Service()");
@@ -85,6 +87,25 @@ Er::PropertyBag Service::queryIcon(const Er::PropertyBag& args)
     {
         auto iconData = m_iconCache->lookupByName(*iconName, IconSize(*iconSize));
         return packIcon(iconData);
+    }
+
+    auto comm = Er::getProperty<Er::Desktop::Props::Comm>(args);
+    auto exe = Er::getProperty<Er::Desktop::Props::Exe>(args);
+    auto pid = Er::getProperty<Er::Desktop::Props::Pid>(args);
+
+    if (comm || exe || pid)
+    {
+        auto name = m_iconResolver->lookup(
+            exe ? std::make_optional(*exe) : std::nullopt,
+            comm ? std::make_optional(*comm) : std::nullopt,
+            pid ? std::make_optional(*pid) : std::nullopt
+        );
+
+        if (!name.empty())
+        {
+            auto iconData = m_iconCache->lookupByName(*iconName, IconSize(*iconSize));
+            return packIcon(iconData);
+        }
     }
 
     return Er::PropertyBag();
