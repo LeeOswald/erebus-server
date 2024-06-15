@@ -322,7 +322,7 @@ private:
             return std::shared_ptr<AppEntry>();
         }
 
-        e->exec = resolveSymlink(*exePath);
+        e->exec = Er::Util::resolveSymlink(*exePath);
 
         auto ico = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Icon"));
         if (!ico)
@@ -349,19 +349,7 @@ private:
 
         return std::make_optional(path.native());
     }
-
-    static std::string resolveSymlink(const std::string& path) noexcept
-    {
-        std::filesystem::path fspath(path);
-        std::error_code ec;
-        while (std::filesystem::is_symlink(fspath, ec) && !ec)
-        {
-            fspath = std::filesystem::read_symlink(fspath, ec);
-        }
-
-        return fspath.native();
-    }
-
+    
     void notifyAll(std::shared_ptr<AppEntry> app)
     {
         std::shared_lock l(m_callbackLock);
