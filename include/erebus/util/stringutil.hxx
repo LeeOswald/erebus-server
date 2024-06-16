@@ -31,11 +31,15 @@ void split(const StringT& source, StringViewT delimiters, ModeT mode, ReceiverT 
         if constexpr (std::is_same_v<ModeT, SplitSkipEmptyPartsT>)
         {
             if (first != second)
-                receiver(source.substr(first, second - first));
+            {
+                if (!receiver(source.substr(first, second - first)))
+                    break;
+            }
         }
         else
         {
-            receiver(source.substr(first, second - first));
+            if (!receiver(source.substr(first, second - first)))
+                break;
         }
 
         if (second == StringViewT::npos)

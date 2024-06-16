@@ -5,6 +5,8 @@ add_library(${EREBUS_DESKTOPLIB} SHARED
     ../../include/erebus-desktop/protocol.hxx
     appentrymonitor.cxx
     erebus-desktop.cxx
+    desktopfile.cxx
+    desktopfile.hxx
     iconcacheipc.cxx
     iconcache.hxx
     iconcache.cxx

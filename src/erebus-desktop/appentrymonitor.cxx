@@ -14,6 +14,7 @@
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/process/search_path.hpp>
 
 
@@ -296,8 +297,14 @@ private:
 
     std::shared_ptr<AppEntry> parseFile(const std::string& path)
     {
-        auto contents = Er::Util::loadTextFile(path);
-        auto ini = Er::Util::IniFile::parse(contents);
+        boost::iostreams::mapped_file_source file(path);
+        if (!file.is_open())
+        {
+            Er::Log::Warning(m_log, ErLogComponent("AppEntryMonitorImpl")) << "Failed to open [" << path << "]";
+            return std::shared_ptr<AppEntry>();
+        }
+
+        auto ini = Er::Util::IniFile::parse(std::string_view(file.data(), file.size()));
 
         auto e = std::make_shared<AppEntry>();
         auto name = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Name"));
@@ -322,7 +329,11 @@ private:
             return std::shared_ptr<AppEntry>();
         }
 
-        e->exec = Er::Util::resolveSymlink(*exePath);
+        Er::Log::Debug(m_log, ErLogComponent("AppEntryMonitorImpl")) << "Resolved [" << exeName << "] -> [" << *exePath << "]";
+
+        auto exec = Er::Util::resolveSymlink(*exePath);
+        if (exec)
+        e->exec = *exec;
 
         auto ico = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Icon"));
         if (!ico)

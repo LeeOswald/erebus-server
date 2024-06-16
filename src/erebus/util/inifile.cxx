@@ -145,7 +145,7 @@ EREBUS_EXPORT Sections parse(std::string_view raw)
             auto trimmed = Er::Util::trim(line);
 
             if (trimmed.empty())
-                return;
+                return true;
 
             auto sectionName = detectSection(line);
             if (!sectionName.empty()) // section start
@@ -158,12 +158,14 @@ EREBUS_EXPORT Sections parse(std::string_view raw)
                 }
 
                 currentSectionName = sectionName;
-                return;
+                return true;
             }
             
             auto kv = splitKeyAndValue(line);
             if (!kv.first.empty())
                 currentSection.insert({ kv.first, kv.second });
+
+            return true;
         }
     );
 
