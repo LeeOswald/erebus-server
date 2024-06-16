@@ -132,45 +132,45 @@ std::string_view detectSection(std::string_view line)
 
 EREBUS_EXPORT Sections parse(std::string_view raw)
 {
-    // split into lines
-    std::vector<std::string> lines;
-    boost::split(lines, raw, [](char c) { return ((c == '\n') || (c == '\r')); });
-    
     Sections sections;
     Section currentSection;
-    std::string currentSectionName;
+    std::string_view currentSectionName;
 
-    for (auto& line: lines)
-    {
-        auto trimmed = Er::Util::trim(line);
-
-        if (trimmed.empty())
-            continue;
-
-        auto sectionName = detectSection(line);
-        if (!sectionName.empty()) // section start
+    Er::Util::split(
+        raw, 
+        std::string_view("\n\r"), 
+        Er::Util::SplitSkipEmptyParts,
+        [&sections, &currentSection, &currentSectionName](std::string_view line)
         {
-            // complete previous section
-            if (!currentSectionName.empty())
-            {
-                sections.insert(std::make_pair(std::move(currentSectionName), std::move(currentSection)));
-                currentSection.clear();
-            }
+            auto trimmed = Er::Util::trim(line);
 
-            currentSectionName = sectionName;
-            continue;
+            if (trimmed.empty())
+                return;
+
+            auto sectionName = detectSection(line);
+            if (!sectionName.empty()) // section start
+            {
+                // complete previous section
+                if (!currentSectionName.empty())
+                {
+                    sections.insert({ currentSectionName, currentSection });
+                    currentSection.clear();
+                }
+
+                currentSectionName = sectionName;
+                return;
+            }
+            
+            auto kv = splitKeyAndValue(line);
+            if (!kv.first.empty())
+                currentSection.insert({ kv.first, kv.second });
         }
-        
-        auto kv = splitKeyAndValue(line);
-        if (!kv.first.empty())
-            currentSection.insert(std::make_pair(std::string(kv.first), std::string(kv.second)));
-        
-    }
+    );
 
     // complete the last section
     if (!currentSectionName.empty())
     {
-        sections.insert(std::make_pair(std::move(currentSectionName), std::move(currentSection)));
+        sections.insert({ currentSectionName, currentSection });
     }
 
     return sections;
@@ -178,11 +178,11 @@ EREBUS_EXPORT Sections parse(std::string_view raw)
 
 EREBUS_EXPORT std::optional<std::string_view> lookup(const Sections& ini, std::string_view section, std::string_view key)
 {
-    auto secIt = ini.find(std::string(section));
+    auto secIt = ini.find(section);
     if (secIt == ini.end())
         return std::nullopt;
 
-    auto valIt = secIt->second.find(std::string(key));
+    auto valIt = secIt->second.find(key);
     if (valIt == secIt->second.end())
         return std::nullopt;
 

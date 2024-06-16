@@ -15,8 +15,8 @@ namespace IniFile
 {
 
 
-using Key = std::string;
-using Value = std::string;
+using Key = std::string_view;
+using Value = std::string_view;
 using Section = std::map<Key, Value>;
 using Sections = std::map<Key, Section>;
 

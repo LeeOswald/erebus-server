@@ -4,13 +4,46 @@
 
 #include <cwctype>
 #include <string_view>
-#include <vector>
+
 
 namespace Er
 {
     
 namespace Util
 {
+
+struct SplitSkipEmptyPartsT {};
+constexpr SplitSkipEmptyPartsT SplitSkipEmptyParts;
+
+struct SplitKeepEmptyPartsT {};
+constexpr SplitKeepEmptyPartsT SplitKeepEmptyParts;
+
+
+template <class StringT, class StringViewT, class ModeT, class ReceiverT>
+void split(const StringT& source, StringViewT delimiters, ModeT mode, ReceiverT receiver)
+{
+    size_t first = 0;
+
+    while (first < source.size())
+    {
+        const auto second = source.find_first_of(delimiters, first);
+
+        if constexpr (std::is_same_v<ModeT, SplitSkipEmptyPartsT>)
+        {
+            if (first != second)
+                receiver(source.substr(first, second - first));
+        }
+        else
+        {
+            receiver(source.substr(first, second - first));
+        }
+
+        if (second == StringViewT::npos)
+            break;
+
+        first = second + 1;
+    }
+}
 
 
 template <class StringT>

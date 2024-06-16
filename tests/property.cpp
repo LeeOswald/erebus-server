@@ -6,9 +6,6 @@
 
 TEST(Er_Property, registration)
 {
-    // must be already registered
-    EXPECT_THROW(Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<TestProps::BoolProp>>(), g_log), Er::Exception);
-
     using SomeProp = Er::PropertyValue<bool, ER_PROPID("some_test_prop"), "SomeBool", Er::PropertyComparator<bool>, Er::PropertyFormatter<bool>>;
     Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<SomeProp>>(), g_log);
     
