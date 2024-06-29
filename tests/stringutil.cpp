@@ -10,21 +10,21 @@ TEST(string_split, char_string)
     // split empty string
     {
         std::vector<std::string_view> v;
-        Er::Util::split(std::string_view(), std::string_view(" "), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        Er::Util::split(std::string_view(), std::string_view(" "), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); });
         EXPECT_TRUE(v.empty());
-        Er::Util::split(std::string_view(), std::string_view(" "), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        Er::Util::split(std::string_view(), std::string_view(" "), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); });
         EXPECT_TRUE(v.empty());
     }
 
     // split by empty separator
     {
         std::vector<std::string_view> v;
-        Er::Util::split(std::string_view("test string"), std::string_view(), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        Er::Util::split(std::string_view("test string"), std::string_view(), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); });
         ASSERT_EQ(v.size(), 1);
         EXPECT_STREQ(std::string(v[0]).c_str(), "test string");
         
         v.clear();
-        Er::Util::split(std::string_view("test string"), std::string_view(), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        Er::Util::split(std::string_view("test string"), std::string_view(), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); });
         ASSERT_EQ(v.size(), 1);
         EXPECT_STREQ(std::string(v[0]).c_str(), "test string");
     }
@@ -32,13 +32,13 @@ TEST(string_split, char_string)
     // split by single separator
     {
         std::vector<std::string_view> v;
-        Er::Util::split(std::string_view(";test ;string;;"), std::string_view(";"), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        Er::Util::split(std::string_view(";test ;string;;"), std::string_view(";"), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); });
         ASSERT_EQ(v.size(), 2);
         EXPECT_STREQ(std::string(v[0]).c_str(), "test ");
         EXPECT_STREQ(std::string(v[1]).c_str(), "string");
 
         v.clear();
-        Er::Util::split(std::string_view(";test ;string;;"), std::string_view(";"), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        Er::Util::split(std::string_view(";test ;string;;"), std::string_view(";"), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); });
         ASSERT_EQ(v.size(), 4);
         EXPECT_STREQ(std::string(v[0]).c_str(), "");
         EXPECT_STREQ(std::string(v[1]).c_str(), "test ");
@@ -49,18 +49,49 @@ TEST(string_split, char_string)
     // split by multiple separator
     {
         std::vector<std::string_view> v;
-        Er::Util::split(std::string_view(";test .string!;"), std::string_view(";.!"), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        Er::Util::split(std::string_view(";test .string!;"), std::string_view(";.!"), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); });
         ASSERT_EQ(v.size(), 2);
         EXPECT_STREQ(std::string(v[0]).c_str(), "test ");
         EXPECT_STREQ(std::string(v[1]).c_str(), "string");
 
         v.clear();
-        Er::Util::split(std::string_view(";test .string!;"), std::string_view(";.!"), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        Er::Util::split(std::string_view(";test .string!;"), std::string_view(";.!"), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); });
         ASSERT_EQ(v.size(), 4);
         EXPECT_STREQ(std::string(v[0]).c_str(), "");
         EXPECT_STREQ(std::string(v[1]).c_str(), "test ");
         EXPECT_STREQ(std::string(v[2]).c_str(), "string");
         EXPECT_STREQ(std::string(v[3]).c_str(), "");
+    }
+
+    // return bool from callback
+    {
+        std::vector<std::string_view> v;
+        Er::Util::split(std::string_view("1.2.3.4.5"), std::string_view("."), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); return true; });
+        ASSERT_EQ(v.size(), 5);
+        EXPECT_STREQ(std::string(v[0]).c_str(), "1");
+        EXPECT_STREQ(std::string(v[1]).c_str(), "2");
+        EXPECT_STREQ(std::string(v[2]).c_str(), "3");
+        EXPECT_STREQ(std::string(v[3]).c_str(), "4");
+        EXPECT_STREQ(std::string(v[4]).c_str(), "5");
+
+        v.clear();
+        Er::Util::split(std::string_view("1.2.3.4.5"), std::string_view("."), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); return (v.size() < 2); });
+        ASSERT_EQ(v.size(), 2);
+        EXPECT_STREQ(std::string(v[0]).c_str(), "1");
+        EXPECT_STREQ(std::string(v[1]).c_str(), "2");
+    }
+
+    // push into vector
+    {
+        std::vector<std::string_view> v;
+        std::vector<std::string_view> out;
+        Er::Util::split(std::string_view("1.2.3.4.5"), std::string_view("."), Er::Util::SplitSkipEmptyParts, out);
+        ASSERT_EQ(out.size(), 5);
+        EXPECT_STREQ(std::string(out[0]).c_str(), "1");
+        EXPECT_STREQ(std::string(out[1]).c_str(), "2");
+        EXPECT_STREQ(std::string(out[2]).c_str(), "3");
+        EXPECT_STREQ(std::string(out[3]).c_str(), "4");
+        EXPECT_STREQ(std::string(out[4]).c_str(), "5");
     }
 }
 

@@ -32,14 +32,44 @@ void split(const StringT& source, StringViewT delimiters, ModeT mode, ReceiverT 
         {
             if (first != second)
             {
-                if (!receiver(source.substr(first, second - first)))
-                    break;
+                if constexpr (std::is_invocable_r_v<bool, ReceiverT, StringViewT>)
+                {
+                    if (!receiver(source.substr(first, second - first)))
+                        break;
+                }
+                else if constexpr (std::is_invocable_v<ReceiverT, StringViewT>)
+                {
+                    receiver(source.substr(first, second - first));
+                }
+                else if constexpr (requires(ReceiverT r) {  r.emplace_back(StringViewT()); })
+                {
+                    receiver.emplace_back(source.substr(first, second - first));
+                }
+                else
+                {
+                    ErAssert(!"unsupported receiver");
+                }
             }
         }
         else
         {
-            if (!receiver(source.substr(first, second - first)))
-                break;
+            if constexpr (std::is_invocable_r_v<bool, ReceiverT, StringViewT>)
+            {
+                if (!receiver(source.substr(first, second - first)))
+                    break;
+            }
+            else if constexpr (std::is_invocable_v<ReceiverT, StringViewT>)
+            {
+                receiver(source.substr(first, second - first));
+            }
+            else if constexpr (requires(ReceiverT r) {  r.emplace_back(StringViewT()); })
+            {
+                receiver.emplace_back(source.substr(first, second - first));
+            }
+            else
+            {
+                ErAssert(!"unsupported receiver");
+            }
         }
 
         if (second == StringViewT::npos)
