@@ -41,10 +41,15 @@ void terminateHandler()
     std::ostringstream ss;
     ss << boost::stacktrace::stacktrace();
 
-    if (g_log)
+    if (g_log) 
+    {
         ErLogFatal(g_log, ErLogNowhere(), "std::terminate() called from\n%s", ss.str().c_str());
+        g_log->flush();
+    }
     else
-        Er::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str();
+    {
+        Er::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str() << std::endl; // force flush
+    }
 
     std::abort();
 }
