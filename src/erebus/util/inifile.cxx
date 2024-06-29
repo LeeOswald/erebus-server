@@ -130,10 +130,10 @@ std::string_view detectSection(std::string_view line)
 } // namespace {}
 
 
-EREBUS_EXPORT Sections parse(std::string_view raw)
+EREBUS_EXPORT IniView parse(std::string_view raw)
 {
-    Sections sections;
-    Section currentSection;
+    IniView sections;
+    SectionView currentSection;
     std::string_view currentSectionName;
 
     Er::Util::split(
@@ -177,20 +177,6 @@ EREBUS_EXPORT Sections parse(std::string_view raw)
 
     return sections;
 }
-
-EREBUS_EXPORT std::optional<std::string_view> lookup(const Sections& ini, std::string_view section, std::string_view key)
-{
-    auto secIt = ini.find(section);
-    if (secIt == ini.end())
-        return std::nullopt;
-
-    auto valIt = secIt->second.find(key);
-    if (valIt == secIt->second.end())
-        return std::nullopt;
-
-    return valIt->second;
-}
-
 
 } // namespace IniFile {}
 
