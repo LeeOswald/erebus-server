@@ -16,19 +16,6 @@ TEST(string_split, char_string)
         EXPECT_TRUE(v.empty());
     }
 
-    // split by empty separator
-    {
-        std::vector<std::string_view> v;
-        Er::Util::split(std::string_view("test string"), std::string_view(), Er::Util::SplitSkipEmptyParts, [&v](std::string_view part) { v.push_back(part); });
-        ASSERT_EQ(v.size(), 1);
-        EXPECT_STREQ(std::string(v[0]).c_str(), "test string");
-        
-        v.clear();
-        Er::Util::split(std::string_view("test string"), std::string_view(), Er::Util::SplitKeepEmptyParts, [&v](std::string_view part) { v.push_back(part); });
-        ASSERT_EQ(v.size(), 1);
-        EXPECT_STREQ(std::string(v[0]).c_str(), "test string");
-    }
-
     // split by single separator
     {
         std::vector<std::string_view> v;
@@ -85,7 +72,7 @@ TEST(string_split, char_string)
     {
         std::vector<std::string_view> v;
         std::vector<std::string_view> out;
-        Er::Util::split(std::string_view("1.2.3.4.5"), std::string_view("."), Er::Util::SplitSkipEmptyParts, out);
+        Er::Util::split2(std::string_view("1.2.3.4.5"), std::string_view("."), Er::Util::SplitSkipEmptyParts, out);
         ASSERT_EQ(out.size(), 5);
         EXPECT_STREQ(std::string(out[0]).c_str(), "1");
         EXPECT_STREQ(std::string(out[1]).c_str(), "2");

@@ -20,30 +20,32 @@ constexpr SplitKeepEmptyPartsT SplitKeepEmptyParts;
 
 
 template <class StringT, class StringViewT, class ModeT, class ReceiverT>
-void split(const StringT& source, StringViewT delimiters, ModeT mode, ReceiverT receiver)
+    requires std::is_invocable_v<ReceiverT, StringViewT>
+void split(const StringT& source, const StringViewT& delimiters, ModeT mode, ReceiverT receiver)
 {
-    size_t first = 0;
+    ErAssert(!delimiters.empty());
+    if (delimiters.empty())
+        return;
 
-    while (first < source.size())
+    size_t start = 0;
+
+    while (start < source.size())
     {
-        const auto second = source.find_first_of(delimiters, first);
+        const auto delim = source.find_first_of(delimiters, start);
+        const auto end = (delim == StringT::npos) ? source.size() : delim;
 
         if constexpr (std::is_same_v<ModeT, SplitSkipEmptyPartsT>)
         {
-            if (first != second)
+            if (start != end)
             {
                 if constexpr (std::is_invocable_r_v<bool, ReceiverT, StringViewT>)
                 {
-                    if (!receiver(source.substr(first, second - first)))
+                    if (!receiver(StringViewT(source.data() + start, end - start)))
                         break;
                 }
                 else if constexpr (std::is_invocable_v<ReceiverT, StringViewT>)
                 {
-                    receiver(source.substr(first, second - first));
-                }
-                else if constexpr (requires(ReceiverT r) {  r.emplace_back(StringViewT()); })
-                {
-                    receiver.emplace_back(source.substr(first, second - first));
+                    receiver(StringViewT(source.data() + start, end - start));
                 }
                 else
                 {
@@ -55,16 +57,12 @@ void split(const StringT& source, StringViewT delimiters, ModeT mode, ReceiverT 
         {
             if constexpr (std::is_invocable_r_v<bool, ReceiverT, StringViewT>)
             {
-                if (!receiver(source.substr(first, second - first)))
+                if (!receiver(StringViewT(source.data() + start, end - start)))
                     break;
             }
             else if constexpr (std::is_invocable_v<ReceiverT, StringViewT>)
             {
-                receiver(source.substr(first, second - first));
-            }
-            else if constexpr (requires(ReceiverT r) {  r.emplace_back(StringViewT()); })
-            {
-                receiver.emplace_back(source.substr(first, second - first));
+                receiver(StringViewT(source.data() + start, end - start));
             }
             else
             {
@@ -72,13 +70,46 @@ void split(const StringT& source, StringViewT delimiters, ModeT mode, ReceiverT 
             }
         }
 
-        if (second == StringViewT::npos)
+        if (delim == StringT::npos)
             break;
 
-        first = second + 1;
+        start = delim + 1;
     }
 }
 
+template <class StringT, class StringViewT, class ModeT, class ReceiverT>
+    requires requires(ReceiverT r) {  r.emplace_back(StringViewT()); }
+void split2(const StringT& source, const StringViewT& delimiters, ModeT mode, ReceiverT& receiver)
+{
+    ErAssert(!delimiters.empty());
+    if (delimiters.empty())
+        return;
+
+    size_t start = 0;
+
+    while (start < source.size())
+    {
+        const auto delim = source.find_first_of(delimiters, start);
+        const auto end = (delim == StringT::npos) ? source.size() : delim;
+
+        if constexpr (std::is_same_v<ModeT, SplitSkipEmptyPartsT>)
+        {
+            if (start != end)
+            {
+                receiver.emplace_back(StringViewT(source.data() + start, end - start));
+            }
+        }
+        else
+        {
+            receiver.emplace_back(StringViewT(source.data() + start, end - start));
+        }
+
+        if (delim == StringT::npos)
+            break;
+
+        start = delim + 1;
+    }
+}
 
 template <class StringT>
 StringT ltrim(const StringT& s)
