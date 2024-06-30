@@ -271,8 +271,11 @@ int main(int argc, char* argv[])
         if (vm.count("iconpid"))
             iconPid = vm["iconpid"].as<uint64_t>();
 
-        iconBy(&console, params, iconName, iconPid, iconSize, outFile);
-        
+        if (iconName || iconPid)
+        {
+            iconBy(&console, params, iconName, iconPid, iconSize, outFile);
+        }
+
         if (g_signalReceived)
         {
             std::cerr << "Exiting due to signal " << *g_signalReceived << "\n";

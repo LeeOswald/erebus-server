@@ -6,8 +6,9 @@ if(ER_USE_SYSTEM_GRPC)
     
     find_package(Protobuf REQUIRED)
     find_package(gRPC CONFIG REQUIRED)
-
-    include_directories("${gRPC_DIR}/../../../include" "${Protobuf_INCLUDE_DIR}") 
+    
+    include_directories("${gRPC_DIR}/../../../include")
+    include_directories("${Protobuf_INCLUDE_DIRS}")
 
     set(GRPC_LIBS
         gRPC::grpc++ 
