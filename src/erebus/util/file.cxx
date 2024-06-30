@@ -1,10 +1,13 @@
 #include <erebus/exception.hxx>
+#include <erebus/util/autoptr.hxx>
 #include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
+#if ER_WINDOWS
+    #include <erebus/util/utf16.hxx>
+#endif
 
+#include <cstdio>
 #include <filesystem>
-
-#include <boost/iostreams/device/mapped_file.hpp>
 
 
 namespace Er
@@ -13,24 +16,58 @@ namespace Er
 namespace Util
 {
 
+namespace
+{
+
+struct FileCloser
+{
+    void operator()(FILE* f)
+    {
+        std::fclose(f);
+    }
+};
+
+using File = AutoPtr<FILE, FileCloser>;
+
+} // namespace {}
+
+
+EREBUS_EXPORT Bytes loadBinaryFile(const std::string& path)
+{
+    File f(std::fopen(path.c_str(), "rb"));
+    if (!f)
+    {
+        auto e = errno;
+        throw Er::Exception(ER_HERE(), Er::Util::format("Failed to open %s", path.c_str()), Er::ExceptionProps::PosixErrorCode(e));
+    }
+
+    std::setvbuf(f, nullptr, _IONBF, 0);
+
+    std::fseek(f, 0, SEEK_END);
+    auto size = std::ftell(f);
+    std::fseek(f, 0, SEEK_SET);
+
+    if (size <= 0)
+    {
+        return Bytes();
+    }
+
+    std::string buffer;
+    buffer.resize(size);
+
+    auto rd = std::fread(buffer.data(), 1, size, f);
+    if (rd < size_t(size))
+    {
+        buffer.resize(rd);
+    }
+
+    return Bytes(std::move(buffer));
+}
+
 EREBUS_EXPORT std::string loadTextFile(const std::string& path)
 {
     auto bytes = loadBinaryFile(path);
     return std::string(std::move(bytes.bytes()));
-}
-
-EREBUS_EXPORT Bytes loadBinaryFile(const std::string& path)
-{
-    if (std::filesystem::file_size(path) == 0)
-        return Bytes();
-
-    boost::iostreams::mapped_file_source file(path);
-    if (!file.is_open())
-        throw Er::Exception(ER_HERE(), Er::Util::format("Failed to open [%s]", path.c_str()));
-
-    std::string buffer(file.data(), file.size());
-
-    return Bytes(std::move(buffer));
 }
 
 EREBUS_EXPORT std::optional<std::string> resolveSymlink(const std::string& path, unsigned maxDepth) noexcept
@@ -43,7 +80,14 @@ EREBUS_EXPORT std::optional<std::string> resolveSymlink(const std::string& path,
         return std::nullopt;
 
     if (!link)
+    {
+#if ER_WINDOWS
+        auto& native = fspath.native();
+        return Er::Util::utf16To8bit(CP_UTF8, native.data(), native.length());
+#else
         return fspath.native();
+#endif
+    }
     
     while (maxDepth)
     {
@@ -55,8 +99,15 @@ EREBUS_EXPORT std::optional<std::string> resolveSymlink(const std::string& path,
             return std::nullopt;
 
         if (!link)
+        {
+#if ER_WINDOWS
+            auto& native = fspath.native();
+            return Er::Util::utf16To8bit(CP_UTF8, native.data(), native.length());
+#else
             return fspath.native();
-        
+#endif
+        }
+
         --maxDepth;
     }
 
