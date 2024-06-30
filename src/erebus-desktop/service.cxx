@@ -95,7 +95,7 @@ Er::PropertyBag Service::queryIcon(const Er::PropertyBag& args)
         auto name = m_iconResolver->lookupIcon(*pid);
         if (!name.empty())
         {
-            auto iconData = m_iconCache->lookupByName(*iconName, IconSize(*iconSize));
+            auto iconData = m_iconCache->lookupByName(name, IconSize(*iconSize));
             return packIcon(iconData);
         }
     }
