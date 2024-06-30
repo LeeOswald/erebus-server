@@ -96,13 +96,14 @@ void dumpProcess(Er::Client::IClient* client, Er::Log::ILog* log, int pid)
     );
 }
 
-void dumpProcess(Er::Log::ILog* log, const Er::Client::Params& params, int pid, int interval)
+void dumpProcess(Er::Log::ILog* log, const Er::Client::ChannelParams& params, int pid, int interval)
 {
     protectedCall(
         log,
         [log, &params, pid, interval]()
         {
-            auto client = Er::Client::create(params);
+            auto channel = Er::Client::createChannel(params);
+            auto client = Er::Client::createClient(channel, log);
 
             while (!g_signalReceived)
             {
@@ -135,13 +136,14 @@ void dumpProcesses(Er::Client::IClient* client, Er::Log::ILog* log)
     );
 }
 
-void dumpProcesses(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
+void dumpProcesses(Er::Log::ILog* log, const Er::Client::ChannelParams& params, int interval)
 {
     protectedCall(
         log,
         [log, &params, interval]()
         {
-            auto client = Er::Client::create(params);
+            auto channel = Er::Client::createChannel(params);
+            auto client = Er::Client::createClient(channel, log);
 
             while (!g_signalReceived)
             {
@@ -182,13 +184,14 @@ void dumpProcessesDiff(Er::Client::IClient* client, Er::Log::ILog* log, Er::Clie
     );
 }
 
-void dumpProcessesDiff(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
+void dumpProcessesDiff(Er::Log::ILog* log, const Er::Client::ChannelParams& params, int interval)
 {
     protectedCall(
         log,
         [log, &params, interval]()
         {
-            auto client = Er::Client::create(params);
+            auto channel = Er::Client::createChannel(params);
+            auto client = Er::Client::createClient(channel, log);
             auto sessionId = client->beginSession(Er::ProcessRequests::ListProcessesDiff);
 
             while (!g_signalReceived)
@@ -208,13 +211,14 @@ void dumpProcessesDiff(Er::Log::ILog* log, const Er::Client::Params& params, int
     );
 }
 
-void killProcess(Er::Log::ILog* log, const Er::Client::Params& params, uint64_t pid, const std::string& signame)
+void killProcess(Er::Log::ILog* log, const Er::Client::ChannelParams& params, uint64_t pid, const std::string& signame)
 {
     protectedCall(
         log,
         [log, &params, pid, &signame]()
         {
-            auto client = Er::Client::create(params);
+            auto channel = Er::Client::createChannel(params);
+            auto client = Er::Client::createClient(channel, log);
             
             Er::PropertyBag req;
             req.insert({ Er::ProcessesGlobal::Pid::Id::value, Er::Property(Er::ProcessesGlobal::Pid::Id::value, pid) });

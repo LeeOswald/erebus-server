@@ -42,13 +42,14 @@ void version(Er::Client::IClient* client, Er::Log::ILog* log)
     );
 }
 
-void version(Er::Log::ILog* log, const Er::Client::Params& params, int interval)
+void version(Er::Log::ILog* log, const Er::Client::ChannelParams& params, int interval)
 {
     protectedCall(
         log,
         [log, &params, interval]()
         {
-            auto client = Er::Client::create(params);
+            auto channel = Er::Client::createChannel(params);
+            auto client = Er::Client::createClient(channel, log);
 
             while (!g_signalReceived)
             {
@@ -111,7 +112,7 @@ void iconBy(
 
 void iconBy(
     Er::Log::ILog* log, 
-    const Er::Client::Params& params, 
+    const Er::Client::ChannelParams& params, 
     std::optional<std::string> iconName,
     std::optional<uint64_t> iconPid, 
     uint32_t iconSize, 
@@ -122,7 +123,8 @@ void iconBy(
         log,
         [log, &params, iconName, iconPid, iconSize, outFile]()
         {
-            auto client = Er::Client::create(params);
+            auto channel = Er::Client::createChannel(params);
+            auto client = Er::Client::createClient(channel, log);
 
             iconBy(log, client.get(), iconName, iconPid, iconSize, outFile);
         }
@@ -217,7 +219,7 @@ int main(int argc, char* argv[])
         if (!keyFile.empty())
             key = Er::Util::loadTextFile(keyFile);
 
-        Er::Client::Params params(&console, ep, ssl, root, cert, key);
+        Er::Client::ChannelParams params(ep, ssl, root, cert, key);
         
         if (vm.count("version"))
         {

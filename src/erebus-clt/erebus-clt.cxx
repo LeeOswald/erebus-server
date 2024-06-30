@@ -29,9 +29,9 @@ public:
     {
     }
 
-    explicit ClientImpl(std::shared_ptr<grpc::Channel> channel, const Params& params)
+    explicit ClientImpl(std::shared_ptr<grpc::Channel> channel, Er::Log::ILog* log)
         : m_stub(erebus::Erebus::NewStub(channel))
-        , m_params(params)
+        , m_log(log)
     {
     }
 
@@ -192,13 +192,8 @@ private:
         }
     }
 
-    const size_t kSaltLength = 8;
-    const std::string_view kSaltChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
-
     std::unique_ptr<erebus::Erebus::Stub> m_stub;
-    Params m_params;
-    bool m_autorized = false;
-    std::string m_ticket;
+    Er::Log::ILog* const m_log;
 };
 
 
@@ -253,7 +248,7 @@ EREBUSCLT_EXPORT void finalize()
     }
 }
 
-EREBUSCLT_EXPORT std::shared_ptr<IClient> create(const Params& params)
+EREBUSCLT_EXPORT std::shared_ptr<void> createChannel(const ChannelParams& params)
 {
     bool local = params.endpoint.starts_with("unix:");
 
@@ -275,14 +270,17 @@ EREBUSCLT_EXPORT std::shared_ptr<IClient> create(const Params& params)
         opts.pem_private_key = params.key;
 
         auto channelCreds = grpc::SslCredentials(opts);
-        auto channel = grpc::CreateCustomChannel(params.endpoint, channelCreds, args);
-        return std::make_shared<ClientImpl>(channel, params);
+        return grpc::CreateCustomChannel(params.endpoint, channelCreds, args);
     }
     else
     {
-        auto channel = grpc::CreateCustomChannel(params.endpoint, grpc::InsecureChannelCredentials(), args);
-        return std::make_shared<ClientImpl>(channel, params);
+        return grpc::CreateCustomChannel(params.endpoint, grpc::InsecureChannelCredentials(), args);
     }
+}
+
+EREBUSCLT_EXPORT std::shared_ptr<IClient> createClient(std::shared_ptr<void> channel, Log::ILog* log)
+{
+    return std::make_shared<ClientImpl>(std::static_pointer_cast<grpc::Channel>(channel), log);
 }
 
 } // namespace Client {}

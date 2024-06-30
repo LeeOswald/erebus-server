@@ -69,27 +69,24 @@ public:
 };
 
 
-struct Params
+struct ChannelParams
 {
-    Log::ILog* log = nullptr;
     std::string endpoint;
     bool ssl;
     std::string rootCertificate;
     std::string certificate;
     std::string key;
 
-    Params() noexcept = default;
+    ChannelParams() noexcept = default;
 
-    explicit Params(
-        Log::ILog* log,
+    explicit ChannelParams(
         std::string_view endpoint,
         bool ssl,
         std::string_view rootCertificate,
         std::string_view certificate,
         std::string_view key
     )
-        : log(log)
-        , endpoint(endpoint)
+        : endpoint(endpoint)
         , ssl(ssl)
         , rootCertificate(rootCertificate)
         , certificate(certificate)
@@ -98,7 +95,11 @@ struct Params
     }
 };
 
-EREBUSCLT_EXPORT std::shared_ptr<IClient> create(const Params& params);
+
+EREBUSCLT_EXPORT std::shared_ptr<void> createChannel(const ChannelParams& params);
+
+EREBUSCLT_EXPORT std::shared_ptr<IClient> createClient(std::shared_ptr<void> channel, Log::ILog* log);
+
 
 } // namespace Client {}
     
