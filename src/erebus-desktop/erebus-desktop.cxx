@@ -1,8 +1,8 @@
 #include <erebus/exception.hxx>
-#include <erebus-desktop/appentry.hxx>
 #include <erebus-desktop/protocol.hxx>
 #include <erebus-srv/plugin.hxx>
 
+#include "desktopfilecache.hxx"
 #include "erebus-version.h"
 #include "iconcache.hxx"
 #include "iconresolver.hxx"
@@ -71,9 +71,9 @@ public:
             params.log->write(Er::Log::Level::Warning, ErLogComponent("DesktopPlugin"), "Starting without icon cache");
         }
 
-        m_appEntryMonitor = Er::Desktop::createAppEntryMonitor(params.log);
+        m_desktopFileCache = std::make_shared<Er::Desktop::Private::DesktopFileCache>(params.log);
 
-        m_iconResolver = std::make_shared<Er::Desktop::Private::IconResolver>(params.log, m_appEntryMonitor);
+        m_iconResolver = std::make_shared<Er::Desktop::Private::IconResolver>(params.log, m_desktopFileCache);
 
         if (m_iconCacheIpc || !args.iconCacheDir.empty())
         {
@@ -129,7 +129,7 @@ private:
 
     Er::Server::PluginParams m_params;
     std::shared_ptr<IIconCacheIpc> m_iconCacheIpc;
-    std::shared_ptr<IAppEntryMonitor> m_appEntryMonitor;
+    std::shared_ptr<Er::Desktop::Private::DesktopFileCache> m_desktopFileCache;
     std::shared_ptr<Er::Desktop::Private::IconResolver> m_iconResolver;
     std::shared_ptr<Er::Desktop::Private::IconCache> m_iconCache;
     std::unique_ptr<Er::Desktop::Private::Service> m_service;

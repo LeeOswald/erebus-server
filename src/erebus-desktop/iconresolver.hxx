@@ -1,7 +1,9 @@
 #pragma once
 
-#include <erebus-desktop/appentry.hxx>
+#include <erebus-desktop/erebus-desktop.hxx>
+#include <erebus/log.hxx>
 
+#include "procfs.hxx"
 
 namespace Er
 {
@@ -12,25 +14,23 @@ namespace Desktop
 namespace Private
 {
 
-//
-// lookup process icon name
-// 
+class DesktopFileCache;
+
 
 class IconResolver final
-    : public Er::Desktop::IAppEntryCallback
-    , public Er::NonCopyable
+    : public Er::NonCopyable
 {
 public:
-    ~IconResolver();
-    explicit IconResolver(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IAppEntryMonitor> appEntryMonitor);
+    explicit IconResolver(Er::Log::ILog* log, std::shared_ptr<DesktopFileCache> m_desktopFileCache);
 
-    std::string lookup(std::optional<std::string> exe, std::optional<std::string> comm, std::optional<uint64_t> pid);
+    std::string lookupIcon(uint64_t pid) const;
 
 private:
-    void appEntryAdded(std::shared_ptr<Er::Desktop::AppEntry> app) override;
+    std::string desktopFileFor(uint64_t pid, const std::string& comm, const std::string& exec) const;
 
     Er::Log::ILog* const m_log;
-    std::shared_ptr<Er::Desktop::IAppEntryMonitor> m_appEntryMonitor;
+    std::shared_ptr<DesktopFileCache> m_desktopFileCache;
+    ProcFs m_procFs;
 };
 
 

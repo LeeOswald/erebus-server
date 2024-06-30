@@ -89,18 +89,10 @@ Er::PropertyBag Service::queryIcon(const Er::PropertyBag& args)
         return packIcon(iconData);
     }
 
-    auto comm = Er::getProperty<Er::Desktop::Props::Comm>(args);
-    auto exe = Er::getProperty<Er::Desktop::Props::Exe>(args);
     auto pid = Er::getProperty<Er::Desktop::Props::Pid>(args);
-
-    if (comm || exe || pid)
+    if (pid)
     {
-        auto name = m_iconResolver->lookup(
-            exe ? std::make_optional(*exe) : std::nullopt,
-            comm ? std::make_optional(*comm) : std::nullopt,
-            pid ? std::make_optional(*pid) : std::nullopt
-        );
-
+        auto name = m_iconResolver->lookupIcon(*pid);
         if (!name.empty())
         {
             auto iconData = m_iconCache->lookupByName(*iconName, IconSize(*iconSize));

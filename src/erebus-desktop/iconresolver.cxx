@@ -1,6 +1,8 @@
+#include "desktopfilecache.hxx"
 #include "iconresolver.hxx"
 
 #include <regex>
+
 
 namespace Er
 {
@@ -46,47 +48,96 @@ std::string knownAppIcon(const std::string& comm)
 } // namespace {}
 
 
-IconResolver::~IconResolver()
-{
-    m_appEntryMonitor->unregisterCallback(this);
-}
-
-IconResolver::IconResolver(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IAppEntryMonitor> appEntryMonitor)
+IconResolver::IconResolver(Er::Log::ILog* log, std::shared_ptr<DesktopFileCache> desktopFileCache)
     : m_log(log)
-    , m_appEntryMonitor(appEntryMonitor)
-{
-    m_appEntryMonitor->registerCallback(this);
-}
-
-void IconResolver::appEntryAdded(std::shared_ptr<Er::Desktop::AppEntry> app)
+    , m_desktopFileCache(desktopFileCache)
+    , m_procFs("/proc", log)
 {
 }
 
-std::string IconResolver::lookup(std::optional<std::string> exe, std::optional<std::string> comm, std::optional<uint64_t> pid)
+std::string IconResolver::lookupIcon(uint64_t pid) const
 {
-    if (exe)
+    auto comm = m_procFs.readComm(pid);
+    if (comm.empty())
     {
-        auto app = m_appEntryMonitor->lookup(*exe);
-        if (app)
+        ErLogDebug(m_log, ErLogComponent("IconResolver"), "No comm for PID %zu", pid);
+        return defaultExeIcon();
+    }
+
+    auto knownIcon = knownAppIcon(comm);
+    if (!knownIcon.empty())
+    {
+        ErLogDebug(m_log, ErLogComponent("IconResolver"), "Found known icon [%s] for PID %zu [%s]", knownIcon.c_str(), pid, comm.c_str());
+        return knownIcon;
+    }
+
+    auto exec = m_procFs.readExePath(pid);
+    if (exec.empty())
+    {
+        ErLogDebug(m_log, ErLogComponent("IconResolver"), "No exe path for PID %zu [%s]", pid, comm.c_str());
+        return defaultExeIcon();
+    }
+
+    auto desktopFilePath = desktopFileFor(pid, comm, exec);
+    if (!desktopFilePath.empty())
+    {
+        auto desktopEntry = m_desktopFileCache->lookupByPath(desktopFilePath);
+        if (desktopEntry && !desktopEntry->icon.empty())
         {
-            ErLogDebug(m_log, ErLogComponent("IconResolver"), "[%s] -> [%s]", exe->c_str(), app->icon.c_str());
-            return app->icon;
+            ErLogDebug(m_log, ErLogComponent("IconResolver"), "Found icon [%s] for PID %zu [%s] [%s]", desktopEntry->icon.c_str(), pid,comm.c_str(), exec.c_str()); 
+            return desktopEntry->icon;
         }
     }
 
-    if (comm)
+    auto desktopEntry = m_desktopFileCache->lookupByExec(exec);
+    if (desktopEntry && !desktopEntry->icon.empty())
     {
-        auto ico = knownAppIcon(*comm);
-        if (!ico.empty())
+        ErLogDebug(m_log, ErLogComponent("IconResolver"), "Found icon [%s] for PID %zu [%s] [%s]", desktopEntry->icon.c_str(), pid,comm.c_str(), exec.c_str()); 
+        return desktopEntry->icon;
+    }
+
+    ErLogDebug(m_log, ErLogComponent("IconResolver"), "No icon for PID %zu [%s] [%s]", pid,comm.c_str(), exec.c_str()); 
+    return defaultExeIcon();
+}
+
+std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, const std::string& exec) const
+{
+    auto environ = m_procFs.readEnviron(pid);
+    if (environ.empty())
+    {
+        ErLogWarning(m_log, ErLogComponent("IconResolver"), "Empty environment for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str());
+        return std::string();
+    }
+
+    std::string bamfDesktopFileHint;
+    auto it = environ.find("BAMF_DESKTOP_FILE_HINT");
+    if (it != environ.end())
+    {
+        bamfDesktopFileHint = it->second;
+        ErLogDebug(m_log, ErLogComponent("IconResolver"), "BAMF_DESKTOP_FILE_HINT=[%s] for PID %zu [%s] [%s]", bamfDesktopFileHint.c_str(), pid, comm.c_str(), exec.c_str()); 
+    }
+
+    std::string gioDesktopFile;
+    it = environ.find("GIO_LAUNCHED_DESKTOP_FILE");
+    if (it != environ.end())
+    {
+        gioDesktopFile = it->second;
+        
+        it = environ.find("GIO_LAUNCHED_DESKTOP_FILE_PID");
+        if (it != environ.end())
         {
-            ErLogDebug(m_log, ErLogComponent("IconResolver"), "[%s] -> [%s]", exe->c_str(), ico.c_str());
-            return ico;
+            auto pidStr = it->second;
+            auto gioDesktopFilePid = std::strtoull(pidStr.c_str(), nullptr, 10);
+            if (gioDesktopFilePid == pid)
+            {
+                ErLogDebug(m_log, ErLogComponent("IconResolver"), "GIO_LAUNCHED_DESKTOP_FILE=[%s] for PID %zu [%s] [%s]", gioDesktopFile.c_str(), pid, comm.c_str(), exec.c_str()); 
+    
+                return gioDesktopFile;
+            }
         }
     }
 
-    auto defIcon = defaultExeIcon();
-    ErLogDebug(m_log, ErLogComponent("IconResolver"), "[%s] -> [%s]", exe->c_str(), defIcon.c_str());
-    return defIcon;
+    return bamfDesktopFileHint;
 }
 
 } // namespace Private {}

@@ -67,8 +67,6 @@ void iconBy(
     Er::Log::ILog* log, 
     Er::Client::IClient* client, 
     std::optional<std::string> iconName,
-    std::optional<std::string> iconExe,
-    std::optional<std::string> iconComm,
     std::optional<uint64_t> iconPid,  
     uint32_t iconSize, 
     const std::string& outFile
@@ -83,24 +81,11 @@ void iconBy(
         ErLogInfo(log, ErLogNowhere(), "Requested icon by name [%s]...", iconName->c_str());
     }
 
-    if (iconExe)
-    {
-        Er::addProperty<Er::Desktop::Props::Exe>(req, *iconExe);
-        ErLogInfo(log, ErLogNowhere(), "Requested icon by exe [%s]...", iconExe->c_str());
-    }
-
-    if (iconComm)
-    {
-        Er::addProperty<Er::Desktop::Props::Comm>(req, *iconComm);
-        ErLogInfo(log, ErLogNowhere(), "Requested icon by comm [%s]...", iconComm->c_str());
-    }
-
     if (iconPid)
     {
         Er::addProperty<Er::Desktop::Props::Pid>(req, *iconPid);
         ErLogInfo(log, ErLogNowhere(), "Requested icon by PID %zu...", *iconPid);
     }
-        
 
     auto reply = client->request(Er::Desktop::Requests::QueryIcon, req);
     while (!g_signalReceived)
@@ -128,8 +113,6 @@ void iconBy(
     Er::Log::ILog* log, 
     const Er::Client::Params& params, 
     std::optional<std::string> iconName,
-    std::optional<std::string> iconExe,
-    std::optional<std::string> iconComm,
     std::optional<uint64_t> iconPid, 
     uint32_t iconSize, 
     const std::string& outFile
@@ -137,11 +120,11 @@ void iconBy(
 {
     protectedCall(
         log,
-        [log, &params, iconName, iconExe, iconComm, iconPid, iconSize, outFile]()
+        [log, &params, iconName, iconPid, iconSize, outFile]()
         {
             auto client = Er::Client::create(params);
 
-            iconBy(log, client.get(), iconName, iconExe, iconComm, iconPid, iconSize, outFile);
+            iconBy(log, client.get(), iconName, iconPid, iconSize, outFile);
         }
     );
 }
@@ -187,9 +170,7 @@ int main(int argc, char* argv[])
             ("procdiff", "view process list (incremental)")
             ("kill", po::value<std::string>(), "kill <pid>:<signal>")
             ("icon", po::value<std::string>(), "retrieve icon by name")
-            ("iconcomm", po::value<std::string>(), "retrieve icon by process\'s comm")
-            ("iconexe", po::value<std::string>(), "retrieve icon by process\'s exe path")
-            ("iconpid", po::value<uint64_t>(), "retrieve icon by process\'s PID")
+            ("iconpid", po::value<uint64_t>(), "retrieve icon by process ID")
             ("iconsize", po::value<int>(), "icon size (16|32)")
             ("out", po::value<std::string>(&outFile), "output file name")
         ;
@@ -282,19 +263,13 @@ int main(int argc, char* argv[])
         }
 
         std::optional<std::string> iconName;
-        std::optional<std::string> iconExe;
-        std::optional<std::string> iconComm;
         std::optional<uint64_t> iconPid;
         if (vm.count("icon"))
             iconName = vm["icon"].as<std::string>();
-        if (vm.count("iconexe"))
-            iconExe = vm["iconexe"].as<std::string>();        
-        if (vm.count("iconcomm"))
-            iconComm = vm["iconcomm"].as<std::string>();
         if (vm.count("iconpid"))
             iconPid = vm["iconpid"].as<uint64_t>();
 
-        iconBy(&console, params, iconName, iconExe, iconComm, iconPid, iconSize, outFile);
+        iconBy(&console, params, iconName, iconPid, iconSize, outFile);
         
         if (g_signalReceived)
         {
