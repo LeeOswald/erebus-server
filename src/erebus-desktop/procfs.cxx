@@ -28,6 +28,21 @@ ProcFs::ProcFs(const std::string& root, Er::Log::ILog* const log)
     }
 }
 
+std::optional<uint64_t> ProcFs::getUid(uint64_t pid) const noexcept
+{
+    auto path = m_root;
+    path.append("/");
+    path.append(std::to_string(pid));
+    
+    struct ::stat64 fileStat;
+    if (::stat64(path.c_str(), &fileStat) == -1)
+    {
+        return std::nullopt;
+    }
+
+    return fileStat.st_uid;
+}
+
 std::string ProcFs::readComm(uintptr_t pid) const noexcept
 {
     try

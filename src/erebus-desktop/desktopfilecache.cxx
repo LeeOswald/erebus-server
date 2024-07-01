@@ -111,25 +111,18 @@ DesktopFileCache::DesktopFileCache(Er::Log::ILog* log)
 {
 }
 
-void DesktopFileCache::addXdgDataDirs(std::stop_token stop)
+void DesktopFileCache::addXdgDataDirs(const std::string& packed)
 {
-    auto xdgDirs = std::getenv("XDG_DATA_DIRS");
-    if (!xdgDirs)
-    {
-        Er::Log::Warning(m_log, ErLogComponent("DesktopFileCache")) << "XDG_DATA_DIRS is not set";
-        return;
-    }
-
     std::vector<std::string> dirs;
-    Er::Util::split2(std::string_view(xdgDirs), std::string_view(":"), Er::Util::SplitSkipEmptyParts, dirs);
-    
-    for (auto& d: dirs)
-    {
-        if (stop.stop_requested())
-            break;
+    Er::Util::split2(std::string_view(packed), std::string_view(":"), Er::Util::SplitSkipEmptyParts, dirs);
+    if (dirs.empty())
+        return;
 
-        std::filesystem::path path(d);
+    for (auto& dir: dirs)
+    {
+        std::filesystem::path path(dir);
         path.append("applications");
+        
         std::error_code ec;
         if (!std::filesystem::exists(path, ec))
             continue;
@@ -141,13 +134,20 @@ void DesktopFileCache::addXdgDataDirs(std::stop_token stop)
             continue;
         }
 
-        Er::Log::Debug(m_log, ErLogComponent("DesktopFileCache")) << "including " << pathStr;
-
         {
             std::unique_lock l(m_dirsLock);
-            m_dirs.push_back(std::move(pathStr));
+            m_dirs.push(std::move(dir));
+            m_idle = false;
         }
     }
+
+    m_dirsCv.notify_one();
+}
+
+bool DesktopFileCache::waitIdle(std::chrono::milliseconds timeout)
+{
+    std::unique_lock l(m_dirsLock);
+    return m_dirsCv.wait_for(l, timeout, [this]() { return m_idle; });
 }
 
 void DesktopFileCache::addUserDirs(std::stop_token stop)
@@ -161,12 +161,6 @@ void DesktopFileCache::addUserDirs(std::stop_token stop)
         if (u.homeDir.empty())
             continue;
 
-        if (::access(u.homeDir.c_str(), R_OK) == -1)
-        {
-            Er::Log::Warning(m_log, ErLogComponent("DesktopFileCache")) << "failed to access " << u.homeDir;
-            continue;
-        }
-
         std::filesystem::path path(u.homeDir);
         path.append(".local/share/applications");
         
@@ -175,12 +169,13 @@ void DesktopFileCache::addUserDirs(std::stop_token stop)
             continue;
 
         auto pathStr = path.string();
-        Er::Log::Debug(m_log, ErLogComponent("DesktopFileCache")) << "including " << pathStr;
-        
+        if (::access(pathStr.c_str(), R_OK) == -1)
         {
-            std::unique_lock l(m_dirsLock);
-            m_dirs.push_back(std::move(pathStr));
+            Er::Log::Warning(m_log, ErLogComponent("DesktopFileCache")) << "failed to access " << pathStr;
+            continue;
         }
+
+        parseFiles(pathStr, stop);
     }
 }
 
@@ -188,16 +183,28 @@ void DesktopFileCache::worker(std::stop_token stop)
 {
     Er::System::CurrentThread::setName("DesktopFileCache");
 
-    addXdgDataDirs(stop);
     addUserDirs(stop);
 
-    std::shared_lock l(m_dirsLock);
-    for (auto& dir: m_dirs)
-        parseFiles(dir, stop);
+    while (!stop.stop_requested())
+    {
+        std::unique_lock l(m_dirsLock);
+        if (!m_dirsCv.wait(l, stop, [this]() { return !m_dirs.empty(); }))
+            continue;
+
+        while (!m_dirs.empty() && !stop.stop_requested())
+        {
+            parseFiles(m_dirs.front(), stop);
+            m_dirs.pop();
+        }
+
+        m_idle = true;
+    }
 }
 
 void DesktopFileCache::parseFiles(const std::string& dir, std::stop_token stop)
 {
+    ErLogDebug(m_log, ErLogComponent("DesktopFileCache"), "Including [%s]", dir.c_str());
+
     std::vector<std::string> filePaths;
     Er::Util::searchFor(
         filePaths, 
@@ -322,9 +329,9 @@ std::optional<std::string> DesktopFileCache::findExePath(const std::string& exe)
     return std::make_optional(path.native());
 }
 
-DesktopFile::Ptr DesktopFileCache::lookupByExec(const std::string& exec) const
+DesktopFile::Ptr DesktopFileCache::lookupByExec(const std::string& exec)
 {
-    std::shared_lock l(m_entriesLock);
+    std::unique_lock l(m_entriesLock);
 
     auto it = m_entriesByExec.find(exec);
     if (it == m_entriesByExec.end())
@@ -333,11 +340,11 @@ DesktopFile::Ptr DesktopFileCache::lookupByExec(const std::string& exec) const
     return it->second;
 }
 
-DesktopFile::Ptr DesktopFileCache::lookupByPath(const std::string& path) const
+DesktopFile::Ptr DesktopFileCache::lookupByPath(const std::string& path)
 {
     // look in the cache
     {
-        std::shared_lock l(m_entriesLock);
+        std::unique_lock l(m_entriesLock);
 
         auto it = m_entriesByPath.find(path);
         if (it != m_entriesByPath.end())

@@ -55,7 +55,7 @@ IconResolver::IconResolver(Er::Log::ILog* log, std::shared_ptr<DesktopFileCache>
 {
 }
 
-std::string IconResolver::lookupIcon(uint64_t pid) const
+std::string IconResolver::lookupIcon(uint64_t pid)
 {
     auto comm = m_procFs.readComm(pid);
     if (comm.empty())
@@ -100,13 +100,36 @@ std::string IconResolver::lookupIcon(uint64_t pid) const
     return defaultExeIcon();
 }
 
-std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, const std::string& exec) const
+std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, const std::string& exec)
 {
+    auto uid = m_procFs.getUid(pid);
+    if (!uid)
+    {
+        ErLogDebug(m_log, ErLogComponent("IconResolver"), "No UID for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str()); 
+        return std::string();
+    }
+
+    ErLogDebug(m_log, ErLogComponent("IconResolver"), "UID %zu for PID %zu [%s] [%s]", *uid, pid, comm.c_str(), exec.c_str()); 
+        
+
     auto environ = m_procFs.readEnviron(pid);
     if (environ.empty())
     {
         ErLogWarning(m_log, ErLogComponent("IconResolver"), "Empty environment for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str());
         return std::string();
+    }
+
+    if (!haveXdgDataDirsFor(*uid))
+    {
+        auto it = environ.find("XDG_DATA_DIRS");
+        if (it != environ.end() && !it->second.empty())
+        {
+            addXdgDataDirsFor(*uid, it->second);
+        }
+        else
+        {
+            ErLogDebug(m_log, ErLogComponent("IconResolver"), "No XDG_DATA_DIRS for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str());
+        }
     }
 
     std::string bamfDesktopFileHint;
@@ -138,6 +161,32 @@ std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, 
     }
 
     return bamfDesktopFileHint;
+}
+
+bool IconResolver::haveXdgDataDirsFor(uint64_t uid) const
+{
+    std::unique_lock l(m_xdgDataDirsLock);
+    auto it = m_xdgDataDirs.find(uid);
+
+    return (it != m_xdgDataDirs.end());
+}
+
+void IconResolver::addXdgDataDirsFor(uint64_t uid, const std::string& dirs)
+{
+    bool updated = false;
+    {
+        std::unique_lock l(m_xdgDataDirsLock);
+        auto r = m_xdgDataDirs.insert({ uid, dirs });
+        updated = r.second;
+    }
+
+    if (updated)
+    {
+        m_desktopFileCache->addXdgDataDirs(dirs);
+        m_desktopFileCache->waitIdle(std::chrono::milliseconds(1000));
+
+        ErLogDebug(m_log, ErLogComponent("IconResolver"), "XDG_DATA_DIRS=[%s] for UID %zu", dirs.c_str(), uid);
+    }
 }
 
 } // namespace Private {}

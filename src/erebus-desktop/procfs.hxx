@@ -26,6 +26,7 @@ class ProcFs final
 public:
     explicit ProcFs(const std::string& root, Er::Log::ILog* const log);
 
+    std::optional<uint64_t> getUid(uint64_t pid) const noexcept;
     std::string readComm(uint64_t pid) const noexcept;
     std::string readExePath(uint64_t pid) const noexcept;
     std::unordered_map<std::string, std::string> readEnviron(uint64_t pid) const noexcept;

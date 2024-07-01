@@ -88,6 +88,7 @@ void iconBy(
         ErLogInfo(log, ErLogNowhere(), "Requested icon by PID %zu...", *iconPid);
     }
 
+    long retries = 3;
     auto reply = client->request(Er::Desktop::Requests::QueryIcon, req);
     while (!g_signalReceived)
     {
@@ -102,7 +103,14 @@ void iconBy(
 
         if (*status == static_cast<uint32_t>(Er::Desktop::IconState::Pending))
         {
+            if (!retries)
+                break;
+
+            --retries;
+                
+            std::this_thread::sleep_for(std::chrono::seconds(1));
             reply = client->request(Er::Desktop::Requests::QueryIcon, req);
+            
             continue;
         }
 
