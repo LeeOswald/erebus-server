@@ -20,12 +20,14 @@ struct ProcessData
     : public Er::NonCopyable
 {
     uint64_t pid;
+    uint64_t ppid;
     bool isNew;
     std::chrono::steady_clock::time_point timestamp;
     Er::PropertyBag properties;
 
-    explicit ProcessData(uint64_t pid, bool isNew, std::chrono::steady_clock::time_point timestamp, Er::PropertyBag&& properties) noexcept
+    explicit ProcessData(uint64_t pid, uint64_t ppid, bool isNew, std::chrono::steady_clock::time_point timestamp, Er::PropertyBag&& properties) noexcept
         : pid(pid)
+        , ppid(ppid)
         , isNew(isNew)
         , timestamp(timestamp)
         , properties(std::move(properties))
@@ -59,6 +61,7 @@ struct ProcessCollectionDiff
 
 struct ProcessDetailsCached // smth that is faster than a property bag lookup
 {
+    uint64_t ppid = ProcFs::InvalidPid;
     std::string comm;
     std::string exe;
     double stime = 0.0;
@@ -68,7 +71,7 @@ struct ProcessDetailsCached // smth that is faster than a property bag lookup
 Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required, Er::PropertyBag&& previous, ProcessDetailsCached& cached);
 Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required);
 
-Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current);
+Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, uint64_t ppid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current);
 
 ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, const Er::PropertyBag& prev, Er::PropertyBag& curr);
 

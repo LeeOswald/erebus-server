@@ -332,7 +332,7 @@ std::string ProcFs::readComm(uintptr_t pid) noexcept
 
 std::string ProcFs::readExePath(uintptr_t pid) noexcept
 {
-    if (pid == KernelPid)
+    if (pid == KernelPid || pid == KThreadDPid)
         return std::string();
 
     try

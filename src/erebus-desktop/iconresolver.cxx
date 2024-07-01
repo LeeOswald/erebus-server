@@ -109,9 +109,6 @@ std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, 
         return std::string();
     }
 
-    ErLogDebug(m_log, ErLogComponent("IconResolver"), "UID %zu for PID %zu [%s] [%s]", *uid, pid, comm.c_str(), exec.c_str()); 
-        
-
     auto environ = m_procFs.readEnviron(pid);
     if (environ.empty())
     {

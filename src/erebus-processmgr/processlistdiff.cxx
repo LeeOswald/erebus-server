@@ -29,6 +29,7 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
         Er::addProperty<Er::ProcessProps::Valid>(bag, true);
         Er::addProperty<Er::ProcessProps::Pid>(bag, stat.pid);
         Er::addProperty<Er::ProcessProps::PPid>(bag, stat.ppid);
+        cached.ppid = stat.ppid;
                 
         if (required[Er::ProcessProps::PropIndices::PGrp])
             Er::addProperty<Er::ProcessProps::PGrp>(bag, stat.pgrp);
@@ -72,13 +73,16 @@ Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, 
                 Er::addProperty<Er::ProcessProps::CmdLine>(bag, std::move(cmdLine));
         }
 
-        if (required[Er::ProcessProps::PropIndices::Exe])
+        if (stat.ppid != Er::ProcFs::KThreadDPid)
         {
-            auto exe = source.readExePath(pid);
-            if (!exe.empty())
+            if (required[Er::ProcessProps::PropIndices::Exe])
             {
-                cached.exe = exe;
-                Er::addProperty<Er::ProcessProps::Exe>(bag, std::move(exe));
+                auto exe = source.readExePath(pid);
+                if (!exe.empty())
+                {
+                    cached.exe = exe;
+                    Er::addProperty<Er::ProcessProps::Exe>(bag, std::move(exe));
+                }
             }
         }
 
@@ -135,29 +139,32 @@ Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProp
     return bag;
 }
 
-Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current)
+Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, uint64_t ppid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current)
 {
     auto filtered = required;
     if (existing.empty())
         return filtered; // looks like this is a new process, no data collected yet
 
-    // almost all props get changed when exec() is called
-    // compare /proc/[pid]/exe contents to detect that exec() has occurred 
-    
-    auto exeOld = Er::getPropertyOr<Er::ProcessProps::Exe>(existing, std::string());
-    auto exeCurrent = source.readExePath(pid);
-    auto exeChanged = (exeCurrent != exeOld);
-    if (exeChanged)
+    if (ppid != Er::ProcFs::KThreadDPid)
     {
-        // since we already have an exe path, no need to look for it again
-        Er::addProperty<Er::ProcessProps::Exe>(current, std::move(exeCurrent));
-        filtered.reset(Er::ProcessProps::PropIndices::Exe);
-    }
+        // almost all props get changed when exec() is called
+        // compare /proc/[pid]/exe contents to detect that exec() has occurred 
+        
+        auto exeOld = Er::getPropertyOr<Er::ProcessProps::Exe>(existing, std::string());
+        auto exeCurrent = source.readExePath(pid);
+        auto exeChanged = (exeCurrent != exeOld);
+        if (exeChanged)
+        {
+            // since we already have an exe path, no need to look for it again
+            Er::addProperty<Er::ProcessProps::Exe>(current, std::move(exeCurrent));
+            filtered.reset(Er::ProcessProps::PropIndices::Exe);
+        }
 
-    if (!exeChanged)
-    {
-        filtered.reset(Er::ProcessProps::PropIndices::User);
-        filtered.reset(Er::ProcessProps::PropIndices::Ruid);
+        if (!exeChanged)
+        {
+            filtered.reset(Er::ProcessProps::PropIndices::User);
+            filtered.reset(Er::ProcessProps::PropIndices::Ruid);
+        }
     }
 
     return filtered;
@@ -200,7 +207,7 @@ ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, Er::PropertyBag&& newPro
     return diff;
 }
 
-static void updateDiffAndCollectionForProcess(ProcessCollection::Container::iterator which, bool firstRun, ProcessCollectionDiff& diff, ProcessCollection& collection, std::chrono::steady_clock::time_point now, uint64_t pid, Er::PropertyBag&& newProps)
+static void updateDiffAndCollectionForProcess(ProcessCollection::Container::iterator which, bool firstRun, ProcessCollectionDiff& diff, ProcessCollection& collection, std::chrono::steady_clock::time_point now, uint64_t pid, uint64_t ppid, Er::PropertyBag&& newProps)
 {
     Er::cachePropertyInfo(newProps);
 
@@ -208,7 +215,7 @@ static void updateDiffAndCollectionForProcess(ProcessCollection::Container::iter
     if (which == collection.processes.end())
     {
         // new one
-        auto data = std::make_unique<ProcessData>(pid, !firstRun, now, std::move(newProps));
+        auto data = std::make_unique<ProcessData>(pid, ppid, !firstRun, now, std::move(newProps));
         auto item = collection.processes.insert({ pid, std::move(data) });
         ErAssert(item.second); // really a new item
         diff.added.push_back(item.first->second.get());
@@ -247,17 +254,18 @@ ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::Pr
         {
             // this is an existing process, only need to update volatile props
             auto& oldProps = existing->second.get()->properties;
+            auto ppid = existing->second.get()->ppid;
             Er::PropertyBag newProps;
-            auto filtered = filterVolatileProps(source, pid, oldProps, required, newProps);
+            auto filtered = filterVolatileProps(source, pid, ppid, oldProps, required, newProps);
 
             auto process = collectProcessDetails(source, pid, filtered, std::move(newProps), cached);
-            updateDiffAndCollectionForProcess(existing, firstRun, diff, collection, now, pid, std::move(process));
+            updateDiffAndCollectionForProcess(existing, firstRun, diff, collection, now, pid, ppid, std::move(process));
         }
         else
         {
             // this is a new process
             auto process = collectProcessDetails(source, pid, required, Er::PropertyBag(), cached);
-            updateDiffAndCollectionForProcess(collection.processes.end(), firstRun, diff, collection, now, pid, std::move(process));
+            updateDiffAndCollectionForProcess(collection.processes.end(), firstRun, diff, collection, now, pid, cached.ppid, std::move(process));
         }
 
         stats.uTimeTotal += cached.utime;
