@@ -24,15 +24,7 @@ namespace ProcFs
 namespace 
 {
 
-struct DirCloser
-{
-    void operator()(DIR* d) noexcept
-    {
-        ::closedir(d);
-    }
-};
-
-using DirHolder = Util::AutoPtr<DIR, DirCloser>;
+using DirHolder = Util::AutoPtr<DIR, decltype([](DIR* d) { ::closedir(d); })>;
 
 } // namespace {}
 

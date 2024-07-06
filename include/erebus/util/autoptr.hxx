@@ -106,19 +106,6 @@ private:
 };
 
 
-// malloc/free deleter
-struct CrtDeleter
-{
-    void operator()(void* p) noexcept
-    {
-        ::free(p);
-    }
-};
-
-template <typename T>
-using CrtAutoPtr = AutoPtr<T, CrtDeleter>;
-
-
 } // namespace Util {}
 
 } // namespace Er {}

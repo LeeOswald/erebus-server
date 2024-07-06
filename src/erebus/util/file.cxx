@@ -19,15 +19,7 @@ namespace Util
 namespace
 {
 
-struct FileCloser
-{
-    void operator()(FILE* f)
-    {
-        std::fclose(f);
-    }
-};
-
-using File = AutoPtr<FILE, FileCloser>;
+using File = AutoPtr<FILE, decltype([](FILE* f) { std::fclose(f); })>;
 
 } // namespace {}
 

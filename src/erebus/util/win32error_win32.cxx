@@ -8,27 +8,12 @@ namespace Er
 namespace Util
 {
     
-namespace
-{
-
-template <typename T>
-struct HeapDeleter
-{
-    void operator()(T* ptr) noexcept
-    {
-        ::HeapFree(::GetProcessHeap(), 0, ptr);
-    }
-};
-
-} // namespace {}
-
-
 EREBUS_EXPORT std::string win32ErrorToString(DWORD r, HMODULE module)
 {
     if (r == 0)
         return std::string();
 
-    AutoPtr<wchar_t, HeapDeleter<wchar_t>> buffer;
+    AutoPtr<wchar_t, decltype([](void* ptr) { ::HeapFree(::GetProcessHeap(), 0, ptr); })> buffer;
     auto cch = ::FormatMessageW(
         (module ? FORMAT_MESSAGE_FROM_HMODULE : FORMAT_MESSAGE_FROM_SYSTEM) | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
         module,
