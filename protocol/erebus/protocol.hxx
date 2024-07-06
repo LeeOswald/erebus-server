@@ -110,7 +110,7 @@ inline Property getProperty(const erebus::Property& source)
         else if (type == PropertyType::Bytes)
             return Property(id, Bytes(source.v_bytes()), info);
         else
-            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %s", info->id_str(), info->type_info().name()));
+            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %d", info->id_str(), int(type)));
     }
 }
 

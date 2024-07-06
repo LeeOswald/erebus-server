@@ -6,7 +6,6 @@
 
 #include <iomanip>
 #include <ostream>
-#include <typeinfo>
 #include <unordered_map>
 #include <variant>
 
@@ -128,7 +127,6 @@ struct PropertyInfo
     using Formatter = FormatterT;
     
     static constexpr PropertyType type = PropertyTypeFrom<ValueType>::type;
-    static constexpr const std::type_info& type_info = typeid(ValueT);
     static constexpr PropId id = Id::value;
     static constexpr const char* id_str = fromStringLiteral<PrIdStr>();
     static constexpr const char* name = fromStringLiteral<PrName>();
@@ -231,6 +229,10 @@ concept IsPropertyValue =
 
 struct IPropertyInfo;
 
+EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(PropId id) noexcept;
+EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(const char* id) noexcept;
+
+
 
 struct EREBUS_EXPORT Property
 {
@@ -242,9 +244,7 @@ struct EREBUS_EXPORT Property
         , value(pv.value)
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
     {
-#if ER_DEBUG
-        checkProperty();
-#endif
+        ErAssert(info || Er::lookupProperty(id));
     }
 
     template <IsPropertyValue PropertyValueT>
@@ -253,9 +253,7 @@ struct EREBUS_EXPORT Property
         , value(std::move(pv.value))
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
     {
-#if ER_DEBUG
-        checkProperty();
-#endif
+        ErAssert(info || Er::lookupProperty(id));
     }
 
     template <SupportedPropertyType ValueT>
@@ -265,9 +263,7 @@ struct EREBUS_EXPORT Property
         , type(static_cast<PropertyType>(this->value.index()))
         , info(info)
     {
-#if ER_DEBUG
-        checkProperty();
-#endif
+        ErAssert(info || Er::lookupProperty(id));
     }
 
     template <SupportedPropertyType ValueT>
@@ -277,9 +273,7 @@ struct EREBUS_EXPORT Property
         , type(static_cast<PropertyType>(this->value.index()))
         , info(info)
     {
-#if ER_DEBUG
-        checkProperty();
-#endif
+        ErAssert(info || Er::lookupProperty(id));
     }
 
     friend void swap(Property& a, Property& b) noexcept(noexcept(std::is_nothrow_swappable_v<PropertyValueStorage>))
@@ -332,11 +326,6 @@ struct EREBUS_EXPORT Property
     PropertyValueStorage value;
     PropertyType type = PropertyType::Invalid;
     mutable std::shared_ptr<IPropertyInfo> info;
-
-private:
-#if ER_DEBUG
-    void checkProperty();
-#endif
 };
 
 
@@ -414,7 +403,6 @@ struct IPropertyInfo
     using Ptr = std::shared_ptr<IPropertyInfo>;
 
     virtual PropertyType type() const noexcept = 0;
-    virtual const std::type_info& type_info() const noexcept = 0;
     virtual PropId id() const noexcept = 0;
     virtual const char* id_str() const noexcept = 0;
     virtual const char* name() const noexcept = 0;
@@ -439,11 +427,6 @@ struct PropertyInfoWrapper
     PropertyType type() const noexcept override
     {
         return PropertyInfo::type;
-    }
-
-    const std::type_info& type_info() const noexcept override
-    {
-        return PropertyInfo::type_info;
     }
 
     PropId id() const noexcept override

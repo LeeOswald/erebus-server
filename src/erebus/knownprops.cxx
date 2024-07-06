@@ -149,31 +149,4 @@ EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id) noexcept
 }
 
 
-#if ER_DEBUG
-void Property::checkProperty()
-{
-    auto info_ = info ? info.get() : Er::lookupProperty(id).get();
-    ErAssert(info_);
-    auto& type_ = info_->type_info();
-    if (type_ == typeid(bool))
-        ErAssert(type == PropertyType::Bool);
-    else if (type_ == typeid(int32_t))
-        ErAssert(type == PropertyType::Int32);
-    else if (type_ == typeid(uint32_t))
-        ErAssert(type == PropertyType::UInt32);
-    else if (type_ == typeid(int64_t))
-        ErAssert(type == PropertyType::Int64);
-    else if (type_ == typeid(uint64_t))
-        ErAssert(type == PropertyType::UInt64);
-    else if (type_ == typeid(double))
-        ErAssert(type == PropertyType::Double);
-    else if (type_ == typeid(std::string))
-        ErAssert(type == PropertyType::String);
-    else if (type_ == typeid(Bytes))
-        ErAssert(type == PropertyType::Bytes);
-    else
-        ErAssert(!"Mismatched property type");
-}
-#endif
-
 } // namespace Er {}

@@ -32,7 +32,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(propf.id, TestProps::BoolProp::Id::value);
         EXPECT_EQ(propf.type, Er::PropertyType::Bool);
         EXPECT_FALSE(std::get<bool>(propf.value));
-        EXPECT_EQ(bf.type_info, typeid(bool));
 
         Er::Property propt(TestProps::BoolProp(true));
         EXPECT_EQ(propt.id, TestProps::BoolProp::Id::value);
@@ -48,7 +47,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_STREQ(info->id_str(), bf.id_str);
         EXPECT_STREQ(info->name(), bf.name);
         EXPECT_EQ(info->type(), bf.type);
-        EXPECT_EQ(info->type_info(), bf.type_info);
         EXPECT_EQ(info->size(propt), sizeof(bool));
         ASSERT_TRUE(info->data(propt));
         EXPECT_EQ(*static_cast<const bool*>(info->data(propt)), true);
@@ -66,7 +64,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(prop0.id, TestProps::Int32Prop::Id::value);
         EXPECT_EQ(prop0.type, Er::PropertyType::Int32);
         EXPECT_EQ(std::get<int32_t>(prop0.value), 0);
-        EXPECT_EQ(b0.type_info, typeid(int32_t));
 
         Er::Property prop2(TestProps::Int32Prop(-2));
         EXPECT_EQ(prop2.id, TestProps::Int32Prop::Id::value);
@@ -82,7 +79,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_STREQ(info->id_str(), b0.id_str);
         EXPECT_STREQ(info->name(), b0.name);
         EXPECT_EQ(info->type(), b0.type);
-        EXPECT_EQ(info->type_info(), b0.type_info);
         EXPECT_EQ(info->size(prop0), sizeof(int32_t));
         ASSERT_TRUE(info->data(prop0));
         EXPECT_EQ(*static_cast<const int32_t*>(info->data(prop0)), 0);
@@ -100,7 +96,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(prop0.id, TestProps::UInt32Prop::Id::value);
         EXPECT_EQ(prop0.type, Er::PropertyType::UInt32);
         EXPECT_EQ(std::get<uint32_t>(prop0.value), 0);
-        EXPECT_EQ(b0.type_info, typeid(uint32_t));
 
         Er::Property prop2(TestProps::UInt32Prop(2));
         EXPECT_EQ(prop2.id, TestProps::UInt32Prop::Id::value);
@@ -116,7 +111,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_STREQ(info->id_str(), b0.id_str);
         EXPECT_STREQ(info->name(), b0.name);
         EXPECT_EQ(info->type(), b0.type);
-        EXPECT_EQ(info->type_info(), b0.type_info);
         EXPECT_EQ(info->size(prop0), sizeof(uint32_t));
         ASSERT_TRUE(info->data(prop0));
         EXPECT_EQ(*static_cast<const uint32_t*>(info->data(prop0)), 0);
@@ -134,7 +128,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(prop0.id, TestProps::Int64Prop::Id::value);
         EXPECT_EQ(prop0.type, Er::PropertyType::Int64);
         EXPECT_EQ(std::get<int64_t>(prop0.value), 0);
-        EXPECT_EQ(b0.type_info, typeid(int64_t));
 
         Er::Property prop2(TestProps::Int64Prop(-2));
         EXPECT_EQ(prop2.id, TestProps::Int64Prop::Id::value);
@@ -150,7 +143,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_STREQ(info->id_str(), b0.id_str);
         EXPECT_STREQ(info->name(), b0.name);
         EXPECT_EQ(info->type(), b0.type);
-        EXPECT_EQ(info->type_info(), b0.type_info);
         EXPECT_EQ(info->size(prop0), sizeof(int64_t));
         ASSERT_TRUE(info->data(prop0));
         EXPECT_EQ(*static_cast<const int64_t*>(info->data(prop0)), 0);
@@ -168,7 +160,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(prop0.id, TestProps::UInt64Prop::Id::value);
         EXPECT_EQ(prop0.type, Er::PropertyType::UInt64);
         EXPECT_EQ(std::get<uint64_t>(prop0.value), 0);
-        EXPECT_EQ(b0.type_info, typeid(uint64_t));
 
         Er::Property prop2(TestProps::UInt64Prop(0x8000100020003000ULL));
         EXPECT_EQ(prop2.id, TestProps::UInt64Prop::Id::value);
@@ -184,7 +175,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_STREQ(info->id_str(), b0.id_str);
         EXPECT_STREQ(info->name(), b0.name);
         EXPECT_EQ(info->type(), b0.type);
-        EXPECT_EQ(info->type_info(), b0.type_info);
         EXPECT_EQ(info->size(prop0), sizeof(uint64_t));
         ASSERT_TRUE(info->data(prop0));
         EXPECT_EQ(*static_cast<const uint64_t*>(info->data(prop0)), 0);
@@ -202,7 +192,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(prop0.id, TestProps::DoubleProp::Id::value);
         EXPECT_EQ(prop0.type, Er::PropertyType::Double);
         EXPECT_EQ(std::get<double>(prop0.value), 0);
-        EXPECT_EQ(b0.type_info, typeid(double));
 
         Er::Property prop2(TestProps::DoubleProp(-1.03));
         EXPECT_EQ(prop2.id, TestProps::DoubleProp::Id::value);
@@ -218,7 +207,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_STREQ(info->id_str(), b0.id_str);
         EXPECT_STREQ(info->name(), b0.name);
         EXPECT_EQ(info->type(), b0.type);
-        EXPECT_EQ(info->type_info(), b0.type_info);
         EXPECT_EQ(info->size(prop0), sizeof(double));
         ASSERT_TRUE(info->data(prop0));
         EXPECT_EQ(*static_cast<const double*>(info->data(prop0)), 0);
@@ -236,7 +224,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(prop0.id, TestProps::StringProp::Id::value);
         EXPECT_EQ(prop0.type, Er::PropertyType::String);
         EXPECT_STREQ(std::get<std::string>(prop0.value).c_str(), "aaa.a");
-        EXPECT_EQ(b0.type_info, typeid(std::string));
 
         Er::Property prop2(TestProps::StringProp("b.bbb"));
         EXPECT_EQ(prop2.id, TestProps::StringProp::Id::value);
@@ -252,7 +239,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_STREQ(info->id_str(), b0.id_str);
         EXPECT_STREQ(info->name(), b0.name);
         EXPECT_EQ(info->type(), b0.type);
-        EXPECT_EQ(info->type_info(), b0.type_info);
         EXPECT_EQ(info->size(prop0), 5);
         ASSERT_TRUE(info->data(prop0));
         EXPECT_STREQ(static_cast<const char*>(info->data(prop0)), "aaa.a");
@@ -270,7 +256,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(prop0.id, TestProps::BytesProp::Id::value);
         EXPECT_EQ(prop0.type, Er::PropertyType::Bytes);
         EXPECT_STREQ(std::get<Er::Bytes>(prop0.value).bytes().c_str(), "aaa.a");
-        EXPECT_EQ(b0.type_info, typeid(Er::Bytes));
 
         Er::Property prop2(TestProps::BytesProp(Er::Bytes("b.bbb")));
         EXPECT_EQ(prop2.id, TestProps::BytesProp::Id::value);
@@ -286,7 +271,6 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_STREQ(info->id_str(), b0.id_str);
         EXPECT_STREQ(info->name(), b0.name);
         EXPECT_EQ(info->type(), b0.type);
-        EXPECT_EQ(info->type_info(), b0.type_info);
         EXPECT_EQ(info->size(prop0), 5);
         ASSERT_TRUE(info->data(prop0));
         EXPECT_STREQ(static_cast<const char*>(info->data(prop0)), "aaa.a");
