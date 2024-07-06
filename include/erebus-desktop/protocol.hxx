@@ -11,6 +11,11 @@ namespace Er
 namespace Desktop
 {
 
+enum class IconSize : uint32_t
+{
+    Small = 16,
+    large = 32
+};
 
 enum class IconState: uint32_t
 {
