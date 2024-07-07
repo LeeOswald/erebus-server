@@ -1,4 +1,4 @@
-#include "process.hxx"
+#include "common.hxx"
 
 #include <erebus/protocol.hxx>
 #include <erebus/util/file.hxx>
@@ -24,117 +24,175 @@ void signalHandler(int signo)
     g_signalReceived = signo;
 }
 
-void version(Er::Client::IClient* client, Er::Log::ILog* log)
+
+Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
 {
-    protectedCall(
-        log,
-        [client, log]()
+    Er::PropertyBag parsed;
+
+    for (auto& a: args)
+    {
+        std::vector<std::string> parts;
+        boost::split(parts, a, boost::is_any_of(":"));
+        if (parts.size() != 2)
         {
-            Er::PropertyBag req;
-            auto reply = client->request(Er::Protocol::GenericRequests::GetVersion, req, std::nullopt);
-
-            auto systemName = Er::getPropertyOr<Er::Protocol::Props::RemoteSystemDesc>(reply, std::string());
-            auto serverVer = Er::getPropertyOr<Er::Protocol::Props::ServerVersionString>(reply, std::string());
-
-            log->write(Er::Log::Level::Info, ErLogNowhere(), "Remote system: %s", systemName.c_str());
-            log->write(Er::Log::Level::Info, ErLogNowhere(), "Server version: %s", serverVer.c_str());
+            throw Er::Exception(ER_HERE(), Er::Util::format("Invalid format of property_id:value in [%s]", a.c_str()));
         }
-    );
+
+        auto propInfo = Er::lookupProperty(parts[0].c_str());
+        if (!propInfo)
+        {
+            throw Er::Exception(ER_HERE(), Er::Util::format("Unknown property id [%s]", parts[0].c_str()));
+        }
+
+        Er::PropId id = ER_PROPID_(parts[0].c_str());
+
+        switch (propInfo->type())
+        {
+        case Er::PropertyType::Bool:
+            {
+                bool v;
+
+                if ((parts[1] == "true") || (parts[1] == "1"))
+                    v = true;
+                else if ((parts[1] == "false") || (parts[1] == "0"))
+                    v = false;
+                else
+                    throw Er::Exception(ER_HERE(), Er::Util::format("Invalid value [%s] for bool property [%s]", parts[1].c_str(), parts[0].c_str()));
+
+                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+            }
+            break;
+
+        case Er::PropertyType::Int32:
+            {
+                int32_t v = std::strtol(parts[1].c_str(), nullptr, 10);
+                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+            }
+            break;
+
+        case Er::PropertyType::Int64:
+            {
+                int64_t v = std::strtoll(parts[1].c_str(), nullptr, 10);
+                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+            }
+            break;
+
+        case Er::PropertyType::UInt32:
+            {
+                uint32_t v = std::strtoul(parts[1].c_str(), nullptr, 10);
+                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+            }
+            break;
+
+        case Er::PropertyType::UInt64:
+            {
+                uint64_t v = std::strtoull(parts[1].c_str(), nullptr, 10);
+                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+            }
+            break;
+        
+        case Er::PropertyType::Double:
+            {
+                double v = std::strtod(parts[1].c_str(), nullptr);
+                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+            }
+            break;
+
+        case Er::PropertyType::String:
+            Er::insertProperty(parsed, Er::Property(id, parts[1], propInfo));
+            break;
+
+        default:
+            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property type %d for property [%s]", int(propInfo->type()), parts[0].c_str()));
+        }
+    }
+
+    return parsed;
 }
 
-void version(Er::Log::ILog* log, const Er::Client::ChannelParams& params, int interval)
+
+bool issueRequest(
+    Er::Log::ILog* log, 
+    const Er::Client::ChannelParams& params, 
+    const std::string& request,
+    const std::vector<std::string>& args,
+    int interval
+    )
 {
-    protectedCall(
+    return Er::protectedCall<bool>(
         log,
-        [log, &params, interval]()
+        ErLogNowhere(),
+        [log, &params, &request, &args, interval]()
         {
             auto channel = Er::Client::createChannel(params);
             auto client = Er::Client::createClient(channel, log);
+            auto sessionId = client->beginSession(request);
+            auto requestArgs = pargseArgs(args);
+
+            auto result = client->request(request, requestArgs, sessionId);
 
             while (!g_signalReceived)
             {
-                version(client.get(), log);
+                dumpPropertyBag(result, log);
 
                 if (interval <= 0)
                     break;
 
+                log->write(Er::Log::Level::Info, ErLogNowhere(), "------------------------------------------------------");
+
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
+
+                result = client->request(request, requestArgs, sessionId);
             }
+
+            client->endSession(request, sessionId);
+
+            return true;
         }
     );
 }
 
-void iconBy(
-    Er::Log::ILog* log, 
-    Er::Client::IClient* client, 
-    std::optional<std::string> iconName,
-    std::optional<uint64_t> iconPid,  
-    uint32_t iconSize, 
-    const std::string& outFile
-    )
-{
-    Er::PropertyBag req;
-    Er::addProperty<Er::Desktop::Props::IconSize>(req, iconSize);
-    
-    if (iconName)
-    {
-        Er::addProperty<Er::Desktop::Props::IconName>(req, *iconName);
-        ErLogInfo(log, ErLogNowhere(), "Requested icon by name [%s]...", iconName->c_str());
-    }
-
-    if (iconPid)
-    {
-        Er::addProperty<Er::Desktop::Props::Pid>(req, *iconPid);
-        ErLogInfo(log, ErLogNowhere(), "Requested icon by PID %zu...", *iconPid);
-    }
-
-    long retries = 3;
-    auto reply = client->request(Er::Desktop::Requests::QueryIcon, req);
-    while (!g_signalReceived)
-    {
-        dumpPropertyBag(reply, log);
-
-        auto status = Er::getProperty<Er::Desktop::Props::IconState>(reply);
-        if (!status)
-        {
-            ErLogError(log, ErLogNowhere(), "No status returned");
-            break;
-        }
-
-        if (*status == static_cast<uint32_t>(Er::Desktop::IconState::Pending))
-        {
-            if (!retries)
-                break;
-
-            --retries;
-                
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            reply = client->request(Er::Desktop::Requests::QueryIcon, req);
-            
-            continue;
-        }
-
-        break;
-    }    
-}
-
-void iconBy(
+bool receiveStream(
     Er::Log::ILog* log, 
     const Er::Client::ChannelParams& params, 
-    std::optional<std::string> iconName,
-    std::optional<uint64_t> iconPid, 
-    uint32_t iconSize, 
-    const std::string& outFile
+    const std::string& request,
+    const std::vector<std::string>& args,
+    int interval
     )
 {
-    protectedCall(
+    return Er::protectedCall<bool>(
         log,
-        [log, &params, iconName, iconPid, iconSize, outFile]()
+        ErLogNowhere(),
+        [log, &params, &request, &args, interval]()
         {
             auto channel = Er::Client::createChannel(params);
             auto client = Er::Client::createClient(channel, log);
+            auto sessionId = client->beginSession(request);
+            auto requestArgs = pargseArgs(args);
 
-            iconBy(log, client.get(), iconName, iconPid, iconSize, outFile);
+            auto result = client->requestStream(request, requestArgs, sessionId);
+      
+            while (!g_signalReceived)
+            {
+                for (auto& item : result)
+                {
+                    dumpPropertyBag(item, log);
+                    log->write(Er::Log::Level::Info, ErLogNowhere(), "------------------------------------------------------");
+                }
+
+                if (interval <= 0)
+                    break;
+
+                log->write(Er::Log::Level::Info, ErLogNowhere(), "========================================================");
+
+                std::this_thread::sleep_for(std::chrono::seconds(interval));
+
+                result = client->requestStream(request, requestArgs, sessionId);
+            }
+
+            client->endSession(request, sessionId);
+
+            return true;
         }
     );
 }
@@ -160,6 +218,11 @@ int main(int argc, char* argv[])
     std::string keyFile;
     int interval = 0;
     std::string outFile;
+    std::string request;
+    std::string stream;
+    std::vector<std::string> args;
+
+    int result = EXIT_FAILURE;
 
     try
     {
@@ -173,16 +236,11 @@ int main(int argc, char* argv[])
             ("root", po::value<std::string>(&rootFile), "root certificate file path")
             ("cert", po::value<std::string>(&certFile), "client certificate file path")
             ("key", po::value<std::string>(&keyFile), "client certificate key file path")
-            ("version", "display server version")
             ("loop", po::value<int>(&interval)->default_value(0), "repeat the request with an interval")
-            ("process", po::value<int>(), "view process info for PID")
-            ("processes", "view process list")
-            ("procdiff", "view process list (incremental)")
-            ("kill", po::value<std::string>(), "kill <pid>:<signal>")
-            ("icon", po::value<std::string>(), "retrieve icon by name")
-            ("iconpid", po::value<uint64_t>(), "retrieve icon by process ID")
-            ("iconsize", po::value<int>(), "icon size (16|32)")
             ("out", po::value<std::string>(&outFile), "output file name")
+            ("request", po::value<std::string>(&request), "request id")
+            ("stream", po::value<std::string>(&stream), "stream request id")
+            ("arg", po::value<std::vector<std::string>>(&args), "property id:value")
         ;
 
         po::variables_map vm;
@@ -229,59 +287,15 @@ int main(int argc, char* argv[])
 
         Er::Client::ChannelParams params(ep, ssl, root, cert, key);
         
-        if (vm.count("version"))
+        if (!request.empty())
         {
-            version(&console, params, interval);
+            if (issueRequest(&console, params, request, args, interval))
+                result = EXIT_SUCCESS;
         }
-        else if (vm.count("process"))
+        else if (!stream.empty())
         {
-            auto pid = vm["process"].as<int>();
-            dumpProcess(&console, params, pid, interval);
-        }
-        else if (vm.count("processes"))
-        {
-            dumpProcesses(&console, params, interval);
-        }
-        else if (vm.count("procdiff"))
-        {
-            dumpProcessesDiff(&console, params, interval);
-        }
-        else if (vm.count("kill"))
-        {
-            auto tmp = vm["kill"].as<std::string>();
-            std::vector<std::string> parts;
-            boost::split(parts, tmp, boost::is_any_of(":"));
-            if (parts.size() != 2)
-            {
-                std::cerr << "Expected <pid>:<signal> pair specified for \"kill\" command\n";
-                return EXIT_FAILURE;
-            }
-
-            auto pid = std::strtoull(parts[0].c_str(), nullptr, 10);
-            killProcess(&console, params, pid, parts[1]);
-        }
-
-        uint32_t iconSize = 16;
-        if (vm.count("iconsize"))
-        {
-            iconSize = static_cast<uint32_t>(vm["iconsize"].as<int>());
-            if ((iconSize != 16) && (iconSize != 32))
-            {
-                std::cerr << "Unsupported icon size\n";
-                return EXIT_FAILURE;
-            }
-        }
-
-        std::optional<std::string> iconName;
-        std::optional<uint64_t> iconPid;
-        if (vm.count("icon"))
-            iconName = vm["icon"].as<std::string>();
-        if (vm.count("iconpid"))
-            iconPid = vm["iconpid"].as<uint64_t>();
-
-        if (iconName || iconPid)
-        {
-            iconBy(&console, params, iconName, iconPid, iconSize, outFile);
+            if (receiveStream(&console, params, stream, args, interval))
+                result = EXIT_SUCCESS;
         }
 
         if (g_signalReceived)
@@ -292,8 +306,8 @@ int main(int argc, char* argv[])
     catch (std::exception& e)
     {
         std::cerr << e.what() << "\n";
-        return EXIT_FAILURE;
+        
     }
 
-    return EXIT_SUCCESS;
+    return result;
 }

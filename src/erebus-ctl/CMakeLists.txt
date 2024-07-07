@@ -3,8 +3,6 @@ add_executable(${EREBUS_CTL}
     log.cxx
     log.hxx
     main.cxx
-    process.cxx
-    process.hxx
 )
 
 

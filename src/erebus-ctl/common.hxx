@@ -12,23 +12,6 @@
 extern std::optional<int> g_signalReceived;
 
 
-template <typename Work>
-void protectedCall(Er::Log::ILog* log, Work w) noexcept
-{
-    try
-    {
-        w();
-    }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-    catch (std::exception& e)
-    {
-        Er::Util::logException(log, Er::Log::Level::Error, e);
-    }
-}
-
 inline void dumpPropertyBag(const Er::PropertyBag& bag, Er::Log::ILog* log)
 {
     Er::enumerateProperties(bag, [log](const Er::Property& prop)

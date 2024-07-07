@@ -131,9 +131,6 @@ void ProcessList::endStream(StreamId id, std::optional<SessionId> sessionId)
     m_streams.erase(it);
 
     dropStaleStreams();
-#if 0
-    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Ended stream %d", id);    
-#endif
 }
 
 Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionId)
