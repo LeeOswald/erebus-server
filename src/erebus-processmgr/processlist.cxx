@@ -347,9 +347,7 @@ ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& arg
     auto streamId = m_nextStreamId++;
     auto stream = std::make_unique<ProcessListStream>(streamId, required, std::move(pids));
     m_streams.insert({ streamId, std::move(stream) });
-#if 0
-    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Started process stream %d", streamId);
-#endif
+
     return streamId;
 }
 
@@ -363,9 +361,6 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
     ProcessDetailsCached cached;
     auto bag = collectProcessDetails(m_procFs, stream->pids[stream->next], stream->required, Er::PropertyBag(), cached);
 
-#if 0
-    Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next PID " << stream->pids[stream->next] << " on stream " << stream->id;
-#endif
     ++stream->next;
 
     return bag;
@@ -384,10 +379,6 @@ ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag&
 
     auto stream = std::make_unique<ProcessListDiffStream>(streamId, required, std::move(diff));
     m_streams.insert({ streamId, std::move(stream) });
-
-#if 0
-    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Started process diff stream %d", streamId);
-#endif
 
     return streamId;
 }
@@ -413,9 +404,7 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
 
         Er::addProperty<Er::ProcessProps::Pid>(bag, stream->diff.removed[stream->next]);
         Er::addProperty<Er::ProcessProps::IsDeleted>(bag, true);
-#if 0
-        Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next removed PID " << stream->diff.removed[stream->next] << " on stream " << stream->id;
-#endif
+
         ++stream->next;
     }
     else if (stream->stage == ProcessListDiffStream::Stage::Modified)
@@ -429,18 +418,14 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         }
 
         auto& modified = stream->diff.modified[stream->next];
-        for (auto& prop : modified.properties)
+        Er::enumerateProperties(modified.properties, [&bag](Property& prop)
         {
-            bag.insert({ prop.id, std::move(prop) });
-        }
+            Er::insertProperty(bag, std::move(prop));
+        });
 
         Er::addProperty<Er::ProcessProps::Pid>(bag, modified.pid);
         Er::addProperty<Er::ProcessProps::Valid>(bag, true);
 
-#if 0
-        Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next modified PID " << modified.pid << " on stream " << stream->id;
-#endif
-        
         ++stream->next;
     }
     else
@@ -449,24 +434,17 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         if (stream->next >= stream->diff.added.size())
             return Er::PropertyBag(); // end of stream
 
-        auto added = stream->diff.added[stream->next];
+        auto& added = stream->diff.added[stream->next];
         if (added->isNew)
             Er::addProperty<Er::ProcessProps::IsNew>(bag, true);
 
-        for (auto& prop: added->properties)
+        Er::enumerateProperties(added->properties, [&bag](const Property& prop)
         {
-            bag.insert({ prop.first, prop.second });
-        }
+            Er::insertProperty(bag, prop);
+        });
 
-        assert(bag.find(Er::ProcessProps::Pid::Id::value) != bag.end());
-        assert(bag.find(Er::ProcessProps::Valid::Id::value) != bag.end());
-
-#if 0
-        if (added->isNew)
-            Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next new PID " << added->pid << " on stream " << stream->id;
-        else
-            Er::Log::Debug(m_log, ErLogInstance("ProcessList")) << "Next existing PID " << added->pid << " on stream " << stream->id;
-#endif
+        ErAssert(Er::propertyPresent<Er::ProcessProps::Pid>(bag));
+        ErAssert(Er::propertyPresent<Er::ProcessProps::Valid>(bag));
         
         ++stream->next;
     }

@@ -46,7 +46,7 @@ inline IPropertyInfo* cachePropertyInfo(const Property& prop) noexcept
     return prop.info.get();
 }
 
-inline void cachePropertyInfo(const PropertyBag& bag) noexcept
+inline void cachePropertyInfo(const PropertyMap& bag) noexcept
 {
     for (auto& prop: bag)
     {
@@ -54,6 +54,13 @@ inline void cachePropertyInfo(const PropertyBag& bag) noexcept
     }
 }
 
+inline void cachePropertyInfo(const PropertyVector& bag) noexcept
+{
+    for (auto& prop: bag)
+    {
+        cachePropertyInfo(prop);
+    }
+}
 
 
 } // namespace Er {}

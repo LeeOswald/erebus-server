@@ -215,8 +215,7 @@ Er::PropertyBag ServiceBase::unmarshalArgs(const erebus::ServiceRequest* request
     for (int i = 0; i < count; ++i)
     {
         auto& arg = request->args(i);
-        auto id = arg.id();
-        bag.insert({ PropId(id), Er::Protocol::getProperty(arg) });
+        Er::insertProperty(bag, Er::Protocol::getProperty(arg));
     }
 
     return bag;
@@ -228,11 +227,11 @@ void ServiceBase::marshalReplyProps(const Er::PropertyBag& props, erebus::Servic
         return;
 
     auto out = reply->mutable_props();
-    for (auto& prop: props)
+    Er::enumerateProperties(props, [&out](const Property& prop)
     {
         auto mutableProp = out->Add();
-        Er::Protocol::assignProperty(*mutableProp, prop.second);
-    }
+        Er::Protocol::assignProperty(*mutableProp, prop);
+    });
 }
 
 } // namespace Private {}

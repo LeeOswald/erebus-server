@@ -9,7 +9,7 @@ TEST(Er_PropertyBag, simple)
 
     {
         std::string str("some string");
-        EXPECT_TRUE(Er::addProperty<TestProps::StringProp>(bag, str));
+        Er::addProperty<TestProps::StringProp>(bag, str);
         EXPECT_FALSE(str.empty());
     }
 
@@ -34,7 +34,7 @@ TEST(Er_PropertyBag, simple)
     // cannnot modify prop
     {
         std::string str("another string");
-        EXPECT_FALSE(Er::addProperty<TestProps::StringProp>(bag, std::move(str)));
+        Er::addProperty<TestProps::StringProp>(bag, std::move(str));
         EXPECT_TRUE(str.empty()); // should have moved
 
         ASSERT_TRUE(Er::propertyPresent<TestProps::StringProp>(bag));
@@ -51,8 +51,8 @@ TEST(Er_PropertyBag, simple)
         EXPECT_STREQ(Er::getPropertyOr<TestProps::StringProp>(bag, sd).c_str(), "some string");
         EXPECT_FALSE(sd.empty());
 
-        bag.erase(TestProps::StringProp::Id::value);
-        EXPECT_STREQ(Er::getPropertyOr<TestProps::StringProp>(bag, std::move(sd)).c_str(), "default string");
+        Er::PropertyBag empty;
+        EXPECT_STREQ(Er::getPropertyOr<TestProps::StringProp>(empty, std::move(sd)).c_str(), "default string");
         EXPECT_TRUE(sd.empty());
     }
 }

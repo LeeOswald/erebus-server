@@ -175,34 +175,30 @@ ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, Er::PropertyBag&& newPro
     ProcessDataDiff diff(pid);
     diff.properties.reserve(existing.size()); // do not track properties that have wanished
 
-    for (auto& prop: newProps)
+    Er::enumerateProperties(newProps, [&existing, &diff](Property& prop)
     {
-        auto id = prop.first;
-        auto it = existing.find(id);
-        if (it == existing.end())
+        auto current = Er::findProperty(existing, prop.id);
+        if (!current)
         {
             // new property appeared
-            diff.properties.push_back(prop.second);
-
-            existing.insert({prop.first, std::move(prop.second)});
+            diff.properties.push_back(prop);
+            Er::insertProperty(existing, std::move(prop));
         }
         else
         {
             // compare property values
-            auto pi = Er::getPropertyInfo(prop.second);
+            auto pi = Er::getPropertyInfo(prop);
             if (!pi)
-                throw Er::Exception(ER_HERE(), Er::Util::format("Unknown property #%08x", prop.first));
+                throw Er::Exception(ER_HERE(), Er::Util::format("Unknown property #%08x", prop.id));
 
-            if (!pi->equal(it->second, prop.second))
+            if (!pi->equal(*current, prop))
             {
                 // update changed props
-                diff.properties.push_back(prop.second);
-
-                auto& ref = existing.at(prop.first);
-                ref = std::move(prop.second);
+                diff.properties.push_back(prop);
+                *current = std::move(prop);
             }
         }
-    }
+    });
 
     return diff;
 }

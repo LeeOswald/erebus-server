@@ -67,11 +67,11 @@ public:
             request.set_sessionid(*sessionId);
 
         // marshal properties
-        for (auto& arg: args)
+        Er::enumerateProperties(args, [&request](const Property& arg)
         {
             auto a = request.add_args();
-            Er::Protocol::assignProperty(*a, arg.second);
-        }
+            Er::Protocol::assignProperty(*a, arg);
+        });
 
         erebus::ServiceReply reply;
         grpc::ClientContext context;
@@ -84,8 +84,7 @@ public:
         for (int i = 0; i < count; ++i)
         {
             auto& prop = reply.props(i);
-            auto id = prop.id();
-            bag.insert({ id, Er::Protocol::getProperty(prop) });
+            Er::insertProperty(bag, Er::Protocol::getProperty(prop));
         }
 
         return bag;
@@ -99,11 +98,11 @@ public:
             request.set_sessionid(*sessionId);
 
         // marshal properties
-        for (auto& arg: args)
+        Er::enumerateProperties(args, [&request](const Property& arg)
         {
             auto a = request.add_args();
-            Er::Protocol::assignProperty(*a, arg.second);
-        }
+            Er::Protocol::assignProperty(*a, arg);
+        });
 
         grpc::ClientContext context;
         std::shared_ptr<grpc::ClientReader<erebus::ServiceReply>> stream(m_stub->GenericStream(&context, request));
@@ -120,8 +119,7 @@ public:
             for (int i = 0; i < count; ++i)
             {
                 auto& prop = reply.props(i);
-                auto id = prop.id();
-                bag.insert({ id, Er::Protocol::getProperty(prop) });
+                Er::insertProperty(bag, Er::Protocol::getProperty(prop));
             }
 
             if (!bag.empty())
