@@ -19,7 +19,6 @@ namespace Private
 
 Service::~Service()
 {
-    ErLogDebug(m_log, ErLogInstance("Er::Desktop::Private::Service"), "~Service()");
 }
 
 Service::Service(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::Private::IconResolver> iconResolver, std::shared_ptr<IconCache> iconCache)
@@ -27,7 +26,6 @@ Service::Service(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::Private::IconR
     , m_iconResolver(iconResolver)
     , m_iconCache(iconCache)
 {
-    ErLogDebug(m_log, ErLogInstance("Er::Desktop::Private::Service"), "Service()");
 }
 
 void Service::registerService(Er::Server::IServiceContainer* container)

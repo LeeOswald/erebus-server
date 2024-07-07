@@ -18,13 +18,11 @@ namespace Private
 
 CoreService::~CoreService()
 {
-    ErLogDebug(m_log, ErLogInstance("CoreService"), "~CoreService()");
 }
     
 CoreService::CoreService(Er::Log::ILog* log)
     : m_log(log)
 {
-    ErLogDebug(m_log, ErLogInstance("CoreService"), "CoreService()");
 }
 
 void CoreService::registerService(Er::Server::IServiceContainer* container)

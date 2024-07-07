@@ -28,13 +28,11 @@ class ErebusService final
 public:
     ~ErebusService() 
     {
-        ErLogDebug(m_params.log, ErLogInstance("ErebusService"), "~ErebusService()");
     }
 
     explicit ErebusService(const Params* params)
         : ServiceBase(params)
     {
-        ErLogDebug(m_params.log, ErLogInstance("ErebusService"), "ErebusService()");
     }
 
     IServiceContainer* serviceContainer() override
@@ -52,7 +50,7 @@ public:
             throw Er::Exception(ER_HERE(), Er::Util::format("Service for [%s] is already registered", id.c_str()));
 
         
-        ErLogInfo(m_params.log, ErLogInstance("ErebusService"), "Registered service %p for [%s]", service, id.c_str());
+        ErLogInfo(m_params.log, ErLogComponent("ErebusService"), "Registered service %p for [%s]", service, id.c_str());
 
         m_services.insert({ std::move(id), service });
     }
@@ -61,15 +59,18 @@ public:
     {
         std::lock_guard l(m_servicesLock);
         
+        bool success = false;
         for (auto it = m_services.begin(); it != m_services.end();)
         {
             if (it->second == service)
             {
-                ErLogInfo(m_params.log, ErLogInstance("ErebusService"), "Unregistered service %p", service);
+                ErLogInfo(m_params.log, ErLogComponent("ErebusService"), "Unregistered service %p", service);
 
                 auto next = std::next(it);
                 m_services.erase(it);
                 it = next;
+
+                success = true;
             }
             else
             {
@@ -77,7 +78,8 @@ public:
             }
         }
 
-        ErLogError(m_params.log, ErLogInstance("ErebusService"), "Service % p is not registered", service);
+        if (!success)
+            ErLogError(m_params.log, ErLogComponent("ErebusService"), "Service % p is not registered", service);
     }
 
 private:
@@ -120,7 +122,7 @@ private:
         auto it = m_services.find(serviceId);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, ErLogInstance("ErebusService"), "No handlers for [%s]", serviceId.c_str());
+            m_params.log->write(Er::Log::Level::Error, ErLogComponent("ErebusService"), "No handlers for [%s]", serviceId.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -174,7 +176,7 @@ private:
         auto it = m_services.find(serviceId);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, ErLogInstance("ErebusService"), "No handlers for [%s]", serviceId.c_str());
+            m_params.log->write(Er::Log::Level::Error, ErLogComponent("ErebusService"), "No handlers for [%s]", serviceId.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -235,7 +237,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, ErLogInstance("ErebusService"), "No handlers for [%s]", id.c_str());
+            m_params.log->write(Er::Log::Level::Error, ErLogComponent("ErebusService"), "No handlers for [%s]", id.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -292,7 +294,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, ErLogInstance("ErebusService"), "No handlers for [%s]", id.c_str());
+            m_params.log->write(Er::Log::Level::Error, ErLogComponent("ErebusService"), "No handlers for [%s]", id.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }

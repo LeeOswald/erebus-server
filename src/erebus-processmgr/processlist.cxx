@@ -28,14 +28,12 @@ double rtime() noexcept // current time, sec
 
 ProcessList::~ProcessList()
 {
-    ErLogDebug(m_log, ErLogInstance("ProcessList"), "~ProcessList()");
 }
 
 ProcessList::ProcessList(Er::Log::ILog* log)
     : m_log(log)
     , m_procFs(log)
 {
-    ErLogDebug(m_log, ErLogInstance("ProcessList"), "ProcessList()");
 }
 
 void ProcessList::registerService(Er::Server::IServiceContainer* container)
@@ -58,8 +56,6 @@ ProcessList::SessionId ProcessList::allocateSession()
 
     m_sessions.insert({ id, std::make_unique<Session>(id) });
 
-    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Started session %d", id);
-
     return id;
 }
 
@@ -74,8 +70,6 @@ void ProcessList::deleteSession(SessionId id)
     m_sessions.erase(it);
 
     dropStaleSessions();
-
-    ErLogDebug(m_log, ErLogInstance("ProcessList"), "Ended session %d", id);    
 }
 
 ProcessList::Session* ProcessList::getSession(std::optional<SessionId> id)
@@ -302,7 +296,7 @@ void ProcessList::dropStaleStreams() noexcept
         if (d.count() > kStreamTimeoutSeconds)
         {
             auto next = std::next(it);
-            ErLogWarning(m_log, ErLogInstance("ProcessList"), "Dropping stale stream %d", it->first);
+            ErLogWarning(m_log, ErLogComponent("ProcessList"), "Dropping stale stream %d", it->first);
             m_streams.erase(it);
             it = next;
         }
@@ -323,7 +317,7 @@ void ProcessList::dropStaleSessions() noexcept
         if (d.count() > kSessionTimeoutSeconds)
         {
             auto next = std::next(it);
-            ErLogWarning(m_log, ErLogInstance("ProcessList"), "Dropping stale session %d", it->first);
+            ErLogWarning(m_log, ErLogComponent("ProcessList"), "Dropping stale session %d", it->first);
             m_sessions.erase(it);
             it = next;
         }

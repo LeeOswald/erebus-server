@@ -57,13 +57,11 @@ inline int mapSignalNameToSigno(std::string_view name) noexcept
 
 ProcessDetails::~ProcessDetails()
 {
-    ErLogDebug(m_log, ErLogInstance("ProcessDetails"), "~ProcessDetails()");
 }
 
 ProcessDetails::ProcessDetails(Er::Log::ILog* log)
     : m_log(log)
 {
-    ErLogDebug(m_log, ErLogInstance("ProcessDetails"), "ProcessDetails()");
 }
 
 void ProcessDetails::registerService(Er::Server::IServiceContainer* container)
@@ -131,14 +129,14 @@ Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
     {
         auto decoded = Er::Util::posixErrorToString(r);
         
-        ErLogWarning(m_log, ErLogInstance("ProcessDetails"), "kill(%zu, %d) -> %d [%s]", *pid, signo, r, decoded.c_str());
+        ErLogWarning(m_log, ErLogComponent("ProcessDetails"), "kill(%zu, %d) -> %d [%s]", *pid, signo, r, decoded.c_str());
         
         if (!decoded.empty())
             Er::addProperty<Er::ProcessesGlobal::ErrorText>(result, std::move(decoded));
     }
     else
     {
-        ErLogInfo(m_log, ErLogInstance("ProcessDetails"), "kill(%zu, %d) -> ok", *pid, signo);
+        ErLogInfo(m_log, ErLogComponent("ProcessDetails"), "kill(%zu, %d) -> ok", *pid, signo);
     }
 
     return result;

@@ -59,22 +59,25 @@ void ProcessSpy::worker(std::stop_token stop) noexcept
 {
     Er::System::CurrentThread::setName("ProcmonWorker");
     
-    ErLogDebug(m_log, ErLogInstance("ProcessSpy"), "Worker started");
+    ErLogDebug(m_log, ErLogComponent("ProcessSpy"), "Worker started");
 
     while (!stop.stop_requested())
     {
         auto err = ::ring_buffer__poll(m_ringBuffer, PollTimeoutMs);
         if (err == -EINTR)
-            break;
+        {
+            ErLogError(m_log, ErLogComponent("ProcessSpy"), "Resuming after EINTR");
+            continue;
+        }
 
         if (err < 0) 
         {
-            ErLogError(m_log, ErLogInstance("ProcessSpy"), "Error polling the ring buffer: %d", err);
+            ErLogError(m_log, ErLogComponent("ProcessSpy"), "Error polling the ring buffer: %d", err);
             break;
         }
     }
 
-    ErLogDebug(m_log, ErLogInstance("ProcessSpy"), "Worker exited");
+    ErLogDebug(m_log, ErLogComponent("ProcessSpy"), "Worker exited");
 }
 
 int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
