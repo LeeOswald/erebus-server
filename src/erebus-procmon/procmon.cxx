@@ -1,5 +1,6 @@
 #include <erebus/exception.hxx>
 #include <erebus/log.hxx>
+#include <erebus/util/format.hxx>
 
 #include "process_spy.hxx"
 
@@ -24,7 +25,7 @@ public:
         m_processSpy.reset();
 
         g_instances--;
-        ::libbpf_set_print(nullptr);
+        ::libbpf_set_print(m_oldBpfPrint);
         g_log = nullptr;
     }
 
@@ -45,7 +46,7 @@ public:
             throw Er::Exception(ER_HERE(), "Only one instance of erebus-procmon plugin can be created");
 
         g_log = params.log;
-        ::libbpf_set_print(libbpf_print_fn);
+        m_oldBpfPrint = ::libbpf_set_print(libbpf_print_fn);
 
         ::libbpf_set_strict_mode(libbpf_strict_mode(LIBBPF_STRICT_CLEAN_PTRS | LIBBPF_STRICT_DIRECT_ERRS));
 
@@ -64,8 +65,19 @@ private:
         else if (level == LIBBPF_WARN)
             l = Er::Log::Level::Warning;
 
-        g_log->writev(l, ErLogComponent("eBPF"), format, args);
-
+        std::string formatted;
+        try
+        {
+            formatted = Er::Util::formatv(format, args);
+            if ((formatted.length() > 0) && (formatted[formatted.length() - 1] == '\n'))
+                formatted.resize(formatted.length() - 1);
+        
+            g_log->write(l, ErLogComponent("eBPF"), formatted);
+        }
+        catch (std::exception&)
+        {
+        }
+        
         return 0;
     }
 
@@ -75,6 +87,7 @@ private:
 
     Er::Server::PluginParams m_params;
     std::unique_ptr<Er::Private::ProcessSpy> m_processSpy;
+    libbpf_print_fn_t m_oldBpfPrint = nullptr;
 };
 
 std::atomic<long> ProcMonPlugin::g_instances = 0;
