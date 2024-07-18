@@ -232,6 +232,88 @@ EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(PropId id) noexcept;
 EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(const char* id) noexcept;
 
 
+template <std::equality_comparable T>
+struct PropertyComparator<T>
+{
+    bool operator()(const T& a, const T& b) { return a == b; }
+};
+
+
+struct NullPropertyFormatter
+{
+    template <typename T>
+    void operator()([[maybe_unused]] const T& v, [[maybe_unused]] std::ostream& s) {  }
+};
+
+template <typename T>
+struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, bool>::value>>
+{
+    void operator()(const T& v, std::ostream& s) { s << std::boolalpha << v; }
+};
+
+template <typename T>
+struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>>
+{
+    void operator()(const T& v, std::ostream& s) { s << v; }
+};
+
+template <typename T>
+struct PropertyFormatter<T, std::enable_if_t<std::is_floating_point<T>::value>>
+{
+    explicit PropertyFormatter(int precision = 3)
+        : precision(precision)
+    {}
+
+    void operator()(const T& v, std::ostream& s) { s << std::fixed << std::setprecision(precision) << v; }
+
+    int precision;
+};
+
+template <typename T>
+struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value>>
+{
+    void operator()(const T& v, std::ostream& s) { s << v; }
+};
+
+template <typename T>
+struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, Bytes>::value>>
+{
+    void operator()(const T& v, std::ostream& s) { s << v; }
+};
+
+
+
+enum class TimeZone
+{
+    Utc,
+    Local
+};
+
+template <StringLiteral Format, TimeZone Zone>
+struct TimeFormatter
+{
+    static constexpr const char* format = fromStringLiteral<Format>();
+
+    void operator()(uint64_t v, std::ostream& s) 
+    {
+        Er::System::Time unpacked;
+        if constexpr (Zone == TimeZone::Utc)
+            unpacked = Er::System::Time::gmt(v);
+        else
+            unpacked = Er::System::Time::local(v);
+
+        struct tm t = {};
+        t.tm_year = unpacked.year;
+        t.tm_mon = unpacked.month;
+        t.tm_mday = unpacked.day;
+        t.tm_hour = unpacked.hour;
+        t.tm_min = unpacked.minute;
+        t.tm_sec = unpacked.second;
+
+        s << std::put_time(&t, format);
+    }
+};
+
 
 struct EREBUS_EXPORT Property
 {
@@ -243,7 +325,6 @@ struct EREBUS_EXPORT Property
         , value(pv.value)
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
     {
-        ErAssert(info || Er::lookupProperty(id));
     }
 
     template <IsPropertyValue PropertyValueT>
@@ -252,7 +333,6 @@ struct EREBUS_EXPORT Property
         , value(std::move(pv.value))
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
     {
-        ErAssert(info || Er::lookupProperty(id));
     }
 
     template <SupportedPropertyType ValueT>
@@ -262,7 +342,6 @@ struct EREBUS_EXPORT Property
         , type(static_cast<PropertyType>(this->value.index()))
         , info(info)
     {
-        ErAssert(info || Er::lookupProperty(id));
     }
 
     template <SupportedPropertyType ValueT>
@@ -272,7 +351,6 @@ struct EREBUS_EXPORT Property
         , type(static_cast<PropertyType>(this->value.index()))
         , info(info)
     {
-        ErAssert(info || Er::lookupProperty(id));
     }
 
     friend void swap(Property& a, Property& b) noexcept(noexcept(std::is_nothrow_swappable_v<PropertyValueStorage>))
@@ -321,81 +399,95 @@ struct EREBUS_EXPORT Property
         return type == PropertyType::Invalid;
     }
 
+    friend auto operator==(const Property& a, const Property& b) noexcept
+    {
+        ErAssert(a.id == b.id);
+        ErAssert(a.type == b.type);
+        return a.value == b.value;
+    }
+
+    friend auto operator<=>(const Property& a, const Property& b) noexcept
+    {
+        ErAssert(a.id == b.id);
+        ErAssert(a.type == b.type);
+        return a.value <=> b.value;
+    }
+
+    const void* data() const noexcept
+    {
+        switch (type)
+        {
+        case PropertyType::Invalid: return nullptr;
+        case PropertyType::Bool: return std::get_if<bool>(&value);
+        case PropertyType::Int32: return std::get_if<int32_t>(&value);
+        case PropertyType::UInt32: return std::get_if<uint32_t>(&value);
+        case PropertyType::Int64: return std::get_if<int64_t>(&value);
+        case PropertyType::UInt64: return std::get_if<uint64_t>(&value);
+        case PropertyType::Double: return std::get_if<double>(&value);
+        case PropertyType::String: 
+        {
+            auto v = std::get_if<std::string>(&value);
+            return v ? v->data() : nullptr;
+        }
+        case PropertyType::Bytes: 
+        {
+            auto v = std::get_if<Bytes>(&value);
+            return v ? v->data() : nullptr;
+        }
+        }
+        ErAssert(!"Unsupported property type");
+        return nullptr;
+    }
+
+    std::size_t size() const noexcept
+    {
+        switch (type)
+        {
+        case PropertyType::Invalid: return 0;
+        case PropertyType::Bool: return sizeof(bool);
+        case PropertyType::Int32: return sizeof(int32_t);
+        case PropertyType::UInt32: return sizeof(uint32_t);
+        case PropertyType::Int64: return sizeof(int64_t);
+        case PropertyType::UInt64: return sizeof(uint64_t);
+        case PropertyType::Double: return sizeof(double);
+        case PropertyType::String: 
+        {
+            auto v = std::get_if<std::string>(&value);
+            return v ? v->size() : 0;
+        }
+        case PropertyType::Bytes: 
+        {
+            auto v = std::get_if<Bytes>(&value);
+            return v ? v->size() : 0;
+        }
+        }
+        ErAssert(!"Unsupported property type");
+        return 0;
+    }
+
+    void format(std::ostream& s) const
+    {
+        switch (type)
+        {
+        case PropertyType::Invalid: s << "<empty>"; break;
+        case PropertyType::Bool: PropertyFormatter<bool>()(std::get<bool>(value), s); break;
+        case PropertyType::Int32: PropertyFormatter<int32_t>()(std::get<int32_t>(value), s); break;
+        case PropertyType::UInt32: PropertyFormatter<uint32_t>()(std::get<uint32_t>(value), s); break;
+        case PropertyType::Int64: PropertyFormatter<int64_t>()(std::get<int64_t>(value), s); break;
+        case PropertyType::UInt64: PropertyFormatter<uint64_t>()(std::get<uint64_t>(value), s); break;
+        case PropertyType::Double: PropertyFormatter<double>()(std::get<double>(value), s); break;
+        case PropertyType::String: PropertyFormatter<std::string>()(std::get<std::string>(value), s); break;
+        case PropertyType::Bytes: PropertyFormatter<Bytes>()(std::get<Bytes>(value), s); break;
+        default: s << "<\?\?\?>";
+        }
+    }
+
     PropId id = InvalidPropId;
     PropertyValueStorage value;
     PropertyType type = PropertyType::Invalid;
     mutable std::shared_ptr<IPropertyInfo> info;
 };
 
-
-template <std::equality_comparable T>
-struct PropertyComparator<T>
-{
-    bool operator()(const T& a, const T& b) { return a == b; }
-};
-
-
-struct NullPropertyFormatter
-{
-    template <typename T>
-    void operator()([[maybe_unused]] const T& v, [[maybe_unused]] std::ostream& s) {  }
-};
-
-template <typename T>
-struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, bool>::value>>
-{
-    void operator()(const T& v, std::ostream& s) { s << std::boolalpha << v; }
-};
-
-template <typename T>
-struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>>
-{
-    void operator()(const T& v, std::ostream& s) { s << v; }
-};
-
-template <typename T>
-struct PropertyFormatter<T, std::enable_if_t<std::is_floating_point<T>::value>>
-{
-    void operator()(const T& v, std::ostream& s) { s << std::fixed << std::setprecision(3) << v; }
-};
-
-template <typename T>
-struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value>>
-{
-    void operator()(const T& v, std::ostream& s) { s << v; }
-};
-
-
-enum class TimeZone
-{
-    Utc,
-    Local
-};
-
-template <StringLiteral Format, TimeZone Zone>
-struct TimeFormatter
-{
-    static constexpr const char* format = fromStringLiteral<Format>();
-
-    void operator()(uint64_t v, std::ostream& s) 
-    {
-        Er::System::Time unpacked;
-        if constexpr (Zone == TimeZone::Utc)
-            unpacked = Er::System::Time::gmt(v);
-        else
-            unpacked = Er::System::Time::local(v);
-
-        struct tm t = {};
-        t.tm_year = unpacked.year;
-        t.tm_mon = unpacked.month;
-        t.tm_mday = unpacked.day;
-        t.tm_hour = unpacked.hour;
-        t.tm_min = unpacked.minute;
-        t.tm_sec = unpacked.second;
-
-        s << std::put_time(&t, format);
-    }
-};
 
 struct IPropertyInfo
 {

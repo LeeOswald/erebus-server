@@ -63,12 +63,9 @@ struct EREBUS_EXPORT Bytes final
         : m_bytes(std::move(b.m_bytes))
     {}
 
-    explicit Bytes(const std::string& b)
-        : m_bytes(b)
-    {}
-
-    explicit Bytes(std::string&& b) noexcept
-        : m_bytes(std::move(b))
+    template <typename StringT>
+    explicit Bytes(StringT&& s) noexcept
+        : m_bytes(std::forward<StringT>(s))
     {}
 
     Bytes& operator=(const Bytes& o)
@@ -113,6 +110,27 @@ struct EREBUS_EXPORT Bytes final
     bool empty() const noexcept
     {
         return m_bytes.empty();
+    }
+
+    template <class OStreamT>
+    friend OStreamT& operator<<(OStreamT& ostream, const Bytes& bytes)
+    {
+        static const char HexDigits[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        bool first = true;
+        for (auto b: bytes.m_bytes)
+        {
+            if (first)
+                first = false;
+            else
+                ostream << " ";
+
+            uint8_t hi = uint8_t(b) >> 4;
+            uint8_t lo = uint8_t(b) & 0x0f;
+
+            ostream << HexDigits[hi] << HexDigits[lo];
+        }
+
+        return ostream;
     }
 
 private:
