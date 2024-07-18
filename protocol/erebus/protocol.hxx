@@ -85,33 +85,24 @@ inline void assignProperty(erebus::Property& out, const Property& source)
 inline Property getProperty(const erebus::Property& source)
 {
     auto id = source.id();
-    auto info = Er::lookupProperty(id);
-    if (!info) [[unlikely]]
-    {
-        throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property 0x%08x", id));
-    }
+    if (source.has_v_bool())
+        return Property(PropId(id), source.v_bool());
+    else if (source.has_v_int32())
+        return Property(PropId(id), source.v_int32());
+    else if (source.has_v_uint32())
+        return Property(PropId(id), source.v_uint32());
+    else if (source.has_v_int64())
+        return Property(PropId(id), source.v_int64());
+    else if (source.has_v_uint64())
+        return Property(PropId(id), source.v_uint64());
+    else if (source.has_v_double())
+        return Property(PropId(id), source.v_double());
+    else if (source.has_v_string())
+        return Property(PropId(id), source.v_string());
+    else if (source.has_v_bytes())
+        return Property(PropId(id), source.v_bytes());
     else
-    {
-        auto type = info->type();
-        if (type == PropertyType::Bool)
-            return Property(id, source.v_bool(), info);
-        else if (type == PropertyType::Int32)
-            return Property(id, source.v_int32(), info);
-        else if (type == PropertyType::UInt32)
-            return Property(id, source.v_uint32(), info);
-        else if (type == PropertyType::Int64)
-            return Property(id, source.v_int64(), info);
-        else if (type == PropertyType::UInt64)
-            return Property(id, source.v_uint64(), info);
-        else if (type == PropertyType::Double)
-            return Property(id, source.v_double(), info);
-        else if (type == PropertyType::String)
-            return Property(id, source.v_string(), info);
-        else if (type == PropertyType::Bytes)
-            return Property(id, Bytes(source.v_bytes()), info);
-        else
-            throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %s type %d", info->id_str(), int(type)));
-    }
+        throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported property %08x type"));
 }
 
 namespace Props

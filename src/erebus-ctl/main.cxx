@@ -59,47 +59,47 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
                 else
                     throw Er::Exception(ER_HERE(), Er::Util::format("Invalid value [%s] for bool property [%s]", parts[1].c_str(), parts[0].c_str()));
 
-                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+                Er::insertProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::Int32:
             {
                 int32_t v = std::strtol(parts[1].c_str(), nullptr, 10);
-                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+                Er::insertProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::Int64:
             {
                 int64_t v = std::strtoll(parts[1].c_str(), nullptr, 10);
-                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+                Er::insertProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::UInt32:
             {
                 uint32_t v = std::strtoul(parts[1].c_str(), nullptr, 10);
-                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+                Er::insertProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::UInt64:
             {
                 uint64_t v = std::strtoull(parts[1].c_str(), nullptr, 10);
-                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+                Er::insertProperty(parsed, Er::Property(id, v));
             }
             break;
         
         case Er::PropertyType::Double:
             {
                 double v = std::strtod(parts[1].c_str(), nullptr);
-                Er::insertProperty(parsed, Er::Property(id, v, propInfo));
+                Er::insertProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::String:
-            Er::insertProperty(parsed, Er::Property(id, parts[1], propInfo));
+            Er::insertProperty(parsed, Er::Property(id, parts[1]));
             break;
 
         default:

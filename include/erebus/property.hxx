@@ -322,34 +322,32 @@ struct EREBUS_EXPORT Property
     template <IsPropertyValue PropertyValueT>
     Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
         : id(pv.id)
-        , value(pv.value)
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
+        , value(pv.value)
     {
     }
 
     template <IsPropertyValue PropertyValueT>
     Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
         : id(pv.id)
-        , value(std::move(pv.value))
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
+        , value(std::move(pv.value))
     {
     }
 
     template <SupportedPropertyType ValueT>
-    Property(PropId id, const ValueT& value, std::shared_ptr<IPropertyInfo> info = std::shared_ptr<IPropertyInfo>()) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const ValueT&>))
+    Property(PropId id, const ValueT& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const ValueT&>))
         : id(id)
+        , type(PropertyTypeFrom<std::remove_cvref_t<ValueT>>::type)
         , value(value)
-        , type(static_cast<PropertyType>(this->value.index()))
-        , info(info)
     {
     }
 
     template <SupportedPropertyType ValueT>
-    Property(PropId id, ValueT&& value, std::shared_ptr<IPropertyInfo> info = std::shared_ptr<IPropertyInfo>()) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, ValueT&&>))
+    Property(PropId id, ValueT&& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, ValueT&&>))
         : id(id)
+        , type(PropertyTypeFrom<std::remove_cvref_t<ValueT>>::type)
         , value(std::move(value))
-        , type(static_cast<PropertyType>(this->value.index()))
-        , info(info)
     {
     }
 
@@ -357,16 +355,14 @@ struct EREBUS_EXPORT Property
     {
         using std::swap;
         swap(a.id, b.id);
-        a.value.swap(b.value);
         swap(a.type, b.type);
-        a.info.swap(b.info);
+        a.value.swap(b.value);
     }
 
     Property(const Property& o)
         : id(o.id)
-        , value(o.value)
         , type(o.type)
-        , info(o.info)
+        , value(o.value)
     {
     }
 
@@ -379,9 +375,8 @@ struct EREBUS_EXPORT Property
 
     Property(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
         : id(o.id)
-        , value(std::move(o.value))
         , type(o.type)
-        , info(o.info)
+        , value(std::move(o.value))
     {
         // make 'o' empty
         o.type = PropertyType::Invalid;
@@ -483,9 +478,8 @@ struct EREBUS_EXPORT Property
     }
 
     PropId id = InvalidPropId;
-    PropertyValueStorage value;
     PropertyType type = PropertyType::Invalid;
-    mutable std::shared_ptr<IPropertyInfo> info;
+    PropertyValueStorage value;
 };
 
 

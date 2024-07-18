@@ -187,11 +187,7 @@ ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, Er::PropertyBag&& newPro
         else
         {
             // compare property values
-            auto pi = Er::getPropertyInfo(prop);
-            if (!pi)
-                throw Er::Exception(ER_HERE(), Er::Util::format("Unknown property #%08x", prop.id));
-
-            if (!pi->equal(*current, prop))
+            if (*current != prop)
             {
                 // update changed props
                 diff.properties.push_back(prop);
@@ -205,8 +201,6 @@ ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, Er::PropertyBag&& newPro
 
 static void updateDiffAndCollectionForProcess(ProcessCollection::Container::iterator which, bool firstRun, ProcessCollectionDiff& diff, ProcessCollection& collection, std::chrono::steady_clock::time_point now, uint64_t pid, uint64_t ppid, Er::PropertyBag&& newProps)
 {
-    Er::cachePropertyInfo(newProps);
-
     // is this a previously existed process?
     if (which == collection.processes.end())
     {
