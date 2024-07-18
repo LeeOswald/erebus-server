@@ -43,7 +43,7 @@ void terminateHandler()
 
     if (g_log) 
     {
-        ErLogFatal(g_log, ErLogNowhere(), "std::terminate() called from\n%s", ss.str().c_str());
+        ErLogFatal(g_log, "std::terminate() called from\n%s", ss.str().c_str());
         g_log->flush();
     }
     else
@@ -180,7 +180,7 @@ int main(int argc, char* argv[], char* env[])
     try
     {
         auto user = Er::System::User::current();
-        logger->write(Er::Log::Level::Info, ErLogNowhere(), "Starting as user %s", user.name.c_str());
+        logger->writef(Er::Log::Level::Info, "Starting as user %s", user.name.c_str());
 
         std::string root;
         std::string certificate;
@@ -203,7 +203,7 @@ int main(int argc, char* argv[], char* env[])
         servers.reserve(cfg.endpoints.size());
         for (auto& ep: cfg.endpoints)
         {
-            logger->write(Er::Log::Level::Info, ErLogNowhere(), "Creating a server instance at [%s]", ep.endpoint.c_str());
+            logger->writef(Er::Log::Level::Info, "Creating a server instance at [%s]", ep.endpoint.c_str());
 
             try
             {
@@ -243,7 +243,7 @@ int main(int argc, char* argv[], char* env[])
         {
             if (!plugin.enabled)
             {
-                logger->write(Er::Log::Level::Info, ErLogNowhere(), "Skipping plugin [%s]", plugin.path.c_str());
+                logger->writef(Er::Log::Level::Info, "Skipping plugin [%s]", plugin.path.c_str());
                 continue;
             }
             
@@ -262,12 +262,12 @@ int main(int argc, char* argv[], char* env[])
         }
 
         // now just sit around and wait
-        logger->write(Er::Log::Level::Info, ErLogNowhere(), "Waiting for client connections...");
+        logger->write(Er::Log::Level::Info, "Waiting for client connections...");
 
         g_exitCondition.waitValue(true);
 
         // cleanup
-        logger->write(Er::Log::Level::Info, ErLogNowhere(), "Stopping server instances...");
+        logger->write(Er::Log::Level::Info, "Stopping server instances...");
         
         for (auto srv : servers)
         {
@@ -279,7 +279,7 @@ int main(int argc, char* argv[], char* env[])
         
         if (g_signalReceived)
         {
-            logger->write(Er::Log::Level::Warning, ErLogNowhere(), "Exiting due to signal %d", *g_signalReceived);
+            logger->writef(Er::Log::Level::Warning, "Exiting due to signal %d", *g_signalReceived);
         }
     }
     catch (Er::Exception& e)

@@ -68,7 +68,7 @@ public:
         }
         else
         {
-            params.log->write(Er::Log::Level::Warning, ErLogComponent("DesktopPlugin"), "Starting without icon cache");
+            params.log->write(Er::Log::Level::Warning, "Starting without icon cache");
         }
 
         m_desktopFileCache = std::make_shared<Er::Desktop::Private::DesktopFileCache>(params.log);
@@ -115,7 +115,7 @@ private:
             }
             else
             {
-                params.log->write(Er::Log::Level::Error, ErLogComponent("DesktopPlugin"), "Unrecognized plugin arg [%s]", arg->name.c_str());
+                params.log->writef(Er::Log::Level::Error, "Unrecognized plugin arg [%s]", arg->name.c_str());
             }
         }
 

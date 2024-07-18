@@ -60,21 +60,21 @@ std::string IconResolver::lookupIcon(uint64_t pid)
     auto comm = m_procFs.readComm(pid);
     if (comm.empty())
     {
-        ErLogDebug(m_log, ErLogComponent("IconResolver"), "No comm for PID %zu", pid);
+        ErLogDebug(m_log, "No comm for PID %zu", pid);
         return defaultExeIcon();
     }
 
     auto knownIcon = knownAppIcon(comm);
     if (!knownIcon.empty())
     {
-        ErLogDebug(m_log, ErLogComponent("IconResolver"), "Found known icon [%s] for PID %zu [%s]", knownIcon.c_str(), pid, comm.c_str());
+        ErLogDebug(m_log, "Found known icon [%s] for PID %zu [%s]", knownIcon.c_str(), pid, comm.c_str());
         return knownIcon;
     }
 
     auto exec = m_procFs.readExePath(pid);
     if (exec.empty())
     {
-        ErLogDebug(m_log, ErLogComponent("IconResolver"), "No exe path for PID %zu [%s]", pid, comm.c_str());
+        ErLogDebug(m_log, "No exe path for PID %zu [%s]", pid, comm.c_str());
         return defaultExeIcon();
     }
 
@@ -84,7 +84,7 @@ std::string IconResolver::lookupIcon(uint64_t pid)
         auto desktopEntry = m_desktopFileCache->lookupByPath(desktopFilePath);
         if (desktopEntry && !desktopEntry->icon.empty())
         {
-            ErLogDebug(m_log, ErLogComponent("IconResolver"), "Found icon [%s] for PID %zu [%s] [%s]", desktopEntry->icon.c_str(), pid,comm.c_str(), exec.c_str()); 
+            ErLogDebug(m_log, "Found icon [%s] for PID %zu [%s] [%s]", desktopEntry->icon.c_str(), pid,comm.c_str(), exec.c_str()); 
             return desktopEntry->icon;
         }
     }
@@ -92,11 +92,11 @@ std::string IconResolver::lookupIcon(uint64_t pid)
     auto desktopEntry = m_desktopFileCache->lookupByExec(exec);
     if (desktopEntry && !desktopEntry->icon.empty())
     {
-        ErLogDebug(m_log, ErLogComponent("IconResolver"), "Found icon [%s] for PID %zu [%s] [%s]", desktopEntry->icon.c_str(), pid,comm.c_str(), exec.c_str()); 
+        ErLogDebug(m_log, "Found icon [%s] for PID %zu [%s] [%s]", desktopEntry->icon.c_str(), pid,comm.c_str(), exec.c_str()); 
         return desktopEntry->icon;
     }
 
-    ErLogDebug(m_log, ErLogComponent("IconResolver"), "No icon for PID %zu [%s] [%s]", pid,comm.c_str(), exec.c_str()); 
+    ErLogDebug(m_log, "No icon for PID %zu [%s] [%s]", pid,comm.c_str(), exec.c_str()); 
     return defaultExeIcon();
 }
 
@@ -105,14 +105,14 @@ std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, 
     auto uid = m_procFs.getUid(pid);
     if (!uid)
     {
-        ErLogDebug(m_log, ErLogComponent("IconResolver"), "No UID for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str()); 
+        ErLogDebug(m_log, "No UID for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str()); 
         return std::string();
     }
 
     auto environ = m_procFs.readEnviron(pid);
     if (environ.empty())
     {
-        ErLogWarning(m_log, ErLogComponent("IconResolver"), "Empty environment for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str());
+        ErLogWarning(m_log, "Empty environment for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str());
         return std::string();
     }
 
@@ -125,7 +125,7 @@ std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, 
         }
         else
         {
-            ErLogDebug(m_log, ErLogComponent("IconResolver"), "No XDG_DATA_DIRS for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str());
+            ErLogDebug(m_log, "No XDG_DATA_DIRS for PID %zu [%s] [%s]", pid, comm.c_str(), exec.c_str());
         }
     }
 
@@ -134,7 +134,7 @@ std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, 
     if (it != environ.end())
     {
         bamfDesktopFileHint = it->second;
-        ErLogDebug(m_log, ErLogComponent("IconResolver"), "BAMF_DESKTOP_FILE_HINT=[%s] for PID %zu [%s] [%s]", bamfDesktopFileHint.c_str(), pid, comm.c_str(), exec.c_str()); 
+        ErLogDebug(m_log, "BAMF_DESKTOP_FILE_HINT=[%s] for PID %zu [%s] [%s]", bamfDesktopFileHint.c_str(), pid, comm.c_str(), exec.c_str()); 
     }
 
     std::string gioDesktopFile;
@@ -150,7 +150,7 @@ std::string IconResolver::desktopFileFor(uint64_t pid, const std::string& comm, 
             auto gioDesktopFilePid = std::strtoull(pidStr.c_str(), nullptr, 10);
             if (gioDesktopFilePid == pid)
             {
-                ErLogDebug(m_log, ErLogComponent("IconResolver"), "GIO_LAUNCHED_DESKTOP_FILE=[%s] for PID %zu [%s] [%s]", gioDesktopFile.c_str(), pid, comm.c_str(), exec.c_str()); 
+                ErLogDebug(m_log, "GIO_LAUNCHED_DESKTOP_FILE=[%s] for PID %zu [%s] [%s]", gioDesktopFile.c_str(), pid, comm.c_str(), exec.c_str()); 
     
                 return gioDesktopFile;
             }
@@ -182,7 +182,7 @@ void IconResolver::addXdgDataDirsFor(uint64_t uid, const std::string& dirs)
         m_desktopFileCache->addXdgDataDirs(dirs);
         m_desktopFileCache->waitIdle(std::chrono::milliseconds(1000));
 
-        ErLogDebug(m_log, ErLogComponent("IconResolver"), "XDG_DATA_DIRS=[%s] for UID %zu", dirs.c_str(), uid);
+        ErLogDebug(m_log, "XDG_DATA_DIRS=[%s] for UID %zu", dirs.c_str(), uid);
     }
 }
 

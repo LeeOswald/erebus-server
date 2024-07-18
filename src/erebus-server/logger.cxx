@@ -123,7 +123,7 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
     char prefix[256];
     ::snprintf(prefix, 
         _countof(prefix), 
-        "[%02d.%02d.%04d %02d:%02d:%02d.%03d @%zu:%zu %s] ",
+        "[%02d.%02d.%04d %02d:%02d:%02d.%03d @%zu %s] ",
         r->time.day,
         r->time.month,
         r->time.year,
@@ -131,27 +131,12 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
         r->time.minute, 
         r->time.second,
         r->time.milli,
-        r->pid,
         r->tid,
         strLevel
     );
 
 
     std::string message = std::string(prefix);
-    if (r->location.component)
-    {
-        message.append("[");
-        message.append(r->location.component);
-        if (r->location.instance)
-        {
-            char tmp[64];
-            ::snprintf(tmp, _countof(tmp), " %p", r->location.instance);
-            message.append(tmp);
-        }
-
-        message.append("] ");
-    }
-
     message.append(r->message);
     message.append("\n");
 

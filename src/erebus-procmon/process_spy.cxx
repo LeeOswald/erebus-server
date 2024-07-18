@@ -59,25 +59,25 @@ void ProcessSpy::worker(std::stop_token stop) noexcept
 {
     Er::System::CurrentThread::setName("ProcmonWorker");
     
-    ErLogDebug(m_log, ErLogComponent("ProcessSpy"), "Worker started");
+    ErLogDebug(m_log, "Worker started");
 
     while (!stop.stop_requested())
     {
         auto err = ::ring_buffer__poll(m_ringBuffer, PollTimeoutMs);
         if (err == -EINTR)
         {
-            ErLogError(m_log, ErLogComponent("ProcessSpy"), "Resuming after EINTR");
+            ErLogError(m_log, "Resuming after EINTR");
             continue;
         }
 
         if (err < 0) 
         {
-            ErLogError(m_log, ErLogComponent("ProcessSpy"), "Error polling the ring buffer: %d", err);
+            ErLogError(m_log, "Error polling the ring buffer: %d", err);
             break;
         }
     }
 
-    ErLogDebug(m_log, ErLogComponent("ProcessSpy"), "Worker exited");
+    ErLogDebug(m_log, "Worker exited");
 }
 
 int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
@@ -87,7 +87,6 @@ int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
 
     return Er::protectedCall<int>(
         this_->m_log,
-        ErLogComponent("ProcessSpy"),
         [this_, ctx, data, size]()
         {
             auto header = static_cast<const process_event_header_t*>(data);
@@ -101,7 +100,7 @@ int ProcessSpy::staticHandleEvent(void* ctx, void* data, size_t size) noexcept
             case PROCESS_EVENT_FORK: return this_->handleFork(static_cast<const process_event_fork_t*>(data));
             }
 
-            ErLogError(this_->m_log, ErLogComponent("ProcessSpy"), "Unknown process event type %d", header->type);
+            ErLogError(this_->m_log, "Unknown process event type %d", header->type);
             return 0;
         }
     );
@@ -112,7 +111,7 @@ int ProcessSpy::handleExecveEnter(const process_event_execve_enter_t* ev)
     auto process = std::make_shared<ProcessInfo>(ev);
     auto r = m_runningProcesses.insert({ uint64_t(ev->header.pid), process });
     if (!r.second)
-        ErLogWarning(m_log, ErLogComponent("ProcessSpy"), "Reusing existing PID %zu", ev->header.pid);
+        ErLogWarning(m_log, "Reusing existing PID %zu", ev->header.pid);
 
     m_currentExecve = r.first->second;
     return 0;
@@ -157,7 +156,7 @@ std::shared_ptr<ProcessSpy::ProcessInfo> ProcessSpy::lookupCurrentExecve(uint64_
         auto it = m_runningProcesses.find(pid);
         if (it == m_runningProcesses.end())
         {
-            ErLogWarning(m_log, ErLogComponent("ProcessSpy"), "Non-existing PID %zu", pid);
+            ErLogWarning(m_log, "Non-existing PID %zu", pid);
             return std::shared_ptr<ProcessInfo>();
         }
 
@@ -209,14 +208,14 @@ int ProcessSpy::handleExit(const process_event_exit_t* ev)
 int ProcessSpy::handleFork(const process_event_fork_t* ev)
 {
 
-    ErLogInfo(m_log, ErLogNowhere(), "FORK parent_pid=%zu; parent_comm=[%s]; child_pid=%zu; child_comm=[%s]", ev->parent_pid, ev->parent_comm, ev->child_pid, ev->child_comm);
+    ErLogInfo(m_log, "FORK parent_pid=%zu; parent_comm=[%s]; child_pid=%zu; child_comm=[%s]", ev->parent_pid, ev->parent_comm, ev->child_pid, ev->child_comm);
     
     return 0;
 }
     
 void ProcessSpy::issueExecve(std::shared_ptr<ProcessInfo> info, uint64_t retVal)
 {
-    ErLogInfo(m_log, ErLogNowhere(), "%d EXECVE pid=%zu; ppid=%zu; uid=%zu; sid=%zu; [%s] [%s] %s", int(retVal), info->pid, info->ppid, info->uid, info->sid, info->comm.c_str(), info->fileName.c_str(), info->argv.c_str());
+    ErLogInfo(m_log, "%d EXECVE pid=%zu; ppid=%zu; uid=%zu; sid=%zu; [%s] [%s] %s", int(retVal), info->pid, info->ppid, info->uid, info->sid, info->comm.c_str(), info->fileName.c_str(), info->argv.c_str());
 }
 
 void ProcessSpy::issueTaskExit(std::shared_ptr<ProcessInfo> info, int32_t exitCode, uint64_t pid, uint64_t tid)
@@ -224,16 +223,16 @@ void ProcessSpy::issueTaskExit(std::shared_ptr<ProcessInfo> info, int32_t exitCo
     if (info)
     {
         if (pid == tid)
-            ErLogInfo(m_log, ErLogNowhere(), "EXIT pid=%zu; [%s] -> %d", pid, info->comm.c_str(), exitCode);
+            ErLogInfo(m_log, "EXIT pid=%zu; [%s] -> %d", pid, info->comm.c_str(), exitCode);
         else
-            ErLogInfo(m_log, ErLogNowhere(), "THREAD EXIT pid=%zu; tid=%zu; [%s] -> %d", pid, tid, info->comm.c_str(), exitCode);
+            ErLogInfo(m_log, "THREAD EXIT pid=%zu; tid=%zu; [%s] -> %d", pid, tid, info->comm.c_str(), exitCode);
     }
     else
     {
         if (pid == tid)
-            ErLogInfo(m_log, ErLogNowhere(), "EXIT pid=%zu -> %d", pid, exitCode);
+            ErLogInfo(m_log, "EXIT pid=%zu -> %d", pid, exitCode);
         else
-            ErLogInfo(m_log, ErLogNowhere(), "THREAD EXIT pid=%zu; tid=%zu -> %d", pid, tid, exitCode);
+            ErLogInfo(m_log, "THREAD EXIT pid=%zu; tid=%zu -> %d", pid, tid, exitCode);
     }
 }
 

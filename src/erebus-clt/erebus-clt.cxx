@@ -209,7 +209,7 @@ void gprLogFunction(gpr_log_func_args* args)
         case GPR_LOG_SEVERITY_ERROR: level = Log::Level::Error; break;
         }
 
-        g_libParams.log->write(level, ErLogComponent("gRPC"), "%s", args->message);
+        g_libParams.log->writef(level, "[gRPC] %s", args->message);
     }
 }
 

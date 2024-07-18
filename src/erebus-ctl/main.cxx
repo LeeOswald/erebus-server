@@ -121,7 +121,6 @@ bool issueRequest(
 {
     return Er::protectedCall<bool>(
         log,
-        ErLogNowhere(),
         [log, &params, &request, &args, interval]()
         {
             auto channel = Er::Client::createChannel(params);
@@ -138,7 +137,7 @@ bool issueRequest(
                 if (interval <= 0)
                     break;
 
-                log->write(Er::Log::Level::Info, ErLogNowhere(), "------------------------------------------------------");
+                log->write(Er::Log::Level::Info, "------------------------------------------------------");
 
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
 
@@ -162,7 +161,6 @@ bool receiveStream(
 {
     return Er::protectedCall<bool>(
         log,
-        ErLogNowhere(),
         [log, &params, &request, &args, interval]()
         {
             auto channel = Er::Client::createChannel(params);
@@ -177,13 +175,13 @@ bool receiveStream(
                 for (auto& item : result)
                 {
                     dumpPropertyBag(item, log);
-                    log->write(Er::Log::Level::Info, ErLogNowhere(), "------------------------------------------------------");
+                    log->write(Er::Log::Level::Info, "------------------------------------------------------");
                 }
 
                 if (interval <= 0)
                     break;
 
-                log->write(Er::Log::Level::Info, ErLogNowhere(), "========================================================");
+                log->write(Er::Log::Level::Info, "========================================================");
 
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
 

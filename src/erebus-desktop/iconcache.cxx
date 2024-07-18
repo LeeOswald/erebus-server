@@ -219,7 +219,6 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
         // load icon from cache file
         auto data = Er::protectedCall<Bytes>(
             m_log,
-            ErLogComponent("IconCache"),
             [this, iconInfo]()
             {
                 return Er::Util::loadBinaryFile(iconInfo->path);

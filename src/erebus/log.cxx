@@ -212,17 +212,16 @@ bool LogBase::write(std::shared_ptr<Record> r) noexcept
     return true;
 }
 
-bool LogBase::write(Level l, const Location& location, std::string_view s) noexcept
+bool LogBase::write(Level l, std::string&& s) noexcept
 {
     if (l < m_level)
         return false;
 
-    auto pid = System::CurrentProcess::id();
     auto tid = System::CurrentThread::id();
 
     try
     {
-        auto record = std::make_shared<Record>(l, System::Time::local(), pid, tid, location, s);
+        auto record = std::make_shared<Record>(l, System::Time::local(), tid, std::move(s));
         return write(record);
     }
     catch (...)
@@ -232,7 +231,7 @@ bool LogBase::write(Level l, const Location& location, std::string_view s) noexc
     return false;
 }
 
-bool LogBase::writev(Level l, const Location& location, const char* format, va_list args) noexcept
+bool LogBase::writev(Level l, const char* format, va_list args) noexcept
 {
     if (l < m_level)
         return false;
@@ -249,7 +248,7 @@ bool LogBase::writev(Level l, const Location& location, const char* format, va_l
 
         va_end(args1);
 
-        return write(l, location, std::string_view(formatted));
+        return write(l, std::move(formatted));
     }
     catch (...)
     {
@@ -258,7 +257,7 @@ bool LogBase::writev(Level l, const Location& location, const char* format, va_l
     return false;
 }
 
-bool LogBase::write(Level l, const Location& location, const char* format, ...) noexcept
+bool LogBase::writef(Level l, const char* format, ...) noexcept
 {
     if (l < m_level)
         return false;
@@ -266,7 +265,7 @@ bool LogBase::write(Level l, const Location& location, const char* format, ...) 
     va_list args;
     va_start(args, format);
 
-    auto b = writev(l, location, format, args);
+    auto b = writev(l, format, args);
 
     va_end(args);
 

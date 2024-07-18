@@ -72,7 +72,7 @@ private:
             if ((formatted.length() > 0) && (formatted[formatted.length() - 1] == '\n'))
                 formatted.resize(formatted.length() - 1);
         
-            g_log->write(l, ErLogComponent("eBPF"), formatted);
+            g_log->write(l, std::move(formatted));
         }
         catch (std::exception&)
         {

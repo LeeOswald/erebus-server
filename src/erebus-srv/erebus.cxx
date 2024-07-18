@@ -50,7 +50,7 @@ public:
             throw Er::Exception(ER_HERE(), Er::Util::format("Service for [%s] is already registered", id.c_str()));
 
         
-        ErLogInfo(m_params.log, ErLogComponent("ErebusService"), "Registered service %p for [%s]", service, id.c_str());
+        ErLogInfo(m_params.log, "Registered service %p for [%s]", service, id.c_str());
 
         m_services.insert({ std::move(id), service });
     }
@@ -64,7 +64,7 @@ public:
         {
             if (it->second == service)
             {
-                ErLogInfo(m_params.log, ErLogComponent("ErebusService"), "Unregistered service %p", service);
+                ErLogInfo(m_params.log, "Unregistered service %p", service);
 
                 auto next = std::next(it);
                 m_services.erase(it);
@@ -79,7 +79,7 @@ public:
         }
 
         if (!success)
-            ErLogError(m_params.log, ErLogComponent("ErebusService"), "Service % p is not registered", service);
+            ErLogError(m_params.log, "Service % p is not registered", service);
     }
 
 private:
@@ -122,7 +122,7 @@ private:
         auto it = m_services.find(serviceId);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, ErLogComponent("ErebusService"), "No handlers for [%s]", serviceId.c_str());
+            m_params.log->writef(Er::Log::Level::Error, "No handlers for [%s]", serviceId.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -176,7 +176,7 @@ private:
         auto it = m_services.find(serviceId);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, ErLogComponent("ErebusService"), "No handlers for [%s]", serviceId.c_str());
+            m_params.log->writef(Er::Log::Level::Error, "No handlers for [%s]", serviceId.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -237,7 +237,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, ErLogComponent("ErebusService"), "No handlers for [%s]", id.c_str());
+            m_params.log->writef(Er::Log::Level::Error, "No handlers for [%s]", id.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -294,7 +294,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->write(Er::Log::Level::Error, ErLogComponent("ErebusService"), "No handlers for [%s]", id.c_str());
+            m_params.log->writef(Er::Log::Level::Error, "No handlers for [%s]", id.c_str());
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }

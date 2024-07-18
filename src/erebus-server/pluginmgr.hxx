@@ -37,7 +37,7 @@ private:
         ~PluginInfo()
         {
             if (dll.is_loaded())
-                log->write(Er::Log::Level::Info, ErLogNowhere(), "Unloading plugin [%s]", path.c_str());
+                log->writef(Er::Log::Level::Info, "Unloading plugin [%s]", path.c_str());
         }
 
         explicit PluginInfo(const std::string& path, Er::Log::ILog* log)

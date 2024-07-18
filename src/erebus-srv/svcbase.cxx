@@ -92,7 +92,7 @@ void ServiceBase::handleRpcs()
 {
     Er::System::CurrentThread::setName("RPCHandler");
 
-    Er::Log::Debug(m_params.log, ErLogComponent("ServiceBase")) << "RPC handler thread started";
+    Er::Log::Debug(m_params.log) << "RPC handler thread started";
 
     createRpcs();
 
@@ -108,7 +108,7 @@ void ServiceBase::handleRpcs()
         {
             if (!m_stop)
             {
-                m_params.log->write(Er::Log::Level::Warning, ErLogComponent("ServiceBase"), "No more tags in completion queue");
+                m_params.log->write(Er::Log::Level::Warning, "No more tags in completion queue");
                 break;
             }
         }
@@ -121,13 +121,13 @@ void ServiceBase::handleRpcs()
         m_incoming.notify_one();
     }
 
-    Er::Log::Debug(m_params.log, ErLogComponent("ServiceBase")) << "RPC handler thread exited";
+    Er::Log::Debug(m_params.log) << "RPC handler thread exited";
 }
 
 void ServiceBase::processRpcs()
 {
     Er::System::CurrentThread::setName("RPCProcessor");
-    Er::Log::Debug(m_params.log, ErLogComponent("ServiceBase")) << "RPC processor thread started";
+    Er::Log::Debug(m_params.log) << "RPC processor thread started";
 
     while (!m_stop)
     {
@@ -150,7 +150,7 @@ void ServiceBase::processRpcs()
         }
     }
 
-    Er::Log::Debug(m_params.log, ErLogComponent("ServiceBase")) << "RPC processor thread exited";
+    Er::Log::Debug(m_params.log) << "RPC processor thread exited";
 }
 
 void ServiceBase::genericDone(Er::Server::Private::Rpc::RpcBase& rpc, bool rpcCancelled)

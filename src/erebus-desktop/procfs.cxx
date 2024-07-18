@@ -59,7 +59,7 @@ std::string ProcFs::readComm(uintptr_t pid) const noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, ErLogNowhere(), "comm for process %zu could not be read: %s", pid, e.what());
+        ErLogDebug(m_log, "comm for process %zu could not be read: %s", pid, e.what());
     }
 
     return std::string();
@@ -78,7 +78,7 @@ std::string ProcFs::readExePath(uintptr_t pid) const noexcept
         if (::lstat(path.c_str(), &sb) == -1)
         {
             auto e = errno;
-            ErLogDebug(m_log, ErLogNowhere(), "exe link for process %zu could not be opened: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
+            ErLogDebug(m_log, "exe link for process %zu could not be opened: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
             return std::string();
         }
         else
@@ -93,7 +93,7 @@ std::string ProcFs::readExePath(uintptr_t pid) const noexcept
             if (r < 0)
             {
                 auto e = errno;
-                ErLogDebug(m_log, ErLogNowhere(), "Failed to read exe link for process %zu: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
+                ErLogDebug(m_log, "Failed to read exe link for process %zu: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
                 return std::string();
             }
 
@@ -104,7 +104,7 @@ std::string ProcFs::readExePath(uintptr_t pid) const noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, ErLogNowhere(), "exe link for process %zu could not be read: %s", pid, e.what());
+        ErLogDebug(m_log, "exe link for process %zu could not be read: %s", pid, e.what());
     }
 
     return std::string();
@@ -147,7 +147,7 @@ std::unordered_map<std::string, std::string> ProcFs::readEnviron(uint64_t pid) c
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, ErLogNowhere(), "environ for process %zu could not be read: %s", pid, e.what());
+        ErLogDebug(m_log, "environ for process %zu could not be read: %s", pid, e.what());
     }
 
     return env;

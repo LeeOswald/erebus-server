@@ -203,8 +203,7 @@ EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const std::exc
 
     if (level >= log->level())
     {
-        auto s = formatException(e);
-        log->write(level, ErLogNowhere(), "%s", s.c_str());
+        log->write(level, formatException(e));
     }
 }
 
@@ -215,8 +214,7 @@ EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const Er::Exce
 
     if (level >= log->level())
     {
-        auto s = formatException(e);
-        log->write(level, ErLogNowhere(), "%s", s.c_str());
+        log->write(level, formatException(e));
     }
 }
 

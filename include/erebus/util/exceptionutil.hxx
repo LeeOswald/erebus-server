@@ -20,7 +20,7 @@ void EREBUS_EXPORT logException(Log::ILog* log, Log::Level level, const Er::Exce
 
 
 template <typename ResultT, typename WorkT, typename... Args>
-ResultT protectedCall(Er::Log::ILog* log, const Er::Log::Location& location, WorkT work, Args&&... args)
+ResultT protectedCall(Er::Log::ILog* log, WorkT work, Args&&... args)
 {
     try
     {
@@ -30,22 +30,20 @@ ResultT protectedCall(Er::Log::ILog* log, const Er::Log::Location& location, Wor
     {
         if (log)
         {
-            auto msg = Er::Util::formatException(e);
-            log->write(Er::Log::Level::Error, location, "%s", msg.c_str());
+            log->write(Er::Log::Level::Error, Er::Util::formatException(e));
         }
     }
     catch (std::exception& e)
     {
         if (log)
         {
-            auto msg = Er::Util::formatException(e);
-            log->write(Er::Log::Level::Error, location, "%s", msg.c_str());
+            log->write(Er::Log::Level::Error, Er::Util::formatException(e));
         }
     }
     catch (...)
     {
         if (log)
-            log->write(Er::Log::Level::Error, location, "Unexpected exception");
+            log->writef(Er::Log::Level::Error, "Unexpected exception");
     }
 
     return ResultT();
