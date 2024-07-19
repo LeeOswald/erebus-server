@@ -1,24 +1,23 @@
 #pragma once
 
 #include <erebus/propertybag.hxx>
-#include <erebus-processmgr/processmgr.hxx>
-#include <erebus-processmgr/processprops.hxx>
+#include <erebus-processmgr/erebus-processmgr.hxx>
+#include <erebus-srv/plugin.hxx>
 
-
-namespace Er
+namespace Erp
 {
 
-namespace Private
+namespace ProcessMgr
 {
 
 
-class ProcessDetails final
+class ProcessDetailsService final
     : public Er::Server::IService
     , public Er::NonCopyable
 {
 public:
-    ~ProcessDetails();
-    explicit ProcessDetails(Er::Log::ILog* log);
+    ~ProcessDetailsService();
+    explicit ProcessDetailsService(Er::Log::ILog* log);
 
     void registerService(Er::Server::IServiceContainer* container);
     void unregisterService(Er::Server::IServiceContainer* container);
@@ -37,6 +36,6 @@ private:
 
 };
 
-} // namespace Private {}
+} // namespace ProcessMgr {}
 
-} // namespace Er {}
+} // namespace Erp {}

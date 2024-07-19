@@ -1,10 +1,11 @@
 #pragma once
 
-#include <erebus-processmgr/processmgr.hxx>
-#include <erebus-processmgr/processprops.hxx>
-#include <erebus-processmgr/procfs.hxx>
+#include <erebus-processmgr/erebus-processmgr.hxx>
+#include <erebus-srv/plugin.hxx>
 
 #include "processlistdiff.hxx"
+#include "procfs.hxx"
+
 
 #include <chrono>
 #include <mutex>
@@ -12,20 +13,20 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Er
+namespace Erp
 {
 
-namespace Private
+namespace ProcessMgr
 {
 
 
-class ProcessList final
+class ProcessListService final
     : public Er::Server::IService
     , public Er::NonCopyable
 {
 public:
-    ~ProcessList();
-    explicit ProcessList(Er::Log::ILog* log);
+    ~ProcessListService();
+    explicit ProcessListService(Er::Log::ILog* log);
 
     void registerService(Er::Server::IServiceContainer* container);
     void unregisterService(Er::Server::IServiceContainer* container);
@@ -72,13 +73,13 @@ private:
     struct ProcessListStream final
         : public Stream
     {
-        explicit ProcessListStream(StreamId id, Er::ProcessProps::PropMask required, std::vector<uint64_t>&& pids) noexcept
+        explicit ProcessListStream(StreamId id, Er::ProcessMgr::ProcessProps::PropMask required, std::vector<uint64_t>&& pids) noexcept
             : Stream(StreamType::ProcessList, id)
             , required(required)
             , pids(std::move(pids))
         {}
 
-        Er::ProcessProps::PropMask required;
+        Er::ProcessMgr::ProcessProps::PropMask required;
         std::vector<uint64_t> pids;
         size_t next = 0;
     };
@@ -86,7 +87,7 @@ private:
     struct ProcessListDiffStream final
         : public Stream
     {
-        explicit ProcessListDiffStream(StreamId id, Er::ProcessProps::PropMask required, ProcessCollectionDiff&& diff) noexcept
+        explicit ProcessListDiffStream(StreamId id, Er::ProcessMgr::ProcessProps::PropMask required, ProcessCollectionDiff&& diff) noexcept
             : Stream(StreamType::ProcessListDiff, id)
             , diff(std::move(diff))
         {}
@@ -104,11 +105,11 @@ private:
         size_t next = 0;
     };
 
-    static Er::ProcessProps::PropMask getProcessPropMask(const Er::PropertyBag& args);
-    Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required);
+    static Er::ProcessMgr::ProcessProps::PropMask getProcessPropMask(const Er::PropertyBag& args);
+    Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessMgr::ProcessProps::PropMask required);
 
-    static Er::ProcessesGlobal::PropMask getProcessesGlobalPropMask(const Er::PropertyBag& args);
-    Er::PropertyBag processesGlobal(Er::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount);
+    static Er::ProcessMgr::ProcessesGlobal::PropMask getProcessesGlobalPropMask(const Er::PropertyBag& args);
+    Er::PropertyBag processesGlobal(Er::ProcessMgr::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount);
 
     Session* getSession(std::optional<SessionId> id);
     void dropStaleSessions() noexcept;
@@ -125,7 +126,7 @@ private:
     const unsigned kStreamTimeoutSeconds = 60;
 
     Er::Log::ILog* const m_log;
-    Er::ProcFs::ProcFs m_procFs;
+    ProcFs m_procFs;
    
     std::shared_mutex m_mutexSession;
     SessionId m_nextSessionId = 0;
@@ -134,6 +135,6 @@ private:
     std::unordered_map<StreamId, std::unique_ptr<Stream>> m_streams;
 };
 
-} // namespace Private {}
+} // namespace ProcessMgr {}
 
-} // namespace Er {}
+} // namespace Erp {}

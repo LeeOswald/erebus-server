@@ -1,15 +1,16 @@
 add_library(${EREBUS_PROCESSMGR} SHARED
-    ../../include/erebus-processmgr/processmgr.hxx
-    ../../include/erebus-processmgr/processprops.hxx
-    ../../include/erebus-processmgr/procfs.hxx
-    processdetails.cxx
-    processdetails.hxx
-    processlist.cxx
-    processlist.hxx
+    ../../include/erebus-processmgr/erebus-processmgr.hxx
+    processdetailsservice.cxx
+    processdetailsservice.hxx
+    processlistcollector.cxx
+    processlistcollector.hxx
     processlistdiff.cxx
     processlistdiff.hxx
-    processmgr.cxx
+    processlistservice.cxx
+    processlistservice.hxx
+    processmgrplugin.cxx
     procfs.cxx
+    procfs.hxx
 )
 
 add_compile_definitions(ER_PROCESSMGR_EXPORTS=1)

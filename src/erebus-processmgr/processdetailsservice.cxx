@@ -1,4 +1,4 @@
-#include "processdetails.hxx"
+#include "processdetailsservice.hxx"
 
 #include <erebus/exception.hxx>
 #include <erebus/util/format.hxx>
@@ -6,10 +6,10 @@
 
 #include <signal.h>
 
-namespace Er
+namespace Erp
 {
 
-namespace Private
+namespace ProcessMgr
 {
 
 namespace
@@ -55,63 +55,63 @@ inline int mapSignalNameToSigno(std::string_view name) noexcept
 
 } // namespace {}
 
-ProcessDetails::~ProcessDetails()
+ProcessDetailsService::~ProcessDetailsService()
 {
 }
 
-ProcessDetails::ProcessDetails(Er::Log::ILog* log)
+ProcessDetailsService::ProcessDetailsService(Er::Log::ILog* log)
     : m_log(log)
 {
 }
 
-void ProcessDetails::registerService(Er::Server::IServiceContainer* container)
+void ProcessDetailsService::registerService(Er::Server::IServiceContainer* container)
 {
-    container->registerService(Er::ProcessRequests::KillProcess, this);
+    container->registerService(Er::ProcessMgr::ProcessRequests::KillProcess, this);
 }
 
-void ProcessDetails::unregisterService(Er::Server::IServiceContainer* container)
+void ProcessDetailsService::unregisterService(Er::Server::IServiceContainer* container)
 {
     container->unregisterService(this);
 }
 
-ProcessDetails::SessionId ProcessDetails::allocateSession()
+ProcessDetailsService::SessionId ProcessDetailsService::allocateSession()
 {
     return SessionId(1);
 }
 
-void ProcessDetails::deleteSession(SessionId id)
+void ProcessDetailsService::deleteSession(SessionId id)
 {
 }
 
-Er::PropertyBag ProcessDetails::request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+Er::PropertyBag ProcessDetailsService::request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
 {
-    if (request == Er::ProcessRequests::KillProcess)
+    if (request == Er::ProcessMgr::ProcessRequests::KillProcess)
         return killProcess(args);
 
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-ProcessDetails::StreamId ProcessDetails::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+ProcessDetailsService::StreamId ProcessDetailsService::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
 {
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-void ProcessDetails::endStream(StreamId id, std::optional<SessionId> sessionId)
+void ProcessDetailsService::endStream(StreamId id, std::optional<SessionId> sessionId)
 {
 }
 
-Er::PropertyBag ProcessDetails::next(StreamId id, std::optional<SessionId> sessionId)
+Er::PropertyBag ProcessDetailsService::next(StreamId id, std::optional<SessionId> sessionId)
 {
     return Er::PropertyBag();
 }
 
-Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
+Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
 {
-    auto pid = Er::getProperty<Er::ProcessesGlobal::Pid>(args);
+    auto pid = Er::getPropertyValue<Er::ProcessMgr::ProcessesGlobal::Pid>(args);
     if (!pid)
         throw Er::Exception(ER_HERE(), "Process ID expected");
 
-    auto signame = Er::getProperty<Er::ProcessesGlobal::Signal>(args);
+    auto signame = Er::getPropertyValue<Er::ProcessMgr::ProcessesGlobal::Signal>(args);
     if (!signame)
         throw Er::Exception(ER_HERE(), "Signal name expected");
 
@@ -123,7 +123,7 @@ Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
     auto r = ::kill(*pid, signo);
 
     Er::PropertyBag result;
-    Er::addProperty<Er::ProcessesGlobal::PosixResult>(result, r);
+    Er::addProperty<Er::ProcessMgr::ProcessesGlobal::PosixResult>(result, r);
 
     if (r < 0)
     {
@@ -132,7 +132,7 @@ Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
         ErLogWarning(m_log, "kill(%zu, %d) -> %d [%s]", *pid, signo, r, decoded.c_str());
         
         if (!decoded.empty())
-            Er::addProperty<Er::ProcessesGlobal::ErrorText>(result, std::move(decoded));
+            Er::addProperty<Er::ProcessMgr::ProcessesGlobal::ErrorText>(result, std::move(decoded));
     }
     else
     {
@@ -142,6 +142,6 @@ Er::PropertyBag ProcessDetails::killProcess(const Er::PropertyBag& args)
     return result;
 }
 
-} // namespace Private {}
+} // namespace ProcessMgr {}
 
-} // namespace Er {}
+} // namespace Erp {}

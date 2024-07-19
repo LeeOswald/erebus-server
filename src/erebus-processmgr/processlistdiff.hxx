@@ -1,18 +1,18 @@
 #pragma once
 
-#include <erebus-processmgr/processmgr.hxx>
-#include <erebus-processmgr/processprops.hxx>
-#include <erebus-processmgr/procfs.hxx>
+#include <erebus-processmgr/erebus-processmgr.hxx>
+
+#include "procfs.hxx"
 
 
 #include <chrono>
 #include <unordered_map>
 #include <vector>
 
-namespace Er
+namespace Erp
 {
 
-namespace Private
+namespace ProcessMgr
 {
 
 
@@ -61,17 +61,17 @@ struct ProcessCollectionDiff
 
 struct ProcessDetailsCached // smth that is faster than a property bag lookup
 {
-    uint64_t ppid = ProcFs::InvalidPid;
+    uint64_t ppid = InvalidPid;
     std::string comm;
     std::string exe;
     double stime = 0.0;
     double utime = 0.0;
 };
 
-Er::PropertyBag collectProcessDetails(Er::ProcFs::ProcFs& source, uint64_t pid, Er::ProcessProps::PropMask required, Er::PropertyBag&& previous, ProcessDetailsCached& cached);
-Er::PropertyBag collectKernelDetails(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required);
+Er::PropertyBag collectProcessDetails(ProcFs& source, uint64_t pid, Er::ProcessMgr::ProcessProps::PropMask required, Er::PropertyBag&& previous, ProcessDetailsCached& cached);
+Er::PropertyBag collectKernelDetails(ProcFs& source, Er::ProcessMgr::ProcessProps::PropMask required);
 
-Er::ProcessProps::PropMask filterVolatileProps(Er::ProcFs::ProcFs& source, uint64_t pid, uint64_t ppid, const Er::PropertyBag& existing, Er::ProcessProps::PropMask required, Er::PropertyBag& current);
+Er::ProcessMgr::ProcessProps::PropMask filterVolatileProps(ProcFs& source, uint64_t pid, uint64_t ppid, const Er::PropertyBag& existing, Er::ProcessMgr::ProcessProps::PropMask required, Er::PropertyBag& current);
 
 ProcessDataDiff diffAndUpdateProcessProps(uint64_t pid, const Er::PropertyBag& prev, Er::PropertyBag& curr);
 
@@ -81,9 +81,9 @@ struct ProcessStatistics
     double uTimeTotal = 0.0;
 };
 
-ProcessCollectionDiff updateProcessCollection(Er::ProcFs::ProcFs& source, Er::ProcessProps::PropMask required, ProcessCollection& collection, ProcessStatistics& stats);
+ProcessCollectionDiff updateProcessCollection(ProcFs& source, Er::ProcessMgr::ProcessProps::PropMask required, ProcessCollection& collection, ProcessStatistics& stats);
 
 
-} // namespace Private {}
+} // namespace ProcessMgr {}
 
-} // namespace Er {}
+} // namespace Erp {}

@@ -1,18 +1,17 @@
 #include <erebus/exception.hxx>
-#include <erebus-processmgr/processmgr.hxx>
-#include <erebus-processmgr/processprops.hxx>
+#include <erebus-processmgr/erebus-processmgr.hxx>
 
-#include "processdetails.hxx"
-#include "processlist.hxx"
+#include "processdetailsservice.hxx"
+#include "processlistservice.hxx"
 
 #include "erebus-version.h"
 
 #include <atomic>
 
-namespace Er
+namespace Erp
 {
 
-namespace
+namespace ProcessMgr
 {
 
 class ProcessMgrPlugin final
@@ -32,8 +31,8 @@ public:
         m_processList.reset();
         m_processDetails.reset();
 
-        Er::ProcessProps::Private::unregisterAll(m_params.log);
-        Er::ProcessesGlobal::Private::unregisterAll(m_params.log);
+        Er::ProcessMgr::ProcessProps::Private::unregisterAll(m_params.log);
+        Er::ProcessMgr::ProcessesGlobal::Private::unregisterAll(m_params.log);
 
         g_instances--;
     }
@@ -55,8 +54,8 @@ public:
             throw Er::Exception(ER_HERE(), "Only one instance of erebus-processmgr plugin can be created");
 
         // create and register services
-        m_processList.reset(new Er::Private::ProcessList(m_params.log));
-        m_processDetails.reset(new Er::Private::ProcessDetails(m_params.log));
+        m_processList.reset(new Erp::ProcessMgr::ProcessListService(m_params.log));
+        m_processDetails.reset(new Erp::ProcessMgr::ProcessDetailsService(m_params.log));
         
         for (auto container: m_params.containers)
         {
@@ -64,24 +63,24 @@ public:
             m_processDetails->registerService(container);
         }
 
-        Er::ProcessesGlobal::Private::registerAll(m_params.log);
-        Er::ProcessProps::Private::registerAll(m_params.log);
+        Er::ProcessMgr::ProcessesGlobal::Private::registerAll(m_params.log);
+        Er::ProcessMgr::ProcessProps::Private::registerAll(m_params.log);
     }
 
 private:
     static std::atomic<long> g_instances;
 
     Er::Server::PluginParams m_params;
-    std::unique_ptr<Er::Private::ProcessList> m_processList;
-    std::unique_ptr<Er::Private::ProcessDetails> m_processDetails;
+    std::unique_ptr<Erp::ProcessMgr::ProcessListService> m_processList;
+    std::unique_ptr<Erp::ProcessMgr::ProcessDetailsService> m_processDetails;
 };
 
 std::atomic<long> ProcessMgrPlugin::g_instances = 0;
 
 
-} // namespace {}
+} // namespace ProcessMgr {}
 
-} // namespace Er {}
+} // namespace Erp {}
 
 
 extern "C"
@@ -89,7 +88,7 @@ extern "C"
 
 ER_PROCESSMGR_EXPORT Er::Server::IPlugin* createPlugin(const Er::Server::PluginParams& params)
 {
-    return new Er::ProcessMgrPlugin(params);
+    return new Erp::ProcessMgr::ProcessMgrPlugin(params);
 }
 
 } // extern "C" {}

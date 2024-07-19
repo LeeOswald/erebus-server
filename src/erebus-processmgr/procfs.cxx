@@ -1,4 +1,4 @@
-#include <erebus-processmgr/procfs.hxx>
+#include "procfs.hxx"
 
 #include <erebus/exception.hxx>
 #include <erebus/util/autoptr.hxx>
@@ -15,16 +15,16 @@
 #include <sys/sysinfo.h>
 
 
-namespace Er
+namespace Erp
 {
 
-namespace ProcFs
+namespace ProcessMgr
 {
 
 namespace 
 {
 
-using DirHolder = Util::AutoPtr<DIR, decltype([](DIR* d) { ::closedir(d); })>;
+using DirHolder = Er::Util::AutoPtr<DIR, decltype([](DIR* d) { ::closedir(d); })>;
 
 } // namespace {}
 
@@ -736,6 +736,6 @@ MemStats ProcFs::readMemStats() noexcept
 }
 
     
-} // namespace ProcFs {}
+} // namespace ProcessMgr {}
 
-} // namespace Er {}
+} // namespace Erp {}

@@ -20,13 +20,13 @@ TEST(Er_PropertyBag, simple)
     EXPECT_FALSE(Er::propertyPresent<TestProps::DoubleProp>(bag));
 
     {
-        auto sp = Er::getProperty<TestProps::StringProp>(bag);
+        auto sp = Er::getPropertyValue<TestProps::StringProp>(bag);
         ASSERT_TRUE(sp);
         EXPECT_STREQ(sp->c_str(), "some string");
     }
 
     {
-        auto ip = Er::getProperty<TestProps::Int32Prop>(bag);
+        auto ip = Er::getPropertyValue<TestProps::Int32Prop>(bag);
         ASSERT_TRUE(ip);
         EXPECT_EQ(*ip, -5);
     }
@@ -38,21 +38,21 @@ TEST(Er_PropertyBag, simple)
         EXPECT_TRUE(str.empty()); // should have moved
 
         ASSERT_TRUE(Er::propertyPresent<TestProps::StringProp>(bag));
-        auto sp = Er::getProperty<TestProps::StringProp>(bag);
+        auto sp = Er::getPropertyValue<TestProps::StringProp>(bag);
         ASSERT_TRUE(sp);
         EXPECT_STREQ(sp->c_str(), "some string"); // should keep the old val
     }
 
-    EXPECT_EQ(Er::getPropertyOr<TestProps::Int32Prop>(bag, 10), -5);
-    EXPECT_EQ(Er::getPropertyOr<TestProps::DoubleProp>(bag, 10.0), 10.0);
+    EXPECT_EQ(Er::getPropertyValueOr<TestProps::Int32Prop>(bag, 10), -5);
+    EXPECT_EQ(Er::getPropertyValueOr<TestProps::DoubleProp>(bag, 10.0), 10.0);
 
     {
         std::string sd("default string");
-        EXPECT_STREQ(Er::getPropertyOr<TestProps::StringProp>(bag, sd).c_str(), "some string");
+        EXPECT_STREQ(Er::getPropertyValueOr<TestProps::StringProp>(bag, sd).c_str(), "some string");
         EXPECT_FALSE(sd.empty());
 
         Er::PropertyBag empty;
-        EXPECT_STREQ(Er::getPropertyOr<TestProps::StringProp>(empty, std::move(sd)).c_str(), "default string");
+        EXPECT_STREQ(Er::getPropertyValueOr<TestProps::StringProp>(empty, std::move(sd)).c_str(), "default string");
         EXPECT_TRUE(sd.empty());
     }
 }

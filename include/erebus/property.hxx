@@ -202,11 +202,11 @@ struct PropertyValue final
         : value()
     {}
 
-    constexpr PropertyValue(const ValueT& value) noexcept(std::is_nothrow_copy_constructible_v<ValueT>)
+    constexpr explicit PropertyValue(const ValueT& value) noexcept(std::is_nothrow_copy_constructible_v<ValueT>)
         : value(value)
     {}
 
-    constexpr PropertyValue(ValueT&& value) noexcept(std::is_nothrow_move_constructible_v<ValueT>)
+    constexpr explicit PropertyValue(ValueT&& value) noexcept(std::is_nothrow_move_constructible_v<ValueT>)
         : value(std::move(value))
     {}
 
@@ -320,7 +320,7 @@ struct EREBUS_EXPORT Property
     Property() noexcept = default;
 
     template <IsPropertyValue PropertyValueT>
-    Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
+    explicit Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
         : id(pv.id)
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
         , value(pv.value)
@@ -328,7 +328,7 @@ struct EREBUS_EXPORT Property
     }
 
     template <IsPropertyValue PropertyValueT>
-    Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
+    explicit Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
         : id(pv.id)
         , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
         , value(std::move(pv.value))
@@ -336,7 +336,7 @@ struct EREBUS_EXPORT Property
     }
 
     template <SupportedPropertyType ValueT>
-    Property(PropId id, const ValueT& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const ValueT&>))
+    explicit Property(PropId id, const ValueT& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const ValueT&>))
         : id(id)
         , type(PropertyTypeFrom<std::remove_cvref_t<ValueT>>::type)
         , value(value)
@@ -344,7 +344,7 @@ struct EREBUS_EXPORT Property
     }
 
     template <SupportedPropertyType ValueT>
-    Property(PropId id, ValueT&& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, ValueT&&>))
+    explicit Property(PropId id, ValueT&& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, ValueT&&>))
         : id(id)
         , type(PropertyTypeFrom<std::remove_cvref_t<ValueT>>::type)
         , value(std::move(value))

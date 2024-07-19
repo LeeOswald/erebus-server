@@ -215,7 +215,7 @@ Er::PropertyBag ServiceBase::unmarshalArgs(const erebus::ServiceRequest* request
     for (int i = 0; i < count; ++i)
     {
         auto& arg = request->args(i);
-        Er::insertProperty(bag, Er::Protocol::getProperty(arg));
+        Er::addProperty(bag, Er::Protocol::getProperty(arg));
     }
 
     return bag;

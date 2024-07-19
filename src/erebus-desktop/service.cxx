@@ -73,21 +73,21 @@ Er::PropertyBag Service::request(std::string_view request, const Er::PropertyBag
 
 Er::PropertyBag Service::queryIcon(const Er::PropertyBag& args)
 {
-    auto iconSize = Er::getProperty<Er::Desktop::Props::IconSize>(args);
+    auto iconSize = Er::getPropertyValue<Er::Desktop::Props::IconSize>(args);
     if (!iconSize)
         throw Er::Exception(ER_HERE(), "Icon size not specified");
 
     if ((*iconSize != uint32_t(IconSize::Large)) && (*iconSize != uint32_t(IconSize::Small)))
         throw Er::Exception(ER_HERE(), "Unsupported icon size");
 
-    auto iconName = Er::getProperty<Er::Desktop::Props::IconName>(args);
+    auto iconName = Er::getPropertyValue<Er::Desktop::Props::IconName>(args);
     if (iconName)
     {
         auto iconData = m_iconCache->lookupByName(*iconName, IconSize(*iconSize));
         return packIcon(iconData);
     }
 
-    auto pid = Er::getProperty<Er::Desktop::Props::Pid>(args);
+    auto pid = Er::getPropertyValue<Er::Desktop::Props::Pid>(args);
     if (pid)
     {
         auto name = m_iconResolver->lookupIcon(*pid);

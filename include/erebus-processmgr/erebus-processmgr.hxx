@@ -2,12 +2,26 @@
 
 #include <erebus/flags.hxx>
 #include <erebus/knownprops.hxx>
-#include <erebus-processmgr/processmgr.hxx>
+#include <erebus-processmgr/erebus-processmgr.hxx>
 
 #include <iomanip>
 #include <vector>
 
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    #ifdef ER_PROCESSMGR_EXPORTS
+        #define ER_PROCESSMGR_EXPORT __declspec(dllexport)
+    #else
+        #define ER_PROCESSMGR_EXPORT __declspec(dllimport)
+    #endif
+#else
+    #define ER_PROCESSMGR_EXPORT __attribute__((visibility("default")))
+#endif
+
 namespace Er
+{
+
+namespace ProcessMgr
 {
 
 namespace ProcessRequests
@@ -344,5 +358,7 @@ inline void unregisterAll(Er::Log::ILog* log)
 } // namespace Private {}
 
 } // namespace ProcessesGlobal {}
+
+} // namespace ProcessMgr {}
 
 } // namespace Er {}

@@ -1,14 +1,14 @@
 #pragma once
 
 #include <erebus/log.hxx>
-#include <erebus-processmgr/processmgr.hxx>
+#include <erebus-processmgr/erebus-processmgr.hxx>
 
 #include <vector>
 
-namespace Er
+namespace Erp
 {
 
-namespace ProcFs
+namespace ProcessMgr
 {
 
 constexpr uint64_t InvalidPid = uint64_t(-1);
@@ -169,6 +169,6 @@ private:
 
 
 
-} // namespace ProcFs {}
+} // namespace ProcessMgr {}
 
-} // namespace Er {}
+} // namespace Erp {}

@@ -1,14 +1,14 @@
-#include "processlist.hxx"
+#include "processlistservice.hxx"
 
 #include <erebus/exception.hxx>
 #include <erebus/util/format.hxx>
 
 #include <time.h>
 
-namespace Er
+namespace Erp
 {
 
-namespace Private
+namespace ProcessMgr
 {
 
 namespace
@@ -26,30 +26,30 @@ double rtime() noexcept // current time, sec
 } // namespace {}
 
 
-ProcessList::~ProcessList()
+ProcessListService::~ProcessListService()
 {
 }
 
-ProcessList::ProcessList(Er::Log::ILog* log)
+ProcessListService::ProcessListService(Er::Log::ILog* log)
     : m_log(log)
     , m_procFs(log)
 {
 }
 
-void ProcessList::registerService(Er::Server::IServiceContainer* container)
+void ProcessListService::registerService(Er::Server::IServiceContainer* container)
 {
-    container->registerService(Er::ProcessRequests::ListProcesses, this);
-    container->registerService(Er::ProcessRequests::ListProcessesDiff, this);
-    container->registerService(Er::ProcessRequests::ProcessDetails, this);
-    container->registerService(Er::ProcessRequests::ProcessesGlobal, this);
+    container->registerService(Er::ProcessMgr::ProcessRequests::ListProcesses, this);
+    container->registerService(Er::ProcessMgr::ProcessRequests::ListProcessesDiff, this);
+    container->registerService(Er::ProcessMgr::ProcessRequests::ProcessDetails, this);
+    container->registerService(Er::ProcessMgr::ProcessRequests::ProcessesGlobal, this);
 }
 
-void ProcessList::unregisterService(Er::Server::IServiceContainer* container)
+void ProcessListService::unregisterService(Er::Server::IServiceContainer* container)
 {
     container->unregisterService(this);
 }
 
-ProcessList::SessionId ProcessList::allocateSession()
+ProcessListService::SessionId ProcessListService::allocateSession()
 {
     std::unique_lock l(m_mutexSession);
     auto id = m_nextSessionId++;
@@ -59,7 +59,7 @@ ProcessList::SessionId ProcessList::allocateSession()
     return id;
 }
 
-void ProcessList::deleteSession(SessionId id)
+void ProcessListService::deleteSession(SessionId id)
 {
     std::unique_lock l(m_mutexSession);
 
@@ -72,7 +72,7 @@ void ProcessList::deleteSession(SessionId id)
     dropStaleSessions();
 }
 
-ProcessList::Session* ProcessList::getSession(std::optional<SessionId> id)
+ProcessListService::Session* ProcessListService::getSession(std::optional<SessionId> id)
 {
     if (!id)
         throw Er::Exception(ER_HERE(), "Session not specified");
@@ -88,14 +88,14 @@ ProcessList::Session* ProcessList::getSession(std::optional<SessionId> id)
     return it->second.get();
 }
 
-Er::PropertyBag ProcessList::request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+Er::PropertyBag ProcessListService::request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
 {
-    if (request == Er::ProcessRequests::ProcessDetails)
+    if (request == Er::ProcessMgr::ProcessRequests::ProcessDetails)
     {
         auto required = getProcessPropMask(args);
         return processDetails(args, required);
     }
-    else if (request == Er::ProcessRequests::ProcessesGlobal)
+    else if (request == Er::ProcessMgr::ProcessRequests::ProcessesGlobal)
     {
         auto required = getProcessesGlobalPropMask(args);
         return processesGlobal(required, std::nullopt);
@@ -104,17 +104,17 @@ Er::PropertyBag ProcessList::request(std::string_view request, const Er::Propert
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-ProcessList::StreamId ProcessList::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+ProcessListService::StreamId ProcessListService::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
 {
-    if (request == Er::ProcessRequests::ListProcesses)
+    if (request == Er::ProcessMgr::ProcessRequests::ListProcesses)
         return beginProcessStream(args);
-    else if (request == Er::ProcessRequests::ListProcessesDiff)
+    else if (request == Er::ProcessMgr::ProcessRequests::ListProcessesDiff)
         return beginProcessDiffStream(args, getSession(sessionId));
 
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-void ProcessList::endStream(StreamId id, std::optional<SessionId> sessionId)
+void ProcessListService::endStream(StreamId id, std::optional<SessionId> sessionId)
 {
     std::unique_lock l(m_mutexSession);
 
@@ -127,7 +127,7 @@ void ProcessList::endStream(StreamId id, std::optional<SessionId> sessionId)
     dropStaleStreams();
 }
 
-Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionId)
+Er::PropertyBag ProcessListService::next(StreamId id, std::optional<SessionId> sessionId)
 {
     Stream* stream = nullptr;
     {
@@ -150,40 +150,40 @@ Er::PropertyBag ProcessList::next(StreamId id, std::optional<SessionId> sessionI
     return Er::PropertyBag();
 }
 
-Er::ProcessProps::PropMask ProcessList::getProcessPropMask(const Er::PropertyBag& args)
+Er::ProcessMgr::ProcessProps::PropMask ProcessListService::getProcessPropMask(const Er::PropertyBag& args)
 {
     // default mask is 'everything included'
-    auto mask = Er::getPropertyOr<Er::ProcessProps::RequiredFields>(args, 0xffffffffffffffff);
-    return Er::ProcessProps::PropMask(mask, Er::ProcessProps::PropMask::FromBits);
+    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::ProcessProps::RequiredFields>(args, 0xffffffffffffffff);
+    return Er::ProcessMgr::ProcessProps::PropMask(mask, Er::ProcessMgr::ProcessProps::PropMask::FromBits);
 }
 
-Er::ProcessesGlobal::PropMask ProcessList::getProcessesGlobalPropMask(const Er::PropertyBag& args)
+Er::ProcessMgr::ProcessesGlobal::PropMask ProcessListService::getProcessesGlobalPropMask(const Er::PropertyBag& args)
 {
     // default mask is 'everything included'
-    auto mask = Er::getPropertyOr<Er::ProcessesGlobal::RequiredFields>(args, 0xffffffffffffffff);
-    return Er::ProcessesGlobal::PropMask(mask, Er::ProcessesGlobal::PropMask::FromBits);
+    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::ProcessesGlobal::RequiredFields>(args, 0xffffffffffffffff);
+    return Er::ProcessMgr::ProcessesGlobal::PropMask(mask, Er::ProcessMgr::ProcessesGlobal::PropMask::FromBits);
 }
 
-Er::PropertyBag ProcessList::processDetails(const Er::PropertyBag& args, Er::ProcessProps::PropMask required)
+Er::PropertyBag ProcessListService::processDetails(const Er::PropertyBag& args, Er::ProcessMgr::ProcessProps::PropMask required)
 {
-    auto pid = Er::getProperty<Er::ProcessProps::Pid>(args);
+    auto pid = Er::getPropertyValue<Er::ProcessMgr::ProcessProps::Pid>(args);
     if (!pid)
         throw Er::Exception(ER_HERE(), "No process.pid field in ProcessDetails request");
 
-    if (*pid == ProcFs::KernelPid)
+    if (*pid == KernelPid)
         return collectKernelDetails(m_procFs, required);
         
     ProcessDetailsCached cached;
     return collectProcessDetails(m_procFs, *pid, required, Er::PropertyBag(), cached);
 }
 
-Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount)
+Er::PropertyBag ProcessListService::processesGlobal(Er::ProcessMgr::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount)
 {
     Er::PropertyBag bag;
     
     if (!processCount)
     {
-        if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
+        if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::ProcessCount])
         {
             auto pids = m_procFs.enumeratePids();
             processCount = pids.size();
@@ -210,83 +210,83 @@ Er::PropertyBag ProcessList::processesGlobal(Er::ProcessesGlobal::PropMask requi
     if (!cpuCount) [[unlikely]]
         cpuCount = 1;
 
-    if (required[Er::ProcessesGlobal::PropIndices::ProcessCount])
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::ProcessCount])
     {
-        Er::addProperty<Er::ProcessesGlobal::ProcessCount>(bag, *processCount);
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::ProcessCount>(bag, *processCount);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::RealTime])
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::RealTime])
     {
         auto r = rtime();
-        Er::addProperty<Er::ProcessesGlobal::RealTime>(bag, r);
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::RealTime>(bag, r);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::IdleTime])
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::IdleTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::IdleTime>(bag, idleAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::IdleTime>(bag, idleAll / cpuCount);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::UserTime])
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::UserTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::UserTime>(bag, userAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::UserTime>(bag, userAll / cpuCount);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::SystemTime])
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::SystemTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::SystemTime>(bag, systemAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::SystemTime>(bag, systemAll / cpuCount);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::VirtualTime])
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::VirtualTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::VirtualTime>(bag, virtAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::VirtualTime>(bag, virtAll / cpuCount);
     }
 
-    if (required[Er::ProcessesGlobal::PropIndices::TotalTime])
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::TotalTime])
     {
-        Er::addProperty<Er::ProcessesGlobal::TotalTime>(bag, totalAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::TotalTime>(bag, totalAll / cpuCount);
     }
 
     auto mem = m_procFs.readMemStats();
 
-    if (required[Er::ProcessesGlobal::PropIndices::TotalMem])
-        Er::addProperty<Er::ProcessesGlobal::TotalMem>(bag, mem.totalMem);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::TotalMem])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::TotalMem>(bag, mem.totalMem);
 
-    if (required[Er::ProcessesGlobal::PropIndices::UsedMem])
-        Er::addProperty<Er::ProcessesGlobal::UsedMem>(bag, mem.usedMem);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::UsedMem])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::UsedMem>(bag, mem.usedMem);
 
-    if (required[Er::ProcessesGlobal::PropIndices::BuffersMem])
-        Er::addProperty<Er::ProcessesGlobal::BuffersMem>(bag, mem.buffersMem);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::BuffersMem])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::BuffersMem>(bag, mem.buffersMem);
 
-    if (required[Er::ProcessesGlobal::PropIndices::CachedMem])
-        Er::addProperty<Er::ProcessesGlobal::CachedMem>(bag, mem.cachedMem);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::CachedMem])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::CachedMem>(bag, mem.cachedMem);
 
-    if (required[Er::ProcessesGlobal::PropIndices::SharedMem])
-        Er::addProperty<Er::ProcessesGlobal::SharedMem>(bag, mem.sharedMem);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::SharedMem])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::SharedMem>(bag, mem.sharedMem);
 
-    if (required[Er::ProcessesGlobal::PropIndices::AvailableMem])
-        Er::addProperty<Er::ProcessesGlobal::AvailableMem>(bag, mem.availableMem);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::AvailableMem])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::AvailableMem>(bag, mem.availableMem);
 
-    if (required[Er::ProcessesGlobal::PropIndices::TotalSwap])
-        Er::addProperty<Er::ProcessesGlobal::TotalSwap>(bag, mem.totalSwap);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::TotalSwap])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::TotalSwap>(bag, mem.totalSwap);
 
-    if (required[Er::ProcessesGlobal::PropIndices::UsedSwap])
-        Er::addProperty<Er::ProcessesGlobal::UsedSwap>(bag, mem.usedSwap);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::UsedSwap])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::UsedSwap>(bag, mem.usedSwap);
 
-    if (required[Er::ProcessesGlobal::PropIndices::CachedSwap])
-        Er::addProperty<Er::ProcessesGlobal::CachedSwap>(bag, mem.cachedSwap);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::CachedSwap])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::CachedSwap>(bag, mem.cachedSwap);
 
-    if (required[Er::ProcessesGlobal::PropIndices::ZSwapComp])
-        Er::addProperty<Er::ProcessesGlobal::ZSwapComp>(bag, mem.zswapComp);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::ZSwapComp])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::ZSwapComp>(bag, mem.zswapComp);
 
-    if (required[Er::ProcessesGlobal::PropIndices::ZSwapOrig])
-        Er::addProperty<Er::ProcessesGlobal::ZSwapOrig>(bag, mem.zswapOrig);
+    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::ZSwapOrig])
+        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::ZSwapOrig>(bag, mem.zswapOrig);
 
-    Er::addProperty<Er::ProcessesGlobal::Global>(bag, true);
+    Er::addProperty<Er::ProcessMgr::ProcessesGlobal::Global>(bag, true);
 
     return bag;
 }
 
-void ProcessList::dropStaleStreams() noexcept
+void ProcessListService::dropStaleStreams() noexcept
 {
     auto now = std::chrono::steady_clock::now();
 
@@ -307,7 +307,7 @@ void ProcessList::dropStaleStreams() noexcept
     }
 }
 
-void ProcessList::dropStaleSessions() noexcept
+void ProcessListService::dropStaleSessions() noexcept
 {
     auto now = std::chrono::steady_clock::now();
 
@@ -328,7 +328,7 @@ void ProcessList::dropStaleSessions() noexcept
     }
 }
 
-ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& args)
+ProcessListService::StreamId ProcessListService::beginProcessStream(const Er::PropertyBag& args)
 {
     auto pids = m_procFs.enumeratePids();
     auto required = getProcessPropMask(args);
@@ -342,7 +342,7 @@ ProcessList::StreamId ProcessList::beginProcessStream(const Er::PropertyBag& arg
     return streamId;
 }
 
-Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
+Er::PropertyBag ProcessListService::nextProcess(ProcessListStream* stream)
 {
     if (stream->next >= stream->pids.size())
     {
@@ -357,7 +357,7 @@ Er::PropertyBag ProcessList::nextProcess(ProcessListStream* stream)
     return bag;
 }
 
-ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag& args, Session* session)
+ProcessListService::StreamId ProcessListService::beginProcessDiffStream(const Er::PropertyBag& args, Session* session)
 {
     auto required = getProcessPropMask(args);
 
@@ -374,13 +374,13 @@ ProcessList::StreamId ProcessList::beginProcessDiffStream(const Er::PropertyBag&
     return streamId;
 }
 
-Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Session* session)
+Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* stream, Session* session)
 {
     Er::PropertyBag bag;
 
     if (stream->stage == ProcessListDiffStream::Stage::Globals)
     {
-        bag = processesGlobal(Er::ProcessesGlobal::PropMask(0xffffffffffffffff, Er::ProcessesGlobal::PropMask::FromBits), stream->diff.processCount);
+        bag = processesGlobal(Er::ProcessMgr::ProcessesGlobal::PropMask(0xffffffffffffffff, Er::ProcessMgr::ProcessesGlobal::PropMask::FromBits), stream->diff.processCount);
         stream->stage = ProcessListDiffStream::Stage::Removed;
     }
     else if (stream->stage == ProcessListDiffStream::Stage::Removed)
@@ -393,8 +393,8 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
             return nextProcessDiff(stream, session);
         }
 
-        Er::addProperty<Er::ProcessProps::Pid>(bag, stream->diff.removed[stream->next]);
-        Er::addProperty<Er::ProcessProps::IsDeleted>(bag, true);
+        Er::addProperty<Er::ProcessMgr::ProcessProps::Pid>(bag, stream->diff.removed[stream->next]);
+        Er::addProperty<Er::ProcessMgr::ProcessProps::IsDeleted>(bag, true);
 
         ++stream->next;
     }
@@ -409,13 +409,13 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
         }
 
         auto& modified = stream->diff.modified[stream->next];
-        Er::enumerateProperties(modified.properties, [&bag](Property& prop)
+        Er::enumerateProperties(modified.properties, [&bag](Er::Property& prop)
         {
-            Er::insertProperty(bag, std::move(prop));
+            Er::addProperty(bag, std::move(prop));
         });
 
-        Er::addProperty<Er::ProcessProps::Pid>(bag, modified.pid);
-        Er::addProperty<Er::ProcessProps::Valid>(bag, true);
+        Er::addProperty<Er::ProcessMgr::ProcessProps::Pid>(bag, modified.pid);
+        Er::addProperty<Er::ProcessMgr::ProcessProps::Valid>(bag, true);
 
         ++stream->next;
     }
@@ -427,15 +427,15 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
 
         auto& added = stream->diff.added[stream->next];
         if (added->isNew)
-            Er::addProperty<Er::ProcessProps::IsNew>(bag, true);
+            Er::addProperty<Er::ProcessMgr::ProcessProps::IsNew>(bag, true);
 
-        Er::enumerateProperties(added->properties, [&bag](const Property& prop)
+        Er::enumerateProperties(added->properties, [&bag](const Er::Property& prop)
         {
-            Er::insertProperty(bag, prop);
+            Er::addProperty(bag, prop);
         });
 
-        ErAssert(Er::propertyPresent<Er::ProcessProps::Pid>(bag));
-        ErAssert(Er::propertyPresent<Er::ProcessProps::Valid>(bag));
+        ErAssert(Er::propertyPresent<Er::ProcessMgr::ProcessProps::Pid>(bag));
+        ErAssert(Er::propertyPresent<Er::ProcessMgr::ProcessProps::Valid>(bag));
         
         ++stream->next;
     }
@@ -444,6 +444,6 @@ Er::PropertyBag ProcessList::nextProcessDiff(ProcessListDiffStream* stream, Sess
     return bag;
 }
 
-} // namespace Private {}
+} // namespace ProcessMgr {}
 
-} // namespace Er {}
+} // namespace Erp {}

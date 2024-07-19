@@ -3,7 +3,7 @@
 #include <erebus/lrucache.hxx>
 #include <erebus-desktop/ic.hxx>
 #include <erebus-desktop/protocol.hxx>
-#include <erebus-processmgr/processmgr.hxx>
+#include <erebus-processmgr/erebus-processmgr.hxx>
 
 #include <chrono>
 #include <mutex>

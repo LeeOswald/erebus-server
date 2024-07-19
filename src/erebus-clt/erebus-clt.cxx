@@ -84,7 +84,7 @@ public:
         for (int i = 0; i < count; ++i)
         {
             auto& prop = reply.props(i);
-            Er::insertProperty(bag, Er::Protocol::getProperty(prop));
+            Er::addProperty(bag, Er::Protocol::getProperty(prop));
         }
 
         return bag;
@@ -119,7 +119,7 @@ public:
             for (int i = 0; i < count; ++i)
             {
                 auto& prop = reply.props(i);
-                Er::insertProperty(bag, Er::Protocol::getProperty(prop));
+                Er::addProperty(bag, Er::Protocol::getProperty(prop));
             }
 
             if (!bag.empty())
