@@ -17,7 +17,7 @@ elseif(ER_WINDOWS)
 endif()
 
 if(ER_LINUX)
-    set(PLATFORM_LIBS pthread dl)
+    set(PLATFORM_LIBS pthread dl backtrace)
 elseif(ER_WINDOWS)
     set(PLATFORM_LIBS secur32)
 endif()

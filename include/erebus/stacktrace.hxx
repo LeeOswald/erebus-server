@@ -2,6 +2,10 @@
 
 #include <erebus/erebus.hxx>
 
+#if ER_POSIX
+#define BOOST_STACKTRACE_USE_BACKTRACE
+#endif
+
 #include <boost/stacktrace.hpp>
 
 #include <vector>

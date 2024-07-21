@@ -38,17 +38,23 @@ std::optional<int> g_signalReceived;
 
 void terminateHandler()
 {
-    std::ostringstream ss;
-    ss << boost::stacktrace::stacktrace();
+    try
+    {
+        std::ostringstream ss;
+        ss << boost::stacktrace::stacktrace();
 
-    if (g_log) 
-    {
-        ErLogFatal(g_log, "std::terminate() called from\n%s", ss.str().c_str());
-        g_log->flush();
+        if (g_log) 
+        {
+            ErLogFatal(g_log, "std::terminate() called from\n%s", ss.str().c_str());
+            g_log->flush();
+        }
+        else
+        {
+            Er::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str() << std::endl; // force flush
+        }
     }
-    else
+    catch (...)
     {
-        Er::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str() << std::endl; // force flush
     }
 
     std::abort();
@@ -250,6 +256,7 @@ int main(int argc, char* argv[], char* env[])
             try
             {
                 pluginMgr.load(plugin.path, plugin.args);
+                continue;
             }
             catch (Er::Exception& e)
             {
@@ -259,6 +266,8 @@ int main(int argc, char* argv[], char* env[])
             {
                 Er::Util::logException(g_log, Er::Log::Level::Error, e);
             }
+
+            logger->writef(Er::Log::Level::Error, "Failed to load plugin [%s]", plugin.path.c_str());
         }
 
         // now just sit around and wait
