@@ -69,7 +69,6 @@ ProcessListCollector::ProcessInfoCollectionDiff ProcessListCollector::update(Pro
     auto now = ProcessInfo::Clock::now();
 
     auto pids = m_procFs.enumeratePids();
-    pids.push_back(KernelPid);
     result.processCount = pids.size();
 
     for (auto pid: pids)
@@ -204,6 +203,8 @@ void ProcessListCollector::updateProcess(ProcessInfoCollectionDiff& result, Prop
 
         std::size_t nextProp = 3;
         
+        updateProperty<Er::ProcessMgr::ProcessProps::PPid>(replaceProps, info->properties, pdiff, nextProp++, stat.ppid);
+
         if (required[Er::ProcessMgr::ProcessProps::PropIndices::PGrp])
             updateProperty<Er::ProcessMgr::ProcessProps::PGrp>(replaceProps, info->properties, pdiff, nextProp++, stat.pgrp);
 
