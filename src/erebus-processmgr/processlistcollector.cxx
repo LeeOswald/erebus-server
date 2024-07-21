@@ -88,6 +88,8 @@ ProcessListCollector::ProcessInfoCollectionDiff ProcessListCollector::update(Pro
         {
             // either a new process or just the initial run
             info = std::make_shared<ProcessInfo>(pid, true, now);
+
+            m_collection.insert({ pid, info });
         }
 
         if (pid == KernelPid)
