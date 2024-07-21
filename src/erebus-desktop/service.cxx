@@ -47,21 +47,21 @@ void Service::deleteSession(SessionId id)
 {
 }
 
-Service::StreamId Service::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+Service::StreamId Service::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-void Service::endStream(StreamId id, std::optional<SessionId> sessionId)
+void Service::endStream(StreamId id, SessionId sessionId)
 {
 }
 
-Er::PropertyBag Service::next(StreamId id, std::optional<SessionId> sessionId)
+Er::PropertyBag Service::next(StreamId id, SessionId sessionId)
 {
     return Er::PropertyBag();
 }
 
-Er::PropertyBag Service::request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+Er::PropertyBag Service::request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
     if (request == Er::Desktop::Requests::QueryIcon)
     {

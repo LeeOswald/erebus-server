@@ -83,7 +83,7 @@ void ProcessDetailsService::deleteSession(SessionId id)
 {
 }
 
-Er::PropertyBag ProcessDetailsService::request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+Er::PropertyBag ProcessDetailsService::request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
     if (request == Er::ProcessMgr::ProcessRequests::KillProcess)
         return killProcess(args);
@@ -91,16 +91,16 @@ Er::PropertyBag ProcessDetailsService::request(std::string_view request, const E
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-ProcessDetailsService::StreamId ProcessDetailsService::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+ProcessDetailsService::StreamId ProcessDetailsService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-void ProcessDetailsService::endStream(StreamId id, std::optional<SessionId> sessionId)
+void ProcessDetailsService::endStream(StreamId id, SessionId sessionId)
 {
 }
 
-Er::PropertyBag ProcessDetailsService::next(StreamId id, std::optional<SessionId> sessionId)
+Er::PropertyBag ProcessDetailsService::next(StreamId id, SessionId sessionId)
 {
     return Er::PropertyBag();
 }

@@ -225,12 +225,11 @@ private:
         erebus::ServiceReply response;
 
         auto& id = request->request();
-        std::optional<uint32_t> sessionId;
+        uint32_t sessionId = 0;
         if (request->has_sessionid())
             sessionId = request->sessionid();
 
-        if (sessionId)
-            response.set_sessionid(*sessionId);
+        response.set_sessionid(sessionId);
 
         std::shared_lock l(m_servicesLock);
         
@@ -285,7 +284,7 @@ private:
         auto request = static_cast<const erebus::ServiceRequest*>(message);
         
         auto& id = request->request();
-        std::optional<uint32_t> sessionId;
+        uint32_t sessionId = 0;
         if (request->has_sessionid())
             sessionId = request->sessionid();
 
@@ -310,7 +309,7 @@ private:
             {
                 erebus::ServiceReply response;
                 if (sessionId)
-                        response.set_sessionid(*sessionId);
+                        response.set_sessionid(sessionId);
 
                 try
                 {

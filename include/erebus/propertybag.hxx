@@ -11,6 +11,112 @@ namespace Er
 using PropertyBag = std::vector<Property>;
 
 
+inline auto propertyCount(const PropertyBag& bag) noexcept
+{
+    return bag.size();
+}
+
+inline void clearPropertyBag(PropertyBag& bag) noexcept
+{
+    bag.clear();
+}
+
+inline void reservePropertyBag(PropertyBag& bag, std::size_t size)
+{
+    bag.reserve(size);
+}
+
+inline void resizePropertyBag(PropertyBag& bag, std::size_t size)
+{
+    bag.resize(size);
+}
+
+template <IsPropertyValue PropT>
+void addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
+{
+    bag.push_back(Er::Property(PropT::id, v));
+}
+
+template <IsPropertyValue PropT>
+void addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
+{
+    bag.push_back(Er::Property(PropT::id, std::move(v)));
+}
+
+inline void addProperty(PropertyBag& bag, const Property& prop)
+{
+    bag.push_back(prop);
+}
+
+inline void addProperty(PropertyBag& bag, Property&& prop)
+{
+    bag.push_back(std::move(prop));
+}
+
+template <IsPropertyValue PropT>
+void setPropertyValueAt(PropertyBag& bag, std::size_t index, typename PropT::ValueType const& v)
+{
+    using Id = typename PropT::Id;
+    using Type = typename PropT::ValueType;
+
+    if (bag.size() <= index)
+    {
+        bag.resize(index + 1);
+    }
+
+    bag[index] = Property(Id::value, v);
+} 
+
+template <IsPropertyValue PropT>
+void setPropertyValueAt(PropertyBag& bag, std::size_t index, typename PropT::ValueType&& v)
+{
+    using Id = typename PropT::Id;
+    using Type = typename PropT::ValueType;
+
+    if (bag.size() <= index)
+    {
+        bag.resize(index + 1);
+    }
+
+    bag[index] = Property(Id::value, std::move(v));
+}
+
+template <IsPropertyValue PropT>
+bool updatePropertyValueAt(PropertyBag& bag, std::size_t index, typename PropT::ValueType const& v)
+{
+    using Id = typename PropT::Id;
+    using Type = typename PropT::ValueType;
+    
+    ErAssert(index < bag.size());
+    ErAssert(bag[index].id == Id::value);
+
+    if (std::get<Type>(bag[index].value) != v)
+    {        
+        bag[index] = Property(Id::value, v);
+        return true;
+    }
+
+    return false;
+} 
+
+template <IsPropertyValue PropT>
+bool updatePropertyValueAt(PropertyBag& bag, std::size_t index, typename PropT::ValueType&& v)
+{
+    using Id = typename PropT::Id;
+    using Type = typename PropT::ValueType;
+    
+    ErAssert(index < bag.size());
+    ErAssert(bag[index].id == Id::value);
+
+    if (std::get<Type>(bag[index].value) != v)
+    {        
+        bag[index] = Property(Id::value, std::move(v));
+        return true;
+    }
+
+    return false;
+} 
+
 template <IsPropertyValue PropT>
 inline bool propertyPresent(const PropertyBag& bag) noexcept
 {
@@ -86,27 +192,6 @@ typename PropT::ValueType getPropertyValueOr(const PropertyBag& bag, typename Pr
     return *ptr;
 }
 
-template <IsPropertyValue PropT>
-void addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
-{
-    bag.push_back(Er::Property(PropT::id, v));
-}
-
-template <IsPropertyValue PropT>
-void addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
-{
-    bag.push_back(Er::Property(PropT::id, std::move(v)));
-}
-
-inline void addProperty(PropertyBag& bag, const Property& prop)
-{
-    bag.push_back(prop);
-}
-
-inline void addProperty(PropertyBag& bag, Property&& prop)
-{
-    bag.push_back(std::move(prop));
-}
 
 template <typename VisitorT>
     requires std::is_invocable_v<VisitorT, const Property&>

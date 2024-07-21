@@ -30,8 +30,8 @@ struct IClient
 
     virtual SessionId beginSession(std::string_view request) = 0;
     virtual void endSession(std::string_view request, SessionId id) = 0;
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId = std::nullopt) = 0;
-    virtual std::vector<Er::PropertyBag> requestStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId = std::nullopt) = 0;
+    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, SessionId) = 0;
+    virtual std::vector<Er::PropertyBag> requestStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) = 0;
 
     virtual ~IClient() {}
 };

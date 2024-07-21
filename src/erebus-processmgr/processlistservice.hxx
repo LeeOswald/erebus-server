@@ -3,7 +3,8 @@
 #include <erebus-processmgr/erebus-processmgr.hxx>
 #include <erebus-srv/plugin.hxx>
 
-#include "processlistdiff.hxx"
+#include "globalscollector.hxx"
+#include "processlistcollector.hxx"
 #include "procfs.hxx"
 
 
@@ -33,63 +34,55 @@ public:
 
     SessionId allocateSession() override;
     void deleteSession(SessionId id)  override;
-    Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override; 
-    StreamId beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override;
-    void endStream(StreamId id, std::optional<SessionId> sessionId) override;
-    Er::PropertyBag next(StreamId id, std::optional<SessionId> sessionId) override;
+    Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) override; 
+    StreamId beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) override;
+    void endStream(StreamId id, SessionId sessionId) override;
+    Er::PropertyBag next(StreamId id, SessionId sessionId) override;
 
 private:
+    struct Stream;
+
     struct Session
         : public Er::NonCopyable
     {
+        std::mutex mutex;
         std::chrono::steady_clock::time_point touched = std::chrono::steady_clock::now();
         SessionId id;
-        ProcessCollection processes;
+        std::unordered_map<StreamId, std::shared_ptr<Stream>> streams;
+        StreamId nextStreamId = 1;
+
+        std::unique_ptr<ProcessListCollector> collector;
 
         explicit Session(SessionId id) noexcept
             : id(id)
         {}
     };
 
-    enum class StreamType
-    {
-        ProcessList,
-        ProcessListDiff
-    };
-
     struct Stream
         : public Er::NonCopyable
     {
+        enum class Type
+        {
+            ProcessListDiff
+        };
+
         std::chrono::steady_clock::time_point touched = std::chrono::steady_clock::now();
-        StreamType type;
+        Type type;
         StreamId id;
 
-        explicit Stream(StreamType type, StreamId id) noexcept
+        explicit Stream(Type type, StreamId id) noexcept
             : type(type)
             , id(id)
         {}
     };
 
-    struct ProcessListStream final
-        : public Stream
-    {
-        explicit ProcessListStream(StreamId id, Er::ProcessMgr::ProcessProps::PropMask required, std::vector<uint64_t>&& pids) noexcept
-            : Stream(StreamType::ProcessList, id)
-            , required(required)
-            , pids(std::move(pids))
-        {}
-
-        Er::ProcessMgr::ProcessProps::PropMask required;
-        std::vector<uint64_t> pids;
-        size_t next = 0;
-    };
-
     struct ProcessListDiffStream final
         : public Stream
     {
-        explicit ProcessListDiffStream(StreamId id, Er::ProcessMgr::ProcessProps::PropMask required, ProcessCollectionDiff&& diff) noexcept
-            : Stream(StreamType::ProcessListDiff, id)
-            , diff(std::move(diff))
+        explicit ProcessListDiffStream(StreamId id, Er::PropertyBag&& globals, ProcessListCollector::ProcessInfoCollectionDiff&& processes) noexcept
+            : Stream(Type::ProcessListDiff, id)
+            , globals(std::move(globals))
+            , processes(std::move(processes))
         {}
 
         enum class Stage
@@ -100,24 +93,21 @@ private:
             Added
         };
 
-        ProcessCollectionDiff diff;
+        Er::PropertyBag globals;
+        ProcessListCollector::ProcessInfoCollectionDiff processes;
         Stage stage = Stage::Globals;
         size_t next = 0;
     };
 
     static Er::ProcessMgr::ProcessProps::PropMask getProcessPropMask(const Er::PropertyBag& args);
-    Er::PropertyBag processDetails(const Er::PropertyBag& args, Er::ProcessMgr::ProcessProps::PropMask required);
-
     static Er::ProcessMgr::ProcessesGlobal::PropMask getProcessesGlobalPropMask(const Er::PropertyBag& args);
-    Er::PropertyBag processesGlobal(Er::ProcessMgr::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount);
 
-    Session* getSession(std::optional<SessionId> id);
+    Er::PropertyBag processesGlobal(Session* session, Er::ProcessMgr::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount);
+
+    std::shared_ptr<Session> getSession(SessionId id);
     void dropStaleSessions() noexcept;
 
-    void dropStaleStreams() noexcept;
-
-    StreamId beginProcessStream(const Er::PropertyBag& args);
-    Er::PropertyBag nextProcess(ProcessListStream* stream);
+    void dropStaleStreams(Session* session) noexcept;
 
     StreamId beginProcessDiffStream(const Er::PropertyBag& args, Session* session);
     Er::PropertyBag nextProcessDiff(ProcessListDiffStream* stream, Session* session);
@@ -127,12 +117,11 @@ private:
 
     Er::Log::ILog* const m_log;
     ProcFs m_procFs;
+    GlobalsCollector m_globalsCollector;
    
-    std::shared_mutex m_mutexSession;
-    SessionId m_nextSessionId = 0;
-    StreamId m_nextStreamId = 0;
-    std::unordered_map<StreamId, std::unique_ptr<Session>> m_sessions;
-    std::unordered_map<StreamId, std::unique_ptr<Stream>> m_streams;
+    std::shared_mutex m_mutex;
+    SessionId m_nextSessionId = 1;
+    std::unordered_map<StreamId, std::shared_ptr<Session>> m_sessions;
 };
 
 } // namespace ProcessMgr {}

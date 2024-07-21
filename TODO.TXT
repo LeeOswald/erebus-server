@@ -3,5 +3,5 @@
 - use {fmt} lib
 - format log messages in background?
 - prlimit() to read processes' rlimits
-- consider std::vector for property bag; may reserve() on each /proc lookup the capacity needed during previous cycle;reuse previously allocated props & bags
+- remove noexcept unless absolutely necessary
 

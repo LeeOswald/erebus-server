@@ -59,12 +59,11 @@ public:
         throwIfFailed(status, &reply);
     }
 
-    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override
+    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args, SessionId sessionId) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
-        if (sessionId)
-            request.set_sessionid(*sessionId);
+        request.set_sessionid(sessionId);
 
         // marshal properties
         Er::enumerateProperties(args, [&request](const Property& arg)
@@ -90,12 +89,11 @@ public:
         return bag;
     }
 
-    std::vector<Er::PropertyBag> requestStream(std::string_view req, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override
+    std::vector<Er::PropertyBag> requestStream(std::string_view req, const Er::PropertyBag& args, SessionId sessionId) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
-        if (sessionId)
-            request.set_sessionid(*sessionId);
+        request.set_sessionid(sessionId);
 
         // marshal properties
         Er::enumerateProperties(args, [&request](const Property& arg)

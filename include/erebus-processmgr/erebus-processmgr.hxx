@@ -27,9 +27,7 @@ namespace ProcessMgr
 namespace ProcessRequests
 {
 
-static const std::string_view ListProcesses = "ListProcesses";
 static const std::string_view ListProcessesDiff = "ListProcessesDiff";
-static const std::string_view ProcessDetails = "ProcessDetails";
 static const std::string_view ProcessesGlobal = "ProcessesGlobal";
 static const std::string_view KillProcess = "KillProcess";
 

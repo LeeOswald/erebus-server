@@ -44,7 +44,7 @@ void CoreService::deleteSession(SessionId id)
 {
 }
 
-Er::PropertyBag CoreService::request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+Er::PropertyBag CoreService::request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
     if (request == Er::Protocol::GenericRequests::GetVersion)
         return getVersion(args);
@@ -75,16 +75,16 @@ Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
     return reply;
 }
 
-CoreService::StreamId CoreService::beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId)
+CoreService::StreamId CoreService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
     throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
-void CoreService::endStream(StreamId id, std::optional<SessionId> sessionId)
+void CoreService::endStream(StreamId id, SessionId sessionId)
 {
 }
 
-Er::PropertyBag CoreService::next(StreamId id, std::optional<SessionId> sessionId)
+Er::PropertyBag CoreService::next(StreamId id, SessionId sessionId)
 {
     return Er::PropertyBag();
 }

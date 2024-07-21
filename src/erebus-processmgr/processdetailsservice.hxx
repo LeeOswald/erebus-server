@@ -24,10 +24,10 @@ public:
 
     SessionId allocateSession() override;
     void deleteSession(SessionId id)  override;
-    Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override; 
-    StreamId beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) override;
-    void endStream(StreamId id, std::optional<SessionId> sessionId) override;
-    Er::PropertyBag next(StreamId id, std::optional<SessionId> sessionId) override;
+    Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) override; 
+    StreamId beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) override;
+    void endStream(StreamId id, SessionId sessionId) override;
+    Er::PropertyBag next(StreamId id, SessionId sessionId) override;
 
 private:
     Er::PropertyBag killProcess(const Er::PropertyBag& args); 

@@ -1,11 +1,11 @@
 add_library(${EREBUS_PROCESSMGR} SHARED
     ../../include/erebus-processmgr/erebus-processmgr.hxx
+    globalscollector.cxx
+    globalscollector.hxx
     processdetailsservice.cxx
     processdetailsservice.hxx
     processlistcollector.cxx
     processlistcollector.hxx
-    processlistdiff.cxx
-    processlistdiff.hxx
     processlistservice.cxx
     processlistservice.hxx
     processmgrplugin.cxx

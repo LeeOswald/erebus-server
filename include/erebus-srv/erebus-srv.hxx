@@ -32,10 +32,10 @@ struct IService
     
     virtual SessionId allocateSession() = 0;
     virtual void deleteSession(SessionId id) = 0;
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) = 0; 
-    virtual StreamId beginStream(std::string_view request, const Er::PropertyBag& args, std::optional<SessionId> sessionId) = 0;
-    virtual void endStream(StreamId id, std::optional<SessionId> sessionId) = 0;
-    virtual Er::PropertyBag next(StreamId id, std::optional<SessionId> sessionId) = 0;
+    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) = 0; 
+    virtual StreamId beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) = 0;
+    virtual void endStream(StreamId id, SessionId sessionId) = 0;
+    virtual Er::PropertyBag next(StreamId id, SessionId sessionId) = 0;
 
 protected:
     virtual ~IService() {}
