@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/debug.hxx>
 #include <erebus/location.hxx>
 
 
@@ -13,22 +14,11 @@
 namespace Er
 {
 
-namespace Private
-{
-
-EREBUS_EXPORT void failAssert(Location&& location, const char* expression);
+using PrintFailedAssertionFn = void(*)(std::string_view message);
 
 
-template <typename PredT>
-void doAssert(Location&& location, const char* expression, PredT pred)
-{
-    if (!pred())
-        failAssert(std::move(location), expression);
-
-}
-
-
-} // namespace Private {}
+EREBUS_EXPORT void setPrintFailedAssertionFn(PrintFailedAssertionFn f) noexcept;
+EREBUS_EXPORT void printFailedAssertion(Location&& location, const char* expression) noexcept;
 
 } // namespace Er {}
 
@@ -36,11 +26,20 @@ void doAssert(Location&& location, const char* expression, PredT pred)
 #if ER_ENABLE_ASSERT
 
 #define ErAssert(expr) \
-    static_cast<void>(::Er::Private::doAssert( \
-        ::Er::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace(0, static_cast<std::size_t>(-1))), \
-        #expr, \
-        [&]() noexcept { return static_cast<bool>(expr); } \
-    ))
+    do \
+    { \
+        if (!bool(expr)) \
+        { \
+            ::Er::printFailedAssertion( \
+                ::Er::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace(0, static_cast<std::size_t>(-1))), \
+                #expr \
+            ); \
+            if (::Er::isDebuggerPresent()) \
+                _ER_TRAP(); \
+            else \
+                std::abort(); \
+        } \
+    } while (false)
 
 
 #else

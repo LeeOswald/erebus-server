@@ -1,4 +1,4 @@
-- improve ErAssert (don't throw?)
+
 - make use of Er::ResultCode where possible
 - use {fmt} lib
 - format log messages in background?

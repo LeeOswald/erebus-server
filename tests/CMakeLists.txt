@@ -17,7 +17,6 @@ enable_testing()
 add_executable(
     ${ER_TESTS}
     common.hpp
-    assert.cpp
     condition.cpp
     exception.cpp
     flags.cpp

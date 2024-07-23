@@ -1,15 +1,37 @@
-#include <erebus/exception.hxx>
+#include <erebus/assert.hxx>
+#include <erebus/syncstream.hxx>
 
+#include <atomic>
+#include <iostream>
 #include <sstream>
 
 
 namespace Er
 {
 
-namespace Private
-{
+static std::atomic<PrintFailedAssertionFn> g_printAssertFn{ nullptr };
+static std::atomic<long> g_activeAssertions{ 0 };
 
-EREBUS_EXPORT void failAssert(Location&& location, const char* expression)
+static void defaultPrintFailedAssertionFn(std::string_view message)
+{
+    Er::osyncstream(std::cerr) << message << std::endl; // force flush
+}
+
+EREBUS_EXPORT void setPrintFailedAssertionFn(PrintFailedAssertionFn f) noexcept
+{
+    g_printAssertFn.store(f, std::memory_order_release);
+}
+
+static void doPrintFailedAssertion(std::string_view message)
+{
+    auto f = g_printAssertFn.load(std::memory_order_acquire);
+    if (f)
+        f(message);
+    else
+        defaultPrintFailedAssertionFn(message);
+}
+
+static std::string formatFailedAssertion(Location&& location, const char* expression)
 {
     std::ostringstream ss;
     ss << "ASSERTION FAILED\n";
@@ -52,9 +74,26 @@ EREBUS_EXPORT void failAssert(Location&& location, const char* expression)
         ss << "Stack: " << stk.str() << "\n";
     }
 
-    throw Er::Exception(std::move(tempLocation), ss.str(), Er::ExceptionProps::FailedAssertion(expression));
+    return ss.str();
 }
 
-} // namespace Private {}
+EREBUS_EXPORT void printFailedAssertion(Location&& location, const char* expression) noexcept
+{
+    if (++g_activeAssertions == 1)
+    {
+        try
+        {
+            auto msg = formatFailedAssertion(std::move(location), expression);
+
+            doPrintFailedAssertion(msg);
+        }
+        catch (...)
+        {
+        }
+    }
+
+    --g_activeAssertions;
+}
+
 
 } // namespace Er {}

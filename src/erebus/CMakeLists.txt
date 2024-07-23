@@ -25,8 +25,10 @@ endif()
 add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/assert.hxx
     ../../include/erebus/condition.hxx
+    ../../include/erebus/debug.hxx
     ../../include/erebus/empty.hxx
     ../../include/erebus/erebus.hxx
+    ../../include/erebus/errno.hxx
     ../../include/erebus/exception.hxx
     ../../include/erebus/flags.hxx
     ../../include/erebus/knownprops.hxx
@@ -62,6 +64,8 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/util/sha256.hxx
     ../../include/erebus/util/stringutil.hxx
     assert.cxx
+    debug.cxx
+    errno.cxx
     exception.cxx
     init.cxx
     knownprops.cxx

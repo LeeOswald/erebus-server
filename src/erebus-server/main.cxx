@@ -66,6 +66,12 @@ void signalHandler(int signo)
     g_exitCondition.setAndNotifyAll(true);
 }
 
+void printAssertFn(std::string_view message)
+{
+    g_log->write(Er::Log::Level::Fatal, std::string(message));
+    g_log->flush();
+}
+
 
 } // namespace {}
 
@@ -178,6 +184,7 @@ int main(int argc, char* argv[], char* env[])
         return EXIT_FAILURE;
 
     g_log = logger.get();
+    Er::setPrintFailedAssertionFn(printAssertFn);
 
     Er::LibScope er(g_log);
 
@@ -290,6 +297,8 @@ int main(int argc, char* argv[], char* env[])
         {
             logger->writef(Er::Log::Level::Warning, "Exiting due to signal %d", *g_signalReceived);
         }
+
+        Er::setPrintFailedAssertionFn(nullptr);
     }
     catch (Er::Exception& e)
     {
