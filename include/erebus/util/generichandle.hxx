@@ -83,6 +83,43 @@ private:
 };
 
 
+#if ER_POSIX
+
+namespace __
+{
+
+struct FileCloser
+{
+    void operator()(int fd) noexcept
+    {
+        ::close(fd);
+    }
+};
+
+} // namespace __ {}
+
+using FileHandle = GenericHandle<int, int, -1, __::FileCloser>;
+
+#elif ER_WINDOWS
+
+namespace __
+{
+
+struct FileCloser
+{
+    void operator()(HANDLE fd) noexcept
+    {
+        ::CloseHandle(fd);
+    }
+};
+
+} // namespace __ {}
+
+using FileHandle = GenericHandle<HANDLE, intptr_t, -1, __::FileCloser>;
+
+#endif
+
+
 } // namespace Util {}
 
 } // namespace Er {}

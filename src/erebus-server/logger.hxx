@@ -36,31 +36,9 @@ public:
     }
 
 private:
-#if ER_POSIX
-    struct FileCloser
-    {
-        void operator()(int fd) noexcept
-        {
-            ::close(fd);
-        }
-    };
-
-    using File = Util::GenericHandle<int, int, -1, FileCloser>;
-#else
-    struct FileCloser
-    {
-        void operator()(HANDLE fd) noexcept
-        {
-            ::CloseHandle(fd);
-        }
-    };
-
-    using File = Util::GenericHandle<HANDLE, intptr_t, -1, FileCloser>;
-#endif
-
     void delegate(std::shared_ptr<Er::Log::Record> r);
 
-    File m_file;
+    Er::Util::FileHandle m_file;
 };
 
 
