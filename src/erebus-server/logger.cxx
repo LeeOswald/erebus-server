@@ -29,10 +29,10 @@ namespace Er
 namespace Private
 {
 
-LogRotator::LogRotator(Er::Log::Level level, const char* fileName)
+LogRotator::LogRotator(Er::Log::Level level, const char* fileName, int keep)
     : Er::Log::LogBase(Er::Log::LogBase::AsyncLog, level, 65536)
 {
-    int i = kKeep;
+    int i = keep;
     while (i >= 0)
     {
         std::string nameNew = std::string(fileName) + std::string(".") + std::to_string(i);
@@ -66,42 +66,39 @@ Logger::~Logger()
     Er::Log::LogBase::removeDelegate("this");
 }
 
-Logger::Logger(Er::Log::Level level, const char* fileName)
-    : LogRotator(level, fileName)
+Logger::Logger(Er::Log::Level level, const char* fileName, int keep)
+    : LogRotator(level, fileName, keep)
 #if ER_POSIX
     , m_file(::open(fileName, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH))
 #elif ER_WINDOWS
-    , m_file(::CreateFileW(Er::Util::utf8ToUtf16(fileName).c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0))
+    , m_file(::CreateFileW(Er::Util::utf8ToUtf16(fileName).c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0))
 #endif
 {
 #if ER_POSIX
     if (m_file == -1)
     {
-        Er::osyncstream(std::cerr) << "Failed to create the logfile: " << errno << "\n";
+        auto e = errno;
+        throw Er::Exception(
+            ER_HERE(), 
+            "Failed to create the logfile", 
+            Er::ExceptionProps::FileName(fileName),
+            Er::ExceptionProps::PosixErrorCode(e),
+            Er::ExceptionProps::DecodedError(Er::Util::posixErrorToString(e))
+        );
     }
-    else if (::flock(m_file, LOCK_EX | LOCK_NB) == -1)
-    {
-        if (errno == EWOULDBLOCK)
-        {
-            Er::osyncstream(std::cerr) << "Server is already running\n";
-        }
-        else
-        {
-            Er::osyncstream(std::cerr) << "Failed to lock the logfile: " << errno << "\n";
-        }
-    }
+
 #elif ER_WINDOWS
     if (m_file == INVALID_HANDLE_VALUE)
     {
         auto e = ::GetLastError();
-        if (e == ERROR_SHARING_VIOLATION)
-        {
-            Er::osyncstream(std::cerr) << "Server is already running\n";
-        }
-        else
-        {
-            Er::osyncstream(std::cerr) << "Failed to create the logfile: " << e << "\n";
-        }
+        throw Er::Exception(
+            ER_HERE(), 
+            "Failed to create the logfile", 
+            Er::ExceptionProps::FileName(fileName),
+            Er::ExceptionProps::Win32ErrorCode(e),
+            Er::ExceptionProps::DecodedError(Er::Util::win32ErrorToString(e))
+        );
+        
     }
 #endif
 
@@ -144,39 +141,23 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
     ::OutputDebugStringW(Er::Util::utf8ToUtf16(message).c_str());
 #endif
 
-    bool fileValid = false;
-#if ER_POSIX
-    if (m_file < 0)
-#elif ER_WINDOWS
-    if (m_file == INVALID_HANDLE_VALUE)
-#endif
-    {
-        // if we failed to create a logfile we have nothing else than std::cerr
-        Er::osyncstream(std::cerr) << message;
-    }
-    else
-    {
-        fileValid = true;
-#if ER_DEBUG
-        // for debug purposes use std::cout
-        if (r->level < Er::Log::Level::Warning)
-            Er::osyncstream(std::cout) << message;
-        else
-            Er::osyncstream(std::cerr) << message;
-#endif
-    }
 
-    if (fileValid)
-    {
-#if ER_POSIX
-        ::write(m_file, message.data(), message.length());
-        ::fsync(m_file);
-#elif ER_WINDOWS
-        DWORD written = 0;
-        ::WriteFile(m_file, message.data(), message.length(), &written, nullptr);
-        ::FlushFileBuffers(m_file);
+#if ER_DEBUG
+    // for debug purposes use std::cout
+    if (r->level < Er::Log::Level::Warning)
+        Er::osyncstream(std::cout) << message;
+    else
+        Er::osyncstream(std::cerr) << message;
 #endif
-    }
+
+#if ER_POSIX
+    ::write(m_file, message.data(), message.length());
+    ::fdatasync(m_file);
+#elif ER_WINDOWS
+    DWORD written = 0;
+    ::WriteFile(m_file, message.data(), message.length(), &written, nullptr);
+    ::FlushFileBuffers(m_file);
+#endif
 }
 
 

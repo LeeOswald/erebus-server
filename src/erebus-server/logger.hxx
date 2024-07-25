@@ -16,10 +16,7 @@ class LogRotator
 {
 public:
     ~LogRotator() {}
-    explicit LogRotator(Er::Log::Level level, const char* fileName);
-
-private:
-    const int kKeep = 3;
+    explicit LogRotator(Er::Log::Level level, const char* fileName, int keep);
 };
 
 
@@ -28,12 +25,7 @@ class Logger final
 {
 public:
     ~Logger();
-    explicit Logger(Er::Log::Level level, const char* fileName);
-
-    bool valid() const noexcept
-    {
-        return m_file.valid();
-    }
+    explicit Logger(Er::Log::Level level, const char* fileName, int keep);
 
 private:
     void delegate(std::shared_ptr<Er::Log::Record> r);

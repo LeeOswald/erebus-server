@@ -198,9 +198,16 @@ int main(int argc, char* argv[], char* env[])
 
 
     Er::Log::Level logLevel = (cfg.verbose > 0) ? Er::Log::Level::Debug : Er::Log::Level::Info;
-    auto logger = std::make_unique<Er::Private::Logger>(logLevel, cfg.logfile.c_str());
-    if (!logger->valid())
+    std::unique_ptr<Er::Private::Logger> logger;
+    try
+    {
+        logger.reset(new Er::Private::Logger(logLevel, cfg.logfile.c_str(), cfg.keeplogs));
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << "\n";
         return EXIT_FAILURE;
+    }
 
     g_log = logger.get();
     Er::setPrintFailedAssertionFn(printAssertFn);

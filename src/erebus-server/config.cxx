@@ -36,6 +36,9 @@ R"(
         "logfile": {
             "type": "string"
         },
+        "keeplogs": {
+            "type": "number"
+        },
         "pidfile": {
             "type": "string"
         },
@@ -161,6 +164,8 @@ ServerConfig loadConfig(const std::string& path)
             cfg.verbose = m->value.GetInt();
         else if (!std::strcmp(name, "logfile"))
             cfg.logfile = m->value.GetString();
+        else if (!std::strcmp(name, "keeplogs"))
+            cfg.keeplogs = m->value.GetInt();
         else if (!std::strcmp(name, "pidfile"))
             cfg.pidfile = m->value.GetString();
         else if (!std::strcmp(name, "certificate"))
