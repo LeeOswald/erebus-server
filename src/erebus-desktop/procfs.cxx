@@ -1,8 +1,6 @@
 #include "procfs.hxx"
 
 #include <erebus/exception.hxx>
-#include <erebus/util/exceptionutil.hxx>
-#include <erebus/util/posixerror.hxx>
 #include <erebus/util/stringutil.hxx>
 
 #include <fstream>
@@ -22,10 +20,7 @@ ProcFs::ProcFs(const std::string& root, Er::Log::ILog* const log)
     , m_log(log)
 {
     if (::access(root.c_str(), R_OK) == -1)
-    {   
-        auto e = errno;
-        throw Er::Exception(ER_HERE(), "Failed to access /proc", Er::ExceptionProps::PosixErrorCode(e), Er::ExceptionProps::DecodedError(Er::Util::posixErrorToString(e)));
-    }
+        throwPosixError("Failed to access /proc", errno);
 }
 
 std::optional<uint64_t> ProcFs::getUid(uint64_t pid) const noexcept

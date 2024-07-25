@@ -47,8 +47,7 @@ public:
         std::string id(request);
         auto it = m_services.find(id);
         if (it != m_services.end())
-            throw Er::Exception(ER_HERE(), Er::Util::format("Service for [%s] is already registered", id.c_str()));
-
+            throwGenericError(Er::Util::format("Service for [%s] is already registered", id.c_str()));
         
         ErLogInfo(m_params.log, "Registered service %p for [%s]", service, id.c_str());
 

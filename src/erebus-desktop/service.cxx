@@ -49,7 +49,7 @@ void Service::deleteSession(SessionId id)
 
 Service::StreamId Service::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
-    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    throwGenericError(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
 void Service::endStream(StreamId id, SessionId sessionId)
@@ -68,17 +68,17 @@ Er::PropertyBag Service::request(std::string_view request, const Er::PropertyBag
         return queryIcon(args);
     }
 
-    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    throwGenericError(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
 Er::PropertyBag Service::queryIcon(const Er::PropertyBag& args)
 {
     auto iconSize = Er::getPropertyValue<Er::Desktop::Props::IconSize>(args);
     if (!iconSize)
-        throw Er::Exception(ER_HERE(), "Icon size not specified");
+        throwGenericError("Icon size not specified");
 
     if ((*iconSize != uint32_t(IconSize::Large)) && (*iconSize != uint32_t(IconSize::Small)))
-        throw Er::Exception(ER_HERE(), "Unsupported icon size");
+        throwGenericError("Unsupported icon size");
 
     auto iconName = Er::getPropertyValue<Er::Desktop::Props::IconName>(args);
     if (iconName)

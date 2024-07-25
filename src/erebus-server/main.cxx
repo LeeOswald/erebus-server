@@ -115,7 +115,7 @@ int main(int argc, char* argv[], char* env[])
 
         if (vm.count("help"))
         {
-            std::cout << cmdOpts << "\n";
+            std::cout << cmdOpts << std::endl;
             return EXIT_SUCCESS;
         }
 
@@ -130,7 +130,7 @@ int main(int argc, char* argv[], char* env[])
     }
     catch (std::exception& e)
     {
-        std::cerr << "Failed to parse the command line: " << e.what() << "\n";
+        std::cerr << "Failed to parse the command line: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -142,7 +142,7 @@ int main(int argc, char* argv[], char* env[])
     }
     catch (std::exception& e)
     {
-        std::cerr << "Failed to load the configuration: " << e.what() << "\n";
+        std::cerr << "Failed to load the configuration: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
         
@@ -168,9 +168,9 @@ int main(int argc, char* argv[], char* env[])
         catch (std::exception& e)
         {
             auto existing = Er::Util::PidFile::read(cfg.pidfile);
-            std::cerr << e.what() << "\n";
+            std::cerr << e.what() << std::endl;
             if (existing)
-                std::cerr << "Found running server instance with PID " << *existing << "\n";
+                std::cerr << "Found running server instance with PID " << *existing << std::endl;
 
             return EXIT_FAILURE;
         }
@@ -205,7 +205,7 @@ int main(int argc, char* argv[], char* env[])
     }
     catch (std::exception& e)
     {
-        std::cerr << e.what() << "\n";
+        std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -244,24 +244,16 @@ int main(int argc, char* argv[], char* env[])
         {
             logger->writef(Er::Log::Level::Info, "Creating a server instance at [%s]", ep.endpoint.c_str());
 
-            try
+            Er::protectedCall<void>(g_log, [&ep, &root, &certificate, &key, &servers]()
             {
                 Er::Server::Private::Params params(ep.endpoint, g_log, ep.ssl, root, certificate, key);
                 auto server = Er::Server::Private::create(&params);
                 servers.push_back(server);
-            }
-            catch (Er::Exception& e)
-            {
-                Er::Util::logException(g_log, Er::Log::Level::Error, e);
-            }
-            catch (std::exception& e)
-            {
-                Er::Util::logException(g_log, Er::Log::Level::Error, e);
-            }
+            });
         }
 
         if (servers.empty())
-            throw Er::Exception(ER_HERE(), "Could not create any server instances");
+            throwGenericError("Could not create any server instances");
 
         Er::Private::CoreService coreService(g_log);
         for (auto srv : servers)
@@ -286,21 +278,14 @@ int main(int argc, char* argv[], char* env[])
                 continue;
             }
             
-            try
+            auto success = Er::protectedCall<bool>(g_log, [&plugin, &pluginMgr]()
             {
                 pluginMgr.load(plugin.path, plugin.args);
-                continue;
-            }
-            catch (Er::Exception& e)
-            {
-                Er::Util::logException(g_log, Er::Log::Level::Error, e);
-            }
-            catch (std::exception& e)
-            {
-                Er::Util::logException(g_log, Er::Log::Level::Error, e);
-            }
+                return true;
+            });
 
-            logger->writef(Er::Log::Level::Error, "Failed to load plugin [%s]", plugin.path.c_str());
+            if (!success)
+                logger->writef(Er::Log::Level::Error, "Failed to load plugin [%s]", plugin.path.c_str());
         }
 
         // now just sit around and wait
@@ -326,14 +311,9 @@ int main(int argc, char* argv[], char* env[])
 
         Er::setPrintFailedAssertionFn(nullptr);
     }
-    catch (Er::Exception& e)
-    {
-        Er::Util::logException(g_log, Er::Log::Level::Fatal, e);
-        return EXIT_FAILURE;
-    }
     catch (std::exception& e)
     {
-        Er::Util::logException(g_log, Er::Log::Level::Fatal, e);
+        std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 

@@ -79,7 +79,7 @@ public:
     bool requestIcon(const IconRequest& request, std::chrono::milliseconds timeout) override
     {
         if (request.name.length() > MaxIconName)
-            throw Er::Exception(ER_HERE(), "Icon name too long");
+            throwGenericError("Icon name too long");
 
         IconRequestRaw r;
         r.size = request.size;
@@ -104,10 +104,10 @@ public:
             return std::nullopt;
 
         if (rd != sizeof(IconRequestRaw))
-            throw Er::Exception(ER_HERE(), "Invalid icon cache request");
+            throwGenericError("Invalid icon cache request");
 
         if (r->nameLen > MaxIconName)
-            throw Er::Exception(ER_HERE(), "Invalid icon cache request");
+            throwGenericError("Invalid icon cache request");
 
         return std::make_optional<IconRequest>(std::string_view(r->name, r->nameLen), uint16_t(r->size));
     }
@@ -115,10 +115,10 @@ public:
     bool sendIcon(const IconResponse& response, std::chrono::milliseconds timeout) override
     {
         if (response.request.name.length() > MaxIconName)
-            throw Er::Exception(ER_HERE(), "Icon name too long");
+            throwGenericError("Icon name too long");
 
         if (response.path.length() > MaxIconPath)
-            throw Er::Exception(ER_HERE(), "Icon path too long");
+            throwGenericError("Icon path too long");
 
         IconResponseRaw r;
         r.request.size = response.request.size;
@@ -149,13 +149,13 @@ public:
             return std::nullopt;
 
         if (rd != sizeof(IconResponseRaw))
-            throw Er::Exception(ER_HERE(), "Invalid icon cache response");
+            throwGenericError("Invalid icon cache response");
 
         if (r->request.nameLen > MaxIconName)
-            throw Er::Exception(ER_HERE(), "Invalid icon cache response");
+            throwGenericError("Invalid icon cache response");
 
         if (r->pathLen > MaxIconName)
-            throw Er::Exception(ER_HERE(), "Invalid icon cache response");
+            throwGenericError("Invalid icon cache response");
 
         return std::make_optional<IconResponse>(std::string_view(r->request.name, r->request.nameLen), uint16_t(r->request.size), static_cast<IconResponse::Result>(r->result), std::string_view(r->path, r->pathLen));
     }

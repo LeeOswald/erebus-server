@@ -39,10 +39,7 @@ ProcFs::ProcFs(Er::Log::ILog* log)
 
     auto rootPath = root();
     if (::access(rootPath.c_str(), R_OK) == -1)
-    {   
-        auto e = errno;
-        throw Er::Exception(ER_HERE(), "Failed to access /proc", Er::ExceptionProps::PosixErrorCode(e), Er::ExceptionProps::DecodedError(Er::Util::posixErrorToString(e)));
-    }
+        throwPosixError("Failed to access /proc", errno);
 }
 
 std::string ProcFs::root()
@@ -433,10 +430,7 @@ std::vector<uintptr_t> ProcFs::enumeratePids() noexcept
         auto path = root();
         DirHolder dir(::opendir(path.c_str()));
         if (!dir)
-        {
-            auto e = errno;
-            throw Er::Exception(ER_HERE(), "Failed to open /proc", Er::ExceptionProps::PosixErrorCode(e), Er::ExceptionProps::DecodedError(Er::Util::posixErrorToString(e)));
-        }
+            throwPosixError("Failed to open /proc", errno);
     
         for (auto ent = ::readdir(dir); ent != nullptr; ent = ::readdir(dir))
         {

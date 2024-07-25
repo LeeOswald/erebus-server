@@ -76,30 +76,12 @@ Logger::Logger(Er::Log::Level level, const char* fileName, int keep)
 {
 #if ER_POSIX
     if (m_file == -1)
-    {
-        auto e = errno;
-        throw Er::Exception(
-            ER_HERE(), 
-            "Failed to create the logfile", 
-            Er::ExceptionProps::FileName(fileName),
-            Er::ExceptionProps::PosixErrorCode(e),
-            Er::ExceptionProps::DecodedError(Er::Util::posixErrorToString(e))
-        );
-    }
-
+        throwPosixError("Failed to create the logfile", errno, Er::ExceptionProps::FileName(fileName));
+    
 #elif ER_WINDOWS
     if (m_file == INVALID_HANDLE_VALUE)
-    {
-        auto e = ::GetLastError();
-        throw Er::Exception(
-            ER_HERE(), 
-            "Failed to create the logfile", 
-            Er::ExceptionProps::FileName(fileName),
-            Er::ExceptionProps::Win32ErrorCode(e),
-            Er::ExceptionProps::DecodedError(Er::Util::win32ErrorToString(e))
-        );
+        throwWin32Error("Failed to create the logfile", ::GetLastError(), Er::ExceptionProps::FileName(fileName));
         
-    }
 #endif
 
     Er::Log::LogBase::addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });

@@ -49,7 +49,7 @@ void ProcessListService::deleteSession(SessionId id)
 
     auto it = m_sessions.find(id);
     if (it == m_sessions.end())
-        throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent session %d", id));
+        throwGenericError(Er::Util::format("Non-existent session %d", id));
 
     m_sessions.erase(it);
 
@@ -62,7 +62,7 @@ std::shared_ptr<ProcessListService::Session> ProcessListService::getSession(Sess
 
     auto it = m_sessions.find(id);
     if (it == m_sessions.end())
-        throw Er::Exception(ER_HERE(), "Session not found");
+        throwGenericError("Session not found");
 
     {
         std::unique_lock l(it->second->mutex);
@@ -82,7 +82,7 @@ Er::PropertyBag ProcessListService::request(std::string_view request, const Er::
         return processesGlobal(session.get(), required, std::nullopt);
     }
 
-    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    throwGenericError(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
 ProcessListService::StreamId ProcessListService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
@@ -92,7 +92,7 @@ ProcessListService::StreamId ProcessListService::beginStream(std::string_view re
     if (request == Er::ProcessMgr::ProcessRequests::ListProcessesDiff)
         return beginProcessDiffStream(args, session.get());
 
-    throw Er::Exception(ER_HERE(), Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    throwGenericError(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
 void ProcessListService::endStream(StreamId id, SessionId sessionId)
@@ -103,7 +103,7 @@ void ProcessListService::endStream(StreamId id, SessionId sessionId)
 
     auto it = session->streams.find(id);
     if (it == session->streams.end())
-        throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d:%d", sessionId, id));
+        throwGenericError(Er::Util::format("Non-existent stream %d:%d", sessionId, id));
 
     session->streams.erase(it);
 
@@ -119,7 +119,7 @@ Er::PropertyBag ProcessListService::next(StreamId id, SessionId sessionId)
         std::unique_lock l(session->mutex);
         auto it = session->streams.find(id);
         if (it == session->streams.end())
-            throw Er::Exception(ER_HERE(), Er::Util::format("Non-existent stream %d:%d", sessionId, id));
+            throwGenericError(Er::Util::format("Non-existent stream %d:%d", sessionId, id));
 
         stream = it->second;
 

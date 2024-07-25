@@ -43,7 +43,7 @@ public:
     {
         long expected = 0;
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
-            throw Er::Exception(ER_HERE(), "Only one instance of erebus-procmon plugin can be created");
+            throwGenericError("Only one instance of erebus-procmon plugin can be created");
 
         g_log = params.log;
         m_oldBpfPrint = ::libbpf_set_print(libbpf_print_fn);

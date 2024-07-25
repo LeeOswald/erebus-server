@@ -32,9 +32,7 @@ std::wstring getUserName()
         }
     }
 
-    auto e = ::GetLastError();
-    auto message = Er::Util::win32ErrorToString(e);
-    throw Er::Exception(ER_HERE(), "Failed to get current user name", Er::ExceptionProps::Win32ErrorCode(e), Er::ExceptionProps::DecodedError(std::move(message)));
+    throwWin32Error("Failed to get current user name", ::GetLastError());
 }
 
 } // namespace {}   

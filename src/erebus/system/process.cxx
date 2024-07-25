@@ -41,9 +41,7 @@ EREBUS_EXPORT std::string exe()
     exe.resize(size + 1, '\0');
     auto r = ::readlink("/proc/self/exe", exe.data(), size); // readlink does not append '\0'
     if (r < 0)
-    {
-        throw Exception(ER_HERE(), "Failed to read /proc/self/exe", ExceptionProps::PosixErrorCode(errno));
-    }
+        throwPosixError("Failed to read /proc/self/exe", errno);
 
     exe.resize(std::strlen(exe.c_str())); // cut extra '\0'
 
