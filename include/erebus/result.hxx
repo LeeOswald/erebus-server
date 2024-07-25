@@ -25,6 +25,7 @@ enum class Result : int32_t
     Internal = 14,
     Unavailable = 15,
     DataLoss = 16,
+    SharingViolation = 17,
     DoNotUse = -1
 };
 
@@ -51,6 +52,7 @@ inline StreamT& operator<<(StreamT& stream, Result code)
     case Result::Internal: stream << "Internal"; break;
     case Result::Unavailable: stream << "Unavailable"; break;
     case Result::DataLoss: stream << "Data loss"; break;
+    case Result::SharingViolation: stream << "Sharing violation"; break;
     default: stream << "???"; break;
     }
     return stream;

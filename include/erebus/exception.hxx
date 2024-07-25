@@ -26,8 +26,9 @@ void unregisterAll(Er::Log::ILog* log);
 
 
 using ResultCode = PropertyValue<int32_t, ER_PROPID("erebus_result_code"), "Erebus error code", PropertyComparator<int32_t>, ResultFormatter>;
-using FailedAssertion = PropertyValue<std::string, ER_PROPID("failed_assertion"), "Failed assertion">;
 using DecodedError = PropertyValue<std::string, ER_PROPID("decoded_error"), "Error message">;
+using FileName = PropertyValue<std::string, ER_PROPID("file_name"), "File name">;
+using DirectoryName = PropertyValue<std::string, ER_PROPID("directory_name"), "Directory name">;
 using PosixErrorCode = PropertyValue<int32_t, ER_PROPID("posix_error_code"), "POSIX error code">;
 using Win32ErrorCode = PropertyValue<uint32_t, ER_PROPID("win32_error_code"), "WIN32 error code">;
 
