@@ -1,9 +1,7 @@
 if(ER_POSIX)
     set(PLATFORM_SOURCES
-        ../../include/erebus/util/posixerror.hxx
         ../../include/erebus/util/signalhandler.hxx
         system/user_linux.cxx
-        util/posixerror_posix.cxx
         util/signalhandler_posix.cxx
     )
 elseif(ER_WINDOWS)
@@ -62,6 +60,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/util/inifile.hxx
     ../../include/erebus/util/lockfile.hxx
     ../../include/erebus/util/pidfile.hxx
+    ../../include/erebus/util/posixerror.hxx
     ../../include/erebus/util/ptrutils.hxx
     ../../include/erebus/util/sha256.hxx
     ../../include/erebus/util/stringutil.hxx
@@ -82,6 +81,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     util/format.cxx
     util/inifile.cxx
     util/lockfile.cxx
+    util/posixerror.cxx
     util/sha256.cxx
     ${PLATFORM_SOURCES}
 )

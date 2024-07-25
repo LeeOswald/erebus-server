@@ -4,10 +4,8 @@
 #include <erebus/property.hxx>
 #include <erebus/result.hxx>
 #include <erebus/util/crc32.hxx>
-
-#if ER_POSIX
-    #include <erebus/util/posixerror.hxx>
-#elif ER_WINDOWS
+#include <erebus/util/posixerror.hxx>
+#if ER_WINDOWS
     #include <erebus/util/win32error.hxx>
 #endif
 
@@ -208,12 +206,10 @@ private:
 } // namespace Er {}
 
 
-#if ER_POSIX
-
 #define throwPosixError(msg, err, ...) \
     throw ::Er::Exception(ER_HERE(), msg, ::Er::ExceptionProps::PosixErrorCode(int32_t(err)), ::Er::ExceptionProps::DecodedError(::Er::Util::posixErrorToString(err)), ##__VA_ARGS__)
 
-#elif ER_WINDOWS
+#if ER_WINDOWS
 
 #define throwWin32Error(msg, err, ...) \
     throw ::Er::Exception(ER_HERE(), msg, ::Er::ExceptionProps::Win32ErrorCode(int32_t(err)), ::Er::ExceptionProps::DecodedError(::Er::Util::win32ErrorToString(err)), ##__VA_ARGS__)

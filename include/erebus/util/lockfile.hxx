@@ -9,7 +9,7 @@ namespace Er
 namespace Util
 {
 
-class LockFile 
+class EREBUS_EXPORT LockFile 
     : public Er::NonCopyable
 {
 public:

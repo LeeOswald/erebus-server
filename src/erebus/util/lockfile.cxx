@@ -8,8 +8,6 @@
 #elif ER_WINDOWS
     #include <erebus/util/utf16.hxx>
     #include <erebus/util/win32error.hxx>
-
-    #include <erebus/util/win32error.hxx>
 #endif
 
 
@@ -40,7 +38,7 @@ LockFile::LockFile(const std::string& path)
 #if ER_POSIX
     , m_file(::open(path.c_str(), O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH))
 #elif ER_WINDOWS
-    . m_file(::CreateFileW(m_wpath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0))
+    , m_file(::CreateFileW(m_wpath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0))
 #endif
 {
 #if ER_POSIX
