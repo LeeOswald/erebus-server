@@ -28,6 +28,7 @@ struct ServerConfig final
 
     int verbose = 0;
     std::string logfile;
+    std::string pidfile;
     std::vector<Endpoint> endpoints;
     std::string certificate;
     std::string privateKey;

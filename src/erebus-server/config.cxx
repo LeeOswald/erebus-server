@@ -36,6 +36,9 @@ R"(
         "logfile": {
             "type": "string"
         },
+        "pidfile": {
+            "type": "string"
+        },
         "certificate": {
             "type": "string"
         },
@@ -158,6 +161,8 @@ ServerConfig loadConfig(const std::string& path)
             cfg.verbose = m->value.GetInt();
         else if (!std::strcmp(name, "logfile"))
             cfg.logfile = m->value.GetString();
+        else if (!std::strcmp(name, "pidfile"))
+            cfg.pidfile = m->value.GetString();
         else if (!std::strcmp(name, "certificate"))
             cfg.certificate = m->value.GetString();
         else if (!std::strcmp(name, "key"))

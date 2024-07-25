@@ -60,6 +60,8 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/util/format.hxx
     ../../include/erebus/util/generichandle.hxx
     ../../include/erebus/util/inifile.hxx
+    ../../include/erebus/util/lockfile.hxx
+    ../../include/erebus/util/pidfile.hxx
     ../../include/erebus/util/ptrutils.hxx
     ../../include/erebus/util/sha256.hxx
     ../../include/erebus/util/stringutil.hxx
@@ -79,6 +81,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     util/file.cxx
     util/format.cxx
     util/inifile.cxx
+    util/lockfile.cxx
     util/sha256.cxx
     ${PLATFORM_SOURCES}
 )

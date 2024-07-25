@@ -10,6 +10,7 @@
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
+#include <erebus/util/pidfile.hxx>
 #include <erebus/util/sha256.hxx>
 #if ER_POSIX
     #include <erebus/util/signalhandler.hxx>
@@ -157,6 +158,24 @@ int main(int argc, char* argv[], char* env[])
         Er::System::CurrentProcess::daemonize();
 #endif
 
+    std::unique_ptr<Er::Util::PidFile> pidFile;
+    if (!cfg.pidfile.empty())
+    {
+        try
+        {
+            pidFile.reset(new Er::Util::PidFile(cfg.pidfile));
+        }
+        catch (std::exception& e)
+        {
+            auto existing = Er::Util::PidFile::read(cfg.pidfile);
+            std::cerr << e.what() << "\n";
+            if (existing)
+                std::cerr << "Found running server instance with PID " << *existing << "\n";
+
+            return EXIT_FAILURE;
+        }
+    }
+    
     // setup signal handler
 #if ER_POSIX
     Er::Util::SignalHandler sh({SIGINT, SIGTERM, SIGPIPE, SIGHUP});
