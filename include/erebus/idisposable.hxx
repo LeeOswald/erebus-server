@@ -15,7 +15,10 @@ protected:
 };
 
 
-struct DisposableDisposer final
+namespace __
+{
+
+struct Disposer final
 {
     void operator()(IDisposable* d) noexcept
     {
@@ -24,9 +27,11 @@ struct DisposableDisposer final
     }
 };
 
+} // namespace __ {}
+
 
 template <class T>
-using DisposablePtr = std::unique_ptr<T, DisposableDisposer>;
+using DisposablePtr = std::unique_ptr<T, __::Disposer>;
 
 
 } // namespace Er {}
