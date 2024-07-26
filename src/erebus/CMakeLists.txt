@@ -35,6 +35,30 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/lockable.hxx
     ../../include/erebus/log.hxx
     ../../include/erebus/lrucache.hxx
+    ../../include/erebus/lua.hxx
+    ../../include/erebus/luaxx/base_fun.hxx
+    ../../include/erebus/luaxx/class.hxx
+    ../../include/erebus/luaxx/class_fun.hxx
+    ../../include/erebus/luaxx/ctor.hxx
+    ../../include/erebus/luaxx/dtor.hxx
+    ../../include/erebus/luaxx/exception_handler.hxx
+    ../../include/erebus/luaxx/exception_types.hxx
+    ../../include/erebus/luaxx/fun.hxx
+    ../../include/erebus/luaxx/function.hxx
+    ../../include/erebus/luaxx/lua_name.hxx
+    ../../include/erebus/luaxx/lua_ref.hxx
+    ../../include/erebus/luaxx/metatable_registry.hxx
+    ../../include/erebus/luaxx/obj.hxx
+    ../../include/erebus/luaxx/obj_fun.hxx
+    ../../include/erebus/luaxx/primitives.hxx
+    ../../include/erebus/luaxx/references.hxx
+    ../../include/erebus/luaxx/registry.hxx
+    ../../include/erebus/luaxx/resource_handler.hxx
+    ../../include/erebus/luaxx/selector.hxx
+    ../../include/erebus/luaxx/state.hxx
+    ../../include/erebus/luaxx/traits.hxx
+    ../../include/erebus/luaxx/tuple.hxx
+    ../../include/erebus/luaxx/util.hxx
     ../../include/erebus/mutexpool.hxx
     ../../include/erebus/noncopyable.hxx
     ../../include/erebus/platform.hxx
@@ -92,4 +116,4 @@ add_compile_definitions(EREBUS_EXPORTS=1)
 
 set_property(TARGET ${EREBUS_RTLLIB} PROPERTY PREFIX "")
 
-target_link_libraries(${EREBUS_RTLLIB} PRIVATE ${Boost_LIBRARIES} ${PLATFORM_LIBS})
+target_link_libraries(${EREBUS_RTLLIB} PRIVATE ${Boost_LIBRARIES} ${PLATFORM_LIBS} ${LUA_LIBRARIES})

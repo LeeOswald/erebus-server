@@ -23,6 +23,14 @@ add_executable(
     inifile.cpp
     log.cpp
     lrucache.cpp
+    luaxx_class.cpp
+    luaxx_error.cpp
+    luaxx_exception.cpp
+    luaxx_interop.cpp
+    luaxx_metatable.cpp
+    luaxx_obj.cpp
+    luaxx_reference.cpp
+    luaxx_selector.cpp
     main.cpp
     property.cpp
     propertybag.cpp
@@ -31,6 +39,6 @@ add_executable(
     ${PLATFORM_SOURCES}
 )
 
-target_link_libraries(${ER_TESTS} gtest_main ${EREBUS_RTLLIB})
+target_link_libraries(${ER_TESTS} gtest_main ${EREBUS_RTLLIB} ${LUA_LIBRARIES})
 
 gtest_discover_tests(${ER_TESTS})

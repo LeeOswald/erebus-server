@@ -13,6 +13,7 @@
 
 Er::Log::ILog* g_log = nullptr;
 
+int InstanceCounter::instances = 0;
 
 class Logger
     : public Er::Log::LogBase

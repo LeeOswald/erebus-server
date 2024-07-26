@@ -44,6 +44,8 @@ if(ER_LINUX AND NOT ER_BUILD_CLIENT_LIBS_ONLY)
     include(bpf)
 endif()
 
+include(FetchLua)
+
 include(FetchGRPC)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/erebus-version.h.in" erebus-version.h)
