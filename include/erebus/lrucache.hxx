@@ -26,7 +26,7 @@ public:
     void put(const Key& key, ValueType&& value)
     {
         // always put new items to the front
-        m_list.emplace_front(std::make_pair(key, std::forward<ValueType&&>(value)));
+        m_list.emplace_front(std::make_pair(key, std::forward<ValueType>(value)));
 
         // if it is already there, remove the copy
         auto it = m_map.find(key);
@@ -88,7 +88,7 @@ private:
     using List = std::list<std::pair<Key, Value>>;
 
     mutable List m_list;
-    std::unordered_map<Key, typename List::iterator> m_map; // storing iterators? oh, my!..
+    std::unordered_map<Key, typename List::iterator> m_map;
     size_t m_limit;
 };
 

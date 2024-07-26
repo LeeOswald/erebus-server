@@ -28,7 +28,7 @@ EREBUS_EXPORT Bytes loadBinaryFile(const std::string& path)
 {
     File f(std::fopen(path.c_str(), "rb"));
     if (!f)
-        throwPosixError("Failed top open file", errno, Er::ExceptionProps::FileName(path));
+        ErThrowPosixError("Failed top open file", errno, Er::ExceptionProps::FileName(path));
 
     std::setvbuf(f, nullptr, _IONBF, 0);
 

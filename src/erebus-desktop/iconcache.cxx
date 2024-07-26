@@ -36,15 +36,15 @@ IconCache::IconCache(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCache
     if (std::filesystem::exists(path))
     {
         if (!std::filesystem::is_directory(path, ec) || ec)
-            throwGenericError(Er::Util::format("%s is not a directry", m_cacheDir.c_str()));
+            ErThrow(Er::Util::format("%s is not a directry", m_cacheDir.c_str()));
 
         if (::access(m_cacheDir.c_str(), R_OK | W_OK) == -1)
-            throwGenericError(Er::Util::format("%s is inaccessible", m_cacheDir.c_str()));
+            ErThrow(Er::Util::format("%s is inaccessible", m_cacheDir.c_str()));
     }
     else
     {
         if (!std::filesystem::create_directory(path, ec) || ec)
-            throwGenericError(Er::Util::format("Failed to create %s: %s", m_cacheDir.c_str(), ec.message().c_str()));
+            ErThrow(Er::Util::format("Failed to create %s: %s", m_cacheDir.c_str(), ec.message().c_str()));
     }
 }
 

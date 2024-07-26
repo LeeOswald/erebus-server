@@ -76,11 +76,11 @@ Logger::Logger(Er::Log::Level level, const char* fileName, int keep)
 {
 #if ER_POSIX
     if (m_file == -1)
-        throwPosixError("Failed to create the logfile", errno, Er::ExceptionProps::FileName(fileName));
+        ErThrowPosixError("Failed to create the logfile", errno, Er::ExceptionProps::FileName(fileName));
     
 #elif ER_WINDOWS
     if (m_file == INVALID_HANDLE_VALUE)
-        throwWin32Error("Failed to create the logfile", ::GetLastError(), Er::ExceptionProps::FileName(fileName));
+        ErThrowWin32Error("Failed to create the logfile", ::GetLastError(), Er::ExceptionProps::FileName(fileName));
         
 #endif
 

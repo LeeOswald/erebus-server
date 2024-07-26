@@ -113,7 +113,7 @@ rapidjson::Document loadAndValidate(const std::string& path)
     
     rapidjson::Document targetDocument;
     if (!valijson::utils::loadDocument(path, targetDocument)) 
-        throwGenericError(Util::format("Failed to load config from [%s]", path.c_str()));
+        ErThrow(Util::format("Failed to load config from [%s]", path.c_str()));
 
     valijson::Validator validator(valijson::Validator::kStrongTypes);
     valijson::ValidationResults results;
@@ -142,7 +142,7 @@ rapidjson::Document loadAndValidate(const std::string& path)
             ++errorNum;
         }
         
-        throwGenericError(Er::Util::format("Failed to validate config: %s", ss.str().c_str()));
+        ErThrow(Er::Util::format("Failed to validate config: %s", ss.str().c_str()));
     }
 
     return targetDocument;

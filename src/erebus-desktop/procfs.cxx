@@ -20,7 +20,7 @@ ProcFs::ProcFs(const std::string& root, Er::Log::ILog* const log)
     , m_log(log)
 {
     if (::access(root.c_str(), R_OK) == -1)
-        throwPosixError("Failed to access /proc", errno);
+        ErThrowPosixError("Failed to access /proc", errno);
 }
 
 std::optional<uint64_t> ProcFs::getUid(uint64_t pid) const noexcept

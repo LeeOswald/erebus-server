@@ -43,16 +43,16 @@ LockFile::LockFile(const std::string& path)
 {
 #if ER_POSIX
     if (m_file == -1)
-        throwPosixError("Failed to create the lockfile", errno, Er::ExceptionProps::FileName(m_path));
+        ErThrowPosixError("Failed to create the lockfile", errno, Er::ExceptionProps::FileName(m_path));
 
     if (::flock(m_file, LOCK_EX | LOCK_NB) == -1)
-        throwPosixError("Failed to acquire the lockfile", errno, Er::ExceptionProps::FileName(m_path));
+        ErThrowPosixError("Failed to acquire the lockfile", errno, Er::ExceptionProps::FileName(m_path));
 
  #elif ER_WINDOWS
     if (m_file == INVALID_HANDLE_VALUE)
     {
         auto e = ::GetLastError();
-        throwWin32Error("Failed to acquire the lockfile", e, Er::ExceptionProps::FileName(m_path));
+        ErThrowWin32Error("Failed to acquire the lockfile", e, Er::ExceptionProps::FileName(m_path));
     }
 #endif
 }
@@ -65,7 +65,7 @@ void LockFile::put(std::string_view data)
     const ssize_t written = ::write(m_file, data.data(), data.length());
 
     if (written != static_cast<ssize_t>(data.length()))
-        throwGenericError("Failed to write to the lockfile", Er::ExceptionProps::FileName(m_path));
+        ErThrow("Failed to write to the lockfile", Er::ExceptionProps::FileName(m_path));
 
     ::fdatasync(m_file);
 
@@ -73,7 +73,7 @@ void LockFile::put(std::string_view data)
     DWORD written = 0;
     ::WriteFile(m_file, data.data(), data.length(), &written, nullptr);
     if (written != static_cast<DWORD>(data.length()))
-        throwGenericError("Failed to write to the lockfile", Er::ExceptionProps::FileName(m_path));
+        ErThrow("Failed to write to the lockfile", Er::ExceptionProps::FileName(m_path));
 
     ::FlushFileBuffers(m_file);
 

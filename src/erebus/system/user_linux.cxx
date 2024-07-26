@@ -39,7 +39,7 @@ EREBUS_EXPORT std::optional<Info> lookup(uid_t uid)
         if (result == 0)
             return std::nullopt;
 
-        throwPosixError(Er::Util::format("Could not lookup user %u", uid), result);
+        ErThrowPosixError(Er::Util::format("Could not lookup user %u", uid), result);
     }
 
     Info info;
@@ -57,7 +57,7 @@ EREBUS_EXPORT Info current()
 {
     auto info = lookup(::getuid());
     if (!info)
-        throwGenericError(Er::Util::format("Could not lookup user %u", ::getuid()));
+        ErThrow(Er::Util::format("Could not lookup user %u", ::getuid()));
 
     return *info;
 }
@@ -84,7 +84,7 @@ EREBUS_EXPORT std::vector<Info> enumerate()
             if ((result == 0) || (result == ENOENT))
                 break;
 
-            throwPosixError("Failed to enumerate users", result);
+            ErThrowPosixError("Failed to enumerate users", result);
         }
         
         Info info;

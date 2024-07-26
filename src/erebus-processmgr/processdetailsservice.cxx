@@ -88,12 +88,12 @@ Er::PropertyBag ProcessDetailsService::request(std::string_view request, const E
     if (request == Er::ProcessMgr::ProcessRequests::KillProcess)
         return killProcess(args);
 
-    throwGenericError(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
 ProcessDetailsService::StreamId ProcessDetailsService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
-    throwGenericError(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
 void ProcessDetailsService::endStream(StreamId id, SessionId sessionId)
@@ -109,16 +109,16 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
 {
     auto pid = Er::getPropertyValue<Er::ProcessMgr::ProcessesGlobal::Pid>(args);
     if (!pid)
-        throwGenericError("Process ID expected");
+        ErThrow("Process ID expected");
 
     auto signame = Er::getPropertyValue<Er::ProcessMgr::ProcessesGlobal::Signal>(args);
     if (!signame)
-        throwGenericError("Signal name expected");
+        ErThrow("Signal name expected");
 
     
     auto signo = mapSignalNameToSigno(*signame);
     if (signo == -1)
-        throwGenericError("Invalid signal name");
+        ErThrow("Invalid signal name");
 
     auto r = ::kill(*pid, signo);
 

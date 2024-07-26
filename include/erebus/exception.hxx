@@ -206,15 +206,15 @@ private:
 } // namespace Er {}
 
 
-#define throwPosixError(msg, err, ...) \
+#define ErThrowPosixError(msg, err, ...) \
     throw ::Er::Exception(ER_HERE(), msg, ::Er::ExceptionProps::PosixErrorCode(int32_t(err)), ::Er::ExceptionProps::DecodedError(::Er::Util::posixErrorToString(err)), ##__VA_ARGS__)
 
 #if ER_WINDOWS
 
-#define throwWin32Error(msg, err, ...) \
+#define ErThrowWin32Error(msg, err, ...) \
     throw ::Er::Exception(ER_HERE(), msg, ::Er::ExceptionProps::Win32ErrorCode(int32_t(err)), ::Er::ExceptionProps::DecodedError(::Er::Util::win32ErrorToString(err)), ##__VA_ARGS__)
 
 #endif
 
-#define throwGenericError(msg, ...) \
+#define ErThrow(msg, ...) \
     throw ::Er::Exception(ER_HERE(), msg, ##__VA_ARGS__)

@@ -49,7 +49,7 @@ Er::PropertyBag CoreService::request(std::string_view request, const Er::Propert
     if (request == Er::Protocol::GenericRequests::GetVersion)
         return getVersion(args);
     else
-        throwGenericError(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+        ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
 Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
@@ -77,7 +77,7 @@ Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
 
 CoreService::StreamId CoreService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
-    throwGenericError(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
 
 void CoreService::endStream(StreamId id, SessionId sessionId)

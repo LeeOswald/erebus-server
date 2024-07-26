@@ -24,11 +24,11 @@ ProcessSpy::ProcessSpy(Er::Log::ILog* log)
     , m_bpf(process_bpf::open_and_load())
 {
     if (!m_bpf)
-        throwGenericError("Failed to load the BPF object");
+        ErThrow("Failed to load the BPF object");
 
     m_ringBuffer.reset(::ring_buffer__new(::bpf_map__fd(m_bpf->maps.g_ringbuf), staticHandleEvent, this, nullptr));
     if (!m_ringBuffer)
-        throwGenericError("Failed to create a ring buffer");
+        ErThrow("Failed to create a ring buffer");
     
     m_worker.reset(new std::jthread([this](std::stop_token stop){ worker(stop); }));
 
@@ -41,7 +41,7 @@ void ProcessSpy::attach()
     
     auto err = process_bpf::attach(m_bpf);
     if (err)
-        throwGenericError("Failed to attach to the BPF object");
+        ErThrow("Failed to attach to the BPF object");
 
     m_attached = true;
 }

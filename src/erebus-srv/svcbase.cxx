@@ -80,7 +80,7 @@ void ServiceBase::start()
     // finally assemble the server
     auto server = builder.BuildAndStart();
     if (!server)
-        throwGenericError("Failed to start the service");
+        ErThrow("Failed to start the service");
 
     m_server.swap(server);
 

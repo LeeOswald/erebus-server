@@ -51,7 +51,7 @@ public:
     {
         long expected = 0;
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
-            throwGenericError("Only one instance of erebus-desktop plugin can be created");
+            ErThrow("Only one instance of erebus-desktop plugin can be created");
 
         Props::Private::registerAll(params.log);
 

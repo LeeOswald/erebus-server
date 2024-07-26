@@ -51,7 +51,7 @@ public:
     {
         long expected = 0;
         if (!g_instances.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
-            throwGenericError("Only one instance of erebus-processmgr plugin can be created");
+            ErThrow("Only one instance of erebus-processmgr plugin can be created");
 
         // create and register services
         m_processList.reset(new Erp::ProcessMgr::ProcessListService(m_params.log));

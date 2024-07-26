@@ -253,7 +253,7 @@ int main(int argc, char* argv[], char* env[])
         }
 
         if (servers.empty())
-            throwGenericError("Could not create any server instances");
+            ErThrow("Could not create any server instances");
 
         Er::Private::CoreService coreService(g_log);
         for (auto srv : servers)

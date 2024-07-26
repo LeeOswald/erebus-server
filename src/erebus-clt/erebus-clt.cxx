@@ -158,7 +158,7 @@ private:
         if (!status.ok())
         {
             auto mappedStatus = mapGrpcStatus(status.error_code());
-            throwGenericError("RPC call failed", ::Er::ExceptionProps::ResultCode(static_cast<int32_t>(mappedStatus)), ::Er::ExceptionProps::DecodedError(status.error_message()));
+            ErThrow("RPC call failed", ::Er::ExceptionProps::ResultCode(static_cast<int32_t>(mappedStatus)), ::Er::ExceptionProps::DecodedError(status.error_message()));
         }
 
         if (!reply)

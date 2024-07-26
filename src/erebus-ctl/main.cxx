@@ -35,13 +35,13 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
         boost::split(parts, a, boost::is_any_of(":"));
         if (parts.size() != 2)
         {
-            throwGenericError(Er::Util::format("Invalid format of property_id:value in [%s]", a.c_str()));
+            ErThrow(Er::Util::format("Invalid format of property_id:value in [%s]", a.c_str()));
         }
 
         auto propInfo = Er::lookupProperty(parts[0].c_str());
         if (!propInfo)
         {
-            throwGenericError(Er::Util::format("Unknown property id [%s]", parts[0].c_str()));
+            ErThrow(Er::Util::format("Unknown property id [%s]", parts[0].c_str()));
         }
 
         Er::PropId id = ER_PROPID_(parts[0].c_str());
@@ -57,7 +57,7 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
                 else if ((parts[1] == "false") || (parts[1] == "0"))
                     v = false;
                 else
-                    throwGenericError(Er::Util::format("Invalid value [%s] for bool property [%s]", parts[1].c_str(), parts[0].c_str()));
+                    ErThrow(Er::Util::format("Invalid value [%s] for bool property [%s]", parts[1].c_str(), parts[0].c_str()));
 
                 Er::addProperty(parsed, Er::Property(id, v));
             }
@@ -103,7 +103,7 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
             break;
 
         default:
-            throwGenericError(Er::Util::format("Unsupported property type %d for property [%s]", int(propInfo->type()), parts[0].c_str()));
+            ErThrow(Er::Util::format("Unsupported property type %d for property [%s]", int(propInfo->type()), parts[0].c_str()));
         }
     }
 

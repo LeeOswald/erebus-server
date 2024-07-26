@@ -102,7 +102,7 @@ inline Property getProperty(const erebus::Property& source)
     else if (source.has_v_bytes())
         return Property(PropId(id), Er::Bytes(source.v_bytes()));
     else
-        throwGenericError(Er::Util::format("Unsupported property %08x type"));
+        ErThrow(Er::Util::format("Unsupported property %08x", id));
 }
 
 namespace Props

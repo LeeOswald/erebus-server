@@ -32,7 +32,7 @@ std::wstring getUserName()
         }
     }
 
-    throwWin32Error("Failed to get current user name", ::GetLastError());
+    ErThrowWin32Error("Failed to get current user name", ::GetLastError());
 }
 
 } // namespace {}   
