@@ -5,10 +5,10 @@
 
 
 
-namespace Er
+namespace Erp
 {
 
-namespace Private
+namespace Procmon
 {
 
 ProcessSpy::~ProcessSpy()
@@ -236,6 +236,6 @@ void ProcessSpy::issueTaskExit(std::shared_ptr<ProcessInfo> info, int32_t exitCo
     }
 }
 
-} // namespace Private {}
+} // namespace Procmon {}
 
-} // namespace Er {}
+} // namespace Erp {}

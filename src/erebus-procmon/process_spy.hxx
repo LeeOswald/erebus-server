@@ -12,10 +12,10 @@
 #include <thread>
 #include <unordered_map>
 
-namespace Er
+namespace Erp
 {
 
-namespace Private
+namespace Procmon
 {
 
 
@@ -92,6 +92,6 @@ private:
 };
 
 
-} // namespace Private {}
+} // namespace Procmon {}
 
-} // namespace Er {}
+} // namespace Erp {}

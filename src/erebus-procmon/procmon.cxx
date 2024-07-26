@@ -50,7 +50,7 @@ public:
 
         ::libbpf_set_strict_mode(libbpf_strict_mode(LIBBPF_STRICT_CLEAN_PTRS | LIBBPF_STRICT_DIRECT_ERRS));
 
-        m_processSpy.reset(new Er::Private::ProcessSpy(m_params.log));
+        m_processSpy.reset(new Erp::Procmon::ProcessSpy(m_params.log));
     }
 
 private:
@@ -86,7 +86,7 @@ private:
     static Er::Log::ILog* g_log;
 
     Er::Server::PluginParams m_params;
-    std::unique_ptr<Er::Private::ProcessSpy> m_processSpy;
+    std::unique_ptr<Erp::Procmon::ProcessSpy> m_processSpy;
     libbpf_print_fn_t m_oldBpfPrint = nullptr;
 };
 
