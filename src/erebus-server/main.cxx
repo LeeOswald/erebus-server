@@ -234,11 +234,11 @@ int main(int argc, char* argv[], char* env[])
         if (!cfg.privateKey.empty())
             key = Er::Util::loadTextFile(cfg.privateKey);
     
-        Er::Server::Private::LibParams srvLibParams(g_log, g_log->level());
-        Er::Server::Private::LibScope ss(srvLibParams);
+        Er::Server::LibParams srvLibParams(g_log, g_log->level());
+        Er::Server::LibScope ss(srvLibParams);
 
         // create endpoints
-        std::vector<std::shared_ptr<Er::Server::Private::IServer>> servers;
+        std::vector<std::shared_ptr<Er::Server::IServer>> servers;
         servers.reserve(cfg.endpoints.size());
         for (auto& ep: cfg.endpoints)
         {
@@ -246,8 +246,8 @@ int main(int argc, char* argv[], char* env[])
 
             Er::protectedCall<void>(g_log, [&ep, &root, &certificate, &key, &servers]()
             {
-                Er::Server::Private::Params params(ep.endpoint, g_log, ep.ssl, root, certificate, key);
-                auto server = Er::Server::Private::create(&params);
+                Er::Server::Params params(ep.endpoint, g_log, ep.ssl, root, certificate, key);
+                auto server = Er::Server::create(&params);
                 servers.push_back(server);
             });
         }

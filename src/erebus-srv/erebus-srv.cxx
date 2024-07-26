@@ -16,9 +16,6 @@ namespace Er
 namespace Server
 {
 
-namespace Private
-{
-
 namespace
 {
 
@@ -78,7 +75,6 @@ EREBUSSRV_EXPORT void finalize()
     }
 }
 
-} // namespace Private {}
 
 } // namespace Server {}
 

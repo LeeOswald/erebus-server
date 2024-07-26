@@ -13,17 +13,14 @@ namespace Er
 namespace Server
 {
 
-namespace Private
-{
-
 namespace
 {
 
 
 class ErebusService final
-    : public Er::Server::Private::IServer
+    : public Er::Server::IServer
     , public Er::Server::IServiceContainer
-    , public ServiceBase
+    , public Erp::Server::ServiceBase
 {
 public:
     ~ErebusService() 
@@ -31,7 +28,7 @@ public:
     }
 
     explicit ErebusService(const Params* params)
-        : ServiceBase(params)
+        : Erp::Server::ServiceBase(params)
     {
     }
 
@@ -97,19 +94,19 @@ private:
 
     void createAllocateSessionRpc()
     {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::AllocateSessionRequest, erebus::AllocateSessionReply> rpcHandlers;
+        Erp::Server::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::AllocateSessionRequest, erebus::AllocateSessionReply> rpcHandlers;
 
         rpcHandlers.createRpc = std::bind(&ErebusService::createAllocateSessionRpc, this);
 
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processAllocateSessionRpc(rpc, message); };
+        rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processAllocateSessionRpc(rpc, message); };
         rpcHandlers.done = &genericDone;
 
         rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestAllocateSession;
 
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::AllocateSessionRequest, erebus::AllocateSessionReply>(&m_service, m_queue.get(), rpcHandlers);
+        new Erp::Server::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::AllocateSessionRequest, erebus::AllocateSessionReply>(&m_service, m_queue.get(), rpcHandlers);
     }
 
-    void processAllocateSessionRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    void processAllocateSessionRpc(Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
     {
         auto request = static_cast<const erebus::AllocateSessionRequest*>(message);
         erebus::AllocateSessionReply response;
@@ -151,19 +148,19 @@ private:
 
     void createDeleteSessionRpc()
     {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::DeleteSessionRequest, erebus::GenericReply> rpcHandlers;
+        Erp::Server::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::DeleteSessionRequest, erebus::GenericReply> rpcHandlers;
 
         rpcHandlers.createRpc = std::bind(&ErebusService::createDeleteSessionRpc, this);
 
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processDeleteSessionRpc(rpc, message); };
+        rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processDeleteSessionRpc(rpc, message); };
         rpcHandlers.done = &genericDone;
 
         rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestDeleteSession;
 
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::DeleteSessionRequest, erebus::GenericReply>(&m_service, m_queue.get(), rpcHandlers);
+        new Erp::Server::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::DeleteSessionRequest, erebus::GenericReply>(&m_service, m_queue.get(), rpcHandlers);
     }
 
-    void processDeleteSessionRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    void processDeleteSessionRpc(Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
     {
         auto request = static_cast<const erebus::DeleteSessionRequest*>(message);
         erebus::GenericReply response;
@@ -206,19 +203,19 @@ private:
 
     void createGenericRpc()
     {
-        Er::Server::Private::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
+        Erp::Server::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
 
         rpcHandlers.createRpc = std::bind(&ErebusService::createGenericRpc, this);
 
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processGenericRpc(rpc, message); };
+        rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processGenericRpc(rpc, message); };
         rpcHandlers.done = &genericDone;
 
         rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestGenericRpc;
 
-        new Er::Server::Private::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, m_queue.get(), rpcHandlers);
+        new Erp::Server::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, m_queue.get(), rpcHandlers);
     }
 
-    void processGenericRpc(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    void processGenericRpc(Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
     {
         auto request = static_cast<const erebus::ServiceRequest*>(message);
         erebus::ServiceReply response;
@@ -266,19 +263,19 @@ private:
 
     void createGenericStream()
     {
-        Er::Server::Private::Rpc::ServerStreamingRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
+        Erp::Server::Rpc::ServerStreamingRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
 
         rpcHandlers.createRpc = std::bind(&ErebusService::createGenericStream, this);
 
-        rpcHandlers.processIncomingRequest = [this](Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processGenericStream(rpc, message); };
+        rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) { ErebusService::processGenericStream(rpc, message); };
         rpcHandlers.done = &genericDone;
 
         rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestGenericStream;
 
-        new Er::Server::Private::Rpc::ServerStreamingRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, m_queue.get(), rpcHandlers);
+        new Erp::Server::Rpc::ServerStreamingRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, m_queue.get(), rpcHandlers);
     }
 
-    void processGenericStream(Er::Server::Private::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+    void processGenericStream(Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
     {
         auto request = static_cast<const erebus::ServiceRequest*>(message);
         
@@ -381,7 +378,6 @@ std::shared_ptr<IServer> EREBUSSRV_EXPORT create(const Params* params)
     return result;
 }
 
-} // namespace Private {}
 
 } // namespace Server {}
 

@@ -52,10 +52,6 @@ protected:
 };
 
 
-namespace Private
-{
-
-
 struct Params
 {
     std::string endpoint;
@@ -128,7 +124,6 @@ struct IServer
 
 std::shared_ptr<IServer> EREBUSSRV_EXPORT create(const Params* params);
 
-} // namespace Private {}
 
 } // namespace Server {}
     

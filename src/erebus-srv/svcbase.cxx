@@ -4,14 +4,12 @@
 #include <erebus/system/thread.hxx>
 #include <erebus/util/format.hxx>
 
-namespace Er
+namespace Erp
 {
 
 namespace Server
 {
 
-namespace Private
-{
 
 ServiceBase::~ServiceBase()
 {
@@ -35,7 +33,7 @@ ServiceBase::~ServiceBase()
         m_processorWorker->join();
 }
 
-ServiceBase::ServiceBase(const Params* params)
+ServiceBase::ServiceBase(const Er::Server::Params* params)
     : m_params(*params)
     , m_local(params->endpoint.starts_with("unix:"))
 {
@@ -96,7 +94,7 @@ void ServiceBase::handleRpcs()
 
     createRpcs();
 
-    Er::Server::Private::Rpc::TagInfo tagInfo;
+    Erp::Server::Rpc::TagInfo tagInfo;
     while (!m_stop)
     {
         // Block waiting to read the next event from the completion queue. The
@@ -153,7 +151,7 @@ void ServiceBase::processRpcs()
     Er::Log::Debug(m_params.log) << "RPC processor thread exited";
 }
 
-void ServiceBase::genericDone(Er::Server::Private::Rpc::RpcBase& rpc, bool rpcCancelled)
+void ServiceBase::genericDone(Erp::Server::Rpc::RpcBase& rpc, bool rpcCancelled)
 {
     delete (&rpc);
 }
@@ -194,7 +192,7 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
     }
 }
 
-void ServiceBase::marshalException(erebus::GenericReply* reply, Result code, std::string_view message)
+void ServiceBase::marshalException(erebus::GenericReply* reply, Er::Result code, std::string_view message)
 {
     auto exception = reply->mutable_exception();
     
@@ -204,7 +202,7 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, Result code, std
     auto mutableProps = exception->mutable_props();
     auto mutableProp = mutableProps->Add();
 
-    Er::Protocol::assignProperty(*mutableProp, Er::Property(ExceptionProps::ResultCode(static_cast<int32_t>(code))));
+    Er::Protocol::assignProperty(*mutableProp, Er::Property(Er::ExceptionProps::ResultCode(static_cast<int32_t>(code))));
 }
 
 Er::PropertyBag ServiceBase::unmarshalArgs(const erebus::ServiceRequest* request)
@@ -227,15 +225,13 @@ void ServiceBase::marshalReplyProps(const Er::PropertyBag& props, erebus::Servic
         return;
 
     auto out = reply->mutable_props();
-    Er::enumerateProperties(props, [&out](const Property& prop)
+    Er::enumerateProperties(props, [&out](const Er::Property& prop)
     {
         auto mutableProp = out->Add();
         Er::Protocol::assignProperty(*mutableProp, prop);
     });
 }
 
-} // namespace Private {}
-
 } // namespace Server {}
 
-} // namespace Er {}
+} // namespace Erp {}

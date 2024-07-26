@@ -13,13 +13,10 @@
 #include <mutex>
 #include <thread>
 
-namespace Er
+namespace Erp
 {
 
 namespace Server
-{
-
-namespace Private
 {
 
 
@@ -28,7 +25,7 @@ class EREBUSSRV_EXPORT ServiceBase
 {
 public:
     ~ServiceBase();
-    explicit ServiceBase(const Params* params);
+    explicit ServiceBase(const Er::Server::Params* params);
 
     virtual void start();
 
@@ -39,30 +36,29 @@ protected:
     virtual void handleRpcs();
     virtual void processRpcs();
 
-    static void genericDone(Er::Server::Private::Rpc::RpcBase& rpc, bool rpcCancelled);
+    static void genericDone(Erp::Server::Rpc::RpcBase& rpc, bool rpcCancelled);
 
     static void marshalException(erebus::GenericReply* reply, const std::exception& e);
     static void marshalException(erebus::GenericReply* reply, const Er::Exception& e);
-    static void marshalException(erebus::GenericReply* reply, Result code, std::string_view message);
+    static void marshalException(erebus::GenericReply* reply, Er::Result code, std::string_view message);
 
     static Er::PropertyBag unmarshalArgs(const erebus::ServiceRequest* request);
     static void marshalReplyProps(const Er::PropertyBag& props, erebus::ServiceReply* reply);
 
     bool m_stop = false;
-    Params m_params;
+    Er::Server::Params m_params;
     bool m_local;
     std::unique_ptr<grpc::ServerCompletionQueue> m_queue;
     std::unique_ptr<grpc::Server> m_server;
     std::mutex m_mutex;
     std::condition_variable m_incoming;
-    Er::Server::Private::Rpc::TagList m_incomingTags;
+    Erp::Server::Rpc::TagList m_incomingTags;
     std::unique_ptr<std::thread> m_receiverWorker;
     std::unique_ptr<std::thread> m_processorWorker;
 };
 
 
-} // namespace Private {}
 
 } // namespace Server {}
 
-} // namespace Er {}
+} // namespace Erp {}

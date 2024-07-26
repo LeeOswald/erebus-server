@@ -9,14 +9,12 @@
 #include <list>
 
 
-namespace Er
+namespace Erp
 {
 
 namespace Server
 {
 
-namespace Private
-{
 
 namespace Rpc
 {
@@ -454,8 +452,6 @@ private:
 
 } // namespace Rpc {}
 
-} // namespace Private {}
-
 } // namespace Server {}
 
-} // namespace Er {}
+} // namespace Erp {}
