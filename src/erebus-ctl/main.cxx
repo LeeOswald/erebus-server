@@ -4,7 +4,6 @@
 #include <erebus/util/file.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus-desktop/erebus-desktop.hxx>
-#include <erebus-desktop/protocol.hxx>
 #include <erebus-processmgr/erebus-processmgr.hxx>
 
 #include <iostream>

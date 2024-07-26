@@ -2,18 +2,15 @@
 #include "iconresolver.hxx"
 #include "service.hxx"
 
-#include <erebus-desktop/protocol.hxx>
+#include <erebus-desktop/erebus-desktop.hxx>
 
 #include <erebus/exception.hxx>
 #include <erebus/util/format.hxx>
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
-{
-
-namespace Private
 {
 
 
@@ -21,7 +18,7 @@ Service::~Service()
 {
 }
 
-Service::Service(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::Private::IconResolver> iconResolver, std::shared_ptr<IconCache> iconCache)
+Service::Service(Er::Log::ILog* log, std::shared_ptr<Erp::Desktop::IconResolver> iconResolver, std::shared_ptr<IconCache> iconCache)
     : m_log(log)
     , m_iconResolver(iconResolver)
     , m_iconCache(iconCache)
@@ -113,8 +110,7 @@ Er::PropertyBag Service::packIcon(std::shared_ptr<IconCache::IconData> icon)
     return response;
 }
 
-} // namespace Private {}
 
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

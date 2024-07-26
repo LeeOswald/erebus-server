@@ -13,13 +13,10 @@
 #include <boost/filesystem/path.hpp>
 
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
-{
-
-namespace Private
 {
 
 
@@ -67,8 +64,7 @@ private:
  };
 
 
-} // namespace Private {}
 
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

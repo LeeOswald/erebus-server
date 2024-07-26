@@ -6,14 +6,12 @@
 #include <fstream>
 #include <vector>
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
 {
 
-namespace Private
-{
 
 ProcFs::ProcFs(const std::string& root, Er::Log::ILog* const log)
     : m_root(root)
@@ -149,8 +147,7 @@ std::unordered_map<std::string, std::string> ProcFs::readEnviron(uint64_t pid) c
 }
 
 
-} // namespace Private {}
 
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

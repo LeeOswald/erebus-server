@@ -2,7 +2,6 @@
 
 #include <erebus/lrucache.hxx>
 #include <erebus-desktop/ic.hxx>
-#include <erebus-desktop/protocol.hxx>
 #include <erebus-processmgr/erebus-processmgr.hxx>
 
 #include <chrono>
@@ -12,14 +11,12 @@
 #include <unordered_map>
 
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
 {
 
-namespace Private
-{
 
 
 enum class IconSize : unsigned
@@ -35,16 +32,16 @@ class IconCache final
 public:
     struct IconData
     {
-        IconState state;
-        Bytes raw;
+        Er::Desktop::IconState state;
+        Er::Bytes raw;
 
-        IconData(IconState state)
+        IconData(Er::Desktop::IconState state)
             : state(state)
         {}
 
         template <typename RawT>
         IconData(RawT&& raw)
-            : state(IconState::Found)
+            : state(Er::Desktop::IconState::Found)
             , raw(std::forward<RawT>(raw))
         {}
     };
@@ -64,18 +61,18 @@ private:
     {
         using Clock = std::chrono::steady_clock;
 
-        IconState state;
+        Er::Desktop::IconState state;
         Clock::time_point timestamp;
         std::string path;
 
-        explicit IconInfo(IconState state) noexcept
+        explicit IconInfo(Er::Desktop::IconState state) noexcept
             : state(state)
             , timestamp(Clock::now())
         {}
 
         template <typename PathT>
         explicit IconInfo(PathT&& path) noexcept
-            : state(IconState::Found)
+            : state(Er::Desktop::IconState::Found)
             , timestamp(Clock::now())
             , path(std::forward<PathT>(path))
         {}
@@ -107,8 +104,6 @@ private:
 };
     
 
-} // namespace Private {}
-
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

@@ -9,14 +9,12 @@
 #include <unordered_map>
 
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
 {
 
-namespace Private
-{
 
 class DesktopFileCache;
 
@@ -43,8 +41,6 @@ private:
 
 
 
-} // namespace Private {}
-
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

@@ -17,14 +17,12 @@
 #include <boost/process/search_path.hpp>
 
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
 {
 
-namespace Private
-{
 
 namespace
 {
@@ -376,8 +374,7 @@ DesktopFile::Ptr DesktopFileCache::lookupByPath(const std::string& path)
 }
 
 
-} // namespace Private {}
 
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

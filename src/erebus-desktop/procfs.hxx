@@ -6,14 +6,12 @@
 #include <unordered_map>
 
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
 {
 
-namespace Private
-{
 
 
 constexpr uint64_t InvalidPid = uint64_t(-1);
@@ -37,8 +35,7 @@ private:
 };
 
 
-} // namespace Private {}
 
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

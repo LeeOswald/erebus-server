@@ -4,13 +4,10 @@
 #include <regex>
 
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
-{
-
-namespace Private
 {
 
 namespace
@@ -186,8 +183,7 @@ void IconResolver::addXdgDataDirsFor(uint64_t uid, const std::string& dirs)
     }
 }
 
-} // namespace Private {}
 
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

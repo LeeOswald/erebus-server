@@ -1,4 +1,3 @@
-#include <erebus-desktop/protocol.hxx>
 #include <erebus/system/thread.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
@@ -9,14 +8,12 @@
 #include <filesystem>
 #include <sys/stat.h>
 
-namespace Er
+namespace Erp
 {
 
 namespace Desktop
 {
 
-namespace Private
-{
 
 
 IconCache::~IconCache()
@@ -84,7 +81,7 @@ std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& n
             auto existing = list.find(name);
             if (existing != list.end())
             {
-                if (existing->second->state == IconState::Pending)
+                if (existing->second->state == Er::Desktop::IconState::Pending)
                 { 
                     if (IconInfo::Clock::now() - existing->second->timestamp < IconRequestExpired)
                     {
@@ -106,7 +103,7 @@ std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& n
             {
                 std::unique_lock l(m_appIconsLock);
 
-                auto pending = std::make_shared<IconInfo>(IconState::Pending);
+                auto pending = std::make_shared<IconInfo>(Er::Desktop::IconState::Pending);
                 auto it = list.insert({ name, pending });
 
                 return it.first->second;
@@ -123,7 +120,7 @@ std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& n
     }
 
     Er::Log::Warning(m_log) << "requestIcon() failed";
-    return std::make_shared<IconInfo>(IconState::NotPresent);
+    return std::make_shared<IconInfo>(Er::Desktop::IconState::NotPresent);
 }
 
 void IconCache::iconWorker(std::stop_token stop) noexcept
@@ -158,7 +155,7 @@ void IconCache::receiveIcon() noexcept
             if (response->result != Er::Desktop::IIconCacheIpc::IconResponse::Result::Ok)
             {
                 Er::Log::Info(m_log) << "Icon [" << response->request.name << "] was not found";
-                list.insert({ response->request.name, std::make_shared<IconInfo>(IconState::NotPresent) });
+                list.insert({ response->request.name, std::make_shared<IconInfo>(Er::Desktop::IconState::NotPresent) });
             }
             else
             {
@@ -198,9 +195,9 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
         iconInfo = requestIcon(name, size); // icon path yet unknown; request it now
         
     if (!iconInfo)
-        return std::make_shared<IconData>(IconState::NotPresent);
+        return std::make_shared<IconData>(Er::Desktop::IconState::NotPresent);
     
-    if (iconInfo->state != IconState::Found)
+    if (iconInfo->state != Er::Desktop::IconState::Found)
         return std::make_shared<IconData>(iconInfo->state);
 
     // check if icon bytes are already cached
@@ -217,7 +214,7 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
         }
 
         // load icon from cache file
-        auto data = Er::protectedCall<Bytes>(
+        auto data = Er::protectedCall<Er::Bytes>(
             m_log,
             [this, iconInfo]()
             {
@@ -228,7 +225,7 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
         if (data.empty())
         {
             // failed for whatever reason; don't try to load this icon file again
-            auto dummy = std::make_shared<IconData>(IconState::NotPresent);
+            auto dummy = std::make_shared<IconData>(Er::Desktop::IconState::NotPresent);
             cache.put(iconInfo->path, dummy);
             Er::Log::Error(m_log) << "Could not load icon file [" << iconInfo->path << "]";
             return dummy;
@@ -243,8 +240,7 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
 }
 
 
-} // namespace Private {}
 
 } // namespace Desktop {}
 
-} // namespace Er {}
+} // namespace Erp {}

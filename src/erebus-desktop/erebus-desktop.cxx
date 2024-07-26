@@ -1,5 +1,5 @@
 #include <erebus/exception.hxx>
-#include <erebus-desktop/protocol.hxx>
+#include <erebus-desktop/erebus-desktop.hxx>
 #include <erebus-srv/plugin.hxx>
 
 #include "desktopfilecache.hxx"
@@ -71,16 +71,16 @@ public:
             params.log->write(Er::Log::Level::Warning, "Starting without icon cache");
         }
 
-        m_desktopFileCache = std::make_shared<Er::Desktop::Private::DesktopFileCache>(params.log);
+        m_desktopFileCache = std::make_shared<Erp::Desktop::DesktopFileCache>(params.log);
 
-        m_iconResolver = std::make_shared<Er::Desktop::Private::IconResolver>(params.log, m_desktopFileCache);
+        m_iconResolver = std::make_shared<Erp::Desktop::IconResolver>(params.log, m_desktopFileCache);
 
         if (m_iconCacheIpc || !args.iconCacheDir.empty())
         {
-            m_iconCache = std::make_shared<Er::Desktop::Private::IconCache>(params.log, m_iconCacheIpc, args.iconCacheDir, args.iconCacheSize);
+            m_iconCache = std::make_shared<Erp::Desktop::IconCache>(params.log, m_iconCacheIpc, args.iconCacheDir, args.iconCacheSize);
         }
 
-        m_service.reset(new Er::Desktop::Private::Service(m_params.log, m_iconResolver, m_iconCache));
+        m_service.reset(new Erp::Desktop::Service(m_params.log, m_iconResolver, m_iconCache));
         for (auto container: m_params.containers)
         {
             m_service->registerService(container);
@@ -129,10 +129,10 @@ private:
 
     Er::Server::PluginParams m_params;
     std::shared_ptr<IIconCacheIpc> m_iconCacheIpc;
-    std::shared_ptr<Er::Desktop::Private::DesktopFileCache> m_desktopFileCache;
-    std::shared_ptr<Er::Desktop::Private::IconResolver> m_iconResolver;
-    std::shared_ptr<Er::Desktop::Private::IconCache> m_iconCache;
-    std::unique_ptr<Er::Desktop::Private::Service> m_service;
+    std::shared_ptr<Erp::Desktop::DesktopFileCache> m_desktopFileCache;
+    std::shared_ptr<Erp::Desktop::IconResolver> m_iconResolver;
+    std::shared_ptr<Erp::Desktop::IconCache> m_iconCache;
+    std::unique_ptr<Erp::Desktop::Service> m_service;
 };
 
 std::atomic<long> DesktopPlugin::g_instances = 0;
