@@ -32,7 +32,7 @@ private:
         std::string path;
         Er::Log::ILog* log = nullptr;
         boost::dll::shared_library dll;
-        std::unique_ptr<Er::Server::IPlugin> ref;
+        DisposablePtr<Er::Server::IPlugin> ref;
        
         ~PluginInfo()
         {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/idisposable.hxx>
 #include <erebus/log.hxx>
 #include <erebus-srv/erebus-srv.hxx>
 
@@ -36,6 +37,7 @@ struct PluginParams
 
 
 struct IPlugin
+    : public Er::IDisposable
 {
     struct Info
     {
@@ -63,8 +65,10 @@ struct IPlugin
         {}
     };
 
-    virtual ~IPlugin() {}
     virtual Info info() const = 0;
+
+protected:
+    virtual ~IPlugin() {}
 };
 
 

@@ -29,6 +29,11 @@ public:
         g_log = nullptr;
     }
 
+    void dispose() noexcept override
+    {
+        delete this;
+    }
+
     Er::Server::IPlugin::Info info() const override
     {
         return Er::Server::IPlugin::Info(

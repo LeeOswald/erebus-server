@@ -29,6 +29,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/errno.hxx
     ../../include/erebus/exception.hxx
     ../../include/erebus/flags.hxx
+    ../../include/erebus/idisposable.hxx
     ../../include/erebus/knownprops.hxx
     ../../include/erebus/location.hxx
     ../../include/erebus/lockable.hxx
