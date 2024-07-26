@@ -6,35 +6,56 @@
 
 #include <vector>
 
-struct Foo {
+struct Foo 
+{
     int x;
     const int y;
-    Foo(int x_) : x(x_), y(3) {}
-    int GetX() { return x; }
-    int DoubleAdd(int y) {
+
+    Foo(int x_) 
+        : x(x_)
+        , y(3) 
+    {}
+
+    int GetX() 
+    { 
+        return x; 
+    }
+    
+    int DoubleAdd(int y) 
+    {
         return 2 * (x + y);
     }
-    void SetX(int x_) {
+
+    void SetX(int x_) 
+    {
         x = x_;
     }
 };
 
-bool test_register_obj(sel::State &state) {
+TEST(Lua, register_obj) 
+{
+    sel::State state(true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "double_add", &Foo::DoubleAdd);
     const int answer = state["foo_instance"]["double_add"](3);
-    return answer == 8;
+    EXPECT_EQ(answer, 8);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_register_obj_member_variable(sel::State &state) {
+TEST(Lua, register_obj_member_variable) 
+{
+    sel::State state(true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "x", &Foo::x);
     state["foo_instance"]["set_x"](3);
     const int answer = state["foo_instance"]["x"]();
-    return answer == 3;
+    EXPECT_EQ(answer, 3);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_register_obj_to_table(sel::State &state) {
+TEST(Lua, register_obj_to_table)
+{
+    sel::State state(true);
     Foo foo1(1);
     Foo foo2(2);
     Foo foo3(3);
@@ -45,104 +66,152 @@ bool test_register_obj_to_table(sel::State &state) {
     const int answer = int(foos[1]["get_x"]()) +
         int(foos[2]["get_x"]()) +
         int(foos[3]["get_x"]());
-    return answer == 6;
+    EXPECT_EQ(answer, 6);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_mutate_instance(sel::State &state) {
+TEST(Lua, mutate_instance) 
+{
+    sel::State state(true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "set_x", &Foo::SetX);
     state["foo_instance"]["set_x"](4);
-    return foo_instance.x == 4;
+    EXPECT_EQ(foo_instance.x, 4);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_multiple_methods(sel::State &state) {
+TEST(Lua, multiple_methods) 
+{
+    sel::State state(true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance,
                                  "double_add", &Foo::DoubleAdd,
                                  "set_x", &Foo::SetX);
     state["foo_instance"]["set_x"](4);
     const int answer = state["foo_instance"]["double_add"](3);
-    return answer == 14;
+    EXPECT_EQ(answer, 14);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_register_obj_const_member_variable(sel::State &state) {
+TEST(Lua, register_obj_const_member_variable) 
+{
+    sel::State state(true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "y", &Foo::y);
     const int answer = state["foo_instance"]["y"]();
     state("tmp = foo_instance.set_y == nil");
-    return answer == 3 && state["tmp"];
+    EXPECT_EQ(answer, 3);
+    bool b = state["tmp"];
+    EXPECT_TRUE(b);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_bind_vector_push_back(sel::State &state) {
+TEST(Lua, bind_vector_push_back) 
+{
+    sel::State state(true);
     std::vector<int> test_vector;
     state["vec"].SetObj(test_vector, "push_back",
                         static_cast<void(std::vector<int>::*)(int&&)>(&std::vector<int>::push_back));
     state["vec"]["push_back"](4);
-    return test_vector[0] == 4;
+    EXPECT_EQ(test_vector[0], 4);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_bind_vector_push_back_string(sel::State &state) {
+TEST(Lua, bind_vector_push_back_string) 
+{
+    sel::State state(true);
     std::vector<std::string> test_vector;
     state["vec"].SetObj(test_vector, "push_back",
                         static_cast<void(std::vector<std::string>::*)(std::string&&)>(&std::vector<std::string>::push_back));
     state["vec"]["push_back"]("hi");
-    return test_vector[0] == "hi";
+    std::string s = test_vector[0];
+    EXPECT_STREQ(s.c_str(), "hi");
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_bind_vector_push_back_foos(sel::State &state) {
+TEST(Lua, bind_vector_push_back_foos) 
+{
+    sel::State state(true);
     std::vector<Foo> test_vector;
     state["Foo"].SetClass<Foo, int>();
     state["vec"].SetObj(test_vector, "push_back",
                         static_cast<void(std::vector<Foo>::*)(Foo&&)>(&std::vector<Foo>::push_back));
     state["vec"]["push_back"](Foo{1});
     state["vec"]["push_back"](Foo{2});
-    return test_vector.size() == 2;
+    EXPECT_EQ(test_vector.size(), 2);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-struct FooHolder {
+struct FooHolder 
+{
     Foo foo;
-    FooHolder(int num) : foo(num) {}
-    Foo & getRef() {
+    
+    FooHolder(int num) 
+        : foo(num) 
+    {}
+
+    Foo& getRef() 
+    {
         return foo;
     }
-    Foo * getPtr() {
+
+    Foo* getPtr() 
+    {
         return &foo;
     }
-    Foo getValue() {
+
+    Foo getValue() 
+    {
         return foo;
     }
-    void acceptFoo(Foo *) {};
-};
-struct ObjBar{};
 
-bool test_obj_member_return_pointer(sel::State &state) {
+    void acceptFoo(Foo *) 
+    {};
+};
+
+struct ObjBar
+{
+};
+
+TEST(Lua, obj_member_return_pointer) 
+{
+    sel::State state(true);
     state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
     FooHolder fh{4};
     state["fh"].SetObj(fh, "get", &FooHolder::getPtr);
     state("foo = fh:get()");
     state("foox = foo:get()");
-    return state["foox"] == 4;
+    EXPECT_EQ(state["foox"], 4);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_obj_member_return_ref(sel::State &state) {
+TEST(Lua, obj_member_return_ref) 
+{
+    sel::State state(true);
     state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
     FooHolder fh{4};
     state["fh"].SetObj(fh, "get", &FooHolder::getRef);
     state("foo = fh:get()");
     state("foox = foo:get()");
-    return state["foox"] == 4;
+    EXPECT_EQ(state["foox"], 4);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_obj_member_return_val(sel::State &state) {
+TEST(Lua, obj_member_return_val) 
+{
+    sel::State state(true);
     state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
     FooHolder fh{4};
     state["fh"].SetObj(fh, "get", &FooHolder::getValue);
     state("foo = fh:get()");
     state("foox = foo:get()");
-    return state["foox"] == 4;
+    EXPECT_EQ(state["foox"], 4);
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_obj_member_wrong_type(sel::State &state) {
+TEST(Lua, obj_member_wrong_type) 
+{
+    sel::State state(true);
     state["Foo"].SetClass<Foo, int>();
     state["Bar"].SetClass<ObjBar>();
     FooHolder fh{5};
@@ -150,10 +219,12 @@ bool test_obj_member_wrong_type(sel::State &state) {
     state("bar = Bar.new()");
 
     bool error_encounted = false;
-    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) 
+    {
         error_encounted = true;
     });
 
     state("fh.acceptFoo(bar)");
-    return error_encounted;
+    EXPECT_TRUE(error_encounted);
+    EXPECT_EQ(state.Size(), 0);
 }

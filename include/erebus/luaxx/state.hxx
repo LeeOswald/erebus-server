@@ -60,7 +60,7 @@ public:
         return lua_gettop(_l);
     }
 
-    bool Load(const std::string &file) {
+    bool LoadFromFile(const std::string &file) {
         ResetStackOnScopeExit savedStack(_l);
         int status = luaL_loadfile(_l, file.c_str());
 #if LUA_VERSION_NUM >= 502
@@ -86,6 +86,32 @@ public:
 
         const char *msg = lua_tostring(_l, -1);
         _exception_handler->Handle(status, msg ? msg : file + ": dofile failed");
+        return false;
+    }
+
+    bool LoadFromString(const std::string &str) {
+        ResetStackOnScopeExit savedStack(_l);
+        int status = luaL_loadstring(_l, str.c_str());
+#if LUA_VERSION_NUM >= 502
+        auto const lua_ok = LUA_OK;
+#else
+        auto const lua_ok = 0;
+#endif
+        if (status != lua_ok) {
+            if (status == LUA_ERRSYNTAX) {
+                const char *msg = lua_tostring(_l, -1);
+                _exception_handler->Handle(status, msg ? msg : "luaL_loadstring() failed");
+            }
+            return false;
+        }
+
+        status = lua_pcall(_l, 0, LUA_MULTRET, 0);
+        if (status == lua_ok) {
+            return true;
+        }
+
+        const char *msg = lua_tostring(_l, -1);
+        _exception_handler->Handle(status, msg ? msg : "lua_pcall() failed");
         return false;
     }
 

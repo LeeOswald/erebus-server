@@ -8,17 +8,21 @@
 #include <sstream>
 
 
-class CapturedStdout {
+class CapturedStdout 
+{
 public:
-    CapturedStdout() {
+    CapturedStdout() 
+    {
         _old = std::cout.rdbuf(_out.rdbuf());
     }
 
-    ~CapturedStdout() {
+    ~CapturedStdout() 
+    {
         std::cout.rdbuf(_old);
     }
 
-    std::string Content() const {
+    std::string Content() const 
+    {
         return _out.str();
     }
 
@@ -27,37 +31,89 @@ private:
     std::streambuf *_old;
 };
 
-bool test_load_error(sel::State &state) {
+
+TEST(Lua, load_error) 
+{
+    sel::State state(true);
+
     CapturedStdout capture;
     const char* expected = "cannot open";
-    return !state.Load("../test/non_exist.lua")
-        && capture.Content().find(expected) != std::string::npos;
+    EXPECT_FALSE(state.LoadFromFile("../test/non_exist.lua"));
+    EXPECT_NE(capture.Content().find(expected), std::string::npos);
+
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_load_syntax_error(sel::State &state) {
+
+static const std::string test_syntax_errror_script = R"(
+function syntax_error()
+    1 2 3 4
+end
+)";
+
+TEST(Lua, load_syntax_error) 
+{
+    sel::State state(true);
+
     const char* expected = "unexpected symbol";
     CapturedStdout capture;
-    return !state.Load("../test/test_syntax_error.lua")
-        && capture.Content().find(expected) != std::string::npos;
+    EXPECT_FALSE(state.LoadFromString(test_syntax_errror_script));
+    EXPECT_NE(capture.Content().find(expected), std::string::npos);
+
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_do_syntax_error(sel::State &state) {
+TEST(Lua, do_syntax_error) 
+{
+    sel::State state(true);
+
     const char* expected = "unexpected symbol";
     CapturedStdout capture;
-    return !state("function syntax_error() 1 2 3 4 end")
-        && capture.Content().find(expected) != std::string::npos;
+    bool b = state("function syntax_error() 1 2 3 4 end");
+    EXPECT_FALSE(b);
+    EXPECT_NE(capture.Content().find(expected), std::string::npos);
+
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_call_undefined_function(sel::State &state) {
-    state.Load("../test/test_error.lua");
+
+static const std::string test_test_errror_script = R"(
+function err_func1(x, y)
+	err_func2(x + y)
+end
+
+function divide_by_zero()
+	return 1 / 0
+end
+
+function _overflow(n)
+	return _overflow(n + 1) + 1
+end
+
+function do_overflow()
+	_overflow(1)
+end
+
+)";
+
+TEST(Lua, call_undefined_function) 
+{
+    sel::State state(true);
+
+    state.LoadFromString(test_test_errror_script);
     const char* expected = "attempt to call a nil value";
     CapturedStdout capture;
     state["undefined_function"]();
-    return capture.Content().find(expected) != std::string::npos;
+    EXPECT_NE(capture.Content().find(expected), std::string::npos);
+    
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_call_undefined_function2(sel::State &state) {
-    state.Load("../test/test_error.lua");
+TEST(Lua, call_undefined_function2) 
+{
+    sel::State state(true);
+
+    state.LoadFromString(test_test_errror_script);
 #if LUA_VERSION_NUM < 503
     const char* expected = "attempt to call global 'err_func2'";
 #else
@@ -65,18 +121,29 @@ bool test_call_undefined_function2(sel::State &state) {
 #endif
     CapturedStdout capture;
     state["err_func1"](1, 2);
-    return capture.Content().find(expected) != std::string::npos;
+    EXPECT_NE(capture.Content().find(expected), std::string::npos);
+
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_call_stackoverflow(sel::State &state) {
-    state.Load("../test/test_error.lua");
-    const char* expected = "test_error.lua:10: stack overflow";
+TEST(Lua, call_stackoverflow) 
+{
+    sel::State state(true);
+
+    state.LoadFromString(test_test_errror_script);
+    const char* expected = "stack overflow";
     CapturedStdout capture;
     state["do_overflow"]();
-    return capture.Content().find(expected) != std::string::npos;
+    auto co = capture.Content();
+    EXPECT_NE(capture.Content().find(expected), std::string::npos);
+
+    EXPECT_EQ(state.Size(), 0);
 }
 
-bool test_parameter_conversion_error(sel::State &state) {
+TEST(Lua, parameter_conversion_error) 
+{
+    sel::State state(true);
+
     const char * expected =
         "bad argument #2 to 'accept_string_int_string' (number expected, got string)";
     std::string largeStringToPreventSSO(50, 'x');
@@ -87,5 +154,7 @@ bool test_parameter_conversion_error(sel::State &state) {
         largeStringToPreventSSO,
         "not a number",
         largeStringToPreventSSO);
-    return capture.Content().find(expected) != std::string::npos;
+    EXPECT_NE(capture.Content().find(expected), std::string::npos);
+
+    EXPECT_EQ(state.Size(), 0);
 }
