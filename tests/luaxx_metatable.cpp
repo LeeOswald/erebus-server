@@ -29,7 +29,7 @@ end
 
 TEST(Lua, metatable_registry_ptr) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["get_instance"] = &GetQuxPtr;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz);
     state.LoadFromString(test_metatable_script);
@@ -39,7 +39,7 @@ TEST(Lua, metatable_registry_ptr)
 
 TEST(Lua, metatable_registry_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["get_instance"] = &GetQuxRef;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz);
     state.LoadFromString(test_metatable_script);
@@ -49,7 +49,7 @@ TEST(Lua, metatable_registry_ref)
 
 TEST(Lua, metatable_ptr_member) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["get_instance"] = &GetQuxPtr;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz, "qux", &Qux::qux);
     state.LoadFromString(test_metatable_script);
@@ -59,7 +59,7 @@ TEST(Lua, metatable_ptr_member)
 
 TEST(Lua, metatable_ref_member) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["get_instance"] = &GetQuxRef;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz, "qux", &Qux::qux);
     state.LoadFromString(test_metatable_script);

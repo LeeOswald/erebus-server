@@ -34,7 +34,7 @@ private:
 
 TEST(Lua, load_error) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
 
     CapturedStdout capture;
     const char* expected = "cannot open";
@@ -53,7 +53,7 @@ end
 
 TEST(Lua, load_syntax_error) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
 
     const char* expected = "unexpected symbol";
     CapturedStdout capture;
@@ -65,7 +65,7 @@ TEST(Lua, load_syntax_error)
 
 TEST(Lua, do_syntax_error) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
 
     const char* expected = "unexpected symbol";
     CapturedStdout capture;
@@ -98,7 +98,7 @@ end
 
 TEST(Lua, call_undefined_function) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
 
     state.LoadFromString(test_test_errror_script);
     const char* expected = "attempt to call a nil value";
@@ -111,7 +111,7 @@ TEST(Lua, call_undefined_function)
 
 TEST(Lua, call_undefined_function2) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
 
     state.LoadFromString(test_test_errror_script);
 #if LUA_VERSION_NUM < 503
@@ -128,7 +128,7 @@ TEST(Lua, call_undefined_function2)
 
 TEST(Lua, call_stackoverflow) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
 
     state.LoadFromString(test_test_errror_script);
     const char* expected = "stack overflow";
@@ -142,7 +142,7 @@ TEST(Lua, call_stackoverflow)
 
 TEST(Lua, parameter_conversion_error) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
 
     const char * expected =
         "bad argument #2 to 'accept_string_int_string' (number expected, got string)";

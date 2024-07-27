@@ -79,7 +79,7 @@ end
 
 TEST(Lua, select_global) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     int answer = state["my_global"];
     EXPECT_EQ(answer, 4);
@@ -88,7 +88,7 @@ TEST(Lua, select_global)
 
 TEST(Lua, select_field) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     lua_Number answer = state["my_table"]["key"];
     EXPECT_EQ(answer, lua_Number(6.4));
@@ -97,7 +97,7 @@ TEST(Lua, select_field)
 
 TEST(Lua, select_index) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     std::string answer = state["my_table"][3];
     EXPECT_STREQ(answer.c_str(), "hi");
@@ -106,7 +106,7 @@ TEST(Lua, select_index)
 
 TEST(Lua, select_nested_field) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     std::string answer = state["my_table"]["nested"]["foo"];
     EXPECT_STREQ(answer.c_str(), "bar");
@@ -115,7 +115,7 @@ TEST(Lua, select_nested_field)
 
 TEST(Lua, select_nested_index) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     int answer = state["my_table"]["nested"][2];
     EXPECT_EQ(answer, -3);
@@ -124,7 +124,7 @@ TEST(Lua, select_nested_index)
 
 TEST(Lua, select_equality) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     EXPECT_EQ(state["my_table"]["nested"][2], -3);
     EXPECT_EQ(state.Size(), 0);
@@ -132,7 +132,7 @@ TEST(Lua, select_equality)
 
 TEST(Lua, select_cast) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     EXPECT_EQ(int(state["global1"]), state["global2"]);
     EXPECT_EQ(state.Size(), 0);
@@ -140,7 +140,7 @@ TEST(Lua, select_cast)
 
 TEST(Lua, set_global) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     auto lua_dummy_global = state["dummy_global"];
     lua_dummy_global = 32;
@@ -150,7 +150,7 @@ TEST(Lua, set_global)
 
 TEST(Lua, set_field) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     state["my_table"]["dummy_key"] = "testing";
     std::string s = state["my_table"]["dummy_key"];
@@ -160,7 +160,7 @@ TEST(Lua, set_field)
 
 TEST(Lua, set_index) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     state["my_table"][10] = 3;
     EXPECT_EQ(state["my_table"][10], 3);
@@ -169,7 +169,7 @@ TEST(Lua, set_index)
 
 TEST(Lua, set_nested_field) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     state["my_table"]["nested"]["asdf"] = true;
     EXPECT_TRUE((bool)state["my_table"]["nested"]["asdf"]);
@@ -178,7 +178,7 @@ TEST(Lua, set_nested_field)
 
 TEST(Lua, set_nested_index) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     state["my_table"]["nested"][1] = 2;
     EXPECT_EQ(state["my_table"]["nested"][1], 2);
@@ -187,7 +187,7 @@ TEST(Lua, set_nested_index)
 
 TEST(Lua, create_table_field) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["new_table"]["test"] = 4;
     EXPECT_EQ(state["new_table"]["test"], 4);
     EXPECT_EQ(state.Size(), 0);
@@ -195,7 +195,7 @@ TEST(Lua, create_table_field)
 
 TEST(Lua, create_table_index) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["new_table"][3] = 4;
     EXPECT_EQ(state["new_table"][3], 4);
     EXPECT_EQ(state.Size(), 0);
@@ -203,8 +203,8 @@ TEST(Lua, create_table_index)
 
 TEST(Lua, cache_selector_field_assignment) 
 {
-    sel::State state(true);
-    sel::Selector s = state["new_table"][3];
+    Luaxx::State state(true);
+    Luaxx::Selector s = state["new_table"][3];
     s = 4;
     EXPECT_EQ(state["new_table"][3], 4);
     EXPECT_EQ(state.Size(), 0);
@@ -212,18 +212,18 @@ TEST(Lua, cache_selector_field_assignment)
 
 TEST(Lua, cache_selector_field_access) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["new_table"][3] = 4;
-    sel::Selector s = state["new_table"][3];
+    Luaxx::Selector s = state["new_table"][3];
     EXPECT_EQ(s, 4);
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, cache_selector_function) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
-    sel::Selector s = state["set_global"];
+    Luaxx::Selector s = state["set_global"];
     s();
     EXPECT_EQ(state["global1"], 8);
     EXPECT_EQ(state.Size(), 0);
@@ -231,7 +231,7 @@ TEST(Lua, cache_selector_function)
 
 TEST(Lua, function_should_run_once) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_script);
     auto should_run_once = state["should_run_once"];
     should_run_once();
@@ -241,12 +241,12 @@ TEST(Lua, function_should_run_once)
 
 TEST(Lua, function_result_is_alive_ptr) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
-    sel::Pointer<InstanceCounter> pointer = state["createObj"]();
+    Luaxx::Pointer<InstanceCounter> pointer = state["createObj"]();
     state.ForceGC();
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
@@ -255,12 +255,12 @@ TEST(Lua, function_result_is_alive_ptr)
 
 TEST(Lua, function_result_is_alive_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
-    sel::Reference<InstanceCounter> reference = state["createObj"]();
+    Luaxx::Reference<InstanceCounter> reference = state["createObj"]();
     state.ForceGC();
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
@@ -269,13 +269,13 @@ TEST(Lua, function_result_is_alive_ref)
 
 TEST(Lua, get_and_set_Reference_keeps_identity) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Obj"].SetClass<InstanceCounter>();
     state("objA = Obj.new()");
 
-    sel::Reference<InstanceCounter> objA_ref = state["objA"];
+    Luaxx::Reference<InstanceCounter> objA_ref = state["objA"];
     state["objB"] = objA_ref;
-    sel::Reference<InstanceCounter> objB_ref = state["objB"];
+    Luaxx::Reference<InstanceCounter> objB_ref = state["objB"];
 
     state("function areVerySame() return objA == objB end");
     EXPECT_TRUE((bool)state["areVerySame"]());
@@ -285,13 +285,13 @@ TEST(Lua, get_and_set_Reference_keeps_identity)
 
 TEST(Lua, get_and_set_Pointer_keeps_identity) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Obj"].SetClass<InstanceCounter>();
     state("objA = Obj.new()");
 
-    sel::Pointer<InstanceCounter> objA_ptr = state["objA"];
+    Luaxx::Pointer<InstanceCounter> objA_ptr = state["objA"];
     state["objB"] = objA_ptr;
-    sel::Pointer<InstanceCounter> objB_ptr = state["objB"];
+    Luaxx::Pointer<InstanceCounter> objB_ptr = state["objB"];
 
     state("function areVerySame() return objA == objB end");
     EXPECT_TRUE((bool)state["areVerySame"]());
@@ -319,7 +319,7 @@ struct SelectorFoo
 
 TEST(Lua, selector_call_with_registered_class) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<SelectorFoo, int>("get", &SelectorFoo::getX);
     state("function getXFromFoo(foo) return foo:get() end");
     SelectorFoo foo{4};
@@ -329,7 +329,7 @@ TEST(Lua, selector_call_with_registered_class)
 
 TEST(Lua, selector_call_with_registered_class_ptr) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<SelectorFoo, int>("get", &SelectorFoo::getX);
     state("function getXFromFoo(foo) return foo:get() end");
     SelectorFoo foo{4};
@@ -339,7 +339,7 @@ TEST(Lua, selector_call_with_registered_class_ptr)
 
 TEST(Lua, selector_call_with_wrong_type_ptr) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     auto acceptFoo = [] (SelectorFoo *) {};
     state["Foo"].SetClass<SelectorFoo, int>();
     state["Bar"].SetClass<SelectorBar>();
@@ -359,7 +359,7 @@ TEST(Lua, selector_call_with_wrong_type_ptr)
 
 TEST(Lua, selector_call_with_wrong_type_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     auto acceptFoo = [] (SelectorFoo &) {};
     state["Foo"].SetClass<SelectorFoo, int>();
     state["Bar"].SetClass<SelectorBar>();
@@ -379,7 +379,7 @@ TEST(Lua, selector_call_with_wrong_type_ref)
 
 TEST(Lua, selector_call_with_nullptr_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     auto acceptFoo = [] (SelectorFoo &) {};
     state["Foo"].SetClass<SelectorFoo, int>();
     state["acceptFoo"] = acceptFoo;
@@ -397,7 +397,7 @@ TEST(Lua, selector_call_with_nullptr_ref)
 
 TEST(Lua, selector_get_nullptr_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state("bar = nil");
     bool error_encounted = false;
@@ -406,7 +406,7 @@ TEST(Lua, selector_get_nullptr_ref)
     {
         SelectorFoo & foo = state["bar"];
     } 
-    catch(sel::TypeError &) 
+    catch(Luaxx::TypeError &) 
     {
         error_encounted = true;
     }
@@ -417,7 +417,7 @@ TEST(Lua, selector_get_nullptr_ref)
 
 TEST(Lua, selector_get_wrong_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state["Bar"].SetClass<SelectorBar>();
     state("bar = Bar.new()");
@@ -427,7 +427,7 @@ TEST(Lua, selector_get_wrong_ref)
     {
         SelectorFoo & foo = state["bar"];
     } 
-    catch(sel::TypeError &) 
+    catch(Luaxx::TypeError &) 
     {
         error_encounted = true;
     }
@@ -438,7 +438,7 @@ TEST(Lua, selector_get_wrong_ref)
 
 TEST(Lua, selector_get_wrong_ref_to_string) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state("bar = \"Not a Foo\"");
     bool expected_message = false;
@@ -447,7 +447,7 @@ TEST(Lua, selector_get_wrong_ref_to_string)
     {
         SelectorFoo & foo = state["bar"];
     } 
-    catch(sel::TypeError & e) 
+    catch(Luaxx::TypeError & e) 
     {
         expected_message = std::string(e.what()).find("got string") != std::string::npos;
     }
@@ -458,7 +458,7 @@ TEST(Lua, selector_get_wrong_ref_to_string)
 
 TEST(Lua, selector_get_wrong_ref_to_table) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state("bar = {}");
     bool expected_message = false;
@@ -467,7 +467,7 @@ TEST(Lua, selector_get_wrong_ref_to_table)
     {
         SelectorFoo & foo = state["bar"];
     } 
-    catch(sel::TypeError & e) 
+    catch(Luaxx::TypeError & e) 
     {
         expected_message = std::string(e.what()).find("got table") != std::string::npos;
     }
@@ -478,7 +478,7 @@ TEST(Lua, selector_get_wrong_ref_to_table)
 
 TEST(Lua, selector_get_wrong_ref_to_unregistered) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state("foo = Foo.new(4)");
     bool expected_message = false;
@@ -487,7 +487,7 @@ TEST(Lua, selector_get_wrong_ref_to_unregistered)
     {
         SelectorBar & bar = state["foo"];
     } 
-    catch(sel::TypeError & e) 
+    catch(Luaxx::TypeError & e) 
     {
         expected_message = std::string(e.what()).find("unregistered type expected") != std::string::npos;
     }
@@ -498,7 +498,7 @@ TEST(Lua, selector_get_wrong_ref_to_unregistered)
 
 TEST(Lua, selector_get_wrong_ptr) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state["Bar"].SetClass<SelectorBar>();
     state("bar = Bar.new()");

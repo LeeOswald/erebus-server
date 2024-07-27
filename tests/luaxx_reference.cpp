@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-int take_fun_arg(sel::function<int(int, int)> fun, int a, int b) 
+int take_fun_arg(Luaxx::function<int(int, int)> fun, int a, int b) 
 {
     return fun(a, b);
 }
@@ -16,14 +16,14 @@ struct Mutator
     Mutator() 
     {}
 
-    Mutator(sel::function<void(int)> fun) 
+    Mutator(Luaxx::function<void(int)> fun) 
     {
         fun(-4);
     }
 
-    sel::function<void()> Foobar(bool which,
-                                 sel::function<void()> foo,
-                                 sel::function<void()> bar) 
+    Luaxx::function<void()> Foobar(bool which,
+                                 Luaxx::function<void()> foo,
+                                 Luaxx::function<void()> bar) 
     {
         return which ? foo : bar;
     }
@@ -70,7 +70,7 @@ end
 
 TEST(Lua, function_reference) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["take_fun_arg"] = &take_fun_arg;
     state.LoadFromString(test_ref_script);
     bool check1 = state["pass_add"](3, 5) == 8;
@@ -82,8 +82,8 @@ TEST(Lua, function_reference)
 
 TEST(Lua, function_in_constructor) 
 {
-    sel::State state(true);
-    state["Mutator"].SetClass<Mutator, sel::function<void(int)>>();
+    Luaxx::State state(true);
+    state["Mutator"].SetClass<Mutator, Luaxx::function<void(int)>>();
     state.LoadFromString(test_ref_script);
     bool check1 = state["a"] == 4;
     state("mutator = Mutator.new(mutate_a)");
@@ -95,7 +95,7 @@ TEST(Lua, function_in_constructor)
 
 TEST(Lua, pass_function_to_lua) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Mutator"].SetClass<Mutator>("foobar", &Mutator::Foobar);
     state.LoadFromString(test_ref_script);
     state("mutator = Mutator.new()");
@@ -110,31 +110,31 @@ TEST(Lua, pass_function_to_lua)
 
 TEST(Lua, call_returned_lua_function) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_ref_script);
-    sel::function<int(int, int)> lua_add = state["add"];
+    Luaxx::function<int(int, int)> lua_add = state["add"];
     EXPECT_EQ(lua_add(2, 4), 6);
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, call_multivalue_lua_function) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state.LoadFromString(test_ref_script);
-    sel::function<std::tuple<int, int>()> lua_add = state["return_two"];
+    Luaxx::function<std::tuple<int, int>()> lua_add = state["return_two"];
     EXPECT_EQ(lua_add(), std::make_tuple(1, 2));
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, call_result_is_alive_ptr) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
-    sel::function<sel::Pointer<InstanceCounter>()> createObj = state["createObj"];
+    Luaxx::function<Luaxx::Pointer<InstanceCounter>()> createObj = state["createObj"];
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
-    sel::Pointer<InstanceCounter> pointer = createObj();
+    Luaxx::Pointer<InstanceCounter> pointer = createObj();
     state.ForceGC();
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
@@ -143,13 +143,13 @@ TEST(Lua, call_result_is_alive_ptr)
 
 TEST(Lua, call_result_is_alive_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
-    sel::function<sel::Reference<InstanceCounter>()> createObj = state["createObj"];
+    Luaxx::function<Luaxx::Reference<InstanceCounter>()> createObj = state["createObj"];
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
-    sel::Reference<InstanceCounter> ref = createObj();
+    Luaxx::Reference<InstanceCounter> ref = createObj();
     state.ForceGC();
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
@@ -176,10 +176,10 @@ struct FunctionBar
 
 TEST(Lua, function_call_with_registered_class) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function getX(foo) return foo:get() end");
-    sel::function<int(FunctionFoo &)> getX = state["getX"];
+    Luaxx::function<int(FunctionFoo &)> getX = state["getX"];
     FunctionFoo foo{4};
     EXPECT_EQ(getX(foo), 4);
     EXPECT_EQ(state.Size(), 0);
@@ -187,10 +187,10 @@ TEST(Lua, function_call_with_registered_class)
 
 TEST(Lua, function_call_with_registered_class_ptr) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function getX(foo) return foo:get() end");
-    sel::function<int(FunctionFoo *)> getX = state["getX"];
+    Luaxx::function<int(FunctionFoo *)> getX = state["getX"];
     FunctionFoo foo{4};
     EXPECT_EQ(getX(&foo), 4);
     EXPECT_EQ(state.Size(), 0);
@@ -198,13 +198,13 @@ TEST(Lua, function_call_with_registered_class_ptr)
 
 TEST(Lua, function_call_with_registered_class_val) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function store(foo) globalFoo = foo end");
     state("function getX() return globalFoo:get() end");
 
-    sel::function<void(FunctionFoo)> store = state["store"];
-    sel::function<int()> getX = state["getX"];
+    Luaxx::function<void(FunctionFoo)> store = state["store"];
+    Luaxx::function<int()> getX = state["getX"];
     store(FunctionFoo{4});
 
     EXPECT_EQ(getX(), 4);
@@ -213,10 +213,10 @@ TEST(Lua, function_call_with_registered_class_val)
 
 TEST(Lua, function_call_with_registered_class_val_lifetime) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<InstanceCounter>();
     state("function store(foo) globalFoo = foo end");
-    sel::function<void(InstanceCounter)> store = state["store"];
+    Luaxx::function<void(InstanceCounter)> store = state["store"];
 
     int instanceCountBefore = InstanceCounter::instances;
     store(InstanceCounter{});
@@ -227,17 +227,17 @@ TEST(Lua, function_call_with_registered_class_val_lifetime)
 
 TEST(Lua, function_call_with_nullptr_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function makeNil() return nil end");
-    sel::function<FunctionFoo &()> getFoo = state["makeNil"];
+    Luaxx::function<FunctionFoo &()> getFoo = state["makeNil"];
     bool error_encounted = false;
 
     try 
     {
         FunctionFoo & foo = getFoo();
     } 
-    catch(sel::TypeError &) 
+    catch(Luaxx::TypeError &) 
     {
         error_encounted = true;
     }
@@ -248,18 +248,18 @@ TEST(Lua, function_call_with_nullptr_ref)
 
 TEST(Lua, function_call_with_wrong_ref) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state["Bar"].SetClass<FunctionBar>();
     state("function makeBar() return Bar.new() end");
-    sel::function<FunctionFoo &()> getFoo = state["makeBar"];
+    Luaxx::function<FunctionFoo &()> getFoo = state["makeBar"];
     bool error_encounted = false;
 
     try 
     {
         FunctionFoo & foo = getFoo();
     } 
-    catch(sel::TypeError &) 
+    catch(Luaxx::TypeError &) 
     {
         error_encounted = true;
     }
@@ -270,21 +270,21 @@ TEST(Lua, function_call_with_wrong_ref)
 
 TEST(Lua, function_call_with_wrong_ptr) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state["Bar"].SetClass<FunctionBar>();
     state("function makeBar() return Bar.new() end");
-    sel::function<FunctionFoo *()> getFoo = state["makeBar"];
+    Luaxx::function<FunctionFoo *()> getFoo = state["makeBar"];
     EXPECT_FALSE(!!getFoo());
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, function_get_registered_class_by_value) 
 {
-    sel::State state(true);
+    Luaxx::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function getFoo() return Foo.new(4) end");
-    sel::function<FunctionFoo()> getFoo = state["getFoo"];
+    Luaxx::function<FunctionFoo()> getFoo = state["getFoo"];
 
     FunctionFoo foo = getFoo();
 

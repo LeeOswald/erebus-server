@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace sel {
+namespace Luaxx {
 
 template<typename T>
 class Reference {
@@ -96,12 +96,12 @@ public:
 namespace detail {
 
 template<typename T>
-struct is_primitive<sel::Reference<T>> {
+struct is_primitive<Luaxx::Reference<T>> {
     static constexpr bool value = true;
 };
 
 template <typename T>
-inline sel::Reference<T> _check_get(_id<sel::Reference<T>>,
+inline Luaxx::Reference<T> _check_get(_id<Luaxx::Reference<T>>,
                                     lua_State *l, const int index) {
     T& result = _check_get(_id<T&>{}, l, index);
     lua_pushvalue(l, index);
@@ -110,7 +110,7 @@ inline sel::Reference<T> _check_get(_id<sel::Reference<T>>,
 }
 
 template <typename T>
-inline sel::Reference<T> _get(_id<sel::Reference<T>>,
+inline Luaxx::Reference<T> _get(_id<Luaxx::Reference<T>>,
                               lua_State *l, const int index) {
     T& result = _get(_id<T&>{}, l, index);
     lua_pushvalue(l, index);
@@ -119,18 +119,18 @@ inline sel::Reference<T> _get(_id<sel::Reference<T>>,
 }
 
 template<typename T>
-inline void _push(lua_State *l, sel::Reference<T> const & ref) {
+inline void _push(lua_State *l, Luaxx::Reference<T> const & ref) {
     ref._push(l);
 }
 
 
 template<typename T>
-struct is_primitive<sel::Pointer<T>> {
+struct is_primitive<Luaxx::Pointer<T>> {
     static constexpr bool value = true;
 };
 
 template <typename T>
-inline sel::Pointer<T> _check_get(_id<sel::Pointer<T>>,
+inline Luaxx::Pointer<T> _check_get(_id<Luaxx::Pointer<T>>,
                                     lua_State *l, const int index) {
     auto result = _check_get(_id<T*>{}, l, index);
     if(result) {
@@ -143,7 +143,7 @@ inline sel::Pointer<T> _check_get(_id<sel::Pointer<T>>,
 }
 
 template <typename T>
-inline sel::Pointer<T> _get(_id<sel::Pointer<T>>,
+inline Luaxx::Pointer<T> _get(_id<Luaxx::Pointer<T>>,
                               lua_State *l, const int index) {
     auto result = _get(_id<T*>{}, l, index);
     if(result) {
@@ -156,7 +156,7 @@ inline sel::Pointer<T> _get(_id<sel::Pointer<T>>,
 }
 
 template<typename T>
-inline void _push(lua_State *l, sel::Pointer<T> const & ptr) {
+inline void _push(lua_State *l, Luaxx::Pointer<T> const & ptr) {
     ptr._push(l);
 }
 

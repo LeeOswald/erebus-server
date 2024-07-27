@@ -5,21 +5,31 @@
 #include <tuple>
 
 
-namespace sel {
+namespace Luaxx 
+{
+
 template <typename... T>
-class Tuple {
+class Tuple 
+{
 private:
     std::tuple<T&...> _tuple;
-public:
-    Tuple(T&... args) : _tuple(args...) {}
 
-    void operator=(const sel::Selector &s) {
+public:
+    Tuple(T&... args) 
+        : _tuple(args...) 
+    {}
+
+    void operator=(const Luaxx::Selector& s) 
+    {
         _tuple = s.GetTuple<typename std::remove_reference<T>::type...>();
     }
 };
 
 template <typename... T>
-Tuple<T&...> tie(T&... args) {
+Tuple<T&...> tie(T&... args) 
+{
     return Tuple<T&...>(args...);
 }
-}
+
+
+} // namespace Luaxx {}
