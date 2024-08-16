@@ -128,10 +128,10 @@ public:
         return false;
     }
 
-    bool LoadFromString(const std::string& str) 
+    bool LoadFromString(std::string_view str, const char* name = nullptr) 
     {
         ResetStackOnScopeExit savedStack(_l);
-        int status = luaL_loadstring(_l, str.c_str());
+        int status = luaL_loadbuffer(_l, str.data(), str.length(), name);
 #if LUA_VERSION_NUM >= 502
         auto const lua_ok = LUA_OK;
 #else
@@ -182,7 +182,6 @@ public:
         *_exception_handler = ExceptionHandler(std::move(handler));
     }
 
-public:
     Selector operator[](const char* name) const 
     {
         return Selector(_l, *_registry, *_exception_handler, name);
@@ -204,6 +203,13 @@ public:
     void ForceGC() 
     {
         lua_gc(_l, LUA_GCCOLLECT, 0);
+    }
+
+    uint64_t GetMemUsed()
+    {
+        uint32_t kbytes = lua_gc(_l, LUA_GCCOUNT, 0);
+        uint32_t bytes = lua_gc(_l, LUA_GCCOUNTB, 0);
+        return uint64_t(kbytes) * 1024 + bytes;
     }
 
     void InteractiveDebug() 

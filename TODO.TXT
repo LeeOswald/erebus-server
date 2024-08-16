@@ -4,4 +4,4 @@
 - format log messages in background?
 - prlimit() to read processes' rlimits
 - remove noexcept unless absolutely necessary
-
+- optimize ini file parsing (iterat throug kv pairs instead of making a prop tree)
