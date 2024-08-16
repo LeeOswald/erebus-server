@@ -11,7 +11,7 @@
 #include <tuple>
 #include <vector>
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 class State 
@@ -223,8 +223,8 @@ public:
 
 inline std::ostream& operator<<(std::ostream& os, const State& state) 
 {
-    os << "Luaxx::State - " << state._l;
+    os << "Er::Lua::State - " << state._l;
     return os;
 }
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

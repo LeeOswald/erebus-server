@@ -10,7 +10,7 @@
 #include <vector>
 
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 struct BaseObj 
@@ -39,14 +39,14 @@ private:
             return t->*member;
         };
 
-        _funs.emplace_back(Luaxx::make_unique<ObjFun<1, M>>(state, std::string{member_name}, lambda_get));
+        _funs.emplace_back(Er::Lua::make_unique<ObjFun<1, M>>(state, std::string{member_name}, lambda_get));
 
         std::function<void(M)> lambda_set = [t, member](M value) 
         {
             t->*member = value;
         };
 
-        _funs.emplace_back(Luaxx::make_unique<ObjFun<0, void, M>>(state, std::string{"set_"} + member_name, lambda_set));
+        _funs.emplace_back(Er::Lua::make_unique<ObjFun<0, void, M>>(state, std::string{"set_"} + member_name, lambda_set));
     }
 
     template <typename M>
@@ -57,7 +57,7 @@ private:
             return t->*member;
         };
 
-        _funs.emplace_back(Luaxx::make_unique<ObjFun<1, M>>(state, std::string{member_name}, lambda_get));
+        _funs.emplace_back(Er::Lua::make_unique<ObjFun<1, M>>(state, std::string{member_name}, lambda_get));
     }
 
     template <typename Ret, typename... Args>
@@ -69,7 +69,7 @@ private:
         };
 
         constexpr int arity = detail::_arity<Ret>::value;
-        _funs.emplace_back(Luaxx::make_unique<ObjFun<arity, Ret, Args...>>(state, std::string(fun_name), lambda));
+        _funs.emplace_back(Er::Lua::make_unique<ObjFun<arity, Ret, Args...>>(state, std::string(fun_name), lambda));
     }
 
     template <typename Ret, typename... Args>
@@ -81,7 +81,7 @@ private:
         };
 
         constexpr int arity = detail::_arity<Ret>::value;
-        _funs.emplace_back(Luaxx::make_unique<ObjFun<arity, Ret, Args...>>(state, std::string(fun_name), lambda));
+        _funs.emplace_back(Er::Lua::make_unique<ObjFun<arity, Ret, Args...>>(state, std::string(fun_name), lambda));
     }
 
     void _register_members(lua_State* state, T* t) 
@@ -103,4 +103,4 @@ public:
     }
 };
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

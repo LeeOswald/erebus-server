@@ -4,7 +4,7 @@
 #include <string>
 #include <utility>
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 class LuaException 
@@ -57,4 +57,4 @@ private:
     TypeID _type;
 };
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

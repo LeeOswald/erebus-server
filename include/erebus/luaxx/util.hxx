@@ -12,7 +12,7 @@ extern "C"
 #include <lualib.h>
 }
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 inline std::ostream& operator<<(std::ostream& os, lua_State* l) 
@@ -117,4 +117,4 @@ std::unique_ptr<T> make_unique(Args&&... args)
 }
 
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

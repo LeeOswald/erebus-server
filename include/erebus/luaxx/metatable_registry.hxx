@@ -11,7 +11,7 @@ extern "C"
 #include <lauxlib.h>
 }
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 namespace detail 
@@ -190,10 +190,10 @@ static inline void CheckType(lua_State* state, TypeID type, const int index)
 {
     if (!IsType(state, type, index)) 
     {
-        throw Luaxx::detail::GetUserdataParameterFromLuaTypeError(GetTypeName(state, type), index);
+        throw Er::Lua::detail::GetUserdataParameterFromLuaTypeError(GetTypeName(state, type), index);
     }
 }
 
 } // namespace MetatableRegistry {}
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

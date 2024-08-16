@@ -10,7 +10,7 @@
 #include <tuple>
 
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 struct BaseFun 
@@ -95,4 +95,4 @@ inline std::tuple<T...> _get_args(lua_State* state)
 
 } // namespace detail {}
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

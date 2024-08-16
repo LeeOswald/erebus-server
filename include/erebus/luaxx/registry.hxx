@@ -10,7 +10,7 @@
 #include <vector>
 
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 namespace detail 
@@ -56,14 +56,14 @@ public:
     void Register(std::function<Ret(Args...)> fun) 
     {
         constexpr int arity = detail::_arity<Ret>::value;
-        _funs.emplace_back(Luaxx::make_unique<Fun<arity, Ret, Args...>>(_state, fun));
+        _funs.emplace_back(Er::Lua::make_unique<Fun<arity, Ret, Args...>>(_state, fun));
     }
 
     template <typename Ret, typename... Args>
     void Register(Ret (*fun)(Args...)) 
     {
         constexpr int arity = detail::_arity<Ret>::value;
-        _funs.emplace_back(Luaxx::make_unique<Fun<arity, Ret, Args...>>(_state, fun));
+        _funs.emplace_back(Er::Lua::make_unique<Fun<arity, Ret, Args...>>(_state, fun));
     }
 
     template <typename T, typename... Funs>
@@ -81,7 +81,7 @@ public:
     template <typename T, typename... Funs>
     void RegisterObj(T& t, Funs... funs) 
     {
-        _objs.emplace_back(Luaxx::make_unique<Obj<T, Funs...>>(_state, &t, funs...));
+        _objs.emplace_back(Er::Lua::make_unique<Obj<T, Funs...>>(_state, &t, funs...));
     }
 
     template <typename T, typename... CtorArgs, typename... Funs, size_t... N>
@@ -93,8 +93,8 @@ public:
     template <typename T, typename... CtorArgs, typename... Funs>
     void RegisterClassWorker(const std::string& name, Funs... funs) 
     {
-        _classes.emplace_back(Luaxx::make_unique<Class<T, Ctor<T, CtorArgs...>, Funs...>>(_state, name, funs...));
+        _classes.emplace_back(Er::Lua::make_unique<Class<T, Ctor<T, CtorArgs...>, Funs...>>(_state, name, funs...));
     }
 };
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

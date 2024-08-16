@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace Luaxx {
+namespace Er::Lua {
 
 template<typename T>
 class Reference {
@@ -96,12 +96,12 @@ public:
 namespace detail {
 
 template<typename T>
-struct is_primitive<Luaxx::Reference<T>> {
+struct is_primitive<Er::Lua::Reference<T>> {
     static constexpr bool value = true;
 };
 
 template <typename T>
-inline Luaxx::Reference<T> _check_get(_id<Luaxx::Reference<T>>,
+inline Er::Lua::Reference<T> _check_get(_id<Er::Lua::Reference<T>>,
                                     lua_State *l, const int index) {
     T& result = _check_get(_id<T&>{}, l, index);
     lua_pushvalue(l, index);
@@ -110,7 +110,7 @@ inline Luaxx::Reference<T> _check_get(_id<Luaxx::Reference<T>>,
 }
 
 template <typename T>
-inline Luaxx::Reference<T> _get(_id<Luaxx::Reference<T>>,
+inline Er::Lua::Reference<T> _get(_id<Er::Lua::Reference<T>>,
                               lua_State *l, const int index) {
     T& result = _get(_id<T&>{}, l, index);
     lua_pushvalue(l, index);
@@ -119,18 +119,18 @@ inline Luaxx::Reference<T> _get(_id<Luaxx::Reference<T>>,
 }
 
 template<typename T>
-inline void _push(lua_State *l, Luaxx::Reference<T> const & ref) {
+inline void _push(lua_State *l, Er::Lua::Reference<T> const & ref) {
     ref._push(l);
 }
 
 
 template<typename T>
-struct is_primitive<Luaxx::Pointer<T>> {
+struct is_primitive<Er::Lua::Pointer<T>> {
     static constexpr bool value = true;
 };
 
 template <typename T>
-inline Luaxx::Pointer<T> _check_get(_id<Luaxx::Pointer<T>>,
+inline Er::Lua::Pointer<T> _check_get(_id<Er::Lua::Pointer<T>>,
                                     lua_State *l, const int index) {
     auto result = _check_get(_id<T*>{}, l, index);
     if(result) {
@@ -143,7 +143,7 @@ inline Luaxx::Pointer<T> _check_get(_id<Luaxx::Pointer<T>>,
 }
 
 template <typename T>
-inline Luaxx::Pointer<T> _get(_id<Luaxx::Pointer<T>>,
+inline Er::Lua::Pointer<T> _get(_id<Er::Lua::Pointer<T>>,
                               lua_State *l, const int index) {
     auto result = _get(_id<T*>{}, l, index);
     if(result) {
@@ -156,7 +156,7 @@ inline Luaxx::Pointer<T> _get(_id<Luaxx::Pointer<T>>,
 }
 
 template<typename T>
-inline void _push(lua_State *l, Luaxx::Pointer<T> const & ptr) {
+inline void _push(lua_State *l, Er::Lua::Pointer<T> const & ptr) {
     ptr._push(l);
 }
 

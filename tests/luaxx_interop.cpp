@@ -92,7 +92,7 @@ end
 
 TEST(Lua, function_no_args) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["foo"]();
     EXPECT_TRUE(true);
@@ -101,7 +101,7 @@ TEST(Lua, function_no_args)
 
 TEST(Lua, add) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     int v = state["add"](5, 2);
     EXPECT_EQ(v, 7);
@@ -110,17 +110,17 @@ TEST(Lua, add)
 
 TEST(Lua, multi_return) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     int sum, difference;
-    Luaxx::tie(sum, difference) = state["sum_and_difference"](3, 1);
+    Er::Lua::tie(sum, difference) = state["sum_and_difference"](3, 1);
     EXPECT_EQ(sum, 4);
     EXPECT_EQ(difference, 2);
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, multi_return_invoked_once) {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     int invocation_count = 0;
     state["two_ints"] = [&invocation_count]()
     {
@@ -128,19 +128,19 @@ TEST(Lua, multi_return_invoked_once) {
         return std::tuple<int, int>{1, 2};
     };
     int res_a = 0, res_b = 0;
-    Luaxx::tie(res_a, res_b) = state["two_ints"]();
+    Er::Lua::tie(res_a, res_b) = state["two_ints"]();
     EXPECT_EQ(invocation_count, 1);
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, heterogeneous_return) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     int x;
     bool y;
     std::string z;
-    Luaxx::tie(x, y, z) = state["bar"]();
+    Er::Lua::tie(x, y, z) = state["bar"]();
     EXPECT_EQ(x, 4);
     EXPECT_TRUE(y);
     EXPECT_STREQ(z.c_str(), "hi");
@@ -149,7 +149,7 @@ TEST(Lua, heterogeneous_return)
 
 TEST(Lua, call_field) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     int answer = state["mytable"]["foo"]();
     EXPECT_EQ(answer, 4);
@@ -158,7 +158,7 @@ TEST(Lua, call_field)
 
 TEST(Lua, call_c_function) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["cadd"] = std::function<int(int, int)>(my_add);
     int answer = state["cadd"](3, 6);
@@ -168,7 +168,7 @@ TEST(Lua, call_c_function)
 
 TEST(Lua, call_c_fun_from_lua) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["cadd"] = std::function<int(int, int)>(my_add);
     int answer = state["execute"]();
@@ -178,7 +178,7 @@ TEST(Lua, call_c_fun_from_lua)
 
 TEST(Lua, no_return) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["no_return"] = &no_return;
     state["no_return"]();
     EXPECT_TRUE(true);
@@ -187,7 +187,7 @@ TEST(Lua, no_return)
 
 TEST(Lua, call_std_fun) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     std::function<int(int, int)> mult = [](int x, int y){ return x * y; };
     state["cmultiply"] = mult;
@@ -198,7 +198,7 @@ TEST(Lua, call_std_fun)
 
 TEST(Lua, call_lambda) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["cmultiply"] = [](int x, int y){ return x * y; };
     int answer = state["cmultiply"](5, 6);
@@ -208,7 +208,7 @@ TEST(Lua, call_lambda)
 
 TEST(Lua, call_normal_c_fun) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["cadd"] = &my_add;
     const int answer = state["cadd"](4, 20);
@@ -220,7 +220,7 @@ TEST(Lua, call_normal_c_fun_many_times)
 {
     // Ensures there isn't any strange overflow problem or lingering
     // state
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["cadd"] = &my_add;
     bool result = true;
@@ -244,7 +244,7 @@ TEST(Lua, call_functor)
         }
     };
     the_answer functor;
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["c_the_answer"] = std::function<int()>(functor);
     int answer = state["c_the_answer"]();
@@ -260,11 +260,11 @@ std::tuple<int, int> my_sum_and_difference(int x, int y)
 
 TEST(Lua, multivalue_c_fun_return) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["test_fun"] = &my_sum_and_difference;
     int sum, difference;
-    Luaxx::tie(sum, difference) = state["test_fun"](-2, 2);
+    Er::Lua::tie(sum, difference) = state["test_fun"](-2, 2);
     EXPECT_EQ(sum, 0);
     EXPECT_EQ(difference, -4);
     EXPECT_EQ(state.Size(), 0);
@@ -272,7 +272,7 @@ TEST(Lua, multivalue_c_fun_return)
 
 TEST(Lua, multivalue_c_fun_from_lua) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     state["doozy_c"] = &my_sum_and_difference;
     int answer = state["doozy"](5);
@@ -282,7 +282,7 @@ TEST(Lua, multivalue_c_fun_from_lua)
 
 TEST(Lua, embedded_nulls) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     const std::string result = state["embedded_nulls"]();
     EXPECT_EQ(result.size(), 4);
@@ -291,7 +291,7 @@ TEST(Lua, embedded_nulls)
 
 TEST(Lua, coroutine) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     bool check1 = state["resume_co"]() == 1;
     bool check2 = state["resume_co"]() == 2;
@@ -313,7 +313,7 @@ Special* return_special_pointer() { return &special; }
 
 TEST(Lua, pointer_return) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["return_special_pointer"] = &return_special_pointer;
     Special* p = state["return_special_pointer"]();
     EXPECT_EQ(p, &special);
@@ -324,7 +324,7 @@ Special& return_special_reference() { return special; }
 
 TEST(Lua, reference_return) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["return_special_reference"] = &return_special_reference;
     Special &ref = state["return_special_reference"]();
     EXPECT_EQ(&ref, &special);
@@ -335,7 +335,7 @@ InstanceCounter return_value() { return {}; }
 
 TEST(Lua, return_value) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["MyClass"].SetClass<InstanceCounter>();
     state["return_value"] = &return_value;
     int const instanceCountBeforeCreation = InstanceCounter::instances;
@@ -348,7 +348,7 @@ TEST(Lua, return_value)
 
 TEST(Lua, return_unregistered_type) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["return_value"] = &return_value;
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
@@ -366,7 +366,7 @@ TEST(Lua, return_unregistered_type)
 
 TEST(Lua, value_parameter) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["MyClass"].SetClass<InstanceCounter>();
     state("function acceptValue(value) valCopy = value end");
     int const instanceCountBefore = InstanceCounter::instances;
@@ -379,7 +379,7 @@ TEST(Lua, value_parameter)
 
 TEST(Lua, wrong_value_parameter) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["MyClass"].SetClass<InstanceCounter>();
     state("function acceptValue(value) valCopy = value end");
     int const instanceCountBefore = InstanceCounter::instances;
@@ -389,7 +389,7 @@ TEST(Lua, wrong_value_parameter)
     {
         state["acceptValue"](Special{});
     } 
-    catch(Luaxx::CopyUnregisteredType& e)
+    catch(Er::Lua::CopyUnregisteredType& e)
     {
         expected = true;
         EXPECT_EQ(e.getType().get(), typeid(Special));
@@ -401,7 +401,7 @@ TEST(Lua, wrong_value_parameter)
 
 TEST(Lua, value_parameter_keeps_type_info) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["MyClass"].SetClass<Special>();
     state("function acceptValue(value) valCopy = value end");
     state["acceptValue"](Special{});
@@ -414,7 +414,7 @@ TEST(Lua, value_parameter_keeps_type_info)
 
 TEST(Lua, callback_with_value) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["MyClass"].SetClass<InstanceCounter>();
     state("val = MyClass.new()");
 
@@ -433,7 +433,7 @@ TEST(Lua, callback_with_value)
 
 TEST(Lua, nullptr_to_nil) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["getNullptr"] = []() -> void* 
     {
         return nullptr;
@@ -446,14 +446,14 @@ TEST(Lua, nullptr_to_nil)
 
 TEST(Lua, get_primitive_by_value) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     EXPECT_EQ(static_cast<int>(state["global1"]), 5);
 }
 
 TEST(Lua, get_primitive_by_const_ref) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     EXPECT_EQ(static_cast<const int &>(state["global1"]), 5);
     EXPECT_EQ(state.Size(), 0);
@@ -461,7 +461,7 @@ TEST(Lua, get_primitive_by_const_ref)
 
 TEST(Lua, get_primitive_by_rvalue_ref) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_script);
     EXPECT_EQ(static_cast<int &&>(state["global1"]), 5);
     EXPECT_EQ(state.Size(), 0);
@@ -469,7 +469,7 @@ TEST(Lua, get_primitive_by_rvalue_ref)
 
 TEST(Lua, call_with_primitive_by_value) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     bool success = false;
     auto const accept_int_by_value = [&success](int x) {success = x == 5;};
     state["test"] = accept_int_by_value;
@@ -480,7 +480,7 @@ TEST(Lua, call_with_primitive_by_value)
 
 TEST(Lua, call_with_primitive_by_const_ref) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     bool success = false;
     auto const accept_int_by_const_ref =
         [&success](const int & x) {success = x == 5;};
@@ -492,7 +492,7 @@ TEST(Lua, call_with_primitive_by_const_ref)
 
 TEST(Lua, call_with_primitive_by_rvalue_ref) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     bool success = false;
     auto const accept_int_by_rvalue_ref =
         [&success](int && x) {success = x == 5;};

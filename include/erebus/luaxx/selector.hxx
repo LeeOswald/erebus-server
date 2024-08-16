@@ -14,7 +14,7 @@
 #include <vector>
 
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 class State;
@@ -401,11 +401,11 @@ public:
     }
 
     template <typename R, typename... Args>
-    operator Luaxx::function<R(Args...)>() 
+    operator Er::Lua::function<R(Args...)>() 
     {
         ResetStackOnScopeExit save(_state);
         _evaluate_retrieve(1);
-        auto ret = detail::_pop(detail::_id<Luaxx::function<R(Args...)>>{}, _state);
+        auto ret = detail::_pop(detail::_id<Er::Lua::function<R(Args...)>>{}, _state);
         ret._enable_exception_handler(_exception_handler);
         return ret;
     }
@@ -504,4 +504,4 @@ inline bool operator==(T&& t, const Selector& s)
     return T(s) == t;
 }
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

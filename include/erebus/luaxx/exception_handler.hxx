@@ -11,7 +11,7 @@ extern "C"
 #include <lauxlib.h>
 }
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 struct stored_exception 
@@ -138,4 +138,4 @@ public:
     }
 };
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

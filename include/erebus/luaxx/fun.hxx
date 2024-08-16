@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 template <int N, typename Ret, typename... Args>
@@ -60,4 +60,4 @@ public:
     }
 };
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

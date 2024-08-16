@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 class MovingFlag 
@@ -64,4 +64,4 @@ public:
     ResetStackOnScopeExit& operator=(ResetStackOnScopeExit&&) = delete;
 };
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

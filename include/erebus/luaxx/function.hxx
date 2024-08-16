@@ -10,7 +10,7 @@
 #include <tuple>
 
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 class Selector;
@@ -145,30 +145,30 @@ namespace detail
 {
 
 template <typename T>
-struct is_primitive<Luaxx::function<T>> 
+struct is_primitive<Er::Lua::function<T>> 
 {
     static constexpr bool value = true;
 };
 
 template <typename R, typename...Args>
-inline Luaxx::function<R(Args...)> _check_get(_id<Luaxx::function<R(Args...)>>, lua_State* l, const int index) 
+inline Er::Lua::function<R(Args...)> _check_get(_id<Er::Lua::function<R(Args...)>>, lua_State* l, const int index) 
 {
     lua_pushvalue(l, index);
-    return Luaxx::function<R(Args...)>{ luaL_ref(l, LUA_REGISTRYINDEX), l };
+    return Er::Lua::function<R(Args...)>{ luaL_ref(l, LUA_REGISTRYINDEX), l };
 }
 
 template <typename R, typename... Args>
-inline Luaxx::function<R(Args...)> _get(_id<Luaxx::function<R(Args...)>> id, lua_State* l, const int index) 
+inline Er::Lua::function<R(Args...)> _get(_id<Er::Lua::function<R(Args...)>> id, lua_State* l, const int index) 
 {
     return _check_get(id, l, index);
 }
 
 template <typename R, typename... Args>
-inline void _push(lua_State* l, Luaxx::function<R(Args...)> fun) 
+inline void _push(lua_State* l, Er::Lua::function<R(Args...)> fun) 
 {
     fun.Push(l);
 }
 
 } // namespace detail {}
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

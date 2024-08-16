@@ -7,7 +7,7 @@ extern "C"
 #include <lua.h>
 }
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 /*
  * Used to ensure that globals set in Lua are deleted (set to nil) in
@@ -64,4 +64,4 @@ public:
     }
 };
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

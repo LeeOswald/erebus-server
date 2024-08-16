@@ -6,7 +6,7 @@
  * Implements various type trait objects
  */
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 namespace detail 
@@ -54,4 +54,4 @@ struct _id
 
 } // namespace detail {}
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

@@ -5,7 +5,7 @@
 #include <tuple>
 
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 template <typename... T>
@@ -19,7 +19,7 @@ public:
         : _tuple(args...) 
     {}
 
-    void operator=(const Luaxx::Selector& s) 
+    void operator=(const Er::Lua::Selector& s) 
     {
         _tuple = s.GetTuple<typename std::remove_reference<T>::type...>();
     }
@@ -32,4 +32,4 @@ Tuple<T&...> tie(T&... args)
 }
 
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

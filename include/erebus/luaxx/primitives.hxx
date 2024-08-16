@@ -19,7 +19,7 @@ extern "C"
  * primitives from the stack
  */
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 namespace detail 
@@ -447,4 +447,4 @@ inline void _push(lua_State* l, std::tuple<T...>&& values)
 
 } // namespace detail {}
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

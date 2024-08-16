@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-int take_fun_arg(Luaxx::function<int(int, int)> fun, int a, int b) 
+int take_fun_arg(Er::Lua::function<int(int, int)> fun, int a, int b) 
 {
     return fun(a, b);
 }
@@ -16,14 +16,14 @@ struct Mutator
     Mutator() 
     {}
 
-    Mutator(Luaxx::function<void(int)> fun) 
+    Mutator(Er::Lua::function<void(int)> fun) 
     {
         fun(-4);
     }
 
-    Luaxx::function<void()> Foobar(bool which,
-                                 Luaxx::function<void()> foo,
-                                 Luaxx::function<void()> bar) 
+    Er::Lua::function<void()> Foobar(bool which,
+                                 Er::Lua::function<void()> foo,
+                                 Er::Lua::function<void()> bar) 
     {
         return which ? foo : bar;
     }
@@ -70,7 +70,7 @@ end
 
 TEST(Lua, function_reference) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["take_fun_arg"] = &take_fun_arg;
     state.LoadFromString(test_ref_script);
     bool check1 = state["pass_add"](3, 5) == 8;
@@ -82,8 +82,8 @@ TEST(Lua, function_reference)
 
 TEST(Lua, function_in_constructor) 
 {
-    Luaxx::State state(true);
-    state["Mutator"].SetClass<Mutator, Luaxx::function<void(int)>>();
+    Er::Lua::State state(true);
+    state["Mutator"].SetClass<Mutator, Er::Lua::function<void(int)>>();
     state.LoadFromString(test_ref_script);
     bool check1 = state["a"] == 4;
     state("mutator = Mutator.new(mutate_a)");
@@ -95,7 +95,7 @@ TEST(Lua, function_in_constructor)
 
 TEST(Lua, pass_function_to_lua) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Mutator"].SetClass<Mutator>("foobar", &Mutator::Foobar);
     state.LoadFromString(test_ref_script);
     state("mutator = Mutator.new()");
@@ -110,31 +110,31 @@ TEST(Lua, pass_function_to_lua)
 
 TEST(Lua, call_returned_lua_function) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_ref_script);
-    Luaxx::function<int(int, int)> lua_add = state["add"];
+    Er::Lua::function<int(int, int)> lua_add = state["add"];
     EXPECT_EQ(lua_add(2, 4), 6);
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, call_multivalue_lua_function) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state.LoadFromString(test_ref_script);
-    Luaxx::function<std::tuple<int, int>()> lua_add = state["return_two"];
+    Er::Lua::function<std::tuple<int, int>()> lua_add = state["return_two"];
     EXPECT_EQ(lua_add(), std::make_tuple(1, 2));
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, call_result_is_alive_ptr) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
-    Luaxx::function<Luaxx::Pointer<InstanceCounter>()> createObj = state["createObj"];
+    Er::Lua::function<Er::Lua::Pointer<InstanceCounter>()> createObj = state["createObj"];
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
-    Luaxx::Pointer<InstanceCounter> pointer = createObj();
+    Er::Lua::Pointer<InstanceCounter> pointer = createObj();
     state.ForceGC();
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
@@ -143,13 +143,13 @@ TEST(Lua, call_result_is_alive_ptr)
 
 TEST(Lua, call_result_is_alive_ref) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
-    Luaxx::function<Luaxx::Reference<InstanceCounter>()> createObj = state["createObj"];
+    Er::Lua::function<Er::Lua::Reference<InstanceCounter>()> createObj = state["createObj"];
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
-    Luaxx::Reference<InstanceCounter> ref = createObj();
+    Er::Lua::Reference<InstanceCounter> ref = createObj();
     state.ForceGC();
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
@@ -176,10 +176,10 @@ struct FunctionBar
 
 TEST(Lua, function_call_with_registered_class) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function getX(foo) return foo:get() end");
-    Luaxx::function<int(FunctionFoo &)> getX = state["getX"];
+    Er::Lua::function<int(FunctionFoo &)> getX = state["getX"];
     FunctionFoo foo{4};
     EXPECT_EQ(getX(foo), 4);
     EXPECT_EQ(state.Size(), 0);
@@ -187,10 +187,10 @@ TEST(Lua, function_call_with_registered_class)
 
 TEST(Lua, function_call_with_registered_class_ptr) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function getX(foo) return foo:get() end");
-    Luaxx::function<int(FunctionFoo *)> getX = state["getX"];
+    Er::Lua::function<int(FunctionFoo *)> getX = state["getX"];
     FunctionFoo foo{4};
     EXPECT_EQ(getX(&foo), 4);
     EXPECT_EQ(state.Size(), 0);
@@ -198,13 +198,13 @@ TEST(Lua, function_call_with_registered_class_ptr)
 
 TEST(Lua, function_call_with_registered_class_val) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function store(foo) globalFoo = foo end");
     state("function getX() return globalFoo:get() end");
 
-    Luaxx::function<void(FunctionFoo)> store = state["store"];
-    Luaxx::function<int()> getX = state["getX"];
+    Er::Lua::function<void(FunctionFoo)> store = state["store"];
+    Er::Lua::function<int()> getX = state["getX"];
     store(FunctionFoo{4});
 
     EXPECT_EQ(getX(), 4);
@@ -213,10 +213,10 @@ TEST(Lua, function_call_with_registered_class_val)
 
 TEST(Lua, function_call_with_registered_class_val_lifetime) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Foo"].SetClass<InstanceCounter>();
     state("function store(foo) globalFoo = foo end");
-    Luaxx::function<void(InstanceCounter)> store = state["store"];
+    Er::Lua::function<void(InstanceCounter)> store = state["store"];
 
     int instanceCountBefore = InstanceCounter::instances;
     store(InstanceCounter{});
@@ -227,17 +227,17 @@ TEST(Lua, function_call_with_registered_class_val_lifetime)
 
 TEST(Lua, function_call_with_nullptr_ref) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function makeNil() return nil end");
-    Luaxx::function<FunctionFoo &()> getFoo = state["makeNil"];
+    Er::Lua::function<FunctionFoo &()> getFoo = state["makeNil"];
     bool error_encounted = false;
 
     try 
     {
         FunctionFoo & foo = getFoo();
     } 
-    catch(Luaxx::TypeError &) 
+    catch(Er::Lua::TypeError &) 
     {
         error_encounted = true;
     }
@@ -248,18 +248,18 @@ TEST(Lua, function_call_with_nullptr_ref)
 
 TEST(Lua, function_call_with_wrong_ref) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state["Bar"].SetClass<FunctionBar>();
     state("function makeBar() return Bar.new() end");
-    Luaxx::function<FunctionFoo &()> getFoo = state["makeBar"];
+    Er::Lua::function<FunctionFoo &()> getFoo = state["makeBar"];
     bool error_encounted = false;
 
     try 
     {
         FunctionFoo & foo = getFoo();
     } 
-    catch(Luaxx::TypeError &) 
+    catch(Er::Lua::TypeError &) 
     {
         error_encounted = true;
     }
@@ -270,21 +270,21 @@ TEST(Lua, function_call_with_wrong_ref)
 
 TEST(Lua, function_call_with_wrong_ptr) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state["Bar"].SetClass<FunctionBar>();
     state("function makeBar() return Bar.new() end");
-    Luaxx::function<FunctionFoo *()> getFoo = state["makeBar"];
+    Er::Lua::function<FunctionFoo *()> getFoo = state["makeBar"];
     EXPECT_FALSE(!!getFoo());
     EXPECT_EQ(state.Size(), 0);
 }
 
 TEST(Lua, function_get_registered_class_by_value) 
 {
-    Luaxx::State state(true);
+    Er::Lua::State state(true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function getFoo() return Foo.new(4) end");
-    Luaxx::function<FunctionFoo()> getFoo = state["getFoo"];
+    Er::Lua::function<FunctionFoo()> getFoo = state["getFoo"];
 
     FunctionFoo foo = getFoo();
 

@@ -15,7 +15,7 @@ extern "C"
 #include <lualib.h>
 }
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 namespace detail 
@@ -98,4 +98,4 @@ std::vector<LuaRef> make_Refs(lua_State* state, Args&&... args)
     return refs;
 }
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}

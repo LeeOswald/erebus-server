@@ -2,7 +2,7 @@
 
 #include "base_fun.hxx"
 
-namespace Luaxx 
+namespace Er::Lua 
 {
 
 template <typename T, typename... Args>
@@ -37,4 +37,4 @@ public:
     }
 };
 
-} // namespace Luaxx {}
+} // namespace Er::Lua {}
