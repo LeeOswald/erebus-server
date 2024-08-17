@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/empty.hxx>
 #include <erebus/stringliteral.hxx>
 #include <erebus/system/time.hxx>
 #include <erebus/util/crc32.hxx>
@@ -39,6 +40,7 @@ concept SupportedPropertyType =
 
 
 using PropertyValueStorage = std::variant<
+    Empty,
     bool,
     int32_t,
     uint32_t,
@@ -53,7 +55,8 @@ using PropertyValueStorage = std::variant<
 enum class PropertyType : std::size_t
 {
     Invalid = std::variant_npos,
-    Bool = 0,
+    Empty = 0,
+    Bool,
     Int32,
     UInt32,
     Int64,
@@ -321,33 +324,29 @@ struct EREBUS_EXPORT Property
 
     template <IsPropertyValue PropertyValueT>
     explicit Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
-        : id(pv.id)
-        , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
-        , value(pv.value)
+        : value(pv.value)
+        , id(pv.id)
     {
     }
 
     template <IsPropertyValue PropertyValueT>
     explicit Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
-        : id(pv.id)
-        , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
-        , value(std::move(pv.value))
+        : value(std::move(pv.value))
+        , id(pv.id)
     {
     }
 
     template <SupportedPropertyType ValueT>
     explicit Property(PropId id, const ValueT& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const ValueT&>))
-        : id(id)
-        , type(PropertyTypeFrom<std::remove_cvref_t<ValueT>>::type)
-        , value(value)
+        : value(value)
+        , id(id)
     {
     }
 
     template <SupportedPropertyType ValueT>
     explicit Property(PropId id, ValueT&& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, ValueT&&>))
-        : id(id)
-        , type(PropertyTypeFrom<std::remove_cvref_t<ValueT>>::type)
-        , value(std::move(value))
+        : value(std::move(value))
+        , id(id)
     {
     }
 
@@ -355,14 +354,12 @@ struct EREBUS_EXPORT Property
     {
         using std::swap;
         swap(a.id, b.id);
-        swap(a.type, b.type);
         a.value.swap(b.value);
     }
 
     Property(const Property& o)
-        : id(o.id)
-        , type(o.type)
-        , value(o.value)
+        : value(o.value)
+        , id(o.id)
     {
     }
 
@@ -374,12 +371,9 @@ struct EREBUS_EXPORT Property
     }
 
     Property(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
-        : id(o.id)
-        , type(o.type)
-        , value(std::move(o.value))
+        : value(std::move(o.value))
+        , id(o.id)
     {
-        // make 'o' empty
-        o.type = PropertyType::Invalid;
     }
 
     Property& operator=(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
@@ -389,30 +383,36 @@ struct EREBUS_EXPORT Property
         return *this;
     }
 
+    constexpr PropertyType type() const noexcept
+    {
+        return static_cast<PropertyType>(value.index());
+    }
+
     constexpr bool empty() const noexcept
     {
-        return type == PropertyType::Invalid;
+        return (value.index() == 0) || (value.index() == std::variant_npos);
     }
 
     friend auto operator==(const Property& a, const Property& b) noexcept
     {
         ErAssert(a.id == b.id);
-        ErAssert(a.type == b.type);
+        ErAssert(a.type() == b.type());
         return a.value == b.value;
     }
 
     friend auto operator<=>(const Property& a, const Property& b) noexcept
     {
         ErAssert(a.id == b.id);
-        ErAssert(a.type == b.type);
+        ErAssert(a.type() == b.type());
         return a.value <=> b.value;
     }
 
     const void* data() const noexcept
     {
-        switch (type)
+        switch (type())
         {
         case PropertyType::Invalid: return nullptr;
+        case PropertyType::Empty: return nullptr;
         case PropertyType::Bool: return std::get_if<bool>(&value);
         case PropertyType::Int32: return std::get_if<int32_t>(&value);
         case PropertyType::UInt32: return std::get_if<uint32_t>(&value);
@@ -436,9 +436,10 @@ struct EREBUS_EXPORT Property
 
     std::size_t size() const noexcept
     {
-        switch (type)
+        switch (type())
         {
         case PropertyType::Invalid: return 0;
+        case PropertyType::Empty: return 0;
         case PropertyType::Bool: return sizeof(bool);
         case PropertyType::Int32: return sizeof(int32_t);
         case PropertyType::UInt32: return sizeof(uint32_t);
@@ -462,9 +463,10 @@ struct EREBUS_EXPORT Property
 
     void format(std::ostream& s) const
     {
-        switch (type)
+        switch (type())
         {
-        case PropertyType::Invalid: s << "<empty>"; break;
+        case PropertyType::Invalid: s << "<invalid>"; break;
+        case PropertyType::Empty: s << "<empty>"; break;
         case PropertyType::Bool: PropertyFormatter<bool>()(std::get<bool>(value), s); break;
         case PropertyType::Int32: PropertyFormatter<int32_t>()(std::get<int32_t>(value), s); break;
         case PropertyType::UInt32: PropertyFormatter<uint32_t>()(std::get<uint32_t>(value), s); break;
@@ -477,9 +479,8 @@ struct EREBUS_EXPORT Property
         }
     }
 
-    PropId id = InvalidPropId;
-    PropertyType type = PropertyType::Invalid;
     PropertyValueStorage value;
+    PropId id = InvalidPropId;
 };
 
 
@@ -531,7 +532,7 @@ struct PropertyInfoWrapper
 
     void format(const Property& v, std::ostream& s) const override
     {
-        if (v.type == PropertyType::Invalid)
+        if (v.type() == PropertyType::Invalid) [[unlikely]]
         {
             s << "<\?\?\?>";
             return;
@@ -542,20 +543,21 @@ struct PropertyInfoWrapper
 
     bool equal(const Property& a, const Property& b) const noexcept override
     {
-        if (a.type == PropertyType::Invalid || b.type == PropertyType::Invalid)
+        if (a.type() == PropertyType::Invalid || b.type() == PropertyType::Invalid) [[unlikely]]
             return false;
 
-        if (a.id != b.id)
+        if (a.id != b.id) [[unlikely]]
             return false;
 
-        ErAssert(a.type == b.type);
+        if (a.type() != b.type()) [[unlikely]]
+            return false;
 
         return PropertyInfo::equal(a.value, b.value);
     }
 
     const void* data(const Property& p) const noexcept override
     {
-        if (p.type == PropertyType::Invalid)
+        if (p.type() == PropertyType::Invalid) [[unlikely]]
             return nullptr;
 
         return PropertyInfo::data(p.value);
@@ -563,7 +565,7 @@ struct PropertyInfoWrapper
 
     std::size_t size(const Property& p) const noexcept override
     {
-        if (p.type == PropertyType::Invalid)
+        if (p.type() == PropertyType::Invalid) [[unlikely]]
             return 0;
 
         return PropertyInfo::size(p.value);

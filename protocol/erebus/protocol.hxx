@@ -19,6 +19,10 @@ namespace Protocol
 namespace Private
 {
 
+inline void assignPropertyImpl(erebus::Property& out, const Empty& val)
+{
+}
+
 inline void assignPropertyImpl(erebus::Property& out, bool val)
 {
     out.set_v_bool(val);
