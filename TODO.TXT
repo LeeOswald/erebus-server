@@ -5,3 +5,8 @@
 - prlimit() to read processes' rlimits
 - remove noexcept unless absolutely necessary
 
+PROTOBUF:
+Reuse message objects when possible. Messages try to keep around any memory they allocate for reuse, even when they are cleared. Thus, if you are handling many messages with the same type and similar structure in succession, it is a good idea to reuse the same message object each time to take load off the memory allocator. However, objects can become bloated over time, especially if your messages vary in “shape” or if you occasionally construct a message that is much larger than usual. You should monitor the sizes of your message objects by calling the SpaceUsed method and delete them once they get too big.
+Your system’s memory allocator may not be well-optimized for allocating lots of small objects from multiple threads. Try using Google’s TCMalloc instead.
+
+
