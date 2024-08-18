@@ -89,12 +89,12 @@ using User = PropertyValue<std::string, ER_PROPID("process.user"), "User Name">;
 using Comm = PropertyValue<std::string, ER_PROPID("process.comm"), "Program Name">;
 using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Command Line">;
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable">;
-using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
+using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
 using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
 using ThreadCount = PropertyValue<int64_t, ER_PROPID("process.nthreads"), "Thread Count">;
-using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
-using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
-using CpuUsage = PropertyValue<double, ER_PROPID("process.cpu_usage"), "%CPU", PropertyComparator<double>, CpuLoadFormatter>;
+using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", CpuTimeFormatter>;
+using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", CpuTimeFormatter>;
+using CpuUsage = PropertyValue<double, ER_PROPID("process.cpu_usage"), "%CPU", CpuLoadFormatter>;
 
 constexpr PropId IndexToProp[] =
 {
@@ -216,25 +216,25 @@ using ErrorText = PropertyValue<std::string, ER_PROPID("processes.global.error_t
 using RequiredFields = PropertyValue<uint64_t, ER_PROPID("processes.global.fields"), "__Fields">;
 
 using ProcessCount = PropertyValue<uint64_t, ER_PROPID("processes.global.process_count"), "Total Processes">;
-using RealTime = PropertyValue<double, ER_PROPID("processes.global.real_time"), "Real Time", PropertyComparator<double>, CpuTimeFormatter>;
-using IdleTime = PropertyValue<double, ER_PROPID("processes.global.idle_time"), "CPU Time (Idle)", PropertyComparator<double>, CpuTimeFormatter>;
-using UserTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
-using SystemTime = PropertyValue<double, ER_PROPID("processes.global.system_time"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
-using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.virtual_time"), "CPU Time (Virtual)", PropertyComparator<double>, CpuTimeFormatter>;
-using TotalTime = PropertyValue<double, ER_PROPID("processes.global.total_time"), "Total CPU Time", PropertyComparator<double>, CpuTimeFormatter>;
+using RealTime = PropertyValue<double, ER_PROPID("processes.global.real_time"), "Real Time", CpuTimeFormatter>;
+using IdleTime = PropertyValue<double, ER_PROPID("processes.global.idle_time"), "CPU Time (Idle)", CpuTimeFormatter>;
+using UserTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (User)", CpuTimeFormatter>;
+using SystemTime = PropertyValue<double, ER_PROPID("processes.global.system_time"), "CPU Time (System)", CpuTimeFormatter>;
+using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.virtual_time"), "CPU Time (Virtual)", CpuTimeFormatter>;
+using TotalTime = PropertyValue<double, ER_PROPID("processes.global.total_time"), "Total CPU Time", CpuTimeFormatter>;
 
-using TotalMem = PropertyValue<uint64_t, ER_PROPID("processes.global.total_mem"), "Total Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using UsedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.used_mem"), "Used Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using BuffersMem = PropertyValue<uint64_t, ER_PROPID("processes.global.buffers_mem"), "Buffers", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using CachedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_mem"), "Cached Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using SharedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.shared_mem"), "Shared Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using AvailableMem = PropertyValue<uint64_t, ER_PROPID("processes.global.avail_mem"), "Available Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using TotalMem = PropertyValue<uint64_t, ER_PROPID("processes.global.total_mem"), "Total Mem", MemUnitFormatter>;
+using UsedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.used_mem"), "Used Mem", MemUnitFormatter>;
+using BuffersMem = PropertyValue<uint64_t, ER_PROPID("processes.global.buffers_mem"), "Buffers", MemUnitFormatter>;
+using CachedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_mem"), "Cached Mem", MemUnitFormatter>;
+using SharedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.shared_mem"), "Shared Mem", MemUnitFormatter>;
+using AvailableMem = PropertyValue<uint64_t, ER_PROPID("processes.global.avail_mem"), "Available Mem", MemUnitFormatter>;
 
-using TotalSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.total_swap"), "Swap Total", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using UsedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.used_swap"), "Swap Used", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using CachedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_swap"), "Swap Cached", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using ZSwapComp = PropertyValue<uint64_t, ER_PROPID("processes.global.comp_zswap"), "ZSwap Compressed", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using ZSwapOrig = PropertyValue<uint64_t, ER_PROPID("processes.global.orig_zswap"), "ZSwap Original", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using TotalSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.total_swap"), "Swap Total", MemUnitFormatter>;
+using UsedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.used_swap"), "Swap Used", MemUnitFormatter>;
+using CachedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_swap"), "Swap Cached", MemUnitFormatter>;
+using ZSwapComp = PropertyValue<uint64_t, ER_PROPID("processes.global.comp_zswap"), "ZSwap Compressed", MemUnitFormatter>;
+using ZSwapOrig = PropertyValue<uint64_t, ER_PROPID("processes.global.orig_zswap"), "ZSwap Original", MemUnitFormatter>;
 
 constexpr PropId IndexToProp[] =
 {

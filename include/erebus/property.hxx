@@ -20,10 +20,6 @@ namespace Er
 using PropId = uint32_t;
 constexpr PropId InvalidPropId = PropId(-1);
 
-
-template <typename T, typename = void>
-struct PropertyComparator;
-
 template <typename T, typename = void>
 struct PropertyFormatter;
 
@@ -120,12 +116,11 @@ struct PropertyTypeFrom<Bytes>
 
 
 
-template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT = PropertyFormatter<ValueT>>
 struct PropertyInfo
 {
     using ValueType = std::decay_t<ValueT>;
     using Id = std::integral_constant<PropId, PrId>;
-    using Comparator = ComparatorT;
     using Formatter = FormatterT;
     
     static constexpr PropertyType type = PropertyTypeFrom<ValueType>::type;
@@ -143,63 +138,12 @@ struct PropertyInfo
             f(*p, s);
         }
     }
-
-    static bool equal(const PropertyValueStorage& a, const PropertyValueStorage& b) noexcept
-    {
-        auto pa = std::get_if<ValueType>(&a);
-        if (!pa)
-            return false;
-
-        auto pb = std::get_if<ValueType>(&b);
-        if (!pb)
-            return false;
-
-        Comparator c;
-        return c(*pa, *pb);
-    }
-
-    static constexpr const void* data(const PropertyValueStorage& v) noexcept
-    {
-        if constexpr (std::is_same_v<ValueType, std::string>)
-        {
-            auto s = std::get_if<std::string>(&v);
-            return s ? s->data() : nullptr;
-        }
-        else if constexpr (std::is_same_v<ValueType, Bytes>)
-        {
-            auto b = std::get_if<Bytes>(&v);
-            return b ? b->data() : nullptr;
-        }
-        else
-        {
-            return std::get_if<ValueType>(&v);
-        }
-    }
-
-    static constexpr std::size_t size(const PropertyValueStorage& v) noexcept
-    {
-        if constexpr (std::is_same_v<ValueType, std::string>)
-        {
-            auto s = std::get_if<std::string>(&v);
-            return s ? s->size() : 0;
-        }
-        else if constexpr (std::is_same_v<ValueType, Bytes>)
-        {
-            auto b = std::get_if<Bytes>(&v);
-            return b ? b->size() : 0;
-        }
-        else
-        {
-            auto p = std::get_if<ValueType>(&v);
-            return p ? sizeof(ValueType) : 0;
-        }
-    }
 };
 
 
-template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT = PropertyFormatter<ValueT>>
 struct PropertyValue final
-    : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
+    : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>
 {
     PropertyValue() noexcept(noexcept(std::is_nothrow_constructible_v<ValueT>))
         : value()
@@ -234,12 +178,6 @@ struct IPropertyInfo;
 EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(PropId id) noexcept;
 EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(const char* id) noexcept;
 
-
-template <std::equality_comparable T>
-struct PropertyComparator<T>
-{
-    bool operator()(const T& a, const T& b) { return a == b; }
-};
 
 
 struct NullPropertyFormatter
@@ -395,15 +333,11 @@ struct EREBUS_EXPORT Property
 
     friend auto operator==(const Property& a, const Property& b) noexcept
     {
-        ErAssert(a.id == b.id);
-        ErAssert(a.type() == b.type());
         return a.value == b.value;
     }
 
     friend auto operator<=>(const Property& a, const Property& b) noexcept
     {
-        ErAssert(a.id == b.id);
-        ErAssert(a.type() == b.type());
         return a.value <=> b.value;
     }
 
@@ -493,9 +427,6 @@ struct IPropertyInfo
     virtual const char* id_str() const noexcept = 0;
     virtual const char* name() const noexcept = 0;
     virtual void format(const Property& v, std::ostream& s) const = 0;
-    virtual bool equal(const Property& a, const Property& b) const noexcept = 0;
-    virtual const void* data(const Property& p) const noexcept = 0;
-    virtual std::size_t size(const Property& p) const noexcept = 0;
 
 protected:
     virtual ~IPropertyInfo() {}
@@ -507,7 +438,6 @@ struct PropertyInfoWrapper
     : public IPropertyInfo
 {
     using PropertyInfo = PropertyInfoT;
-    using Comparator = typename PropertyInfo::Comparator;
     using Formatter = typename PropertyInfo::Formatter;
 
     PropertyType type() const noexcept override
@@ -539,36 +469,6 @@ struct PropertyInfoWrapper
         }
 
         PropertyInfo::format(v.value, s);
-    }
-
-    bool equal(const Property& a, const Property& b) const noexcept override
-    {
-        if (a.type() == PropertyType::Invalid || b.type() == PropertyType::Invalid) [[unlikely]]
-            return false;
-
-        if (a.id != b.id) [[unlikely]]
-            return false;
-
-        if (a.type() != b.type()) [[unlikely]]
-            return false;
-
-        return PropertyInfo::equal(a.value, b.value);
-    }
-
-    const void* data(const Property& p) const noexcept override
-    {
-        if (p.type() == PropertyType::Invalid) [[unlikely]]
-            return nullptr;
-
-        return PropertyInfo::data(p.value);
-    }
-
-    std::size_t size(const Property& p) const noexcept override
-    {
-        if (p.type() == PropertyType::Invalid) [[unlikely]]
-            return 0;
-
-        return PropertyInfo::size(p.value);
     }
 };
 
