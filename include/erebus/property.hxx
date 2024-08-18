@@ -63,6 +63,25 @@ enum class PropertyType : std::size_t
 };
 
 
+struct Property;
+
+struct IPropertyInfo
+{
+    using Ptr = std::shared_ptr<IPropertyInfo>;
+
+    virtual ~IPropertyInfo() {}
+
+    virtual PropertyType type() const noexcept = 0;
+    virtual PropId id() const noexcept = 0;
+    virtual const char* id_str() const noexcept = 0;
+    virtual const char* name() const noexcept = 0;
+    virtual void format(const Property& v, std::ostream& s) const = 0;
+};
+
+EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(PropId id) noexcept;
+EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(const char* id) noexcept;
+
+
 template <typename T>
 struct PropertyTypeFrom;
 
@@ -115,49 +134,99 @@ struct PropertyTypeFrom<Bytes>
 };
 
 
-
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT = PropertyFormatter<ValueT>>
 struct PropertyInfo
+    : public IPropertyInfo
 {
     using ValueType = std::decay_t<ValueT>;
     using Id = std::integral_constant<PropId, PrId>;
     using Formatter = FormatterT;
-    
-    static constexpr PropertyType type = PropertyTypeFrom<ValueType>::type;
-    static constexpr PropId id = Id::value;
-    static constexpr const char* id_str = fromStringLiteral<PrIdStr>();
-    static constexpr const char* name = fromStringLiteral<PrName>();
 
-    static void format(const PropertyValueStorage& v, std::ostream& s)
+    PropertyType type() const noexcept override
     {
-        auto p = std::get_if<ValueType>(&v);
-        ErAssert(p);
-        if (p)
-        {
-            Formatter f;
-            f(*p, s);
-        }
+        return PropertyTypeFrom<ValueType>::type;
     }
+
+    PropId id() const noexcept override
+    {
+        return Id::value;
+    }
+
+    const char* id_str() const noexcept override
+    {
+        return fromStringLiteral<PrIdStr>();
+    }
+
+    const char* name() const noexcept override
+    {
+        return fromStringLiteral<PrName>();
+    }
+
+    void format(const Property& v, std::ostream& s) const override;
 };
 
 
+struct PropertyValueTag
+{
+};
+
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT = PropertyFormatter<ValueT>>
 struct PropertyValue final
-    : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>
 {
+    using Tag = PropertyValueTag;
+    using Info = PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>;
+    using ValueType = ValueT;
+    using Id = std::integral_constant<PropId, PrId>;
+
+    static std::shared_ptr<IPropertyInfo> make_info()
+    {
+        return std::make_shared<Info>();
+    }
+
     PropertyValue() noexcept(noexcept(std::is_nothrow_constructible_v<ValueT>))
-        : value()
+        : m_value()
     {}
 
     constexpr explicit PropertyValue(const ValueT& value) noexcept(std::is_nothrow_copy_constructible_v<ValueT>)
-        : value(value)
+        : m_value(value)
     {}
 
     constexpr explicit PropertyValue(ValueT&& value) noexcept(std::is_nothrow_move_constructible_v<ValueT>)
-        : value(std::move(value))
+        : m_value(std::move(value))
     {}
 
-    ValueT value;
+    static PropertyType type() noexcept
+    {
+        return PropertyTypeFrom<typename Info::ValueType>::type;
+    }
+
+    static PropId id() noexcept
+    {
+        return Info::Id::value;
+    }
+
+    static const char* id_str() noexcept
+    {
+        return fromStringLiteral<PrIdStr>();
+    }
+
+    static const char* name() noexcept
+    {
+        return fromStringLiteral<PrName>();
+    }
+
+    const ValueType& value() const noexcept
+    {
+        return m_value;
+    }
+
+    ValueType& value() noexcept
+    {
+        return m_value;
+    }
+
+private:
+    ValueType m_value;
 };
 
 
@@ -165,19 +234,8 @@ template <typename T>
 concept IsPropertyValue =
     requires
 {
-    typename T::ValueType;
-
-    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().id)>, PropId>;
-    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().value)>, typename T::ValueType>;
+    requires std::same_as<typename T::Tag, PropertyValueTag>;
 };
-
-
-
-struct IPropertyInfo;
-
-EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(PropId id) noexcept;
-EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(const char* id) noexcept;
-
 
 
 struct NullPropertyFormatter
@@ -262,15 +320,15 @@ struct EREBUS_EXPORT Property
 
     template <IsPropertyValue PropertyValueT>
     explicit Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
-        : value(pv.value)
-        , id(pv.id)
+        : value(pv.value())
+        , id(pv.id())
     {
     }
 
     template <IsPropertyValue PropertyValueT>
     explicit Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
-        : value(std::move(pv.value))
-        , id(pv.id)
+        : value(std::move(pv.value()))
+        , id(pv.id())
     {
     }
 
@@ -418,60 +476,21 @@ struct EREBUS_EXPORT Property
 };
 
 
-struct IPropertyInfo
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
+void PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>::format(const Property& v, std::ostream& s) const
 {
-    using Ptr = std::shared_ptr<IPropertyInfo>;
-
-    virtual PropertyType type() const noexcept = 0;
-    virtual PropId id() const noexcept = 0;
-    virtual const char* id_str() const noexcept = 0;
-    virtual const char* name() const noexcept = 0;
-    virtual void format(const Property& v, std::ostream& s) const = 0;
-
-protected:
-    virtual ~IPropertyInfo() {}
-};
-
-
-template <class PropertyInfoT>
-struct PropertyInfoWrapper
-    : public IPropertyInfo
-{
-    using PropertyInfo = PropertyInfoT;
-    using Formatter = typename PropertyInfo::Formatter;
-
-    PropertyType type() const noexcept override
+    auto p = std::get_if<ValueType>(&v.value);
+    if (p) [[likely]]
     {
-        return PropertyInfo::type;
+        Formatter f;
+        f(*p, s);
     }
-
-    PropId id() const noexcept override
+    else
     {
-        return PropertyInfo::id;
+        s << "<\?\?\?>";
+        return;
     }
-
-    const char* id_str() const noexcept override
-    {
-        return PropertyInfo::id_str;
-    }
-
-    const char* name() const noexcept override
-    {
-        return PropertyInfo::name;
-    }
-
-    void format(const Property& v, std::ostream& s) const override
-    {
-        if (v.type() == PropertyType::Invalid) [[unlikely]]
-        {
-            s << "<\?\?\?>";
-            return;
-        }
-
-        PropertyInfo::format(v.value, s);
-    }
-};
-
+}
 
 } // namespace Er {}
 

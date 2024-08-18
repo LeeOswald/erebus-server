@@ -28,14 +28,14 @@ using BytesProp = Er::PropertyValue < Er::Bytes, ER_PROPID("test_bytes"), "Bytes
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<BoolProp>>(), log);
-    Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<Int32Prop>>(), log);
-    Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<UInt32Prop>>(), log);
-    Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<Int64Prop>>(), log);
-    Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<UInt64Prop>>(), log);
-    Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<DoubleProp>>(), log);
-    Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<StringProp>>(), log);
-    Er::registerProperty(std::make_shared<Er::PropertyInfoWrapper<BytesProp>>(), log);
+    Er::registerProperty(BoolProp::make_info(), log);
+    Er::registerProperty(Int32Prop::make_info(), log);
+    Er::registerProperty(UInt32Prop::make_info(), log);
+    Er::registerProperty(Int64Prop::make_info(), log);
+    Er::registerProperty(UInt64Prop::make_info(), log);
+    Er::registerProperty(DoubleProp::make_info(), log);
+    Er::registerProperty(StringProp::make_info(), log);
+    Er::registerProperty(BytesProp::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)

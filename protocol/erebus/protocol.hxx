@@ -120,8 +120,8 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<RemoteSystemDesc>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ServerVersionString>>(), log);
+    registerProperty(RemoteSystemDesc::make_info(), log);
+    registerProperty(ServerVersionString::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)

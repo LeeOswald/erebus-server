@@ -76,11 +76,11 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<Icon>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IconName>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IconSize>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IconState>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Pid>>(), log);
+    registerProperty(Icon::make_info(), log);
+    registerProperty(IconName::make_info(), log);
+    registerProperty(IconSize::make_info(), log);
+    registerProperty(IconState::make_info(), log);
+    registerProperty(Pid::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)

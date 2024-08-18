@@ -150,28 +150,28 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Error>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Valid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IsNew>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IsDeleted>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Pid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<PPid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<PGrp>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Tpgid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Session>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Ruid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<User>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Comm>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<CmdLine>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<StartTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<State>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ThreadCount>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<STime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<CpuUsage>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Tty>>(), log);
+    registerProperty(RequiredFields::make_info(), log);
+    registerProperty(Error::make_info(), log);
+    registerProperty(Valid::make_info(), log);
+    registerProperty(IsNew::make_info(), log);
+    registerProperty(IsDeleted::make_info(), log);
+    registerProperty(Pid::make_info(), log);
+    registerProperty(PPid::make_info(), log);
+    registerProperty(PGrp::make_info(), log);
+    registerProperty(Tpgid::make_info(), log);
+    registerProperty(Session::make_info(), log);
+    registerProperty(Ruid::make_info(), log);
+    registerProperty(User::make_info(), log);
+    registerProperty(Comm::make_info(), log);
+    registerProperty(CmdLine::make_info(), log);
+    registerProperty(Exe::make_info(), log);
+    registerProperty(StartTime::make_info(), log);
+    registerProperty(State::make_info(), log);
+    registerProperty(ThreadCount::make_info(), log);
+    registerProperty(STime::make_info(), log);
+    registerProperty(UTime::make_info(), log);
+    registerProperty(CpuUsage::make_info(), log);
+    registerProperty(Tty::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -291,34 +291,34 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<Pid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Signal>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<PosixResult>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ErrorText>>(), log);
+    registerProperty(Pid::make_info(), log);
+    registerProperty(Signal::make_info(), log);
+    registerProperty(PosixResult::make_info(), log);
+    registerProperty(ErrorText::make_info(), log);
 
-    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Global>>(), log);
+    registerProperty(RequiredFields::make_info(), log);
+    registerProperty(Global::make_info(), log);
     
-    registerProperty(std::make_shared<PropertyInfoWrapper<ProcessCount>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<RealTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IdleTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UserTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<SystemTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<VirtualTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<TotalTime>>(), log);
+    registerProperty(ProcessCount::make_info(), log);
+    registerProperty(RealTime::make_info(), log);
+    registerProperty(IdleTime::make_info(), log);
+    registerProperty(UserTime::make_info(), log);
+    registerProperty(SystemTime::make_info(), log);
+    registerProperty(VirtualTime::make_info(), log);
+    registerProperty(TotalTime::make_info(), log);
 
-    registerProperty(std::make_shared<PropertyInfoWrapper<TotalMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UsedMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<BuffersMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<CachedMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<SharedMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<AvailableMem>>(), log);
+    registerProperty(TotalMem::make_info(), log);
+    registerProperty(UsedMem::make_info(), log);
+    registerProperty(BuffersMem::make_info(), log);
+    registerProperty(CachedMem::make_info(), log);
+    registerProperty(SharedMem::make_info(), log);
+    registerProperty(AvailableMem::make_info(), log);
     
-    registerProperty(std::make_shared<PropertyInfoWrapper<TotalSwap>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UsedSwap>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<CachedSwap>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ZSwapComp>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ZSwapOrig>>(), log);
+    registerProperty(TotalSwap::make_info(), log);
+    registerProperty(UsedSwap::make_info(), log);
+    registerProperty(CachedSwap::make_info(), log);
+    registerProperty(ZSwapComp::make_info(), log);
+    registerProperty(ZSwapOrig::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)

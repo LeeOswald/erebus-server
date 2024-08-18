@@ -34,13 +34,13 @@ inline void resizePropertyBag(PropertyBag& bag, std::size_t size)
 template <IsPropertyValue PropT>
 void addProperty(PropertyBag& bag, typename PropT::ValueType const& v)
 {
-    bag.push_back(Er::Property(PropT::id, v));
+    bag.push_back(Er::Property(PropT::id(), v));
 }
 
 template <IsPropertyValue PropT>
 void addProperty(PropertyBag& bag, typename PropT::ValueType&& v)
 {
-    bag.push_back(Er::Property(PropT::id, std::move(v)));
+    bag.push_back(Er::Property(PropT::id(), std::move(v)));
 }
 
 inline void addProperty(PropertyBag& bag, const Property& prop)
