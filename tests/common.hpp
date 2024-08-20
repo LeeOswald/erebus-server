@@ -16,6 +16,8 @@ extern Er::Log::ILog* g_log;
 namespace TestProps
 {
 
+constexpr const std::string_view Domain = "Test";
+
 using BoolProp = Er::PropertyValue<bool, ER_PROPID("test_bool"), "Bool", Er::PropertyFormatter<bool>>;
 using Int32Prop = Er::PropertyValue<int32_t, ER_PROPID("test_int32"), "Int32", Er::PropertyFormatter<int32_t>>;
 using UInt32Prop = Er::PropertyValue<uint32_t, ER_PROPID("test_uint32"), "UInt32", Er::PropertyFormatter<uint32_t>>;
@@ -28,26 +30,26 @@ using BytesProp = Er::PropertyValue < Er::Bytes, ER_PROPID("test_bytes"), "Bytes
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    Er::registerProperty(BoolProp::make_info(), log);
-    Er::registerProperty(Int32Prop::make_info(), log);
-    Er::registerProperty(UInt32Prop::make_info(), log);
-    Er::registerProperty(Int64Prop::make_info(), log);
-    Er::registerProperty(UInt64Prop::make_info(), log);
-    Er::registerProperty(DoubleProp::make_info(), log);
-    Er::registerProperty(StringProp::make_info(), log);
-    Er::registerProperty(BytesProp::make_info(), log);
+    Er::registerProperty(Domain, BoolProp::make_info(), log);
+    Er::registerProperty(Domain, Int32Prop::make_info(), log);
+    Er::registerProperty(Domain, UInt32Prop::make_info(), log);
+    Er::registerProperty(Domain, Int64Prop::make_info(), log);
+    Er::registerProperty(Domain, UInt64Prop::make_info(), log);
+    Er::registerProperty(Domain, DoubleProp::make_info(), log);
+    Er::registerProperty(Domain, StringProp::make_info(), log);
+    Er::registerProperty(Domain, BytesProp::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
 {
-    Er::unregisterProperty(Er::lookupProperty(BoolProp::Id::value), log);
-    Er::unregisterProperty(Er::lookupProperty(Int32Prop::Id::value), log);
-    Er::unregisterProperty(Er::lookupProperty(UInt32Prop::Id::value), log);
-    Er::unregisterProperty(Er::lookupProperty(Int64Prop::Id::value), log);
-    Er::unregisterProperty(Er::lookupProperty(UInt64Prop::Id::value), log);
-    Er::unregisterProperty(Er::lookupProperty(DoubleProp::Id::value), log);
-    Er::unregisterProperty(Er::lookupProperty(StringProp::Id::value), log);
-    Er::unregisterProperty(Er::lookupProperty(BytesProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, BoolProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, Int32Prop::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, UInt32Prop::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, Int64Prop::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, UInt64Prop::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, DoubleProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, StringProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, BytesProp::Id::value), log);
 }
 
 

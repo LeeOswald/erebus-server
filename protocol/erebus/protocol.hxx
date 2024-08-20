@@ -112,6 +112,8 @@ inline Property getProperty(const erebus::Property& source)
 namespace Props
 {
 
+constexpr const std::string_view Domain = "GenericRequests";
+
 using RemoteSystemDesc = PropertyValue<std::string, ER_PROPID("erebus_remote_sys"), "Remote system">;
 using ServerVersionString = PropertyValue<std::string, ER_PROPID("erebus_server_version"), "Erebus server version">;
 
@@ -120,14 +122,14 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(RemoteSystemDesc::make_info(), log);
-    registerProperty(ServerVersionString::make_info(), log);
+    registerProperty(Domain, RemoteSystemDesc::make_info(), log);
+    registerProperty(Domain, ServerVersionString::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(lookupProperty(RemoteSystemDesc::Id::value), log);
-    unregisterProperty(lookupProperty(ServerVersionString::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, RemoteSystemDesc::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ServerVersionString::Id::value), log);
 }
 
 } // namespace Private {}

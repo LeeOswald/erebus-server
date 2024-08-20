@@ -64,6 +64,8 @@ struct IconFormatter
 namespace Props
 {
 
+constexpr const std::string_view Domain = "Desktop";
+
 using Icon = PropertyValue<Bytes, ER_PROPID("app.icon.png"), "Icon Bytes", IconFormatter>;
 using IconName = PropertyValue<std::string, ER_PROPID("app.icon.name"), "Icon Name">;
 using IconSize = PropertyValue<uint32_t, ER_PROPID("app.icon.size"), "Icon Size">;
@@ -76,20 +78,20 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(Icon::make_info(), log);
-    registerProperty(IconName::make_info(), log);
-    registerProperty(IconSize::make_info(), log);
-    registerProperty(IconState::make_info(), log);
-    registerProperty(Pid::make_info(), log);
+    registerProperty(Domain, Icon::make_info(), log);
+    registerProperty(Domain, IconName::make_info(), log);
+    registerProperty(Domain, IconSize::make_info(), log);
+    registerProperty(Domain, IconState::make_info(), log);
+    registerProperty(Domain, Pid::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(lookupProperty(Icon::Id::value), log);
-    unregisterProperty(lookupProperty(IconName::Id::value), log);
-    unregisterProperty(lookupProperty(IconSize::Id::value), log);
-    unregisterProperty(lookupProperty(IconState::Id::value), log);
-    unregisterProperty(lookupProperty(Pid::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, Icon::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, IconName::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, IconSize::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, IconState::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, Pid::Id::value), log);
 }
 
 

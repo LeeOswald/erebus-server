@@ -16,10 +16,10 @@ EREBUS_EXPORT void finalizeKnownProps();
 } // namespace Private {}
 
 
-EREBUS_EXPORT void registerProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log);
-EREBUS_EXPORT void unregisterProperty(IPropertyInfo::Ptr pi, Er::Log::ILog* log) noexcept;
-EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(PropId id) noexcept;
-EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(const char* id) noexcept;
+EREBUS_EXPORT void registerProperty(std::string_view domain, IPropertyInfo::Ptr pi, Er::Log::ILog* log);
+EREBUS_EXPORT void unregisterProperty(std::string_view domain, IPropertyInfo::Ptr pi, Er::Log::ILog* log) noexcept;
+EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(std::string_view domain, PropId id) noexcept;
+EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(std::string_view domain, const char* id) noexcept;
 
 
 } // namespace Er {}

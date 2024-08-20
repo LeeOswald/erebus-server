@@ -78,8 +78,8 @@ struct IPropertyInfo
     virtual void format(const Property& v, std::ostream& s) const = 0;
 };
 
-EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(PropId id) noexcept;
-EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(const char* id) noexcept;
+EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(std::string_view domain, PropId id) noexcept;
+EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(std::string_view domain, const char* id) noexcept;
 
 
 template <typename T>

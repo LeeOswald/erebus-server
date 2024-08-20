@@ -93,7 +93,7 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
         {
             out << "\n" << indent << smallIndent;
 
-            auto pi = lookupProperty(prop.id);
+            auto pi = lookupProperty(Er::ExceptionProps::Domain, prop.id);
             if (pi)
             {
                 out << pi->name() << ": ";
@@ -101,7 +101,8 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
             }
             else
             {
-                out << Util::format("0x%08x: ???", prop.id);
+                out << "0x" << std::hex << ": ";
+                prop.format(out);
             }
         }
     }

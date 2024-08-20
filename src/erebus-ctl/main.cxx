@@ -31,19 +31,19 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
     for (auto& a: args)
     {
         std::vector<std::string> parts;
-        boost::split(parts, a, boost::is_any_of(":"));
+        boost::split(parts, a, boost::is_any_of(".:"));
         if (parts.size() != 2)
         {
-            ErThrow(Er::Util::format("Invalid format of property_id:value in [%s]", a.c_str()));
+            ErThrow(Er::Util::format("Invalid format of domain.property_id:value in [%s]", a.c_str()));
         }
 
-        auto propInfo = Er::lookupProperty(parts[0].c_str());
+        auto propInfo = Er::lookupProperty(parts[0], parts[1].c_str());
         if (!propInfo)
         {
-            ErThrow(Er::Util::format("Unknown property id [%s]", parts[0].c_str()));
+            ErThrow(Er::Util::format("Unknown property [%s.%s]", parts[0].c_str(), parts[1].c_str()));
         }
 
-        Er::PropId id = ER_PROPID_(parts[0].c_str());
+        Er::PropId id = ER_PROPID_(parts[1].c_str());
 
         switch (propInfo->type())
         {
@@ -51,12 +51,12 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
             {
                 bool v;
 
-                if ((parts[1] == "true") || (parts[1] == "1"))
+                if ((parts[2] == "true") || (parts[2] == "1"))
                     v = true;
-                else if ((parts[1] == "false") || (parts[1] == "0"))
+                else if ((parts[2] == "false") || (parts[2] == "0"))
                     v = false;
                 else
-                    ErThrow(Er::Util::format("Invalid value [%s] for bool property [%s]", parts[1].c_str(), parts[0].c_str()));
+                    ErThrow(Er::Util::format("Invalid value [%s] for bool property [%s.%s]", parts[2].c_str(), parts[0].c_str(), parts[1].c_str()));
 
                 Er::addProperty(parsed, Er::Property(id, v));
             }
@@ -64,45 +64,45 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
 
         case Er::PropertyType::Int32:
             {
-                int32_t v = std::strtol(parts[1].c_str(), nullptr, 10);
+                int32_t v = std::strtol(parts[2].c_str(), nullptr, 10);
                 Er::addProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::Int64:
             {
-                int64_t v = std::strtoll(parts[1].c_str(), nullptr, 10);
+                int64_t v = std::strtoll(parts[2].c_str(), nullptr, 10);
                 Er::addProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::UInt32:
             {
-                uint32_t v = std::strtoul(parts[1].c_str(), nullptr, 10);
+                uint32_t v = std::strtoul(parts[2].c_str(), nullptr, 10);
                 Er::addProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::UInt64:
             {
-                uint64_t v = std::strtoull(parts[1].c_str(), nullptr, 10);
+                uint64_t v = std::strtoull(parts[2].c_str(), nullptr, 10);
                 Er::addProperty(parsed, Er::Property(id, v));
             }
             break;
         
         case Er::PropertyType::Double:
             {
-                double v = std::strtod(parts[1].c_str(), nullptr);
+                double v = std::strtod(parts[2].c_str(), nullptr);
                 Er::addProperty(parsed, Er::Property(id, v));
             }
             break;
 
         case Er::PropertyType::String:
-            Er::addProperty(parsed, Er::Property(id, parts[1]));
+            Er::addProperty(parsed, Er::Property(id, parts[2]));
             break;
 
         default:
-            ErThrow(Er::Util::format("Unsupported property type %d for property [%s]", int(propInfo->type()), parts[0].c_str()));
+            ErThrow(Er::Util::format("Unsupported property type %d for property [%s.%s]", int(propInfo->type()), parts[0].c_str(), parts[1].c_str()));
         }
     }
 
@@ -114,13 +114,14 @@ bool issueRequest(
     Er::Log::ILog* log, 
     const Er::Client::ChannelParams& params, 
     const std::string& request,
+    const std::string& domain,
     const std::vector<std::string>& args,
     int interval
     )
 {
     return Er::protectedCall<bool>(
         log,
-        [log, &params, &request, &args, interval]()
+        [log, &params, &request, &domain, &args, interval]()
         {
             auto channel = Er::Client::createChannel(params);
             auto client = Er::Client::createClient(channel, log);
@@ -131,7 +132,7 @@ bool issueRequest(
 
             while (!g_signalReceived)
             {
-                dumpPropertyBag(result, log);
+                dumpPropertyBag(domain, result, log);
 
                 if (interval <= 0)
                     break;
@@ -154,13 +155,14 @@ bool receiveStream(
     Er::Log::ILog* log, 
     const Er::Client::ChannelParams& params, 
     const std::string& request,
+    const std::string& domain,
     const std::vector<std::string>& args,
     int interval
     )
 {
     return Er::protectedCall<bool>(
         log,
-        [log, &params, &request, &args, interval]()
+        [log, &params, &request, &domain, &args, interval]()
         {
             auto channel = Er::Client::createChannel(params);
             auto client = Er::Client::createClient(channel, log);
@@ -173,7 +175,7 @@ bool receiveStream(
             {
                 for (auto& item : result)
                 {
-                    dumpPropertyBag(item, log);
+                    dumpPropertyBag(domain, item, log);
                     log->write(Er::Log::Level::Info, "------------------------------------------------------");
                 }
 
@@ -216,6 +218,7 @@ int main(int argc, char* argv[])
     int interval = 0;
     std::string outFile;
     std::string request;
+    std::string domain;
     std::string stream;
     std::vector<std::string> args;
 
@@ -237,6 +240,7 @@ int main(int argc, char* argv[])
             ("out", po::value<std::string>(&outFile), "output file name")
             ("request", po::value<std::string>(&request), "request id")
             ("stream", po::value<std::string>(&stream), "stream request id")
+            ("domain", po::value<std::string>(&domain), "domain")
             ("arg", po::value<std::vector<std::string>>(&args), "property id:value")
         ;
 
@@ -286,12 +290,12 @@ int main(int argc, char* argv[])
         
         if (!request.empty())
         {
-            if (issueRequest(&console, params, request, args, interval))
+            if (issueRequest(&console, params, request, domain, args, interval))
                 result = EXIT_SUCCESS;
         }
         else if (!stream.empty())
         {
-            if (receiveStream(&console, params, stream, args, interval))
+            if (receiveStream(&console, params, stream, domain, args, interval))
                 result = EXIT_SUCCESS;
         }
 
