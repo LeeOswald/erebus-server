@@ -20,7 +20,10 @@ struct Registry
         IPropertyInfo::Ptr ptr;
         long ref = 1;
 
-        Entry(IPropertyInfo::Ptr ptr) : ptr(ptr) {}
+        Entry(std::string_view domain, IPropertyInfo::Ptr ptr) 
+            : domain(domain)
+            , ptr(ptr)
+        {}
     };
 
     std::shared_mutex mutex;
@@ -91,7 +94,7 @@ EREBUS_EXPORT void registerProperty(std::string_view domain, IPropertyInfo::Ptr 
     auto existing = _lookupProperty(domain, pi);
     if (existing.first == s_registry->propsById.end())
     {
-        s_registry->propsById.insert({ pi->id(), pi });
+        s_registry->propsById.insert({ pi->id(), { domain, pi } });
         ++success;
     }
     else
@@ -101,7 +104,7 @@ EREBUS_EXPORT void registerProperty(std::string_view domain, IPropertyInfo::Ptr 
 
     if (existing.second == s_registry->propsByName.end())
     {
-        s_registry->propsByName.insert({ pi->id_str(), pi });
+        s_registry->propsByName.insert({ pi->id_str(), { domain, pi } });
         ++success;
     }
     else
