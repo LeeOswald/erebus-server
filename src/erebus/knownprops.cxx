@@ -113,7 +113,7 @@ EREBUS_EXPORT void registerProperty(std::string_view domain, IPropertyInfo::Ptr 
     }
 
     if (success > 0)
-        ErLogDebug(log, "Registered property %08x (%s)", pi->id(), pi->id_str());
+        Er::Log::Debug(log) << "Registered property " << std::hex << std::setw(8) << std::setfill('0') << pi->id() << " (" << domain << "." << pi->id_str() << ")";
 }
 
 EREBUS_EXPORT void unregisterProperty(std::string_view domain, IPropertyInfo::Ptr pi, Er::Log::ILog* log) noexcept
@@ -139,7 +139,7 @@ EREBUS_EXPORT void unregisterProperty(std::string_view domain, IPropertyInfo::Pt
     }
 
     if (success > 0)
-        ErLogDebug(log, "Unregistered property %08x (%s)", pi->id(), pi->id_str());
+        Er::Log::Debug(log) << "Unregistered property " << std::hex << std::setw(8) << std::setfill('0') << pi->id() << " (" << domain << "." << pi->id_str() << ")";
 }
 
 EREBUS_EXPORT IPropertyInfo::Ptr lookupProperty(std::string_view domain, PropId id) noexcept
