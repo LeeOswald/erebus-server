@@ -1,12 +1,12 @@
 #pragma once
 
-#include "exception_handler.hxx"
-#include "function.hxx"
-#include "lua_ref.hxx"
-#include "references.hxx"
-#include "registry.hxx"
-#include "resource_handler.hxx"
-#include "util.hxx"
+#include <erebus/luaxx/luaxx_exception_handler.hxx>
+#include <erebus/luaxx/luaxx_function.hxx>
+#include <erebus/luaxx/luaxx_lua_ref.hxx>
+#include <erebus/luaxx/luaxx_references.hxx>
+#include <erebus/luaxx/luaxx_registry.hxx>
+#include <erebus/luaxx/luaxx_resource_handler.hxx>
+#include <erebus/luaxx/luaxx_util.hxx>
 
 #include <functional>
 #include <string>
@@ -19,7 +19,7 @@ namespace Er::Lua
 
 class State;
 
-class Selector 
+class EREBUS_EXPORT Selector 
 {
     friend class State;
 
@@ -81,33 +81,9 @@ private:
         lua_pop(_state, 1);
     }
 
-    void _check_create_table() const 
-    {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        
-        if (lua_istable(_state, -1) == 0) 
-        {   // not table
-            lua_pop(_state, 1); // flush the stack
-            auto put = [this]() 
-            {
-                lua_newtable(_state);
-            };
+    void _check_create_table() const;
 
-            _traverse();
-            _put(put);
-        }
-    }
-
-    void _traverse() const 
-    {
-        lua_pushglobaltable(_state);
-        for (auto& key : _traversal) 
-        {
-            _get(key);
-        }
-    }
+    void _traverse() const;
 
     template <typename Fun>
     void _evaluate_store(Fun&& push) const 
@@ -117,47 +93,9 @@ private:
         _put(std::forward<Fun>(push));
     }
 
-    void _evaluate_retrieve(int num_results) const 
-    {
-        _traverse();
-        _get();
-        _evaluate_function_call(num_results);
-    }
+    void _evaluate_retrieve(int num_results) const;
 
-    void _evaluate_function_call(int num_ret) const 
-    {
-        if (!_functor_active) return;
-        _functor_active = false;
-
-        // install handler, and swap(handler, function) on lua stack
-        int handler_index = SetErrorHandler(_state);
-        int func_index = handler_index - 1;
-#if LUA_VERSION_NUM >= 502
-        lua_pushvalue(_state, func_index);
-        lua_copy(_state, handler_index, func_index);
-        lua_replace(_state, handler_index);
-#else
-        lua_pushvalue(_state, func_index);
-        lua_push_value(_state, handler_index);
-        lua_replace(_state, func_index);
-        lua_replace(_state, handler_index);
-#endif
-        // call lua function with error handler
-        for (auto const&  arg : _functor_arguments) 
-        {
-            arg.Push(_state);
-        }
-
-        auto const statusCode = lua_pcall(_state, _functor_arguments.size(), num_ret, handler_index - 1);
-
-        // remove error handler
-        lua_remove(_state, handler_index - 1);
-
-        if (statusCode != LUA_OK) 
-        {
-            _exception_handler->Handle_top_of_stack(statusCode, _state);
-        }
-    }
+    void _evaluate_function_call(int num_ret) const;
 
 public:
     Selector(const Selector&) = default;
@@ -165,32 +103,7 @@ public:
     Selector&  operator=(const Selector&) = default;
     Selector&  operator=(Selector&&) = default;
 
-    ~Selector() noexcept(false) 
-    {
-        // If there is a functor is not empty, execute it and collect no args
-        if (_functor_active) 
-        {
-            ResetStackOnScopeExit save(_state);
-            _traverse();
-            _get();
-        
-            if (std::uncaught_exceptions())
-            {
-                try 
-                {
-                    _evaluate_function_call(0);
-                } 
-                catch (...) 
-                {
-                    // We are already unwinding, ignore further exceptions.
-                }
-            } 
-            else 
-            {
-                _evaluate_function_call(0);
-            }
-        }
-    }
+    ~Selector() noexcept(false);
 
     // Allow automatic casting when used in comparisons
     bool operator==(Selector& other) = delete;

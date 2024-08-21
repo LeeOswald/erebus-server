@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-#include <erebus/lua.hxx>
+#include <erebus/luaxx.hxx>
 
 static const std::string test_script = R"(
 function foo()

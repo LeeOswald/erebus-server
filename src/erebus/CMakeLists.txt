@@ -35,30 +35,30 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/lockable.hxx
     ../../include/erebus/log.hxx
     ../../include/erebus/lrucache.hxx
-    ../../include/erebus/lua.hxx
-    ../../include/erebus/luaxx/base_fun.hxx
-    ../../include/erebus/luaxx/class.hxx
-    ../../include/erebus/luaxx/class_fun.hxx
-    ../../include/erebus/luaxx/ctor.hxx
-    ../../include/erebus/luaxx/dtor.hxx
-    ../../include/erebus/luaxx/exception_handler.hxx
-    ../../include/erebus/luaxx/exception_types.hxx
-    ../../include/erebus/luaxx/fun.hxx
-    ../../include/erebus/luaxx/function.hxx
-    ../../include/erebus/luaxx/lua_name.hxx
-    ../../include/erebus/luaxx/lua_ref.hxx
-    ../../include/erebus/luaxx/metatable_registry.hxx
-    ../../include/erebus/luaxx/obj.hxx
-    ../../include/erebus/luaxx/obj_fun.hxx
-    ../../include/erebus/luaxx/primitives.hxx
-    ../../include/erebus/luaxx/references.hxx
-    ../../include/erebus/luaxx/registry.hxx
-    ../../include/erebus/luaxx/resource_handler.hxx
-    ../../include/erebus/luaxx/selector.hxx
-    ../../include/erebus/luaxx/state.hxx
-    ../../include/erebus/luaxx/traits.hxx
-    ../../include/erebus/luaxx/tuple.hxx
-    ../../include/erebus/luaxx/util.hxx
+    ../../include/erebus/luaxx.hxx
+    ../../include/erebus/luaxx/luaxx_base_fun.hxx
+    ../../include/erebus/luaxx/luaxx_class.hxx
+    ../../include/erebus/luaxx/luaxx_class_fun.hxx
+    ../../include/erebus/luaxx/luaxx_ctor.hxx
+    ../../include/erebus/luaxx/luaxx_dtor.hxx
+    ../../include/erebus/luaxx/luaxx_exception_handler.hxx
+    ../../include/erebus/luaxx/luaxx_exception_types.hxx
+    ../../include/erebus/luaxx/luaxx_fun.hxx
+    ../../include/erebus/luaxx/luaxx_function.hxx
+    ../../include/erebus/luaxx/luaxx_lua_name.hxx
+    ../../include/erebus/luaxx/luaxx_lua_ref.hxx
+    ../../include/erebus/luaxx/luaxx_metatable_registry.hxx
+    ../../include/erebus/luaxx/luaxx_obj.hxx
+    ../../include/erebus/luaxx/luaxx_obj_fun.hxx
+    ../../include/erebus/luaxx/luaxx_primitives.hxx
+    ../../include/erebus/luaxx/luaxx_references.hxx
+    ../../include/erebus/luaxx/luaxx_registry.hxx
+    ../../include/erebus/luaxx/luaxx_resource_handler.hxx
+    ../../include/erebus/luaxx/luaxx_selector.hxx
+    ../../include/erebus/luaxx/luaxx_state.hxx
+    ../../include/erebus/luaxx/luaxx_traits.hxx
+    ../../include/erebus/luaxx/luaxx_tuple.hxx
+    ../../include/erebus/luaxx/luaxx_util.hxx
     ../../include/erebus/mutexpool.hxx
     ../../include/erebus/noncopyable.hxx
     ../../include/erebus/platform.hxx
@@ -96,6 +96,13 @@ add_library(${EREBUS_RTLLIB} SHARED
     init.cxx
     knownprops.cxx
     log.cxx
+    luaxx.cxx
+    luaxx/luaxx_base_fun.cxx
+    luaxx/luaxx_exception_handler.cxx
+    luaxx/luaxx_metatable_registry.cxx
+    luaxx/luaxx_selector.cxx
+    luaxx/luaxx_state.cxx
+    luaxx/luaxx_util.cxx
     stacktrace.cxx
     system/process.cxx
     system/thread.cxx

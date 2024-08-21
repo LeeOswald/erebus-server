@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-#include <erebus/lua.hxx>
+#include <erebus/luaxx.hxx>
 
 #include <vector>
 

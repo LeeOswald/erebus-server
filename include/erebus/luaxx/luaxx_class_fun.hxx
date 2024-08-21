@@ -1,8 +1,7 @@
 #pragma once
 
-#include "base_fun.hxx"
+#include <erebus/luaxx/luaxx_base_fun.hxx>
 
-#include <string>
 
 namespace Er::Lua 
 {

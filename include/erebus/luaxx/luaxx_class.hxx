@@ -1,10 +1,10 @@
 #pragma once
 
-#include "class_fun.hxx"
-#include "ctor.hxx"
-#include "dtor.hxx"
-#include "metatable_registry.hxx"
-#include "util.hxx"
+#include <erebus/luaxx/luaxx_class_fun.hxx>
+#include <erebus/luaxx/luaxx_ctor.hxx>
+#include <erebus/luaxx/luaxx_dtor.hxx>
+#include <erebus/luaxx/luaxx_metatable_registry.hxx>
+#include <erebus/luaxx/luaxx_util.hxx>
 
 
 #include <map>

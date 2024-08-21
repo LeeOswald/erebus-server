@@ -1,6 +1,6 @@
 #pragma once
 
-#include "selector.hxx"
+#include <erebus/luaxx/luaxx_selector.hxx>
 
 #include <tuple>
 

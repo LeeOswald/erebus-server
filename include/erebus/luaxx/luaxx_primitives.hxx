@@ -1,8 +1,8 @@
 #pragma once
 
-#include "exception_types.hxx"
-#include "traits.hxx"
-#include "metatable_registry.hxx"
+#include <erebus/luaxx/luaxx_exception_types.hxx>
+#include <erebus/luaxx/luaxx_traits.hxx>
+#include <erebus/luaxx/luaxx_metatable_registry.hxx>
 
 #include <string>
 #include <type_traits>

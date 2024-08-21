@@ -1,11 +1,11 @@
 #pragma once
 
-#include "exception_handler.hxx"
-#include "lua_ref.hxx"
-#include "primitives.hxx"
-#include "references.hxx"
-#include "resource_handler.hxx"
-#include "util.hxx"
+#include <erebus/luaxx/luaxx_exception_handler.hxx>
+#include <erebus/luaxx/luaxx_lua_ref.hxx>
+#include <erebus/luaxx/luaxx_primitives.hxx>
+#include <erebus/luaxx/luaxx_references.hxx>
+#include <erebus/luaxx/luaxx_resource_handler.hxx>
+#include <erebus/luaxx/luaxx_util.hxx>
 
 #include <tuple>
 
