@@ -30,21 +30,6 @@ namespace MetatableRegistry
 
 using TypeID = std::reference_wrapper<const std::type_info>;
 
-namespace detail 
-{
-
-EREBUS_EXPORT void _create_table_in_registry(lua_State* state, const std::string& name);
-
-EREBUS_EXPORT void _push_names_table(lua_State* state);
-
-EREBUS_EXPORT void _push_meta_table(lua_State* state);
-
-EREBUS_EXPORT void _push_typeinfo(lua_State* state, TypeID type);
-
-EREBUS_EXPORT void _get_metatable(lua_State* state, TypeID type);
-
-} // namespace detail {}
-
 
 EREBUS_EXPORT void Create(lua_State* state);
 

@@ -13,31 +13,31 @@ using TypeID = std::reference_wrapper<const std::type_info>;
 namespace detail
 {
 
-EREBUS_EXPORT void _create_table_in_registry(lua_State* state, const std::string& name)
+void _create_table_in_registry(lua_State* state, const std::string& name)
 {
     lua_pushlstring(state, name.c_str(), name.size());
     lua_newtable(state);
     lua_settable(state, LUA_REGISTRYINDEX);
 }
 
-EREBUS_EXPORT void _push_names_table(lua_State* state)
+void _push_names_table(lua_State* state)
 {
     lua_pushliteral(state, "erebus_metatable_names");
     lua_gettable(state, LUA_REGISTRYINDEX);
 }
 
-EREBUS_EXPORT void _push_meta_table(lua_State* state)
+void _push_meta_table(lua_State* state)
 {
     lua_pushliteral(state, "erebus_metatables");
     lua_gettable(state, LUA_REGISTRYINDEX);
 }
 
-EREBUS_EXPORT void _push_typeinfo(lua_State* state, TypeID type)
+void _push_typeinfo(lua_State* state, TypeID type)
 {
     lua_pushlightuserdata(state, const_cast<std::type_info*>(&type.get()));
 }
 
-EREBUS_EXPORT void _get_metatable(lua_State* state, TypeID type)
+void _get_metatable(lua_State* state, TypeID type)
 {
     detail::_push_meta_table(state);
     detail::_push_typeinfo(state, type);
