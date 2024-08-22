@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-#include <erebus/luaxx.hxx>
+#include <erebus/luaxx/luaxx_state.hxx>
 
 struct Bar 
 {

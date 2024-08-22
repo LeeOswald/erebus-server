@@ -1,6 +1,7 @@
 #include "common.hpp"
 
-#include <erebus/luaxx.hxx>
+#include <erebus/luaxx/luaxx_state.hxx>
+#include <erebus/luaxx/luaxx_tuple.hxx>
 
 #include <memory>
 #include <string>

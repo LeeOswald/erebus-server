@@ -48,9 +48,9 @@ using PropertyValueStorage = std::variant<
 >;
 
 
-enum class PropertyType : std::size_t
+enum class PropertyType : uint32_t
 {
-    Invalid = std::variant_npos,
+    Invalid = uint32_t(std::variant_npos),
     Empty = 0,
     Bool,
     Int32,

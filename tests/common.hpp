@@ -5,6 +5,7 @@
 
 #include <erebus/erebus.hxx>
 #include <erebus/knownprops.hxx>
+#include <erebus/luaxx.hxx>
 #include <erebus/syncstream.hxx>
 
 #include <iostream>
@@ -50,6 +51,42 @@ inline void unregisterAll(Er::Log::ILog* log)
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, DoubleProp::Id::value), log);
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, StringProp::Id::value), log);
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, BytesProp::Id::value), log);
+}
+
+inline void registerLuaProps(Er::LuaState& state)
+{
+    Er::Lua::Selector s = state["TestProps"];
+    s["BoolProp"]["id"] = static_cast<uint32_t>(TestProps::BoolProp::id());
+    s["BoolProp"]["id_str"] = std::string(TestProps::BoolProp::id_str());
+    s["BoolProp"]["type"] = static_cast<uint32_t>(TestProps::BoolProp::type());
+
+    s["Int32Prop"]["id"] = static_cast<uint32_t>(TestProps::Int32Prop::id());
+    s["Int32Prop"]["id_str"] = std::string(TestProps::Int32Prop::id_str());
+    s["Int32Prop"]["type"] = static_cast<uint32_t>(TestProps::Int32Prop::type());
+
+    s["UInt32Prop"]["id"] = static_cast<uint32_t>(TestProps::UInt32Prop::id());
+    s["UInt32Prop"]["id_str"] = std::string(TestProps::UInt32Prop::id_str());
+    s["UInt32Prop"]["type"] = static_cast<uint32_t>(TestProps::UInt32Prop::type());
+
+    s["Int64Prop"]["id"] = static_cast<uint32_t>(TestProps::Int64Prop::id());
+    s["Int64Prop"]["id_str"] = std::string(TestProps::Int64Prop::id_str());
+    s["Int64Prop"]["type"] = static_cast<uint32_t>(TestProps::Int64Prop::type());
+
+    s["UInt64Prop"]["id"] = static_cast<uint32_t>(TestProps::UInt64Prop::id());
+    s["UInt64Prop"]["id_str"] = std::string(TestProps::UInt64Prop::id_str());
+    s["UInt64Prop"]["type"] = static_cast<uint32_t>(TestProps::UInt64Prop::type());
+
+    s["DoubleProp"]["id"] = static_cast<uint32_t>(TestProps::DoubleProp::id());
+    s["DoubleProp"]["id_str"] = std::string(TestProps::DoubleProp::id_str());
+    s["DoubleProp"]["type"] = static_cast<uint32_t>(TestProps::DoubleProp::type());
+
+    s["StringProp"]["id"] = static_cast<uint32_t>(TestProps::StringProp::id());
+    s["StringProp"]["id_str"] = std::string(TestProps::StringProp::id_str());
+    s["StringProp"]["type"] = static_cast<uint32_t>(TestProps::StringProp::type());
+
+    s["BytesProp"]["id"] = static_cast<uint32_t>(TestProps::BytesProp::id());
+    s["BytesProp"]["id_str"] = std::string(TestProps::BytesProp::id_str());
+    s["BytesProp"]["type"] = static_cast<uint32_t>(TestProps::BytesProp::type());
 }
 
 
