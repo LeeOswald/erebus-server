@@ -13,13 +13,6 @@
 #include <tuple>
 #include <vector>
 
-namespace Er
-{
-
-class LuaState;
-
-} // namespace Er {}
-
 namespace Er::Lua 
 {
 
@@ -28,7 +21,6 @@ class State;
 class EREBUS_EXPORT Selector 
 {
     friend class State;
-    friend class Er::LuaState;
 
 private:
     lua_State* _state;

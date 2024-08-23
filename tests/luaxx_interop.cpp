@@ -91,35 +91,35 @@ end
 
 TEST(Lua, function_no_args) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["foo"]();
     EXPECT_TRUE(true);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, add) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     int v = state["add"](5, 2);
     EXPECT_EQ(v, 7);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, multi_return) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     int sum, difference;
     Er::Lua::tie(sum, difference) = state["sum_and_difference"](3, 1);
     EXPECT_EQ(sum, 4);
     EXPECT_EQ(difference, 2);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, multi_return_invoked_once) {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     int invocation_count = 0;
     state["two_ints"] = [&invocation_count]()
     {
@@ -129,13 +129,13 @@ TEST(Lua, multi_return_invoked_once) {
     int res_a = 0, res_b = 0;
     Er::Lua::tie(res_a, res_b) = state["two_ints"]();
     EXPECT_EQ(invocation_count, 1);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, heterogeneous_return) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     int x;
     bool y;
     std::string z;
@@ -143,84 +143,84 @@ TEST(Lua, heterogeneous_return)
     EXPECT_EQ(x, 4);
     EXPECT_TRUE(y);
     EXPECT_STREQ(z.c_str(), "hi");
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_field) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     int answer = state["mytable"]["foo"]();
     EXPECT_EQ(answer, 4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_c_function) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["cadd"] = std::function<int(int, int)>(my_add);
     int answer = state["cadd"](3, 6);
     EXPECT_EQ(answer, 9);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_c_fun_from_lua) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["cadd"] = std::function<int(int, int)>(my_add);
     int answer = state["execute"]();
     EXPECT_EQ(answer, 11);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, no_return) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["no_return"] = &no_return;
     state["no_return"]();
     EXPECT_TRUE(true);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_std_fun) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     std::function<int(int, int)> mult = [](int x, int y){ return x * y; };
     state["cmultiply"] = mult;
     int answer = state["cmultiply"](5, 6);
     EXPECT_EQ(answer, 30);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_lambda) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["cmultiply"] = [](int x, int y){ return x * y; };
     int answer = state["cmultiply"](5, 6);
     EXPECT_EQ(answer, 30);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_normal_c_fun) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["cadd"] = &my_add;
     const int answer = state["cadd"](4, 20);
     EXPECT_EQ(answer, 24);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_normal_c_fun_many_times) 
 {
     // Ensures there isn't any strange overflow problem or lingering
     // state
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["cadd"] = &my_add;
     bool result = true;
     for (int i = 0; i < 25; ++i) 
@@ -229,7 +229,7 @@ TEST(Lua, call_normal_c_fun_many_times)
         result = result && (answer == 24);
     }
     EXPECT_TRUE(result);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_functor) 
@@ -243,12 +243,12 @@ TEST(Lua, call_functor)
         }
     };
     the_answer functor;
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["c_the_answer"] = std::function<int()>(functor);
     int answer = state["c_the_answer"]();
     EXPECT_EQ(answer, 42);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 
 }
 
@@ -259,46 +259,46 @@ std::tuple<int, int> my_sum_and_difference(int x, int y)
 
 TEST(Lua, multivalue_c_fun_return) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["test_fun"] = &my_sum_and_difference;
     int sum, difference;
     Er::Lua::tie(sum, difference) = state["test_fun"](-2, 2);
     EXPECT_EQ(sum, 0);
     EXPECT_EQ(difference, -4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, multivalue_c_fun_from_lua) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     state["doozy_c"] = &my_sum_and_difference;
     int answer = state["doozy"](5);
     EXPECT_EQ(answer, -75);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, embedded_nulls) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     const std::string result = state["embedded_nulls"]();
     EXPECT_EQ(result.size(), 4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, coroutine) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     bool check1 = state["resume_co"]() == 1;
     bool check2 = state["resume_co"]() == 2;
     bool check3 = state["resume_co"]() == 3;
     EXPECT_TRUE(check1);
     EXPECT_TRUE(check2);
     EXPECT_TRUE(check3);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 struct Special 
@@ -312,29 +312,29 @@ Special* return_special_pointer() { return &special; }
 
 TEST(Lua, pointer_return) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["return_special_pointer"] = &return_special_pointer;
     Special* p = state["return_special_pointer"]();
     EXPECT_EQ(p, &special);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 Special& return_special_reference() { return special; }
 
 TEST(Lua, reference_return) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["return_special_reference"] = &return_special_reference;
     Special &ref = state["return_special_reference"]();
     EXPECT_EQ(&ref, &special);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 InstanceCounter return_value() { return {}; }
 
 TEST(Lua, return_value) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["MyClass"].SetClass<InstanceCounter>();
     state["return_value"] = &return_value;
     int const instanceCountBeforeCreation = InstanceCounter::instances;
@@ -342,17 +342,17 @@ TEST(Lua, return_value)
     state("globalValue = return_value()");
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, return_unregistered_type) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["return_value"] = &return_value;
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
     bool error_encounted = false;
-    state.HandleExceptionsWith([&error_encounted](int, std::string msg, std::exception_ptr) 
+    state.setExceptionHandler([&error_encounted](int, std::string msg, std::exception_ptr) 
     {
         error_encounted = true;
     });
@@ -360,12 +360,12 @@ TEST(Lua, return_unregistered_type)
     state("globalValue = return_value()");
 
     EXPECT_TRUE(error_encounted);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, value_parameter) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["MyClass"].SetClass<InstanceCounter>();
     state("function acceptValue(value) valCopy = value end");
     int const instanceCountBefore = InstanceCounter::instances;
@@ -373,12 +373,12 @@ TEST(Lua, value_parameter)
     state["acceptValue"](InstanceCounter{});
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBefore + 1);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, wrong_value_parameter) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["MyClass"].SetClass<InstanceCounter>();
     state("function acceptValue(value) valCopy = value end");
     int const instanceCountBefore = InstanceCounter::instances;
@@ -395,12 +395,12 @@ TEST(Lua, wrong_value_parameter)
     }
 
     EXPECT_TRUE(expected);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, value_parameter_keeps_type_info) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["MyClass"].SetClass<Special>();
     state("function acceptValue(value) valCopy = value end");
     state["acceptValue"](Special{});
@@ -408,12 +408,12 @@ TEST(Lua, value_parameter_keeps_type_info)
     Special* foo = state["valCopy"];
 
     EXPECT_TRUE(!!foo);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, callback_with_value) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["MyClass"].SetClass<InstanceCounter>();
     state("val = MyClass.new()");
 
@@ -427,12 +427,12 @@ TEST(Lua, callback_with_value)
     state("accept(val)");
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCall + 1);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, nullptr_to_nil) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["getNullptr"] = []() -> void* 
     {
         return nullptr;
@@ -440,63 +440,63 @@ TEST(Lua, nullptr_to_nil)
     state("x = getNullptr()");
     state("result = x == nil");
     EXPECT_TRUE(static_cast<bool>(state["result"]));
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, get_primitive_by_value) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     EXPECT_EQ(static_cast<int>(state["global1"]), 5);
 }
 
 TEST(Lua, get_primitive_by_const_ref) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     EXPECT_EQ(static_cast<const int &>(state["global1"]), 5);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, get_primitive_by_rvalue_ref) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_script);
     EXPECT_EQ(static_cast<int &&>(state["global1"]), 5);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_with_primitive_by_value) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     bool success = false;
     auto const accept_int_by_value = [&success](int x) {success = x == 5;};
     state["test"] = accept_int_by_value;
     state["test"](5);
     EXPECT_TRUE(success);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_with_primitive_by_const_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     bool success = false;
     auto const accept_int_by_const_ref =
         [&success](const int & x) {success = x == 5;};
     state["test"] = accept_int_by_const_ref;
     state["test"](5);
     EXPECT_TRUE(success);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_with_primitive_by_rvalue_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     bool success = false;
     auto const accept_int_by_rvalue_ref =
         [&success](int && x) {success = x == 5;};
     state["test"] = accept_int_by_rvalue_ref;
     state["test"](5);
     EXPECT_TRUE(success);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }

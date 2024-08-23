@@ -211,72 +211,16 @@ void registerPropertyMethods(Er::LuaState& state)
 
 LuaState::~LuaState()
 {
-    if (m_l)
-    {
-        lua_gc(m_l, LUA_GCCOLLECT, 0);
-        lua_close(m_l);
-    }
 }
     
 LuaState::LuaState(Er::Log::ILog* log)
-    : m_log(log)
-    , m_l(luaL_newstate())
+    : Er::Lua::State(log, true)
 {
-    if (!m_l)
-        throw Er::Exception(ER_HERE(), "Failed to allocate a Lua state");
-
-    luaL_openlibs(m_l);
-
-    m_registry.reset(new Er::Lua::Registry(m_l));
-    m_exceptionHandler.reset(new Er::Lua::ExceptionHandler(
-        [this](int luaStatusCode, std::string msg, std::exception_ptr exception)
-        {
-            exceptionHandler(luaStatusCode, msg, exception);
-        }
-    ));
-
     // craft the global Lua stuff
     PropertyAdapter::registerInt64(*this);
     PropertyAdapter::registerUInt64(*this);
     PropertyAdapter::registerPropertyTypes(*this);
     PropertyAdapter::registerPropertyMethods(*this);
-}
-
-void LuaState::exceptionHandler(int luaStatusCode, std::string msg, std::exception_ptr exception)
-{
-    m_log->writef(Log::Level::Error, "[Lua] %s", msg.c_str());
-}
-
-bool LuaState::loadFromString(std::string_view str, const char* name)
-{
-    Er::Lua::ResetStackOnScopeExit savedStack(m_l);
-    int status = luaL_loadbuffer(m_l, str.data(), str.length(), name);
-#if LUA_VERSION_NUM >= 502
-    auto const lua_ok = LUA_OK;
-#else
-    auto const lua_ok = 0;
-#endif
-    if (status != lua_ok)
-    {
-        if (status == LUA_ERRSYNTAX)
-        {
-            const char* msg = lua_tostring(m_l, -1);
-            m_exceptionHandler->Handle(status, msg ? msg : "Failed to load script");
-        }
-
-        return false;
-    }
-
-    status = lua_pcall(m_l, 0, LUA_MULTRET, 0);
-    if (status == lua_ok)
-    {
-        return true;
-    }
-
-    const char* msg = lua_tostring(m_l, -1);
-    m_exceptionHandler->Handle(status, msg ? msg : "Failed to parse script");
-
-    return false;
 }
 
 

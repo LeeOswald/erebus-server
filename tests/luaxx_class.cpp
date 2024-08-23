@@ -118,21 +118,21 @@ barp = bar : print(2)
 
 TEST(Lua, register_class)
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>("print", &Bar::Print, "get_x", &Bar::GetX);
-    state.LoadFromString(test_class_script);
+    state.loadString(test_class_script);
     int result1 = state["barx"];
     std::string result2 = state["barp"];
     EXPECT_EQ(result1, 8);
     EXPECT_STREQ(result2.c_str(), "8+2");
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, get_member_variable)
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>("x", &Bar::x);
     state("bar = Bar.new(-2)");
@@ -142,12 +142,12 @@ TEST(Lua, get_member_variable)
     bool b = state["tmp"];
     EXPECT_TRUE(b);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, set_member_variable) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>("x", &Bar::x);
     state("bar = Bar.new(-2)");
@@ -155,12 +155,12 @@ TEST(Lua, set_member_variable)
     state("barx = bar:x()");
     EXPECT_EQ(state["barx"], -4);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, class_field_set) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>("set", &Bar::SetX, "get", &Bar::GetX);
     state("bar = Bar.new(4)");
@@ -172,7 +172,7 @@ TEST(Lua, class_field_set)
     EXPECT_TRUE(check1);
     EXPECT_TRUE(check2);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 static const std::string test_gc_script = R"(
@@ -192,25 +192,25 @@ end
 
 TEST(Lua, class_gc) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     gc_counter = 0;
     state["GCTest"].SetClass<GCTest>();
-    state.LoadFromString(test_gc_script);
+    state.loadString(test_gc_script);
     state["make_ten"]();
     const bool check1 = gc_counter == 10;
     state["destroy_ten"]();
-    state.ForceGC();
+    state.forceGC();
     const bool check2 = gc_counter == 0;
     EXPECT_TRUE(check1);
     EXPECT_TRUE(check2);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, ctor_wrong_type) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>();
     state["Zoo"].SetClass<Zoo, Bar*>();
@@ -218,19 +218,19 @@ TEST(Lua, ctor_wrong_type)
     state("bar = Bar.new(4)");
 
     bool error_encounted = false;
-    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+    state.setExceptionHandler([&error_encounted](int, std::string, std::exception_ptr) {
         error_encounted = true;
     });
 
     state("zooAcceptor = ZooAcceptor.new(bar)");
     EXPECT_TRUE(error_encounted);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, pass_wrong_type) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>();
     state["Zoo"].SetClass<Zoo, Bar*>();
@@ -240,19 +240,19 @@ TEST(Lua, pass_wrong_type)
     state("zooAcceptor = ZooAcceptor.new(zoo)");
 
     bool error_encounted = false;
-    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+    state.setExceptionHandler([&error_encounted](int, std::string, std::exception_ptr) {
         error_encounted = true;
     });
 
     state("zooAcceptor:acceptZoo(bar)");
     EXPECT_TRUE(error_encounted);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, pass_pointer) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>();
     state["Zoo"].SetClass<Zoo, Bar*>("get", &Zoo::GetX);
@@ -261,12 +261,12 @@ TEST(Lua, pass_pointer)
     state("zoox = zoo:get()");
     EXPECT_EQ(state["zoox"], 4);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, pass_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["Zoo"].SetClass<Zoo, Bar*>("change_bar", &Zoo::ChangeBar);
@@ -276,12 +276,12 @@ TEST(Lua, pass_ref)
     state("barx = bar:get()");
     EXPECT_EQ(state["barx"], 8);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, return_pointer) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getPtr);
@@ -290,12 +290,12 @@ TEST(Lua, return_pointer)
     state("barx = bar:get()");
     EXPECT_EQ(state["barx"], 4);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, return_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getRef);
@@ -304,12 +304,12 @@ TEST(Lua, return_ref)
     state("barx = bar:get()");
     EXPECT_EQ(state["barx"], 4);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, return_val) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getValue);
@@ -318,12 +318,12 @@ TEST(Lua, return_val)
     state("barx = bar:get()");
     EXPECT_EQ(state["barx"], 4);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, freestanding_fun_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>();
     state("bar = Bar.new(4)");
@@ -332,12 +332,12 @@ TEST(Lua, freestanding_fun_ref)
     std::string s = state["barstring"];
     EXPECT_STREQ(s.c_str(), "4");
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, freestanding_fun_ptr) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["Bar"].SetClass<Bar, int>();
     state("bar = Bar.new(4)");
@@ -346,7 +346,7 @@ TEST(Lua, freestanding_fun_ptr)
     std::string s = state["barstring"];
     EXPECT_STREQ(s.c_str(), "4");
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 struct ConstMemberTest 
@@ -361,7 +361,7 @@ struct ConstMemberTest
 
 TEST(Lua, const_member_function) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["ConstMemberTest"].SetClass<ConstMemberTest>(
         "get_bool", &ConstMemberTest::get_bool);
@@ -369,12 +369,12 @@ TEST(Lua, const_member_function)
     bool b = state["tmp"];
     EXPECT_TRUE(b);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, const_member_variable) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
 
     state["ConstMemberTest"].SetClass<ConstMemberTest>(
         "foo", &ConstMemberTest::foo);
@@ -385,5 +385,5 @@ TEST(Lua, const_member_variable)
     bool b2 = state["tmp2"];
     EXPECT_TRUE(b2);
 
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }

@@ -214,7 +214,7 @@ TEST(Er_PropertyBag, lua)
     Er::LuaState state(g_log);
     TestProps::registerLuaProps(state);
 
-    state.loadFromString(test_property_adapter, "test_property_adapter");
+    state.loadString(test_property_adapter, "test_property_adapter");
     
     {
         Er::Property prop(TestProps::BoolProp::id(), false);

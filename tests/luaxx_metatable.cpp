@@ -27,40 +27,40 @@ end
 
 TEST(Lua, metatable_registry_ptr) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["get_instance"] = &GetQuxPtr;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz);
-    state.LoadFromString(test_metatable_script);
+    state.loadString(test_metatable_script);
     EXPECT_EQ(state["call_method"](), 4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, metatable_registry_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["get_instance"] = &GetQuxRef;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz);
-    state.LoadFromString(test_metatable_script);
+    state.loadString(test_metatable_script);
     EXPECT_EQ(state["call_method"](), 4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, metatable_ptr_member) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["get_instance"] = &GetQuxPtr;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz, "qux", &Qux::qux);
-    state.LoadFromString(test_metatable_script);
+    state.loadString(test_metatable_script);
     EXPECT_EQ(state["access_member"](), 3);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, metatable_ref_member) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["get_instance"] = &GetQuxRef;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz, "qux", &Qux::qux);
-    state.LoadFromString(test_metatable_script);
+    state.loadString(test_metatable_script);
     EXPECT_EQ(state["access_member"](), 3);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }

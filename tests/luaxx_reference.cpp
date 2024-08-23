@@ -68,34 +68,34 @@ end
 
 TEST(Lua, function_reference) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["take_fun_arg"] = &take_fun_arg;
-    state.LoadFromString(test_ref_script);
+    state.loadString(test_ref_script);
     bool check1 = state["pass_add"](3, 5) == 8;
     bool check2 = state["pass_sub"](4, 2) == 2;
     EXPECT_TRUE(check1);
     EXPECT_TRUE(check2);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, function_in_constructor) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Mutator"].SetClass<Mutator, Er::Lua::function<void(int)>>();
-    state.LoadFromString(test_ref_script);
+    state.loadString(test_ref_script);
     bool check1 = state["a"] == 4;
     state("mutator = Mutator.new(mutate_a)");
     bool check2 = state["a"] == -4;
     EXPECT_TRUE(check1);
     EXPECT_TRUE(check2);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, pass_function_to_lua) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Mutator"].SetClass<Mutator>("foobar", &Mutator::Foobar);
-    state.LoadFromString(test_ref_script);
+    state.loadString(test_ref_script);
     state("mutator = Mutator.new()");
     state("mutator:foobar(true, foo, bar)()");
     bool check1 = state["test"] == "foo";
@@ -103,55 +103,55 @@ TEST(Lua, pass_function_to_lua)
     bool check2 = state["test"] == "bar";
     EXPECT_TRUE(check1);
     EXPECT_TRUE(check2);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_returned_lua_function) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_ref_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_ref_script);
     Er::Lua::function<int(int, int)> lua_add = state["add"];
     EXPECT_EQ(lua_add(2, 4), 6);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_multivalue_lua_function) 
 {
-    Er::Lua::State state(true);
-    state.LoadFromString(test_ref_script);
+    Er::Lua::State state(g_log, true);
+    state.loadString(test_ref_script);
     Er::Lua::function<std::tuple<int, int>()> lua_add = state["return_two"];
     EXPECT_EQ(lua_add(), std::make_tuple(1, 2));
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_result_is_alive_ptr) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
     Er::Lua::function<Er::Lua::Pointer<InstanceCounter>()> createObj = state["createObj"];
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
     Er::Lua::Pointer<InstanceCounter> pointer = createObj();
-    state.ForceGC();
+    state.forceGC();
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, call_result_is_alive_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
     Er::Lua::function<Er::Lua::Reference<InstanceCounter>()> createObj = state["createObj"];
     int const instanceCountBeforeCreation = InstanceCounter::instances;
 
     Er::Lua::Reference<InstanceCounter> ref = createObj();
-    state.ForceGC();
+    state.forceGC();
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBeforeCreation + 1);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 struct FunctionFoo 
@@ -174,29 +174,29 @@ struct FunctionBar
 
 TEST(Lua, function_call_with_registered_class) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function getX(foo) return foo:get() end");
     Er::Lua::function<int(FunctionFoo &)> getX = state["getX"];
     FunctionFoo foo{4};
     EXPECT_EQ(getX(foo), 4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, function_call_with_registered_class_ptr) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function getX(foo) return foo:get() end");
     Er::Lua::function<int(FunctionFoo *)> getX = state["getX"];
     FunctionFoo foo{4};
     EXPECT_EQ(getX(&foo), 4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, function_call_with_registered_class_val) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function store(foo) globalFoo = foo end");
     state("function getX() return globalFoo:get() end");
@@ -206,12 +206,12 @@ TEST(Lua, function_call_with_registered_class_val)
     store(FunctionFoo{4});
 
     EXPECT_EQ(getX(), 4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, function_call_with_registered_class_val_lifetime) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Foo"].SetClass<InstanceCounter>();
     state("function store(foo) globalFoo = foo end");
     Er::Lua::function<void(InstanceCounter)> store = state["store"];
@@ -220,12 +220,12 @@ TEST(Lua, function_call_with_registered_class_val_lifetime)
     store(InstanceCounter{});
 
     EXPECT_EQ(InstanceCounter::instances, instanceCountBefore + 1);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, function_call_with_nullptr_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function makeNil() return nil end");
     Er::Lua::function<FunctionFoo &()> getFoo = state["makeNil"];
@@ -241,12 +241,12 @@ TEST(Lua, function_call_with_nullptr_ref)
     }
 
     EXPECT_TRUE(error_encounted);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, function_call_with_wrong_ref) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state["Bar"].SetClass<FunctionBar>();
     state("function makeBar() return Bar.new() end");
@@ -263,23 +263,23 @@ TEST(Lua, function_call_with_wrong_ref)
     }
 
     EXPECT_TRUE(error_encounted);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, function_call_with_wrong_ptr) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state["Bar"].SetClass<FunctionBar>();
     state("function makeBar() return Bar.new() end");
     Er::Lua::function<FunctionFoo *()> getFoo = state["makeBar"];
     EXPECT_FALSE(!!getFoo());
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }
 
 TEST(Lua, function_get_registered_class_by_value) 
 {
-    Er::Lua::State state(true);
+    Er::Lua::State state(g_log, true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function getFoo() return Foo.new(4) end");
     Er::Lua::function<FunctionFoo()> getFoo = state["getFoo"];
@@ -287,5 +287,5 @@ TEST(Lua, function_get_registered_class_by_value)
     FunctionFoo foo = getFoo();
 
     EXPECT_EQ(foo.getX(), 4);
-    EXPECT_EQ(state.Size(), 0);
+    EXPECT_EQ(state.size(), 0);
 }

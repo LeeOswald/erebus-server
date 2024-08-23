@@ -1,64 +1,62 @@
 #pragma once
 
+#include <erebus/log.hxx>
+
 #include <erebus/luaxx/luaxx_exception_handler.hxx>
 #include <erebus/luaxx/luaxx_registry.hxx>
 #include <erebus/luaxx/luaxx_selector.hxx>
-#include <erebus/luaxx/luaxx_util.hxx>
 
-#include <iostream>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <vector>
 
 namespace Er::Lua 
 {
 
 class EREBUS_EXPORT State 
+    : public Er::NonCopyable
 {
-private:
-    lua_State* _l;
-    bool _l_owner;
-    std::unique_ptr<Registry> _registry;
-    std::unique_ptr<ExceptionHandler> _exception_handler;
-
 public:
-    State();
-
-    State(bool should_open_libs);
-    State(lua_State* l);
-
-    State(const State& other) = delete;
-    State& operator=(const State& other) = delete;
-
-    State(State&& other);
-    State& operator=(State&& other);
-    
     ~State();
 
-    int Size() const;
-
-    bool LoadFromFile(const std::string& file);
-    bool LoadFromString(std::string_view str, const char* name = nullptr);
-    void OpenLib(const std::string& modname, lua_CFunction openf);
-
-    void HandleExceptionsPrintingToStdOut();
-    void HandleExceptionsWith(ExceptionHandler::function handler);
-
+    explicit State(Er::Log::ILog* log, bool openLibs);
+    explicit State(Er::Log::ILog* log, lua_State* l);
+    
+    
     Selector operator[](const char* name) const;
     bool operator()(const char* code);
 
-    void ForceGC();
-    uint64_t GetMemUsed();
+    void forceGC()
+    {
+        lua_gc(m_l, LUA_GCCOLLECT, 0);
+    }
 
-    friend std::ostream& operator<<(std::ostream& os, const State& state);
+    uint64_t memUsed()
+    {
+        uint32_t kbytes = lua_gc(m_l, LUA_GCCOUNT, 0);
+        uint32_t bytes = lua_gc(m_l, LUA_GCCOUNTB, 0);
+        return uint64_t(kbytes) * 1024 + bytes;
+    }
+
+    int size() const
+    {
+        return lua_gettop(m_l);
+    }
+
+    void openLib(const std::string& name, lua_CFunction openf);
+    bool loadString(std::string_view str, const char* name = nullptr);
+    bool load(const std::string& fileName);
+
+    void setExceptionHandler(ExceptionHandler::function handler)
+    {
+        *m_exceptionHandler = ExceptionHandler(std::move(handler));
+    }
+
+protected:
+    void exceptionHandler(int luaStatusCode, std::string msg, std::exception_ptr exception);
+
+    Er::Log::ILog* m_log;
+    lua_State* m_l;
+    bool m_owner;
+    std::unique_ptr<Er::Lua::Registry> m_registry;
+    std::unique_ptr<Er::Lua::ExceptionHandler> m_exceptionHandler;
 };
-
-
-inline std::ostream& operator<<(std::ostream& os, const State& state) 
-{
-    os << "Er::Lua::State - " << state._l;
-    return os;
-}
 
 } // namespace Er::Lua {}
