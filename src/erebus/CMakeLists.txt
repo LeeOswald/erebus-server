@@ -45,6 +45,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/luaxx/luaxx_exception_types.hxx
     ../../include/erebus/luaxx/luaxx_fun.hxx
     ../../include/erebus/luaxx/luaxx_function.hxx
+    ../../include/erebus/luaxx/luaxx_int64.hxx
     ../../include/erebus/luaxx/luaxx_lua_name.hxx
     ../../include/erebus/luaxx/luaxx_lua_ref.hxx
     ../../include/erebus/luaxx/luaxx_metatable_registry.hxx
@@ -99,6 +100,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     luaxx.cxx
     luaxx/luaxx_base_fun.cxx
     luaxx/luaxx_exception_handler.cxx
+    luaxx/luaxx_int64.cxx
     luaxx/luaxx_metatable_registry.cxx
     luaxx/luaxx_selector.cxx
     luaxx/luaxx_state.cxx

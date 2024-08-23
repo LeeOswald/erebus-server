@@ -26,6 +26,7 @@ add_executable(
     luaxx_class.cpp
     luaxx_error.cpp
     luaxx_exception.cpp
+    luaxx_int64.cpp
     luaxx_interop.cpp
     luaxx_metatable.cpp
     luaxx_obj.cpp

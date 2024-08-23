@@ -185,11 +185,11 @@ function filter(ev)
         Er.Property.setUInt32(ev, v)
     elseif id == TestProps.Int64Prop.id then
         local v = Er.Property.getInt64(ev)
-        v:add(Er.Int64.new(0, 3))
+        v = v + Er.Int64.new(0, 3)
         Er.Property.setInt64(ev, v)
     elseif id == TestProps.UInt64Prop.id then
         local v = Er.Property.getUInt64(ev)
-        v:add(Er.UInt64.new(0, 4))
+        v = v + Er.UInt64.new(0, 4)
         Er.Property.setUInt64(ev, v)
     elseif id == TestProps.DoubleProp.id then
         local v = Er.Property.getDouble(ev)
