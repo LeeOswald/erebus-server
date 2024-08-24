@@ -99,7 +99,21 @@ EREBUS_EXPORT void registerProperty(std::string_view domain, IPropertyInfo::Ptr 
     }
     else
     {
-        existing.first->second.ref += 1;
+        auto& entry = existing.first->second;
+        if (std::strcmp(entry.ptr->id_str(), pi->id_str()) != 0)
+        {
+            throw Er::Exception(
+                ER_HERE(), 
+                Er::Util::format(
+                    "Trying to register property %s:%08x [%s] while [%s] exists with the same ID", 
+                    std::string(domain).c_str(), 
+                    pi->id(), 
+                    pi->id_str(), 
+                    entry.ptr->id_str()
+            ));
+        }
+
+        entry.ref += 1;
     }
 
     if (existing.second == s_registry->propsByName.end())
@@ -109,7 +123,21 @@ EREBUS_EXPORT void registerProperty(std::string_view domain, IPropertyInfo::Ptr 
     }
     else
     {
-        existing.second->second.ref += 1;
+        auto& entry = existing.first->second;
+        if (entry.ptr->id() != pi->id())
+        {
+            throw Er::Exception(
+                ER_HERE(), 
+                Er::Util::format(
+                    "Trying to register property %s:%08x [%s] while %08x exists with the same name", 
+                    std::string(domain).c_str(), 
+                    pi->id(), 
+                    pi->id_str(), 
+                    entry.ptr->id()
+            ));
+        }
+
+        entry.ref += 1;
     }
 
     if (success > 0)
