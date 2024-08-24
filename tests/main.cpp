@@ -1,6 +1,9 @@
 #include "common.hpp"
 
 #include <erebus/log.hxx>
+#if ER_WINDOWS
+    #include <erebus/util/utf16.hxx>
+#endif
 
 #include <iostream>
 #include <sstream>
@@ -39,6 +42,11 @@ private:
             Er::osyncstream(std::cout) << r->message << std::endl;
         else 
             Er::osyncstream(std::cerr) << r->message << std::endl;
+
+#if ER_WINDOWS && ER_DEBUG
+        if (::IsDebuggerPresent())
+            ::OutputDebugStringW(Er::Util::utf8ToUtf16(r->message).append(L"\n").c_str());
+#endif
     }
 };
 
