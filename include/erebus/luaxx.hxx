@@ -11,6 +11,10 @@ class EREBUS_EXPORT LuaState final
 public:
     ~LuaState();
     explicit LuaState(Er::Log::ILog* log);
+
+private:
+    static int _print(lua_State* L);
+    int print();
 };
 
 
