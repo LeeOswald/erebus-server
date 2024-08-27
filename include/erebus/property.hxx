@@ -62,6 +62,25 @@ enum class PropertyType : uint32_t
     Bytes
 };
 
+constexpr const char* propertyTypeToString(PropertyType type) noexcept
+{
+    switch (type)
+    {
+    case Er::PropertyType::Invalid: return "Invalid";
+    case Er::PropertyType::Empty: return "Empty";
+    case Er::PropertyType::Bool: return "Bool";
+    case Er::PropertyType::Int32: return "Int32";
+    case Er::PropertyType::UInt32: return "UInt32";
+    case Er::PropertyType::Int64: return "Int64";
+    case Er::PropertyType::UInt64: return "UInt64";
+    case Er::PropertyType::Double: return "Double";
+    case Er::PropertyType::String: return "String";
+    case Er::PropertyType::Bytes: return "Bytes";
+    }
+
+    return "<\?\?\?>";
+}
+
 
 struct Property;
 
