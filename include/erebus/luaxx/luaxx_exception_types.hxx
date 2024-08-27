@@ -1,54 +1,49 @@
 #pragma once
 
-#include <exception>
+#include <erebus/exception.hxx>
 
 namespace Er::Lua 
 {
 
-class LuaException 
-    : public std::exception 
+class EREBUS_EXPORT LuaException 
+    : public Er::Exception
 {
+public:
+    LuaException() = default;
+
+    template <typename MessageT>
+    explicit LuaException(Location&& location, MessageT&& message)
+        : Er::Exception(std::move(location), std::forward<MessageT>(message))
+    {}
 };
 
-class TypeError 
+class EREBUS_EXPORT TypeError
     : public LuaException 
 {
-    std::string _message;
-
 public:
-    explicit TypeError(std::string expected)
-      : _message(std::move(expected) + " expected, got no object.") 
+    explicit TypeError(Location&& location, std::string expected)
+      : LuaException(std::move(location), std::move(expected) + " expected, got no object")
     {}
 
-    explicit TypeError(std::string expected, std::string const& actual)
-      : _message(std::move(expected) + " expected, got " + actual + '.') 
+    explicit TypeError(Location&& location, std::string expected, std::string const& actual)
+      : LuaException(std::move(location), std::move(expected) + " expected, got " + actual)
     {}
-
-    char const* what() const noexcept override 
-    {
-        return _message.c_str();
-    }
 };
 
-class CopyUnregisteredType 
+class EREBUS_EXPORT CopyUnregisteredType
     : public LuaException 
 {
 public:
     using TypeID = std::reference_wrapper<const std::type_info>;
     
-    explicit CopyUnregisteredType(TypeID type) 
-        : _type(type) 
+    explicit CopyUnregisteredType(Location&& location, TypeID type)
+        : LuaException(std::move(location), "Tried to copy an object of an unregistered type")
+        , _type(type) 
     {}
 
-    TypeID getType() const
+    TypeID type() const
     {
         return _type;
-    }
-
-    char const* what() const noexcept override 
-    {
-        return "Tried to copy an object of an unregistered type. "
-               "Please register classes before passing instances by value.";
     }
 
 private:

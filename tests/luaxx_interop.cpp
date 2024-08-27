@@ -391,7 +391,7 @@ TEST(Lua, wrong_value_parameter)
     catch(Er::Lua::CopyUnregisteredType& e)
     {
         expected = true;
-        EXPECT_EQ(e.getType().get(), typeid(Special));
+        EXPECT_EQ(e.type().get(), typeid(Special));
     }
 
     EXPECT_TRUE(expected);

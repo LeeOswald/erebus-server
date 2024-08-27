@@ -87,6 +87,7 @@ inline T& _get(_id<T&>, lua_State* l, const int index)
     if (!MetatableRegistry::IsType(l, typeid(T), index)) 
     {
         throw TypeError{
+            ER_HERE(),
             MetatableRegistry::GetTypeName(l, typeid(T)),
             MetatableRegistry::GetTypeName(l, index)
         };
@@ -95,7 +96,7 @@ inline T& _get(_id<T&>, lua_State* l, const int index)
     T* ptr = (T*)lua_topointer(l, index);
     if (ptr == nullptr) 
     {
-        throw TypeError{MetatableRegistry::GetTypeName(l, typeid(T))};
+        throw TypeError{ ER_HERE(), MetatableRegistry::GetTypeName(l, typeid(T))};
     }
 
     return *ptr;
@@ -360,7 +361,7 @@ _push(lua_State* l, T&& t)
 {
     if (!MetatableRegistry::IsRegisteredType(l, typeid(t)))
     {
-        throw CopyUnregisteredType(typeid(t));
+        throw CopyUnregisteredType(ER_HERE(), typeid(t));
     }
 
     void *addr = lua_newuserdata(l, sizeof(T));
