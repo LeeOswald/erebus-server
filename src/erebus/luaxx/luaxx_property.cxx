@@ -1,4 +1,5 @@
 #include <erebus/exception.hxx>
+#include <erebus/knownprops.hxx>
 #include <erebus/property.hxx>
 #include <erebus/util/format.hxx>
 
@@ -154,6 +155,54 @@ void setPropertyBytes(Er::Property& prop, const std::string& val)
 }
 
 
+class PropertyInfoWrapper
+{
+public:
+    explicit PropertyInfoWrapper(const std::string& domain, uint32_t id)
+        : m_pi(Er::lookupProperty(domain, id))
+    {
+    }
+
+    bool valid() const
+    {
+        return !!m_pi;
+    }
+
+    uint32_t type() const
+    {
+        return m_pi ? static_cast<uint32_t>(m_pi->type()) : static_cast<uint32_t>(Er::PropertyType::Invalid);
+    }
+
+    uint32_t id() const
+    {
+        return m_pi ? m_pi->id() : Er::InvalidPropId;
+    }
+
+    std::string id_str() const
+    {
+        return m_pi ? m_pi->id_str() : std::string();
+    }
+
+    std::string name() const
+    {
+        return m_pi ? m_pi->name() : std::string();
+    }
+
+    std::string format(const Er::Property& prop) const
+    {
+        if (!m_pi)
+            return std::string();
+
+        std::ostringstream ss;
+        m_pi->format(prop, ss);
+        return ss.str();
+    }
+
+private:
+    std::shared_ptr<Er::IPropertyInfo> m_pi;
+};
+
+
 } // namespace {}
 
 
@@ -193,6 +242,19 @@ EREBUS_EXPORT void registerPropertyTypes(State& state)
         s["setString"] = &setPropertyString;
         s["getBytes"] = &getPropertyBytes;
         s["setBytes"] = &setPropertyBytes;
+    }
+
+    {
+        Selector s = state["Er"]["PropertyInfo"];
+        s.SetClass<PropertyInfoWrapper, std::string, uint32_t>(
+            "valid", &PropertyInfoWrapper::valid,
+            "type", &PropertyInfoWrapper::type,
+            "id", &PropertyInfoWrapper::id,
+            "id_str", &PropertyInfoWrapper::id_str,
+            "name", &PropertyInfoWrapper::name,
+            "format", &PropertyInfoWrapper::format
+        );
+
     }
 }
 
