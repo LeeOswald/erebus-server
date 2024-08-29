@@ -89,12 +89,12 @@ using User = PropertyValue<std::string, ER_PROPID("process.user"), "User Name">;
 using Comm = PropertyValue<std::string, ER_PROPID("process.comm"), "Program Name">;
 using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Command Line">;
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable">;
-using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", PropertyComparator<uint64_t>, TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
+using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
 using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
 using ThreadCount = PropertyValue<int64_t, ER_PROPID("process.nthreads"), "Thread Count">;
-using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
-using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
-using CpuUsage = PropertyValue<double, ER_PROPID("process.cpu_usage"), "%CPU", PropertyComparator<double>, CpuLoadFormatter>;
+using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", CpuTimeFormatter>;
+using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", CpuTimeFormatter>;
+using CpuUsage = PropertyValue<double, ER_PROPID("process.cpu_usage"), "%CPU", CpuLoadFormatter>;
 
 constexpr PropId IndexToProp[] =
 {
@@ -144,60 +144,61 @@ struct PropIndices
 
 using PropMask = Flags<PropIndices>;
 
+constexpr const std::string_view Domain = "Process";
 
 namespace Private
 {
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Error>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Valid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IsNew>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IsDeleted>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Pid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<PPid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<PGrp>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Tpgid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Session>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Ruid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<User>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Comm>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<CmdLine>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Exe>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<StartTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<State>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ThreadCount>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<STime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<CpuUsage>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Tty>>(), log);
+    registerProperty(Domain, RequiredFields::make_info(), log);
+    registerProperty(Domain, Error::make_info(), log);
+    registerProperty(Domain, Valid::make_info(), log);
+    registerProperty(Domain, IsNew::make_info(), log);
+    registerProperty(Domain, IsDeleted::make_info(), log);
+    registerProperty(Domain, Pid::make_info(), log);
+    registerProperty(Domain, PPid::make_info(), log);
+    registerProperty(Domain, PGrp::make_info(), log);
+    registerProperty(Domain, Tpgid::make_info(), log);
+    registerProperty(Domain, Session::make_info(), log);
+    registerProperty(Domain, Ruid::make_info(), log);
+    registerProperty(Domain, User::make_info(), log);
+    registerProperty(Domain, Comm::make_info(), log);
+    registerProperty(Domain, CmdLine::make_info(), log);
+    registerProperty(Domain, Exe::make_info(), log);
+    registerProperty(Domain, StartTime::make_info(), log);
+    registerProperty(Domain, State::make_info(), log);
+    registerProperty(Domain, ThreadCount::make_info(), log);
+    registerProperty(Domain, STime::make_info(), log);
+    registerProperty(Domain, UTime::make_info(), log);
+    registerProperty(Domain, CpuUsage::make_info(), log);
+    registerProperty(Domain, Tty::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(lookupProperty(ProcessProps::RequiredFields::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Error::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Valid::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::IsNew::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::IsDeleted::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Pid::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::PPid::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::PGrp::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Tpgid::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Session::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Ruid::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::User::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Comm::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::CmdLine::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Exe::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::StartTime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::State::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::ThreadCount::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::STime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::UTime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::CpuUsage::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessProps::Tty::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::RequiredFields::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Error::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Valid::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::IsNew::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::IsDeleted::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Pid::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::PPid::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::PGrp::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Tpgid::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Session::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Ruid::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::User::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Comm::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::CmdLine::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Exe::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::StartTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::State::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::ThreadCount::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::STime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::UTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::CpuUsage::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Tty::Id::value), log);
 }
 
 } // namespace Private {}
@@ -206,6 +207,8 @@ inline void unregisterAll(Er::Log::ILog* log)
 
 namespace ProcessesGlobal
 {
+
+constexpr const std::string_view Domain = "Processes.Global";
 
 using Global = PropertyValue<bool, ER_PROPID("processes.global"), "__Global">;
 using Pid = PropertyValue<uint64_t, ER_PROPID("processes.global.pid"), "PID">;
@@ -216,25 +219,25 @@ using ErrorText = PropertyValue<std::string, ER_PROPID("processes.global.error_t
 using RequiredFields = PropertyValue<uint64_t, ER_PROPID("processes.global.fields"), "__Fields">;
 
 using ProcessCount = PropertyValue<uint64_t, ER_PROPID("processes.global.process_count"), "Total Processes">;
-using RealTime = PropertyValue<double, ER_PROPID("processes.global.real_time"), "Real Time", PropertyComparator<double>, CpuTimeFormatter>;
-using IdleTime = PropertyValue<double, ER_PROPID("processes.global.idle_time"), "CPU Time (Idle)", PropertyComparator<double>, CpuTimeFormatter>;
-using UserTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (User)", PropertyComparator<double>, CpuTimeFormatter>;
-using SystemTime = PropertyValue<double, ER_PROPID("processes.global.system_time"), "CPU Time (System)", PropertyComparator<double>, CpuTimeFormatter>;
-using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.virtual_time"), "CPU Time (Virtual)", PropertyComparator<double>, CpuTimeFormatter>;
-using TotalTime = PropertyValue<double, ER_PROPID("processes.global.total_time"), "Total CPU Time", PropertyComparator<double>, CpuTimeFormatter>;
+using RealTime = PropertyValue<double, ER_PROPID("processes.global.real_time"), "Real Time", CpuTimeFormatter>;
+using IdleTime = PropertyValue<double, ER_PROPID("processes.global.idle_time"), "CPU Time (Idle)", CpuTimeFormatter>;
+using UserTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (User)", CpuTimeFormatter>;
+using SystemTime = PropertyValue<double, ER_PROPID("processes.global.system_time"), "CPU Time (System)", CpuTimeFormatter>;
+using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.virtual_time"), "CPU Time (Virtual)", CpuTimeFormatter>;
+using TotalTime = PropertyValue<double, ER_PROPID("processes.global.total_time"), "Total CPU Time", CpuTimeFormatter>;
 
-using TotalMem = PropertyValue<uint64_t, ER_PROPID("processes.global.total_mem"), "Total Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using UsedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.used_mem"), "Used Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using BuffersMem = PropertyValue<uint64_t, ER_PROPID("processes.global.buffers_mem"), "Buffers", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using CachedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_mem"), "Cached Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using SharedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.shared_mem"), "Shared Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using AvailableMem = PropertyValue<uint64_t, ER_PROPID("processes.global.avail_mem"), "Available Mem", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using TotalMem = PropertyValue<uint64_t, ER_PROPID("processes.global.total_mem"), "Total Mem", MemUnitFormatter>;
+using UsedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.used_mem"), "Used Mem", MemUnitFormatter>;
+using BuffersMem = PropertyValue<uint64_t, ER_PROPID("processes.global.buffers_mem"), "Buffers", MemUnitFormatter>;
+using CachedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_mem"), "Cached Mem", MemUnitFormatter>;
+using SharedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.shared_mem"), "Shared Mem", MemUnitFormatter>;
+using AvailableMem = PropertyValue<uint64_t, ER_PROPID("processes.global.avail_mem"), "Available Mem", MemUnitFormatter>;
 
-using TotalSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.total_swap"), "Swap Total", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using UsedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.used_swap"), "Swap Used", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using CachedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_swap"), "Swap Cached", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using ZSwapComp = PropertyValue<uint64_t, ER_PROPID("processes.global.comp_zswap"), "ZSwap Compressed", PropertyComparator<uint64_t>, MemUnitFormatter>;
-using ZSwapOrig = PropertyValue<uint64_t, ER_PROPID("processes.global.orig_zswap"), "ZSwap Original", PropertyComparator<uint64_t>, MemUnitFormatter>;
+using TotalSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.total_swap"), "Swap Total", MemUnitFormatter>;
+using UsedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.used_swap"), "Swap Used", MemUnitFormatter>;
+using CachedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_swap"), "Swap Cached", MemUnitFormatter>;
+using ZSwapComp = PropertyValue<uint64_t, ER_PROPID("processes.global.comp_zswap"), "ZSwap Compressed", MemUnitFormatter>;
+using ZSwapOrig = PropertyValue<uint64_t, ER_PROPID("processes.global.orig_zswap"), "ZSwap Original", MemUnitFormatter>;
 
 constexpr PropId IndexToProp[] =
 {
@@ -291,66 +294,66 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<Pid>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Signal>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<PosixResult>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ErrorText>>(), log);
+    registerProperty(Domain, Pid::make_info(), log);
+    registerProperty(Domain, Signal::make_info(), log);
+    registerProperty(Domain, PosixResult::make_info(), log);
+    registerProperty(Domain, ErrorText::make_info(), log);
 
-    registerProperty(std::make_shared<PropertyInfoWrapper<RequiredFields>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Global>>(), log);
+    registerProperty(Domain, RequiredFields::make_info(), log);
+    registerProperty(Domain, Global::make_info(), log);
     
-    registerProperty(std::make_shared<PropertyInfoWrapper<ProcessCount>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<RealTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<IdleTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UserTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<SystemTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<VirtualTime>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<TotalTime>>(), log);
+    registerProperty(Domain, ProcessCount::make_info(), log);
+    registerProperty(Domain, RealTime::make_info(), log);
+    registerProperty(Domain, IdleTime::make_info(), log);
+    registerProperty(Domain, UserTime::make_info(), log);
+    registerProperty(Domain, SystemTime::make_info(), log);
+    registerProperty(Domain, VirtualTime::make_info(), log);
+    registerProperty(Domain, TotalTime::make_info(), log);
 
-    registerProperty(std::make_shared<PropertyInfoWrapper<TotalMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UsedMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<BuffersMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<CachedMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<SharedMem>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<AvailableMem>>(), log);
+    registerProperty(Domain, TotalMem::make_info(), log);
+    registerProperty(Domain, UsedMem::make_info(), log);
+    registerProperty(Domain, BuffersMem::make_info(), log);
+    registerProperty(Domain, CachedMem::make_info(), log);
+    registerProperty(Domain, SharedMem::make_info(), log);
+    registerProperty(Domain, AvailableMem::make_info(), log);
     
-    registerProperty(std::make_shared<PropertyInfoWrapper<TotalSwap>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<UsedSwap>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<CachedSwap>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ZSwapComp>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<ZSwapOrig>>(), log);
+    registerProperty(Domain, TotalSwap::make_info(), log);
+    registerProperty(Domain, UsedSwap::make_info(), log);
+    registerProperty(Domain, CachedSwap::make_info(), log);
+    registerProperty(Domain, ZSwapComp::make_info(), log);
+    registerProperty(Domain, ZSwapOrig::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(lookupProperty(ProcessesGlobal::Pid::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::Signal::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::PosixResult::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::ErrorText::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::Pid::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::Signal::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::PosixResult::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::ErrorText::Id::value), log);
     
-    unregisterProperty(lookupProperty(ProcessesGlobal::RequiredFields::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::Global::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::RequiredFields::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::Global::Id::value), log);
     
-    unregisterProperty(lookupProperty(ProcessesGlobal::ProcessCount::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::RealTime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::IdleTime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::UserTime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::SystemTime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::VirtualTime::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::TotalTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::ProcessCount::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::RealTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::IdleTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::UserTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::SystemTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::VirtualTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::TotalTime::Id::value), log);
 
-    unregisterProperty(lookupProperty(ProcessesGlobal::TotalMem::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::UsedMem::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::BuffersMem::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::CachedMem::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::SharedMem::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::AvailableMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::TotalMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::UsedMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::BuffersMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::CachedMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::SharedMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::AvailableMem::Id::value), log);
     
-    unregisterProperty(lookupProperty(ProcessesGlobal::TotalSwap::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::UsedSwap::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::CachedSwap::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::ZSwapComp::Id::value), log);
-    unregisterProperty(lookupProperty(ProcessesGlobal::ZSwapOrig::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::TotalSwap::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::UsedSwap::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::CachedSwap::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::ZSwapComp::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::ZSwapOrig::Id::value), log);
 }
 
 } // namespace Private {}

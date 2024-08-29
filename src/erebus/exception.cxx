@@ -12,22 +12,22 @@ namespace Private
 
 void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(std::make_shared<PropertyInfoWrapper<ResultCode>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<DecodedError>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<FileName>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<DirectoryName>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<PosixErrorCode>>(), log);
-    registerProperty(std::make_shared<PropertyInfoWrapper<Win32ErrorCode>>(), log);
+    registerProperty(ExceptionProps::Domain, ResultCode::make_info(), log);
+    registerProperty(ExceptionProps::Domain, DecodedError::make_info(), log);
+    registerProperty(ExceptionProps::Domain, FileName::make_info(), log);
+    registerProperty(ExceptionProps::Domain, DirectoryName::make_info(), log);
+    registerProperty(ExceptionProps::Domain, PosixErrorCode::make_info(), log);
+    registerProperty(ExceptionProps::Domain, Win32ErrorCode::make_info(), log);
 }
 
 void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(lookupProperty(ResultCode::Id::value), log);
-    unregisterProperty(lookupProperty(DecodedError::Id::value), log);
-    unregisterProperty(lookupProperty(FileName::Id::value), log);
-    unregisterProperty(lookupProperty(DirectoryName::Id::value), log);
-    unregisterProperty(lookupProperty(PosixErrorCode::Id::value), log);
-    unregisterProperty(lookupProperty(Win32ErrorCode::Id::value), log);
+    unregisterProperty(ExceptionProps::Domain, lookupProperty(Domain, ResultCode::Id::value), log);
+    unregisterProperty(ExceptionProps::Domain, lookupProperty(Domain, DecodedError::Id::value), log);
+    unregisterProperty(ExceptionProps::Domain, lookupProperty(Domain, FileName::Id::value), log);
+    unregisterProperty(ExceptionProps::Domain, lookupProperty(Domain, DirectoryName::Id::value), log);
+    unregisterProperty(ExceptionProps::Domain, lookupProperty(Domain, PosixErrorCode::Id::value), log);
+    unregisterProperty(ExceptionProps::Domain, lookupProperty(Domain, Win32ErrorCode::Id::value), log);
 }
 
 } // namespace Private {}

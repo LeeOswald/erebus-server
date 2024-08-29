@@ -28,8 +28,9 @@ void unregisterAll(Er::Log::ILog* log);
 
 } // namespace Private {}
 
+constexpr const std::string_view Domain = "Exception";
 
-using ResultCode = PropertyValue<int32_t, ER_PROPID("erebus_result_code"), "Erebus error code", PropertyComparator<int32_t>, ResultFormatter>;
+using ResultCode = PropertyValue<int32_t, ER_PROPID("erebus_result_code"), "Erebus error code", ResultFormatter>;
 using DecodedError = PropertyValue<std::string, ER_PROPID("decoded_error"), "Error message">;
 using FileName = PropertyValue<std::string, ER_PROPID("file_name"), "File name">;
 using DirectoryName = PropertyValue<std::string, ER_PROPID("directory_name"), "Directory name">;

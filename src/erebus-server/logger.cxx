@@ -120,7 +120,8 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
     message.append("\n");
 
 #if ER_WINDOWS && ER_DEBUG
-    ::OutputDebugStringW(Er::Util::utf8ToUtf16(message).c_str());
+    if (::IsDebuggerPresent())
+        ::OutputDebugStringW(Er::Util::utf8ToUtf16(message).c_str());
 #endif
 
 

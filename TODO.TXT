@@ -10,3 +10,4 @@ Reuse message objects when possible. Messages try to keep around any memory they
 Your system’s memory allocator may not be well-optimized for allocating lots of small objects from multiple threads. Try using Google’s TCMalloc instead.
 
 
+- optimize ini file parsing (iterat throug kv pairs instead of making a prop tree)

@@ -31,7 +31,7 @@ TEST(Er_PropertyBag, simple)
         EXPECT_EQ(*ip, -5);
     }
 
-    // cannnot modify prop
+    // cannot modify prop
     {
         std::string str("another string");
         Er::addProperty<TestProps::StringProp>(bag, std::move(str));
@@ -56,3 +56,5 @@ TEST(Er_PropertyBag, simple)
         EXPECT_TRUE(sd.empty());
     }
 }
+
+

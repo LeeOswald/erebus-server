@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/empty.hxx>
 #include <erebus/stringliteral.hxx>
 #include <erebus/system/time.hxx>
 #include <erebus/util/crc32.hxx>
@@ -19,10 +20,6 @@ namespace Er
 using PropId = uint32_t;
 constexpr PropId InvalidPropId = PropId(-1);
 
-
-template <typename T, typename = void>
-struct PropertyComparator;
-
 template <typename T, typename = void>
 struct PropertyFormatter;
 
@@ -39,6 +36,7 @@ concept SupportedPropertyType =
 
 
 using PropertyValueStorage = std::variant<
+    Empty,
     bool,
     int32_t,
     uint32_t,
@@ -50,10 +48,11 @@ using PropertyValueStorage = std::variant<
 >;
 
 
-enum class PropertyType : std::size_t
+enum class PropertyType : uint32_t
 {
-    Invalid = std::variant_npos,
-    Bool = 0,
+    Invalid = uint32_t(std::variant_npos),
+    Empty = 0,
+    Bool,
     Int32,
     UInt32,
     Int64,
@@ -62,6 +61,44 @@ enum class PropertyType : std::size_t
     String,
     Bytes
 };
+
+constexpr const char* propertyTypeToString(PropertyType type) noexcept
+{
+    switch (type)
+    {
+    case Er::PropertyType::Invalid: return "Invalid";
+    case Er::PropertyType::Empty: return "Empty";
+    case Er::PropertyType::Bool: return "Bool";
+    case Er::PropertyType::Int32: return "Int32";
+    case Er::PropertyType::UInt32: return "UInt32";
+    case Er::PropertyType::Int64: return "Int64";
+    case Er::PropertyType::UInt64: return "UInt64";
+    case Er::PropertyType::Double: return "Double";
+    case Er::PropertyType::String: return "String";
+    case Er::PropertyType::Bytes: return "Bytes";
+    }
+
+    return "<\?\?\?>";
+}
+
+
+struct Property;
+
+struct IPropertyInfo
+{
+    using Ptr = std::shared_ptr<IPropertyInfo>;
+
+    virtual ~IPropertyInfo() {}
+
+    virtual PropertyType type() const noexcept = 0;
+    virtual PropId id() const noexcept = 0;
+    virtual const char* id_str() const noexcept = 0;
+    virtual const char* name() const noexcept = 0;
+    virtual void format(const Property& v, std::ostream& s) const = 0;
+};
+
+EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(std::string_view domain, PropId id) noexcept;
+EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(std::string_view domain, const char* id) noexcept;
 
 
 template <typename T>
@@ -116,101 +153,99 @@ struct PropertyTypeFrom<Bytes>
 };
 
 
-
-template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT = PropertyFormatter<ValueT>>
 struct PropertyInfo
+    : public IPropertyInfo
 {
     using ValueType = std::decay_t<ValueT>;
     using Id = std::integral_constant<PropId, PrId>;
-    using Comparator = ComparatorT;
     using Formatter = FormatterT;
-    
-    static constexpr PropertyType type = PropertyTypeFrom<ValueType>::type;
-    static constexpr PropId id = Id::value;
-    static constexpr const char* id_str = fromStringLiteral<PrIdStr>();
-    static constexpr const char* name = fromStringLiteral<PrName>();
 
-    static void format(const PropertyValueStorage& v, std::ostream& s)
+    PropertyType type() const noexcept override
     {
-        auto p = std::get_if<ValueType>(&v);
-        ErAssert(p);
-        if (p)
-        {
-            Formatter f;
-            f(*p, s);
-        }
+        return PropertyTypeFrom<ValueType>::type;
     }
 
-    static bool equal(const PropertyValueStorage& a, const PropertyValueStorage& b) noexcept
+    PropId id() const noexcept override
     {
-        auto pa = std::get_if<ValueType>(&a);
-        if (!pa)
-            return false;
-
-        auto pb = std::get_if<ValueType>(&b);
-        if (!pb)
-            return false;
-
-        Comparator c;
-        return c(*pa, *pb);
+        return Id::value;
     }
 
-    static constexpr const void* data(const PropertyValueStorage& v) noexcept
+    const char* id_str() const noexcept override
     {
-        if constexpr (std::is_same_v<ValueType, std::string>)
-        {
-            auto s = std::get_if<std::string>(&v);
-            return s ? s->data() : nullptr;
-        }
-        else if constexpr (std::is_same_v<ValueType, Bytes>)
-        {
-            auto b = std::get_if<Bytes>(&v);
-            return b ? b->data() : nullptr;
-        }
-        else
-        {
-            return std::get_if<ValueType>(&v);
-        }
+        return fromStringLiteral<PrIdStr>();
     }
 
-    static constexpr std::size_t size(const PropertyValueStorage& v) noexcept
+    const char* name() const noexcept override
     {
-        if constexpr (std::is_same_v<ValueType, std::string>)
-        {
-            auto s = std::get_if<std::string>(&v);
-            return s ? s->size() : 0;
-        }
-        else if constexpr (std::is_same_v<ValueType, Bytes>)
-        {
-            auto b = std::get_if<Bytes>(&v);
-            return b ? b->size() : 0;
-        }
-        else
-        {
-            auto p = std::get_if<ValueType>(&v);
-            return p ? sizeof(ValueType) : 0;
-        }
+        return fromStringLiteral<PrName>();
     }
+
+    void format(const Property& v, std::ostream& s) const override;
 };
 
 
-template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class ComparatorT = PropertyComparator<ValueT>, class FormatterT = PropertyFormatter<ValueT>>
-struct PropertyValue final
-    : public PropertyInfo<ValueT, PrId, PrIdStr, PrName, ComparatorT, FormatterT>
+struct PropertyValueTag
 {
+};
+
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT = PropertyFormatter<ValueT>>
+struct PropertyValue final
+{
+    using Tag = PropertyValueTag;
+    using Info = PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>;
+    using ValueType = ValueT;
+    using Id = std::integral_constant<PropId, PrId>;
+
+    static std::shared_ptr<IPropertyInfo> make_info()
+    {
+        return std::make_shared<Info>();
+    }
+
     PropertyValue() noexcept(noexcept(std::is_nothrow_constructible_v<ValueT>))
-        : value()
+        : m_value()
     {}
 
     constexpr explicit PropertyValue(const ValueT& value) noexcept(std::is_nothrow_copy_constructible_v<ValueT>)
-        : value(value)
+        : m_value(value)
     {}
 
     constexpr explicit PropertyValue(ValueT&& value) noexcept(std::is_nothrow_move_constructible_v<ValueT>)
-        : value(std::move(value))
+        : m_value(std::move(value))
     {}
 
-    ValueT value;
+    static PropertyType type() noexcept
+    {
+        return PropertyTypeFrom<typename Info::ValueType>::type;
+    }
+
+    static PropId id() noexcept
+    {
+        return Info::Id::value;
+    }
+
+    static const char* id_str() noexcept
+    {
+        return fromStringLiteral<PrIdStr>();
+    }
+
+    static const char* name() noexcept
+    {
+        return fromStringLiteral<PrName>();
+    }
+
+    const ValueType& value() const noexcept
+    {
+        return m_value;
+    }
+
+    ValueType& value() noexcept
+    {
+        return m_value;
+    }
+
+private:
+    ValueType m_value;
 };
 
 
@@ -218,24 +253,7 @@ template <typename T>
 concept IsPropertyValue =
     requires
 {
-    typename T::ValueType;
-
-    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().id)>, PropId>;
-    requires std::same_as<std::remove_cvref_t<decltype(std::declval<T>().value)>, typename T::ValueType>;
-};
-
-
-
-struct IPropertyInfo;
-
-EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(PropId id) noexcept;
-EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(const char* id) noexcept;
-
-
-template <std::equality_comparable T>
-struct PropertyComparator<T>
-{
-    bool operator()(const T& a, const T& b) { return a == b; }
+    requires std::same_as<typename T::Tag, PropertyValueTag>;
 };
 
 
@@ -321,33 +339,29 @@ struct EREBUS_EXPORT Property
 
     template <IsPropertyValue PropertyValueT>
     explicit Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
-        : id(pv.id)
-        , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
-        , value(pv.value)
+        : value(pv.value())
+        , id(pv.id())
     {
     }
 
     template <IsPropertyValue PropertyValueT>
     explicit Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
-        : id(pv.id)
-        , type(PropertyTypeFrom<typename PropertyValueT::ValueType>::type)
-        , value(std::move(pv.value))
+        : value(std::move(pv.value()))
+        , id(pv.id())
     {
     }
 
     template <SupportedPropertyType ValueT>
     explicit Property(PropId id, const ValueT& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const ValueT&>))
-        : id(id)
-        , type(PropertyTypeFrom<std::remove_cvref_t<ValueT>>::type)
-        , value(value)
+        : value(value)
+        , id(id)
     {
     }
 
     template <SupportedPropertyType ValueT>
     explicit Property(PropId id, ValueT&& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, ValueT&&>))
-        : id(id)
-        , type(PropertyTypeFrom<std::remove_cvref_t<ValueT>>::type)
-        , value(std::move(value))
+        : value(std::move(value))
+        , id(id)
     {
     }
 
@@ -355,14 +369,12 @@ struct EREBUS_EXPORT Property
     {
         using std::swap;
         swap(a.id, b.id);
-        swap(a.type, b.type);
         a.value.swap(b.value);
     }
 
     Property(const Property& o)
-        : id(o.id)
-        , type(o.type)
-        , value(o.value)
+        : value(o.value)
+        , id(o.id)
     {
     }
 
@@ -374,12 +386,9 @@ struct EREBUS_EXPORT Property
     }
 
     Property(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
-        : id(o.id)
-        , type(o.type)
-        , value(std::move(o.value))
+        : value(std::move(o.value))
+        , id(o.id)
     {
-        // make 'o' empty
-        o.type = PropertyType::Invalid;
     }
 
     Property& operator=(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
@@ -389,30 +398,32 @@ struct EREBUS_EXPORT Property
         return *this;
     }
 
+    constexpr PropertyType type() const noexcept
+    {
+        return static_cast<PropertyType>(value.index());
+    }
+
     constexpr bool empty() const noexcept
     {
-        return type == PropertyType::Invalid;
+        return (value.index() == 0) || (value.index() == std::variant_npos);
     }
 
     friend auto operator==(const Property& a, const Property& b) noexcept
     {
-        ErAssert(a.id == b.id);
-        ErAssert(a.type == b.type);
         return a.value == b.value;
     }
 
     friend auto operator<=>(const Property& a, const Property& b) noexcept
     {
-        ErAssert(a.id == b.id);
-        ErAssert(a.type == b.type);
         return a.value <=> b.value;
     }
 
     const void* data() const noexcept
     {
-        switch (type)
+        switch (type())
         {
         case PropertyType::Invalid: return nullptr;
+        case PropertyType::Empty: return nullptr;
         case PropertyType::Bool: return std::get_if<bool>(&value);
         case PropertyType::Int32: return std::get_if<int32_t>(&value);
         case PropertyType::UInt32: return std::get_if<uint32_t>(&value);
@@ -436,9 +447,10 @@ struct EREBUS_EXPORT Property
 
     std::size_t size() const noexcept
     {
-        switch (type)
+        switch (type())
         {
         case PropertyType::Invalid: return 0;
+        case PropertyType::Empty: return 0;
         case PropertyType::Bool: return sizeof(bool);
         case PropertyType::Int32: return sizeof(int32_t);
         case PropertyType::UInt32: return sizeof(uint32_t);
@@ -462,9 +474,10 @@ struct EREBUS_EXPORT Property
 
     void format(std::ostream& s) const
     {
-        switch (type)
+        switch (type())
         {
-        case PropertyType::Invalid: s << "<empty>"; break;
+        case PropertyType::Invalid: s << "<invalid>"; break;
+        case PropertyType::Empty: s << "<empty>"; break;
         case PropertyType::Bool: PropertyFormatter<bool>()(std::get<bool>(value), s); break;
         case PropertyType::Int32: PropertyFormatter<int32_t>()(std::get<int32_t>(value), s); break;
         case PropertyType::UInt32: PropertyFormatter<uint32_t>()(std::get<uint32_t>(value), s); break;
@@ -477,99 +490,26 @@ struct EREBUS_EXPORT Property
         }
     }
 
-    PropId id = InvalidPropId;
-    PropertyType type = PropertyType::Invalid;
     PropertyValueStorage value;
+    PropId id = InvalidPropId;
 };
 
 
-struct IPropertyInfo
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
+void PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>::format(const Property& v, std::ostream& s) const
 {
-    using Ptr = std::shared_ptr<IPropertyInfo>;
-
-    virtual PropertyType type() const noexcept = 0;
-    virtual PropId id() const noexcept = 0;
-    virtual const char* id_str() const noexcept = 0;
-    virtual const char* name() const noexcept = 0;
-    virtual void format(const Property& v, std::ostream& s) const = 0;
-    virtual bool equal(const Property& a, const Property& b) const noexcept = 0;
-    virtual const void* data(const Property& p) const noexcept = 0;
-    virtual std::size_t size(const Property& p) const noexcept = 0;
-
-protected:
-    virtual ~IPropertyInfo() {}
-};
-
-
-template <class PropertyInfoT>
-struct PropertyInfoWrapper
-    : public IPropertyInfo
-{
-    using PropertyInfo = PropertyInfoT;
-    using Comparator = typename PropertyInfo::Comparator;
-    using Formatter = typename PropertyInfo::Formatter;
-
-    PropertyType type() const noexcept override
+    auto p = std::get_if<ValueType>(&v.value);
+    if (p) [[likely]]
     {
-        return PropertyInfo::type;
+        Formatter f;
+        f(*p, s);
     }
-
-    PropId id() const noexcept override
+    else
     {
-        return PropertyInfo::id;
+        s << "<\?\?\?>";
+        return;
     }
-
-    const char* id_str() const noexcept override
-    {
-        return PropertyInfo::id_str;
-    }
-
-    const char* name() const noexcept override
-    {
-        return PropertyInfo::name;
-    }
-
-    void format(const Property& v, std::ostream& s) const override
-    {
-        if (v.type == PropertyType::Invalid)
-        {
-            s << "<\?\?\?>";
-            return;
-        }
-
-        PropertyInfo::format(v.value, s);
-    }
-
-    bool equal(const Property& a, const Property& b) const noexcept override
-    {
-        if (a.type == PropertyType::Invalid || b.type == PropertyType::Invalid)
-            return false;
-
-        if (a.id != b.id)
-            return false;
-
-        ErAssert(a.type == b.type);
-
-        return PropertyInfo::equal(a.value, b.value);
-    }
-
-    const void* data(const Property& p) const noexcept override
-    {
-        if (p.type == PropertyType::Invalid)
-            return nullptr;
-
-        return PropertyInfo::data(p.value);
-    }
-
-    std::size_t size(const Property& p) const noexcept override
-    {
-        if (p.type == PropertyType::Invalid)
-            return 0;
-
-        return PropertyInfo::size(p.value);
-    }
-};
-
+}
 
 } // namespace Er {}
 
