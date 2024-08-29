@@ -40,6 +40,7 @@ struct IntegerWrapper<T, std::enable_if_t<std::is_integral<T>::value && (sizeof(
     static constexpr bool __lt(const IntegerWrapper& a, const IntegerWrapper& b) { return (a.value < b.value); }
     static constexpr bool __gt(const IntegerWrapper& a, const IntegerWrapper& b) { return (a.value > b.value); }
     static constexpr bool __le(const IntegerWrapper& a, const IntegerWrapper& b) { return (a.value <= b.value); }
+    static std::string __tostring(const IntegerWrapper& a) { return std::to_string(a.value); }
 };
 
 using Int64Wrapper = IntegerWrapper<int64_t>;

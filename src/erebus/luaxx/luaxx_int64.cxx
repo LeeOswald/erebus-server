@@ -4,32 +4,6 @@
 namespace Er::Lua
 {
 
-static Int64Wrapper getInt64(void* p)
-{
-    return Int64Wrapper(p ? *static_cast<int64_t*>(p) : 0);
-}
-
-static void setInt64(void* p, const Int64Wrapper& v)
-{
-    if (p)
-    {
-        *static_cast<int64_t*>(p) = v.value;
-    }
-}
-
-static UInt64Wrapper getUInt64(void* p)
-{
-    return UInt64Wrapper(p ? *static_cast<uint64_t*>(p) : 0);
-}
-
-static void setUInt64(void* p, const UInt64Wrapper& v)
-{
-    if (p)
-    {
-        *static_cast<uint64_t*>(p) = v.value;
-    }
-}
-
 EREBUS_EXPORT void registerInt64(State& state)
 {
     Selector s = state["Er"]["Int64"];
@@ -51,9 +25,7 @@ EREBUS_EXPORT void registerInt64(State& state)
     s["__lt"] = &Int64Wrapper::__lt;
     s["__gt"] = &Int64Wrapper::__gt;
     s["__le"] = &Int64Wrapper::__le;
-
-    state["Er"]["getInt64"] = &getInt64;
-    state["Er"]["setInt64"] = &setInt64;
+    s["__tostring"] = &Int64Wrapper::__tostring;
 }
 
 EREBUS_EXPORT void registerUInt64(State& state)
@@ -77,9 +49,7 @@ EREBUS_EXPORT void registerUInt64(State& state)
     s["__lt"] = &UInt64Wrapper::__lt;
     s["__gt"] = &UInt64Wrapper::__gt;
     s["__le"] = &UInt64Wrapper::__le;
-
-    state["Er"]["getUInt64"] = &getUInt64;
-    state["Er"]["setUInt64"] = &setUInt64;
+    s["__tostring"] = &UInt64Wrapper::__tostring;
 }
 
 
