@@ -24,7 +24,7 @@ using File = AutoPtr<FILE, decltype([](FILE* f) { std::fclose(f); })>;
 } // namespace {}
 
 
-EREBUS_EXPORT Bytes loadBinaryFile(const std::string& path)
+EREBUS_EXPORT Binary loadBinaryFile(const std::string& path)
 {
     File f(std::fopen(path.c_str(), "rb"));
     if (!f)
@@ -38,7 +38,7 @@ EREBUS_EXPORT Bytes loadBinaryFile(const std::string& path)
 
     if (size <= 0)
     {
-        return Bytes();
+        return Binary();
     }
 
     std::string buffer;
@@ -50,7 +50,7 @@ EREBUS_EXPORT Bytes loadBinaryFile(const std::string& path)
         buffer.resize(rd);
     }
 
-    return Bytes(std::move(buffer));
+    return Binary(std::move(buffer));
 }
 
 EREBUS_EXPORT std::string loadTextFile(const std::string& path)

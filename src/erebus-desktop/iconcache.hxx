@@ -33,7 +33,7 @@ public:
     struct IconData
     {
         Er::Desktop::IconState state;
-        Er::Bytes raw;
+        Er::Binary raw;
 
         IconData(Er::Desktop::IconState state)
             : state(state)

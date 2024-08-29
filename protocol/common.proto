@@ -22,7 +22,7 @@ message Property {
     double v_double = 6;
     bool v_bool = 7;
     string v_string = 8;
-    bytes v_bytes = 9;
+    bytes v_binary = 9;
     Void v_void = 10;
   }
 }

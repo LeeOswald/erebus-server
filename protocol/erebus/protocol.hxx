@@ -58,9 +58,9 @@ inline void assignPropertyImpl(erebus::Property& out, const std::string& val)
     out.set_v_string(val);
 }
 
-inline void assignPropertyImpl(erebus::Property& out, const Bytes& val)
+inline void assignPropertyImpl(erebus::Property& out, const Binary& val)
 {
-    out.set_v_bytes(val.bytes());
+    out.set_v_binary(val.bytes());
 }
 
 } // namespace Private {}
@@ -103,8 +103,8 @@ inline Property getProperty(const erebus::Property& source)
         return Property(PropId(id), source.v_double());
     else if (source.has_v_string())
         return Property(PropId(id), source.v_string());
-    else if (source.has_v_bytes())
-        return Property(PropId(id), Er::Bytes(source.v_bytes()));
+    else if (source.has_v_binary())
+        return Property(PropId(id), Er::Binary(source.v_binary()));
     else
         ErThrow(Er::Util::format("Unsupported property %08x", id));
 }

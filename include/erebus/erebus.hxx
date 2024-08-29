@@ -50,44 +50,44 @@ private:
 // binary string for use with gRPC 'bytes' type
 //
 
-struct EREBUS_EXPORT Bytes final
+struct EREBUS_EXPORT Binary final
 {
-    Bytes() noexcept
+    Binary() noexcept
     {}
 
-    Bytes(const Bytes& b)
+    Binary(const Binary& b)
         : m_bytes(b.m_bytes)
     {}
 
-    Bytes(Bytes&& b) noexcept
+    Binary(Binary&& b) noexcept
         : m_bytes(std::move(b.m_bytes))
     {}
 
     template <typename StringT>
-    explicit Bytes(StringT&& s) noexcept
+    explicit Binary(StringT&& s) noexcept
         : m_bytes(std::forward<StringT>(s))
     {}
 
-    Bytes& operator=(const Bytes& o)
+    Binary& operator=(const Binary& o)
     {
-        Bytes tmp(o);
+        Binary tmp(o);
         m_bytes.swap(tmp.m_bytes);
         return *this;
     }
 
-    Bytes& operator=(Bytes&& o) noexcept
+    Binary& operator=(Binary&& o) noexcept
     {
-        Bytes tmp(std::move(o));
+        Binary tmp(std::move(o));
         m_bytes.swap(tmp.m_bytes);
         return *this;
     }
 
-    friend auto operator==(const Bytes& a, const Bytes& b) noexcept
+    friend auto operator==(const Binary& a, const Binary& b) noexcept
     {
         return a.m_bytes == b.m_bytes;
     }
 
-    friend auto operator<=>(const Bytes& a, const Bytes& b) noexcept
+    friend auto operator<=>(const Binary& a, const Binary& b) noexcept
     {
         return a.m_bytes <=> b.m_bytes;
     }
@@ -113,7 +113,7 @@ struct EREBUS_EXPORT Bytes final
     }
 
     template <class OStreamT>
-    friend OStreamT& operator<<(OStreamT& ostream, const Bytes& bytes)
+    friend OStreamT& operator<<(OStreamT& ostream, const Binary& bytes)
     {
         static const char HexDigits[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
         bool first = true;

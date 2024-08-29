@@ -185,20 +185,20 @@ TEST(Er_Property, constructFromPropertyValue)
     }
 
     {
-        TestProps::BytesProp b0(Er::Bytes("aaa.a"));
+        TestProps::BinaryProp b0(Er::Binary("aaa.a"));
         Er::Property prop0(b0);
-        EXPECT_EQ(prop0.id, TestProps::BytesProp::Id::value);
-        EXPECT_EQ(prop0.type(), Er::PropertyType::Bytes);
-        EXPECT_STREQ(std::get<Er::Bytes>(prop0.value).bytes().c_str(), "aaa.a");
+        EXPECT_EQ(prop0.id, TestProps::BinaryProp::Id::value);
+        EXPECT_EQ(prop0.type(), Er::PropertyType::Binary);
+        EXPECT_STREQ(std::get<Er::Binary>(prop0.value).bytes().c_str(), "aaa.a");
 
-        Er::Property prop2(TestProps::BytesProp(Er::Bytes("b.bbb")));
-        EXPECT_EQ(prop2.id, TestProps::BytesProp::Id::value);
-        EXPECT_EQ(prop2.type(), Er::PropertyType::Bytes);
-        EXPECT_STREQ(std::get<Er::Bytes>(prop2.value).bytes().c_str(), "b.bbb");
+        Er::Property prop2(TestProps::BinaryProp(Er::Binary("b.bbb")));
+        EXPECT_EQ(prop2.id, TestProps::BinaryProp::Id::value);
+        EXPECT_EQ(prop2.type(), Er::PropertyType::Binary);
+        EXPECT_STREQ(std::get<Er::Binary>(prop2.value).bytes().c_str(), "b.bbb");
 
         auto info = Er::lookupProperty("Test", prop2.id);
         ASSERT_TRUE(info);
-        EXPECT_EQ(info->id(), TestProps::BytesProp::Id::value);
+        EXPECT_EQ(info->id(), TestProps::BinaryProp::Id::value);
         EXPECT_STREQ(info->id_str(), b0.id_str());
         EXPECT_STREQ(info->name(), b0.name());
         EXPECT_EQ(info->type(), b0.type());
@@ -257,10 +257,10 @@ TEST(Er_Property, constructFromRawValue)
     }
 
     {
-        Er::Property prop(TestProps::BytesProp::Id::value, Er::Bytes(std::string("test string")));
-        EXPECT_EQ(prop.id, TestProps::BytesProp::Id::value);
-        EXPECT_EQ(prop.type(), Er::PropertyType::Bytes);
-        EXPECT_STREQ(std::get<Er::Bytes>(prop.value).bytes().c_str(), "test string");
+        Er::Property prop(TestProps::BinaryProp::Id::value, Er::Binary(std::string("test string")));
+        EXPECT_EQ(prop.id, TestProps::BinaryProp::Id::value);
+        EXPECT_EQ(prop.type(), Er::PropertyType::Binary);
+        EXPECT_STREQ(std::get<Er::Binary>(prop.value).bytes().c_str(), "test string");
     }
 }
 

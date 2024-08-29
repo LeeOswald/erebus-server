@@ -32,7 +32,7 @@ concept SupportedPropertyType =
     std::is_same_v<std::remove_cvref_t<T>, uint64_t> ||
     std::is_same_v<std::remove_cvref_t<T>, double> ||
     std::is_same_v<std::remove_cvref_t<T>, std::string> ||
-    std::is_same_v<std::remove_cvref_t<T>, Bytes>;
+    std::is_same_v<std::remove_cvref_t<T>, Binary>;
 
 
 using PropertyValueStorage = std::variant<
@@ -44,7 +44,7 @@ using PropertyValueStorage = std::variant<
     uint64_t,
     double,
     std::string,
-    Bytes
+    Binary
 >;
 
 
@@ -59,7 +59,7 @@ enum class PropertyType : uint32_t
     UInt64,
     Double,
     String,
-    Bytes
+    Binary
 };
 
 constexpr const char* propertyTypeToString(PropertyType type) noexcept
@@ -75,7 +75,7 @@ constexpr const char* propertyTypeToString(PropertyType type) noexcept
     case Er::PropertyType::UInt64: return "UInt64";
     case Er::PropertyType::Double: return "Double";
     case Er::PropertyType::String: return "String";
-    case Er::PropertyType::Bytes: return "Bytes";
+    case Er::PropertyType::Binary: return "Binary";
     }
 
     return "<\?\?\?>";
@@ -147,9 +147,9 @@ struct PropertyTypeFrom<std::string>
 };
 
 template <>
-struct PropertyTypeFrom<Bytes>
+struct PropertyTypeFrom<Binary>
 {
-    static constexpr PropertyType type = PropertyType::Bytes;
+    static constexpr PropertyType type = PropertyType::Binary;
 };
 
 
@@ -294,7 +294,7 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value
 };
 
 template <typename T>
-struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, Bytes>::value>>
+struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, Binary>::value>>
 {
     void operator()(const T& v, std::ostream& s) { s << v; }
 };
@@ -435,9 +435,9 @@ struct EREBUS_EXPORT Property
             auto v = std::get_if<std::string>(&value);
             return v ? v->data() : nullptr;
         }
-        case PropertyType::Bytes: 
+        case PropertyType::Binary: 
         {
-            auto v = std::get_if<Bytes>(&value);
+            auto v = std::get_if<Binary>(&value);
             return v ? v->data() : nullptr;
         }
         }
@@ -462,9 +462,9 @@ struct EREBUS_EXPORT Property
             auto v = std::get_if<std::string>(&value);
             return v ? v->size() : 0;
         }
-        case PropertyType::Bytes: 
+        case PropertyType::Binary: 
         {
-            auto v = std::get_if<Bytes>(&value);
+            auto v = std::get_if<Binary>(&value);
             return v ? v->size() : 0;
         }
         }
@@ -485,7 +485,7 @@ struct EREBUS_EXPORT Property
         case PropertyType::UInt64: PropertyFormatter<uint64_t>()(std::get<uint64_t>(value), s); break;
         case PropertyType::Double: PropertyFormatter<double>()(std::get<double>(value), s); break;
         case PropertyType::String: PropertyFormatter<std::string>()(std::get<std::string>(value), s); break;
-        case PropertyType::Bytes: PropertyFormatter<Bytes>()(std::get<Bytes>(value), s); break;
+        case PropertyType::Binary: PropertyFormatter<Binary>()(std::get<Binary>(value), s); break;
         default: s << "<\?\?\?>";
         }
     }

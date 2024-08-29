@@ -33,8 +33,8 @@ TEST(Er_Lua, PropertyTypes)
     type = state["Er"]["PropertyType"]["String"];
     EXPECT_EQ(type, static_cast<uint32_t>(Er::PropertyType::String));
 
-    type = state["Er"]["PropertyType"]["Bytes"];
-    EXPECT_EQ(type, static_cast<uint32_t>(Er::PropertyType::Bytes));
+    type = state["Er"]["PropertyType"]["Binary"];
+    EXPECT_EQ(type, static_cast<uint32_t>(Er::PropertyType::Binary));
 }
 
 TEST(Er_Lua, registerLuaProps)
@@ -99,12 +99,12 @@ TEST(Er_Lua, registerLuaProps)
         EXPECT_EQ(type, static_cast<uint32_t>(TestProps::StringProp::type()));
     }
     {
-        uint32_t id = state["TestProps"]["BytesProp"]["id"];
-        EXPECT_EQ(id, TestProps::BytesProp::id());
-        std::string id_str = state["TestProps"]["BytesProp"]["id_str"];
-        EXPECT_STREQ(id_str.c_str(), TestProps::BytesProp::id_str());
-        uint32_t type = state["TestProps"]["BytesProp"]["type"];
-        EXPECT_EQ(type, static_cast<uint32_t>(TestProps::BytesProp::type()));
+        uint32_t id = state["TestProps"]["BinaryProp"]["id"];
+        EXPECT_EQ(id, TestProps::BinaryProp::id());
+        std::string id_str = state["TestProps"]["BinaryProp"]["id_str"];
+        EXPECT_STREQ(id_str.c_str(), TestProps::BinaryProp::id_str());
+        uint32_t type = state["TestProps"]["BinaryProp"]["type"];
+        EXPECT_EQ(type, static_cast<uint32_t>(TestProps::BinaryProp::type()));
     }
 }
 
@@ -143,7 +143,7 @@ function filter(ev)
         local v = Er.Property.getString(ev)
         v = string.upper(v)
         Er.Property.setString(ev, v)
-    elseif id == TestProps.BytesProp.id then
+    elseif id == TestProps.BinaryProp.id then
         local v = Er.Property.getBytes(ev)
         v = string.lower(v)
         Er.Property.setBytes(ev, v)
@@ -224,13 +224,13 @@ TEST(Er_Lua, Property)
         EXPECT_STREQ(std::get<std::string>(prop.value).c_str(), "TEST_STRING");
     }
     {
-        Er::Property prop(TestProps::BytesProp::id(), Er::Bytes(std::string("BYTES_TEST")));
+        Er::Property prop(TestProps::BinaryProp::id(), Er::Binary(std::string("BYTES_TEST")));
 
         uint32_t type = state["filter"](&prop);
-        EXPECT_EQ(prop.id, TestProps::BytesProp::id());
-        ASSERT_EQ(type, static_cast<uint32_t>(TestProps::BytesProp::type()));
-        ASSERT_EQ(prop.type(), TestProps::BytesProp::type());
-        EXPECT_STREQ(std::get<Er::Bytes>(prop.value).bytes().c_str(), "bytes_test");
+        EXPECT_EQ(prop.id, TestProps::BinaryProp::id());
+        ASSERT_EQ(type, static_cast<uint32_t>(TestProps::BinaryProp::type()));
+        ASSERT_EQ(prop.type(), TestProps::BinaryProp::type());
+        EXPECT_STREQ(std::get<Er::Binary>(prop.value).bytes().c_str(), "bytes_test");
     }
 }
 
@@ -382,13 +382,13 @@ TEST(Er_Lua, PropertyInfo)
         uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
         std::string id_str;
         std::string name;
-        Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::BytesProp::id()));
+        Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::BinaryProp::id()));
         ASSERT_TRUE(valid);
-        EXPECT_EQ(id, uint32_t(TestProps::BytesProp::id()));
-        EXPECT_EQ(id1, uint32_t(TestProps::BytesProp::id()));
-        EXPECT_EQ(type, uint32_t(TestProps::BytesProp::type()));
-        EXPECT_STREQ(id_str.c_str(), TestProps::BytesProp::id_str());
-        EXPECT_STREQ(name.c_str(), TestProps::BytesProp::name());
+        EXPECT_EQ(id, uint32_t(TestProps::BinaryProp::id()));
+        EXPECT_EQ(id1, uint32_t(TestProps::BinaryProp::id()));
+        EXPECT_EQ(type, uint32_t(TestProps::BinaryProp::type()));
+        EXPECT_STREQ(id_str.c_str(), TestProps::BinaryProp::id_str());
+        EXPECT_STREQ(name.c_str(), TestProps::BinaryProp::name());
     }
 }
 

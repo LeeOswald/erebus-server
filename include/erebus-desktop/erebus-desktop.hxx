@@ -51,7 +51,7 @@ struct IconStateFormatter
 
 struct IconFormatter
 {
-    void operator()(const Bytes& ico, std::ostream& s) 
+    void operator()(const Binary& ico, std::ostream& s) 
     { 
         if (ico.empty())
             s << "[null icon]";
@@ -66,7 +66,7 @@ namespace Props
 
 constexpr const std::string_view Domain = "Desktop";
 
-using Icon = PropertyValue<Bytes, ER_PROPID("app.icon.png"), "Icon Bytes", IconFormatter>;
+using Icon = PropertyValue<Binary, ER_PROPID("app.icon.png"), "Icon Bytes", IconFormatter>;
 using IconName = PropertyValue<std::string, ER_PROPID("app.icon.name"), "Icon Name">;
 using IconSize = PropertyValue<uint32_t, ER_PROPID("app.icon.size"), "Icon Size">;
 using IconState = PropertyValue<uint32_t, ER_PROPID("app.icon.state"), "Icon State", IconStateFormatter>;

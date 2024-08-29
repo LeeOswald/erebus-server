@@ -26,7 +26,7 @@ using Int64Prop = Er::PropertyValue<int64_t, ER_PROPID("test_int64"), "Int64", E
 using UInt64Prop = Er::PropertyValue<uint64_t, ER_PROPID("test_uint64"), "UInt64", Er::PropertyFormatter<uint64_t>>;
 using DoubleProp = Er::PropertyValue<double, ER_PROPID("test_double"), "Double", Er::PropertyFormatter<double>>;
 using StringProp = Er::PropertyValue<std::string, ER_PROPID("test_string"), "String", Er::PropertyFormatter<std::string>>;
-using BytesProp = Er::PropertyValue < Er::Bytes, ER_PROPID("test_bytes"), "Bytes", Er::NullPropertyFormatter> ;
+using BinaryProp = Er::PropertyValue < Er::Binary, ER_PROPID("test_bytes"), "Binary", Er::NullPropertyFormatter> ;
 
 
 inline void registerAll(Er::Log::ILog* log)
@@ -38,7 +38,7 @@ inline void registerAll(Er::Log::ILog* log)
     Er::registerProperty(Domain, UInt64Prop::make_info(), log);
     Er::registerProperty(Domain, DoubleProp::make_info(), log);
     Er::registerProperty(Domain, StringProp::make_info(), log);
-    Er::registerProperty(Domain, BytesProp::make_info(), log);
+    Er::registerProperty(Domain, BinaryProp::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -50,7 +50,7 @@ inline void unregisterAll(Er::Log::ILog* log)
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, UInt64Prop::Id::value), log);
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, DoubleProp::Id::value), log);
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, StringProp::Id::value), log);
-    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, BytesProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, BinaryProp::Id::value), log);
 }
 
 inline void registerLuaProps(Er::LuaState& state)
@@ -84,9 +84,9 @@ inline void registerLuaProps(Er::LuaState& state)
     s["StringProp"]["id_str"] = std::string(TestProps::StringProp::id_str());
     s["StringProp"]["type"] = static_cast<uint32_t>(TestProps::StringProp::type());
 
-    s["BytesProp"]["id"] = static_cast<uint32_t>(TestProps::BytesProp::id());
-    s["BytesProp"]["id_str"] = std::string(TestProps::BytesProp::id_str());
-    s["BytesProp"]["type"] = static_cast<uint32_t>(TestProps::BytesProp::type());
+    s["BinaryProp"]["id"] = static_cast<uint32_t>(TestProps::BinaryProp::id());
+    s["BinaryProp"]["id_str"] = std::string(TestProps::BinaryProp::id_str());
+    s["BinaryProp"]["type"] = static_cast<uint32_t>(TestProps::BinaryProp::type());
 }
 
 

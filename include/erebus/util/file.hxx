@@ -70,7 +70,7 @@ void searchFor(
 
 
 EREBUS_EXPORT std::string loadTextFile(const std::string& path);
-EREBUS_EXPORT Bytes loadBinaryFile(const std::string& path);
+EREBUS_EXPORT Binary loadBinaryFile(const std::string& path);
 
 EREBUS_EXPORT std::optional<std::string> resolveSymlink(const std::string& path, unsigned maxDepth = 8) noexcept;
 

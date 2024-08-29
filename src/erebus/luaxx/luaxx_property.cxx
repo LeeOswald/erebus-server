@@ -141,17 +141,17 @@ void setPropertyString(Er::Property& prop, const std::string& val)
 
 std::string getPropertyBytes(const Er::Property& prop)
 {
-    auto p = std::get_if<Er::Bytes>(&prop.value);
+    auto p = std::get_if<Er::Binary>(&prop.value);
     if (!p) [[unlikely]]
-        throw PropertyException(ER_HERE(), "get", prop.id, "Bytes", Er::propertyTypeToString(prop.type()));
+        throw PropertyException(ER_HERE(), "get", prop.id, "Binary", Er::propertyTypeToString(prop.type()));
     return p->bytes();
 }
 
 void setPropertyBytes(Er::Property& prop, const std::string& val)
 {
-    if (prop.type() != PropertyType::Bytes) [[unlikely]]
-        throw PropertyException(ER_HERE(), "set", prop.id, "Bytes", Er::propertyTypeToString(prop.type()));
-    prop.value = Er::Bytes(val);
+    if (prop.type() != PropertyType::Binary) [[unlikely]]
+        throw PropertyException(ER_HERE(), "set", prop.id, "Binary", Er::propertyTypeToString(prop.type()));
+    prop.value = Er::Binary(val);
 }
 
 
@@ -219,7 +219,7 @@ EREBUS_EXPORT void registerPropertyTypes(State& state)
         s["UInt64"] = static_cast<uint32_t>(Er::PropertyType::UInt64);
         s["Double"] = static_cast<uint32_t>(Er::PropertyType::Double);
         s["String"] = static_cast<uint32_t>(Er::PropertyType::String);
-        s["Bytes"] = static_cast<uint32_t>(Er::PropertyType::Bytes);
+        s["Binary"] = static_cast<uint32_t>(Er::PropertyType::Binary);
     }
 
     {
