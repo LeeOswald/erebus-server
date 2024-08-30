@@ -6,6 +6,7 @@
 #include <erebus/util/utf16.hxx>
 #endif
 
+#include <iostream>
 #include <fstream>
 
 
