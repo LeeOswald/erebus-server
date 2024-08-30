@@ -8,52 +8,45 @@ endif()
 
 
 get_filename_component(COMMON_PROTO "${CMAKE_CURRENT_SOURCE_DIR}/common.proto" ABSOLUTE)
-get_filename_component(EREBUS_PROTO "${CMAKE_CURRENT_SOURCE_DIR}/erebus.proto" ABSOLUTE)
-get_filename_component(EREBUS_PROTO_PATH "${EREBUS_PROTO}" DIRECTORY)
 
-set(COMMON_PB_CC "${EREBUS_PROTO_PATH}/erebus/common.pb.cc")
-set(COMMON_PB_H "${EREBUS_PROTO_PATH}/erebus/common.pb.h")
-set(COMMON_GRPC_PB_CC "${EREBUS_PROTO_PATH}/erebus/common.grpc.pb.cc")
-set(COMMON_GRPC_PB_H "${EREBUS_PROTO_PATH}/erebus/common.grpc.pb.h")
-set(EREBUS_PB_CC "${EREBUS_PROTO_PATH}/erebus/erebus.pb.cc")
-set(EREBUS_PB_H "${EREBUS_PROTO_PATH}/erebus/erebus.pb.h")
-set(EREBUS_GRPC_PB_CC "${EREBUS_PROTO_PATH}/erebus/erebus.grpc.pb.cc")
-set(EREBUS_GRPC_PB_H "${EREBUS_PROTO_PATH}/erebus/erebus.grpc.pb.h")
+
+set(EREBUS_GENERATED_DIR ${PROJECT_BINARY_DIR}/erebus)
 
 add_custom_command(
-    OUTPUT "${COMMON_PB_CC}" "${COMMON_PB_H}" "${COMMON_GRPC_PB_CC}" "${COMMON_GRPC_PB_H}"
+    OUTPUT "${EREBUS_GENERATED_DIR}/common.pb.cc" "${EREBUS_GENERATED_DIR}/common.pb.h" "${EREBUS_GENERATED_DIR}/common.grpc.pb.cc" "${EREBUS_GENERATED_DIR}/common.grpc.pb.h"
     COMMAND ${PROTOC}
-    ARGS --grpc_out "${CMAKE_CURRENT_SOURCE_DIR}/erebus/"
-        --cpp_out "${CMAKE_CURRENT_SOURCE_DIR}/erebus/"
-        -I "${EREBUS_PROTO_PATH}"
+    ARGS --grpc_out "${EREBUS_GENERATED_DIR}/"
+        --cpp_out "${EREBUS_GENERATED_DIR}/"
+        -I "${CMAKE_CURRENT_SOURCE_DIR}"
         --plugin=protoc-gen-grpc="${GRPC_CPP_PLUGIN}"
         "${COMMON_PROTO}"
     DEPENDS "${COMMON_PROTO}"
 )
 
 
+get_filename_component(EREBUS_PROTO "${CMAKE_CURRENT_SOURCE_DIR}/erebus.proto" ABSOLUTE)
+
 add_custom_command(
-    OUTPUT "${EREBUS_PB_CC}" "${EREBUS_PB_H}" "${EREBUS_GRPC_PB_CC}" "${EREBUS_GRPC_PB_H}"
+    OUTPUT "${EREBUS_GENERATED_DIR}/erebus.pb.cc" "${EREBUS_GENERATED_DIR}/erebus.pb.h" "${EREBUS_GENERATED_DIR}/erebus.grpc.pb.cc" "${EREBUS_GENERATED_DIR}/erebus.grpc.pb.h"
     COMMAND ${PROTOC}
-    ARGS --grpc_out "${CMAKE_CURRENT_SOURCE_DIR}/erebus/"
-        --cpp_out "${CMAKE_CURRENT_SOURCE_DIR}/erebus/"
-        -I "${EREBUS_PROTO_PATH}"
+    ARGS --grpc_out "${EREBUS_GENERATED_DIR}/"
+        --cpp_out "${EREBUS_GENERATED_DIR}/"
+        -I "${CMAKE_CURRENT_SOURCE_DIR}"
         --plugin=protoc-gen-grpc="${GRPC_CPP_PLUGIN}"
         "${EREBUS_PROTO}"
     DEPENDS "${EREBUS_PROTO}"
 )
 
-
 add_library(${EREBUS_PROTOLIB} STATIC
     erebus/protocol.hxx
-    ${COMMON_PB_CC}
-    ${COMMON_PB_H}
-    ${COMMON_GRPC_PB_CC}
-    ${COMMON_GRPC_PB_H}
-    ${EREBUS_PB_CC}
-    ${EREBUS_PB_H}
-    ${EREBUS_GRPC_PB_CC}
-    ${EREBUS_GRPC_PB_H}
+    ${EREBUS_GENERATED_DIR}/common.pb.cc 
+    ${EREBUS_GENERATED_DIR}/common.pb.h 
+    ${EREBUS_GENERATED_DIR}/common.grpc.pb.cc 
+    ${EREBUS_GENERATED_DIR}/common.grpc.pb.h
+    ${EREBUS_GENERATED_DIR}/erebus.pb.cc 
+    ${EREBUS_GENERATED_DIR}/erebus.pb.h 
+    ${EREBUS_GENERATED_DIR}/erebus.grpc.pb.cc 
+    ${EREBUS_GENERATED_DIR}/erebus.grpc.pb.h
 )
 
 set_property(TARGET ${EREBUS_PROTOLIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
