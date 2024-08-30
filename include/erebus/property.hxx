@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/binary.hxx>
 #include <erebus/empty.hxx>
 #include <erebus/stringliteral.hxx>
 #include <erebus/system/time.hxx>

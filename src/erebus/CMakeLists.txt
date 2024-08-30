@@ -22,6 +22,7 @@ endif()
 
 add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/assert.hxx
+    ../../include/erebus/binary.hxx
     ../../include/erebus/condition.hxx
     ../../include/erebus/debug.hxx
     ../../include/erebus/empty.hxx
