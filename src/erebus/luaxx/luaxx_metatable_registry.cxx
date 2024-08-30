@@ -1,5 +1,90 @@
-#include <erebus/erebus.hxx>
+#include <erebus/log.hxx>
 #include <erebus/luaxx/luaxx_metatable_registry.hxx>
+
+#include <shared_mutex>
+#include <unordered_map>
+
+namespace Er
+{
+
+class UserTypeRegistry final
+    : public Er::NonCopyable
+{
+public:
+    UserTypeRegistry(Er::Log::ILog* log)
+        : m_log(log)
+    {
+    }
+
+    const void* findOrAdd(const char* name)
+    {
+        std::string key(name);
+
+        // maybe already there
+        {
+            std::shared_lock l(m_mutex);
+            auto it = m_entries.find(key);
+            if (it != m_entries.end())
+                return it->second.get();
+        }
+
+        // add
+        {
+            std::unique_lock l(m_mutex);
+            auto r = m_entries.insert({ std::move(key), std::make_unique<Entry>() });
+            auto entry = r.first->second.get();
+            if (r.second)
+            {
+                // really added
+                ErLogDebug(m_log, "Registered type [%s] -> %p", name, entry);
+            }
+
+            return entry;
+        }
+    }
+
+private:
+    struct Entry
+    {
+        Entry() = default;
+
+        using Ptr = std::unique_ptr<Entry>;
+    };
+
+    Er::Log::ILog* m_log;
+    std::shared_mutex m_mutex;
+    std::unordered_map<std::string, Entry::Ptr> m_entries;
+};
+
+
+static UserTypeRegistry* s_utr = nullptr;
+
+EREBUS_EXPORT void initializeLua(Er::Log::ILog* log)
+{
+    ErAssert(!s_utr);
+    s_utr = new UserTypeRegistry(log);
+}
+
+EREBUS_EXPORT void finalizeLua()
+{
+    if (s_utr)
+    {
+        delete s_utr;
+        s_utr = nullptr;
+    }
+}
+
+EREBUS_EXPORT const void* registerUserType(const char* name)
+{
+    ErAssert(s_utr);
+
+    if (!s_utr)
+        return nullptr;
+
+    return s_utr->findOrAdd(name);
+}
+
+} // namespace Er {}
 
 
 namespace Er::Lua
@@ -7,8 +92,6 @@ namespace Er::Lua
 
 namespace MetatableRegistry
 {
-
-using TypeID = std::reference_wrapper<const std::type_info>;
 
 namespace detail
 {
@@ -34,7 +117,7 @@ void _push_meta_table(lua_State* state)
 
 void _push_typeinfo(lua_State* state, TypeID type)
 {
-    lua_pushlightuserdata(state, const_cast<std::type_info*>(&type.get()));
+    lua_pushlightuserdata(state, const_cast<void*>(type));
 }
 
 void _get_metatable(lua_State* state, TypeID type)

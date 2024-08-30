@@ -133,7 +133,7 @@ public:
         : _name(name) 
     {
         _metatable_name = _name + "_lib";
-        MetatableRegistry::PushNewMetatable(state, typeid(T), _metatable_name);
+        MetatableRegistry::PushNewMetatable(state, Er::userType<T>(), _metatable_name);
         _register_dtor(state);
         _register_ctor(state);
         _register_members(state, members...);

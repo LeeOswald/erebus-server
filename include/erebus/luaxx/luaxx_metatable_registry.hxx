@@ -11,6 +11,19 @@ extern "C"
 #include <lauxlib.h>
 }
 
+namespace Er
+{
+
+EREBUS_EXPORT const void* registerUserType(const char* name);
+
+template <typename T>
+const void* userType()
+{
+    return registerUserType(typeid(T).name());
+}
+
+} // namespace Er {}
+
 namespace Er::Lua 
 {
 
@@ -28,7 +41,7 @@ struct GetUserdataParameterFromLuaTypeError
 namespace MetatableRegistry 
 {
 
-using TypeID = std::reference_wrapper<const std::type_info>;
+using TypeID = const void*;
 
 
 EREBUS_EXPORT void Create(lua_State* state);

@@ -73,7 +73,7 @@ using decay_primitive =
 template <typename T>
 inline T* _get(_id<T*>, lua_State* l, const int index) 
 {
-    if (MetatableRegistry::IsType(l, typeid(T), index)) 
+    if (MetatableRegistry::IsType(l, Er::userType<T>(), index)) 
     {
         return (T*)lua_topointer(l, index);
     }
@@ -84,11 +84,11 @@ inline T* _get(_id<T*>, lua_State* l, const int index)
 template <typename T>
 inline T& _get(_id<T&>, lua_State* l, const int index) 
 {
-    if (!MetatableRegistry::IsType(l, typeid(T), index)) 
+    if (!MetatableRegistry::IsType(l, Er::userType<T>(), index)) 
     {
         throw TypeError{
             ER_HERE(),
-            MetatableRegistry::GetTypeName(l, typeid(T)),
+            MetatableRegistry::GetTypeName(l, Er::userType<T>()),
             MetatableRegistry::GetTypeName(l, index)
         };
     }
@@ -96,7 +96,7 @@ inline T& _get(_id<T&>, lua_State* l, const int index)
     T* ptr = (T*)lua_topointer(l, index);
     if (ptr == nullptr) 
     {
-        throw TypeError{ ER_HERE(), MetatableRegistry::GetTypeName(l, typeid(T))};
+        throw TypeError{ ER_HERE(), MetatableRegistry::GetTypeName(l, Er::userType<T>())};
     }
 
     return *ptr;
@@ -155,7 +155,7 @@ struct GetParameterFromLuaTypeError
 template <typename T>
 inline T* _check_get(_id<T*>, lua_State* l, const int index) 
 {
-    MetatableRegistry::CheckType(l, typeid(T), index);
+    MetatableRegistry::CheckType(l, Er::userType<T>(), index);
     return (T*)lua_topointer(l, index);
 }
 
@@ -169,7 +169,7 @@ inline T& _check_get(_id<T&>, lua_State* l, const int index)
     if (ptr == nullptr) 
     {
         throw GetUserdataParameterFromLuaTypeError{
-            MetatableRegistry::GetTypeName(l, typeid(T)),
+            MetatableRegistry::GetTypeName(l, Er::userType<T>()),
             index
         };
     }
@@ -343,7 +343,7 @@ inline void _push(lua_State* l, T* t)
   else 
   {
     lua_pushlightuserdata(l, t);
-    MetatableRegistry::SetMetatable(l, typeid(T));
+    MetatableRegistry::SetMetatable(l, Er::userType<T>());
   }
 }
 
@@ -352,21 +352,21 @@ inline typename std::enable_if<!is_primitive<typename std::decay<T>::type>::valu
 _push(lua_State* l, T& t) 
 {
     lua_pushlightuserdata(l, &t);
-    MetatableRegistry::SetMetatable(l, typeid(T));
+    MetatableRegistry::SetMetatable(l, Er::userType<T>());
 }
 
 template <typename T>
 inline typename std::enable_if<!is_primitive<typename std::decay<T>::type>::value && std::is_rvalue_reference<T&&>::value>::type
 _push(lua_State* l, T&& t) 
 {
-    if (!MetatableRegistry::IsRegisteredType(l, typeid(t)))
+    if (!MetatableRegistry::IsRegisteredType(l, Er::userType<T>()))
     {
         throw CopyUnregisteredType(ER_HERE(), typeid(t));
     }
 
     void *addr = lua_newuserdata(l, sizeof(T));
     new(addr) T(std::forward<T>(t));
-    MetatableRegistry::SetMetatable(l, typeid(T));
+    MetatableRegistry::SetMetatable(l, Er::userType<T>());
 }
 
 inline void _push(lua_State* l, bool b) 
