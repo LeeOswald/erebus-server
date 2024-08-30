@@ -22,5 +22,7 @@ namespace Er
 
 EREBUS_EXPORT bool isDebuggerPresent();
 
+EREBUS_EXPORT void trace(const char* format, ...) noexcept;
+
 
 } // namespace Er {}
