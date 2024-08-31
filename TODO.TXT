@@ -11,3 +11,5 @@ Your system’s memory allocator may not be well-optimized for allocating lots o
 
 
 - optimize ini file parsing (iterat throug kv pairs instead of making a prop tree)
+
+- std::unordered_map<std::string, X>::find(const char*) allocates a new std::string each time! How to optimize?
