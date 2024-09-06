@@ -20,9 +20,22 @@ struct EREBUS_EXPORT Binary final
         : m_bytes(std::move(b.m_bytes))
     {}
 
-    template <typename StringT>
-    explicit Binary(StringT&& s) noexcept
-        : m_bytes(std::forward<StringT>(s))
+    Binary(nullptr_t) = delete;
+
+    explicit Binary(const char* s)
+        : m_bytes(s)
+    {}
+
+    explicit Binary(std::string_view s)
+        : m_bytes(s)
+    {}
+
+    explicit Binary(const std::string& s)
+        : m_bytes(s)
+    {}
+
+    explicit Binary(std::string&& s) noexcept
+        : m_bytes(std::move(s))
     {}
 
     Binary& operator=(const Binary& o)

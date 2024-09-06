@@ -6,8 +6,36 @@ package erebus;
 message Void {
 }
 
-message GenericReply {
-  optional Exception exception = 1;  
+message Int32Array {
+    repeated int32 a = 1;
+}
+
+message UInt32Array {
+    repeated uint32 a = 1;
+}
+
+message Int64Array {
+    repeated int64 a = 1;
+}
+
+message UInt64Array {
+    repeated uint64 a = 1;
+}
+
+message DoubleArray {
+    repeated double a = 1;
+}
+
+message BoolArray {
+    repeated bool a = 1;
+}
+
+message StringArray {
+    repeated string a = 1;
+}
+
+message BytesArray {
+    repeated bytes a = 1;
 }
 
 message Property {
@@ -22,6 +50,14 @@ message Property {
     string v_string = 8;
     bytes v_binary = 9;
     Void v_void = 10;
+    Int32Array a_int32 = 11;
+    UInt32Array a_uint32 = 12;
+    Int64Array a_int64 = 13;
+    UInt64Array a_uint64 = 14;
+    DoubleArray a_double = 15;
+    BoolArray a_bool = 16;
+    StringArray a_string = 17;
+    BytesArray a_binary = 18;
   }
 }
 
@@ -30,6 +66,9 @@ message Exception {
   repeated Property props = 4;
 }
 
+message GenericReply {
+  optional Exception exception = 1;  
+}
 
 service Erebus {
   rpc AllocateSession(AllocateSessionRequest) returns(AllocateSessionReply) {}

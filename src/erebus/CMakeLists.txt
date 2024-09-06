@@ -92,6 +92,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/util/ptrutils.hxx
     ../../include/erebus/util/sha256.hxx
     ../../include/erebus/util/stringutil.hxx
+    ../../include/erebus/variant.hxx
     assert.cxx
     debug.cxx
     errno.cxx
@@ -120,6 +121,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     util/lockfile.cxx
     util/posixerror.cxx
     util/sha256.cxx
+    variant.cxx
     ${PLATFORM_SOURCES}
 )
 

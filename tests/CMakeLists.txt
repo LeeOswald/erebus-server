@@ -38,6 +38,7 @@ add_executable(
     propertybag.cpp
     stringutil.cpp
     tree.cpp
+    variant.cpp
     ${PLATFORM_SOURCES}
 )
 
