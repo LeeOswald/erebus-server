@@ -18,7 +18,7 @@ public:
 
     const void* findOrAdd(const char* name)
     {
-        std::string key(name);
+        std::string_view key(name);
 
         // maybe already there
         {
@@ -31,7 +31,7 @@ public:
         // add
         {
             std::unique_lock l(m_mutex);
-            auto r = m_entries.insert({ std::move(key), std::make_unique<Entry>() });
+            auto r = m_entries.insert({ key, std::make_unique<Entry>() });
             auto entry = r.first->second.get();
             if (r.second)
             {
@@ -53,7 +53,7 @@ private:
 
     Er::Log::ILog* m_log;
     std::shared_mutex m_mutex;
-    std::unordered_map<std::string, Entry::Ptr> m_entries;
+    std::unordered_map<std::string_view, Entry::Ptr> m_entries;
 };
 
 
