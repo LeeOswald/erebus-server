@@ -48,9 +48,9 @@ public:
     }
 
     constexpr Variant() noexcept
-        : m_type(Type::Empty)
+        : m_u()
+        , m_type(Type::Empty)
     {
-        m_u._largest = 0;
     }
 
     Variant(nullptr_t) = delete;

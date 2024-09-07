@@ -40,24 +40,25 @@ message BytesArray {
 
 message Property {
   uint32 id = 1;
+  uint32 type = 2;
   oneof value {
-    int32 v_int32 = 2;
-    uint32 v_uint32 = 3;
-    int64 v_int64 = 4;
-    uint64 v_uint64 = 5;
-    double v_double = 6;
-    bool v_bool = 7;
-    string v_string = 8;
-    bytes v_binary = 9;
-    Void v_void = 10;
-    Int32Array a_int32 = 11;
-    UInt32Array a_uint32 = 12;
-    Int64Array a_int64 = 13;
-    UInt64Array a_uint64 = 14;
-    DoubleArray a_double = 15;
-    BoolArray a_bool = 16;
-    StringArray a_string = 17;
-    BytesArray a_binary = 18;
+    int32 v_int32 = 3;
+    uint32 v_uint32 = 4;
+    int64 v_int64 = 5;
+    uint64 v_uint64 = 6;
+    double v_double = 7;
+    bool v_bool = 8;
+    string v_string = 9;
+    bytes v_binary = 10;
+    Void v_void = 11;
+    Int32Array a_int32 = 12;
+    UInt32Array a_uint32 = 13;
+    Int64Array a_int64 = 14;
+    UInt64Array a_uint64 = 15;
+    DoubleArray a_double = 16;
+    BoolArray a_bool = 17;
+    StringArray a_string = 18;
+    BytesArray a_binary = 19;
   }
 }
 

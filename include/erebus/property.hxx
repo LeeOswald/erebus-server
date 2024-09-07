@@ -1,14 +1,13 @@
 #pragma once
 
-#include <erebus/binary.hxx>
-#include <erebus/empty.hxx>
 #include <erebus/stringliteral.hxx>
 #include <erebus/system/time.hxx>
 #include <erebus/util/crc32.hxx>
+#include <erebus/variant.hxx>
+
 
 #include <iomanip>
 #include <ostream>
-#include <variant>
 
 
 namespace Er
@@ -25,7 +24,7 @@ template <typename T, typename = void>
 struct PropertyFormatter;
 
 template <typename T>
-concept SupportedPropertyType = 
+concept SupportedPropertyType =
     std::is_same_v<std::remove_cvref_t<T>, bool> ||
     std::is_same_v<std::remove_cvref_t<T>, int32_t> ||
     std::is_same_v<std::remove_cvref_t<T>, uint32_t> ||
@@ -33,41 +32,23 @@ concept SupportedPropertyType =
     std::is_same_v<std::remove_cvref_t<T>, uint64_t> ||
     std::is_same_v<std::remove_cvref_t<T>, double> ||
     std::is_same_v<std::remove_cvref_t<T>, std::string> ||
-    std::is_same_v<std::remove_cvref_t<T>, Binary>;
+    std::is_same_v<std::remove_cvref_t<T>, Binary> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<bool>> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<int32_t>> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<uint32_t>> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<int64_t>> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<uint64_t>> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<double>> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<std::string>> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<Binary>>;
 
 
-using PropertyValueStorage = std::variant<
-    Empty,
-    bool,
-    int32_t,
-    uint32_t,
-    int64_t,
-    uint64_t,
-    double,
-    std::string,
-    Binary
->;
-
-
-enum class PropertyType : uint32_t
-{
-    Invalid = uint32_t(std::variant_npos),
-    Empty = 0,
-    Bool,
-    Int32,
-    UInt32,
-    Int64,
-    UInt64,
-    Double,
-    String,
-    Binary
-};
+using PropertyType = Variant::Type;
 
 constexpr const char* propertyTypeToString(PropertyType type) noexcept
 {
     switch (type)
     {
-    case Er::PropertyType::Invalid: return "Invalid";
     case Er::PropertyType::Empty: return "Empty";
     case Er::PropertyType::Bool: return "Bool";
     case Er::PropertyType::Int32: return "Int32";
@@ -77,6 +58,14 @@ constexpr const char* propertyTypeToString(PropertyType type) noexcept
     case Er::PropertyType::Double: return "Double";
     case Er::PropertyType::String: return "String";
     case Er::PropertyType::Binary: return "Binary";
+    case Er::PropertyType::Bools: return "Bool[]";
+    case Er::PropertyType::Int32s: return "Int32[]";
+    case Er::PropertyType::UInt32s: return "UInt32[]";
+    case Er::PropertyType::Int64s: return "Int64[]";
+    case Er::PropertyType::UInt64s: return "UInt64[]";
+    case Er::PropertyType::Doubles: return "Double[]";
+    case Er::PropertyType::Strings: return "String[]";
+    case Er::PropertyType::Binaries: return "Binary[]";
     }
 
     return "<\?\?\?>";
@@ -336,44 +325,47 @@ struct TimeFormatter
 
 struct EREBUS_EXPORT Property
 {
-    Property() noexcept = default;
+    Property() noexcept
+        : value()
+        , id(InvalidPropId)
+    {
+    }
 
     template <IsPropertyValue PropertyValueT>
-    explicit Property(const PropertyValueT& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const PropertyValueT&>))
+    constexpr Property(const PropertyValueT& pv)
         : value(pv.value())
         , id(pv.id())
     {
     }
 
     template <IsPropertyValue PropertyValueT>
-    explicit Property(PropertyValueT&& pv) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, PropertyValueT&&>))
+    constexpr Property(PropertyValueT&& pv) noexcept
         : value(std::move(pv.value()))
         , id(pv.id())
     {
     }
 
     template <SupportedPropertyType ValueT>
-    explicit Property(PropId id, const ValueT& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, const ValueT&>))
+    constexpr explicit Property(PropId id, const ValueT& value)
         : value(value)
         , id(id)
     {
     }
 
     template <SupportedPropertyType ValueT>
-    explicit Property(PropId id, ValueT&& value) noexcept(noexcept(std::is_nothrow_constructible_v<PropertyValueStorage, ValueT&&>))
+    constexpr explicit Property(PropId id, ValueT&& value) noexcept
         : value(std::move(value))
         , id(id)
     {
     }
 
-    friend void swap(Property& a, Property& b) noexcept(noexcept(std::is_nothrow_swappable_v<PropertyValueStorage>))
+    constexpr void swap(Property& a, Property& b) noexcept
     {
-        using std::swap;
-        swap(a.id, b.id);
+        std::swap(a.id, b.id);
         a.value.swap(b.value);
     }
 
-    Property(const Property& o)
+    constexpr Property(const Property& o)
         : value(o.value)
         , id(o.id)
     {
@@ -386,13 +378,13 @@ struct EREBUS_EXPORT Property
         return *this;
     }
 
-    Property(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
+    constexpr Property(Property&& o) noexcept
         : value(std::move(o.value))
         , id(o.id)
     {
     }
 
-    Property& operator=(Property&& o) noexcept(noexcept(std::is_nothrow_move_constructible_v<PropertyValueStorage>))
+    Property& operator=(Property&& o) noexcept
     {
         Property tmp(std::move(o));
         swap(*this, tmp);
@@ -401,113 +393,53 @@ struct EREBUS_EXPORT Property
 
     constexpr PropertyType type() const noexcept
     {
-        return static_cast<PropertyType>(value.index());
+        return value.type();
     }
 
     constexpr bool empty() const noexcept
     {
-        return (value.index() == 0) || (value.index() == std::variant_npos);
+        return value.empty();
     }
 
-    friend auto operator==(const Property& a, const Property& b) noexcept
+    constexpr bool operator==(const Property& other) const noexcept
     {
-        return a.value == b.value;
-    }
-
-    friend auto operator<=>(const Property& a, const Property& b) noexcept
-    {
-        return a.value <=> b.value;
-    }
-
-    const void* data() const noexcept
-    {
-        switch (type())
-        {
-        case PropertyType::Invalid: return nullptr;
-        case PropertyType::Empty: return nullptr;
-        case PropertyType::Bool: return std::get_if<bool>(&value);
-        case PropertyType::Int32: return std::get_if<int32_t>(&value);
-        case PropertyType::UInt32: return std::get_if<uint32_t>(&value);
-        case PropertyType::Int64: return std::get_if<int64_t>(&value);
-        case PropertyType::UInt64: return std::get_if<uint64_t>(&value);
-        case PropertyType::Double: return std::get_if<double>(&value);
-        case PropertyType::String: 
-        {
-            auto v = std::get_if<std::string>(&value);
-            return v ? v->data() : nullptr;
-        }
-        case PropertyType::Binary: 
-        {
-            auto v = std::get_if<Binary>(&value);
-            return v ? v->data() : nullptr;
-        }
-        }
-        ErAssert(!"Unsupported property type");
-        return nullptr;
-    }
-
-    std::size_t size() const noexcept
-    {
-        switch (type())
-        {
-        case PropertyType::Invalid: return 0;
-        case PropertyType::Empty: return 0;
-        case PropertyType::Bool: return sizeof(bool);
-        case PropertyType::Int32: return sizeof(int32_t);
-        case PropertyType::UInt32: return sizeof(uint32_t);
-        case PropertyType::Int64: return sizeof(int64_t);
-        case PropertyType::UInt64: return sizeof(uint64_t);
-        case PropertyType::Double: return sizeof(double);
-        case PropertyType::String: 
-        {
-            auto v = std::get_if<std::string>(&value);
-            return v ? v->size() : 0;
-        }
-        case PropertyType::Binary: 
-        {
-            auto v = std::get_if<Binary>(&value);
-            return v ? v->size() : 0;
-        }
-        }
-        ErAssert(!"Unsupported property type");
-        return 0;
+        return value == other.value;
     }
 
     void format(std::ostream& s) const
     {
         switch (type())
         {
-        case PropertyType::Invalid: s << "<invalid>"; break;
         case PropertyType::Empty: s << "<empty>"; break;
-        case PropertyType::Bool: PropertyFormatter<bool>()(std::get<bool>(value), s); break;
-        case PropertyType::Int32: PropertyFormatter<int32_t>()(std::get<int32_t>(value), s); break;
-        case PropertyType::UInt32: PropertyFormatter<uint32_t>()(std::get<uint32_t>(value), s); break;
-        case PropertyType::Int64: PropertyFormatter<int64_t>()(std::get<int64_t>(value), s); break;
-        case PropertyType::UInt64: PropertyFormatter<uint64_t>()(std::get<uint64_t>(value), s); break;
-        case PropertyType::Double: PropertyFormatter<double>()(std::get<double>(value), s); break;
-        case PropertyType::String: PropertyFormatter<std::string>()(std::get<std::string>(value), s); break;
-        case PropertyType::Binary: PropertyFormatter<Binary>()(std::get<Binary>(value), s); break;
+        case PropertyType::Bool: PropertyFormatter<bool>()(get<bool>(value), s); break;
+        case PropertyType::Int32: PropertyFormatter<int32_t>()(get<int32_t>(value), s); break;
+        case PropertyType::UInt32: PropertyFormatter<uint32_t>()(get<uint32_t>(value), s); break;
+        case PropertyType::Int64: PropertyFormatter<int64_t>()(get<int64_t>(value), s); break;
+        case PropertyType::UInt64: PropertyFormatter<uint64_t>()(get<uint64_t>(value), s); break;
+        case PropertyType::Double: PropertyFormatter<double>()(get<double>(value), s); break;
+        case PropertyType::String: PropertyFormatter<std::string>()(get<std::string>(value), s); break;
+        case PropertyType::Binary: PropertyFormatter<Binary>()(get<Binary>(value), s); break;
         default: s << "<\?\?\?>";
         }
     }
 
-    PropertyValueStorage value;
-    PropId id = InvalidPropId;
+    Variant value;
+    PropId id;
 };
 
 
 template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
 void PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>::format(const Property& v, std::ostream& s) const
 {
-    auto p = std::get_if<ValueType>(&v.value);
-    if (p) [[likely]]
+    if (PropertyTypeFrom<ValueType>::type == v.type()) [[likely]]
     {
+        auto const& val = get<ValueType>(v.value);
         Formatter f;
-        f(*p, s);
+        f(val, s);
     }
     else
     {
-        s << "<\?\?\?>";
+        s << "<bad property cast>";
         return;
     }
 }

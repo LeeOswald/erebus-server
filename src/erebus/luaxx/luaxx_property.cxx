@@ -34,10 +34,9 @@ uint32_t getPropertyType(const Er::Property& prop)
 
 bool getPropertyBool(const Er::Property& prop)
 {
-    auto p = std::get_if<bool>(&prop.value);
-    if (!p) [[unlikely]]
+    if (prop.type() != PropertyType::Bool) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "Bool", Er::propertyTypeToString(prop.type()));
-    return *p;
+    return get<bool>(prop.value);
 }
 
 void setPropertyBool(Er::Property& prop, bool val)
@@ -49,10 +48,9 @@ void setPropertyBool(Er::Property& prop, bool val)
 
 int32_t getPropertyInt32(const Er::Property& prop)
 {
-    auto p = std::get_if<int32_t>(&prop.value);
-    if (!p) [[unlikely]]
+    if (prop.type() != PropertyType::Int32) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "Int32", Er::propertyTypeToString(prop.type()));
-    return *p;
+    return get<int32_t>(prop.value);
 }
 
 void setPropertyInt32(Er::Property& prop, int32_t val)
@@ -64,10 +62,9 @@ void setPropertyInt32(Er::Property& prop, int32_t val)
 
 uint32_t getPropertyUInt32(const Er::Property& prop)
 {
-    auto p = std::get_if<uint32_t>(&prop.value);
-    if (!p) [[unlikely]]
+    if (prop.type() != PropertyType::UInt32) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "UInt32", Er::propertyTypeToString(prop.type()));
-    return *p;
+    return get<uint32_t>(prop.value);
 }
 
 void setPropertyUInt32(Er::Property& prop, uint32_t val)
@@ -79,11 +76,10 @@ void setPropertyUInt32(Er::Property& prop, uint32_t val)
 
 Er::Lua::Int64Wrapper getPropertyInt64(const Er::Property& prop)
 {
-    auto p = std::get_if<int64_t>(&prop.value);
-    if (!p) [[unlikely]]
+    if (prop.type() != PropertyType::Int64) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "Int64", Er::propertyTypeToString(prop.type()));
     
-    return Er::Lua::Int64Wrapper(*p);
+    return Er::Lua::Int64Wrapper(get<int64_t>(prop.value));
 }
 
 void setPropertyInt64(Er::Property& prop, const Er::Lua::Int64Wrapper& val)
@@ -95,11 +91,10 @@ void setPropertyInt64(Er::Property& prop, const Er::Lua::Int64Wrapper& val)
 
 Er::Lua::UInt64Wrapper getPropertyUInt64(const Er::Property& prop)
 {
-    auto p = std::get_if<uint64_t>(&prop.value);
-    if (!p) [[unlikely]]
+    if (prop.type() != PropertyType::UInt64) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "UInt64", Er::propertyTypeToString(prop.type()));
 
-    return Er::Lua::UInt64Wrapper(*p);
+    return Er::Lua::UInt64Wrapper(get<uint64_t>(prop.value));
 }
 
 void setPropertyUInt64(Er::Property& prop, const Er::Lua::UInt64Wrapper& val)
@@ -111,10 +106,9 @@ void setPropertyUInt64(Er::Property& prop, const Er::Lua::UInt64Wrapper& val)
 
 double getPropertyDouble(const Er::Property& prop)
 {
-    auto p = std::get_if<double>(&prop.value);
-    if (!p) [[unlikely]]
+    if (prop.type() != PropertyType::Double) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "Double", Er::propertyTypeToString(prop.type()));
-    return *p;
+    return get<double>(prop.value);
 }
 
 void setPropertyDouble(Er::Property& prop, double val)
@@ -124,12 +118,11 @@ void setPropertyDouble(Er::Property& prop, double val)
     prop.value = val;
 }
 
-std::string getPropertyString(const Er::Property& prop)
+const std::string& getPropertyString(const Er::Property& prop)
 {
-    auto p = std::get_if<std::string>(&prop.value);
-    if (!p) [[unlikely]]
+    if (prop.type() != PropertyType::String) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "String", Er::propertyTypeToString(prop.type()));
-    return *p;
+    return get<std::string>(prop.value);
 }
 
 void setPropertyString(Er::Property& prop, const std::string& val)
@@ -139,12 +132,11 @@ void setPropertyString(Er::Property& prop, const std::string& val)
     prop.value = val;
 }
 
-std::string getPropertyBytes(const Er::Property& prop)
+const std::string& getPropertyBytes(const Er::Property& prop)
 {
-    auto p = std::get_if<Er::Binary>(&prop.value);
-    if (!p) [[unlikely]]
+    if (prop.type() != PropertyType::Binary) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "Binary", Er::propertyTypeToString(prop.type()));
-    return p->bytes();
+    return get<Binary>(prop.value).bytes();
 }
 
 void setPropertyBytes(Er::Property& prop, const std::string& val)
@@ -170,7 +162,7 @@ public:
 
     uint32_t type() const
     {
-        return m_pi ? static_cast<uint32_t>(m_pi->type()) : static_cast<uint32_t>(Er::PropertyType::Invalid);
+        return m_pi ? static_cast<uint32_t>(m_pi->type()) : static_cast<uint32_t>(Er::PropertyType::Empty);
     }
 
     uint32_t id() const
@@ -210,7 +202,6 @@ EREBUS_EXPORT void registerPropertyTypes(State& state)
 {
     {
         Er::Lua::Selector s = state["Er"]["PropertyType"];
-        s["Invalid"] = static_cast<uint32_t>(Er::PropertyType::Invalid);
         s["Empty"] = static_cast<uint32_t>(Er::PropertyType::Empty);
         s["Bool"] = static_cast<uint32_t>(Er::PropertyType::Bool);
         s["Int32"] = static_cast<uint32_t>(Er::PropertyType::Int32);

@@ -26,6 +26,7 @@ add_custom_command(
 
 add_library(${EREBUS_PROTOLIB} STATIC
     erebus/protocol.hxx
+    protocol.cxx
     ${EREBUS_GENERATED_DIR}/erebus.pb.cc 
     ${EREBUS_GENERATED_DIR}/erebus.pb.h 
     ${EREBUS_GENERATED_DIR}/erebus.grpc.pb.cc 

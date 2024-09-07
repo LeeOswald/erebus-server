@@ -57,12 +57,12 @@ TEST(Er_Exception, known_props)
         auto code = e.find(Er::ExceptionProps::PosixErrorCode::Id::value);
         ASSERT_NE(code, nullptr);
         EXPECT_EQ(code->id, Er::ExceptionProps::PosixErrorCode::Id::value);
-        EXPECT_EQ(std::get<Er::ExceptionProps::PosixErrorCode::ValueType>(code->value), ENOENT);
+        EXPECT_EQ(Er::get<Er::ExceptionProps::PosixErrorCode::ValueType>(code->value), ENOENT);
 
         auto text = e.find(Er::ExceptionProps::DecodedError::Id::value);
         ASSERT_NE(text, nullptr);
         EXPECT_EQ(text->id, Er::ExceptionProps::DecodedError::Id::value);
-        EXPECT_EQ(std::get<Er::ExceptionProps::DecodedError::ValueType>(text->value), std::string_view("ENOENT"));
+        EXPECT_EQ(Er::get<Er::ExceptionProps::DecodedError::ValueType>(text->value), std::string_view("ENOENT"));
 
     }
 }

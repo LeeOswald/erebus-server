@@ -155,7 +155,7 @@ typename PropT::ValueType const* getPropertyValue(const PropertyBag& bag) noexce
     if (it == bag.end()) [[unlikely]]
         return nullptr;
 
-    return std::get_if<Type>(&it->value);
+    return &get<Type>(it->value);
 } 
 
 template <IsPropertyValue PropT>
@@ -168,11 +168,7 @@ typename PropT::ValueType getPropertyValueOr(const PropertyBag& bag, typename Pr
     if (it == bag.end()) [[unlikely]]
         return defaultValue;
 
-    auto ptr = std::get_if<Type>(&it->value);
-    if (!ptr) [[unlikely]]
-        return defaultValue;
-
-    return *ptr;
+    return get<Type>(it->value);
 }
 
 template <IsPropertyValue PropT>
@@ -185,11 +181,7 @@ typename PropT::ValueType getPropertyValueOr(const PropertyBag& bag, typename Pr
     if (it == bag.end()) [[unlikely]]
         return std::move(defaultValue);
 
-    auto ptr = std::get_if<Type>(&it->value);
-    if (!ptr) [[unlikely]]
-        return std::move(defaultValue);
-
-    return *ptr;
+    return get<Type>(it->value);
 }
 
 

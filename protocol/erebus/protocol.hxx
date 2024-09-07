@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include <erebus/empty.hxx>
 #include <erebus/exception.hxx>
 #include <erebus/property.hxx>
 #include <erebus/knownprops.hxx>
@@ -15,99 +15,9 @@ namespace Er
     
 namespace Protocol
 {
-    
-namespace Private
-{
 
-inline void assignPropertyImpl(erebus::Property& out, const Empty& val)
-{
-}
-
-inline void assignPropertyImpl(erebus::Property& out, bool val)
-{
-    out.set_v_bool(val);
-}
-
-inline void assignPropertyImpl(erebus::Property& out, int32_t val)
-{
-    out.set_v_int32(val);
-}
-
-inline void assignPropertyImpl(erebus::Property& out, uint32_t val)
-{
-    out.set_v_uint32(val);
-}
-
-inline void assignPropertyImpl(erebus::Property& out, int64_t val)
-{
-    out.set_v_int64(val);
-}
-
-inline void assignPropertyImpl(erebus::Property& out, uint64_t val)
-{
-    out.set_v_uint64(val);
-}
-
-inline void assignPropertyImpl(erebus::Property& out, double val)
-{
-    out.set_v_double(val);
-}
-
-inline void assignPropertyImpl(erebus::Property& out, const std::string& val)
-{
-    out.set_v_string(val);
-}
-
-inline void assignPropertyImpl(erebus::Property& out, const Binary& val)
-{
-    out.set_v_binary(val.bytes());
-}
-
-} // namespace Private {}
-
-
-inline void assignProperty(erebus::Property& out, const Property& source)
-{
-    out.set_id(source.id);
-
-    if (source.value.valueless_by_exception()) [[unlikely]]
-    {
-        out.clear_value();
-    }
-    else
-    {
-        std::visit(
-            [&out](auto&& arg)
-            {
-                Private::assignPropertyImpl(out, arg);
-            },
-            source.value
-        );
-    }
-}
-
-inline Property getProperty(const erebus::Property& source)
-{
-    auto id = source.id();
-    if (source.has_v_bool())
-        return Property(PropId(id), source.v_bool());
-    else if (source.has_v_int32())
-        return Property(PropId(id), source.v_int32());
-    else if (source.has_v_uint32())
-        return Property(PropId(id), source.v_uint32());
-    else if (source.has_v_int64())
-        return Property(PropId(id), source.v_int64());
-    else if (source.has_v_uint64())
-        return Property(PropId(id), source.v_uint64());
-    else if (source.has_v_double())
-        return Property(PropId(id), source.v_double());
-    else if (source.has_v_string())
-        return Property(PropId(id), source.v_string());
-    else if (source.has_v_binary())
-        return Property(PropId(id), Er::Binary(source.v_binary()));
-    else
-        ErThrow(Er::Util::format("Unsupported property %08x", id));
-}
+void assignProperty(erebus::Property& out, const Property& source);
+Property getProperty(const erebus::Property& source);
 
 namespace Props
 {

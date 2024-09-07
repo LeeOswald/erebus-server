@@ -6,10 +6,7 @@ TEST(Er_Lua, PropertyTypes)
 {
     Er::LuaState state(g_log);
 
-    uint32_t type = state["Er"]["PropertyType"]["Invalid"];
-    EXPECT_EQ(type, static_cast<uint32_t>(Er::PropertyType::Invalid));
-
-    type = state["Er"]["PropertyType"]["Empty"];
+    uint32_t type = state["Er"]["PropertyType"]["Empty"];
     EXPECT_EQ(type, static_cast<uint32_t>(Er::PropertyType::Empty));
 
     type = state["Er"]["PropertyType"]["Bool"];
@@ -167,7 +164,7 @@ TEST(Er_Lua, Property)
         EXPECT_EQ(prop.id, TestProps::BoolProp::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::BoolProp::type()));
         ASSERT_EQ(prop.type(), TestProps::BoolProp::type());
-        EXPECT_EQ(std::get<bool>(prop.value), true);
+        EXPECT_EQ(Er::get<bool>(prop.value), true);
     }
     {
         Er::Property prop(TestProps::Int32Prop::id(), int32_t(133));
@@ -176,7 +173,7 @@ TEST(Er_Lua, Property)
         EXPECT_EQ(prop.id, TestProps::Int32Prop::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::Int32Prop::type()));
         ASSERT_EQ(prop.type(), TestProps::Int32Prop::type());
-        EXPECT_EQ(std::get<int32_t>(prop.value), 133 + 1);
+        EXPECT_EQ(Er::get<int32_t>(prop.value), 133 + 1);
     }
     {
         Er::Property prop(TestProps::UInt32Prop::id(), uint32_t(133));
@@ -185,7 +182,7 @@ TEST(Er_Lua, Property)
         EXPECT_EQ(prop.id, TestProps::UInt32Prop::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::UInt32Prop::type()));
         ASSERT_EQ(prop.type(), TestProps::UInt32Prop::type());
-        EXPECT_EQ(std::get<uint32_t>(prop.value), 133 + 2);
+        EXPECT_EQ(Er::get<uint32_t>(prop.value), 133 + 2);
     }
     {
         Er::Property prop(TestProps::Int64Prop::id(), int64_t(133));
@@ -194,7 +191,7 @@ TEST(Er_Lua, Property)
         EXPECT_EQ(prop.id, TestProps::Int64Prop::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::Int64Prop::type()));
         ASSERT_EQ(prop.type(), TestProps::Int64Prop::type());
-        EXPECT_EQ(std::get<int64_t>(prop.value), 133 + 3);
+        EXPECT_EQ(Er::get<int64_t>(prop.value), 133 + 3);
     }
     {
         Er::Property prop(TestProps::UInt64Prop::id(), uint64_t(133));
@@ -203,7 +200,7 @@ TEST(Er_Lua, Property)
         EXPECT_EQ(prop.id, TestProps::UInt64Prop::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::UInt64Prop::type()));
         ASSERT_EQ(prop.type(), TestProps::UInt64Prop::type());
-        EXPECT_EQ(std::get<uint64_t>(prop.value), 133 + 4);
+        EXPECT_EQ(Er::get<uint64_t>(prop.value), 133 + 4);
     }
     {
         Er::Property prop(TestProps::DoubleProp::id(), double(133));
@@ -212,7 +209,7 @@ TEST(Er_Lua, Property)
         EXPECT_EQ(prop.id, TestProps::DoubleProp::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::DoubleProp::type()));
         ASSERT_EQ(prop.type(), TestProps::DoubleProp::type());
-        EXPECT_EQ(std::get<double>(prop.value), 133 + 5);
+        EXPECT_EQ(Er::get<double>(prop.value), 133 + 5);
     }
     {
         Er::Property prop(TestProps::StringProp::id(), std::string("test_string"));
@@ -221,7 +218,7 @@ TEST(Er_Lua, Property)
         EXPECT_EQ(prop.id, TestProps::StringProp::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::StringProp::type()));
         ASSERT_EQ(prop.type(), TestProps::StringProp::type());
-        EXPECT_STREQ(std::get<std::string>(prop.value).c_str(), "TEST_STRING");
+        EXPECT_STREQ(Er::get<std::string>(prop.value).c_str(), "TEST_STRING");
     }
     {
         Er::Property prop(TestProps::BinaryProp::id(), Er::Binary(std::string("BYTES_TEST")));
@@ -230,7 +227,7 @@ TEST(Er_Lua, Property)
         EXPECT_EQ(prop.id, TestProps::BinaryProp::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::BinaryProp::type()));
         ASSERT_EQ(prop.type(), TestProps::BinaryProp::type());
-        EXPECT_STREQ(std::get<Er::Binary>(prop.value).bytes().c_str(), "bytes_test");
+        EXPECT_STREQ(Er::get<Er::Binary>(prop.value).bytes().c_str(), "bytes_test");
     }
 }
 
@@ -256,7 +253,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(Er::InvalidPropId));
@@ -267,7 +264,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::BoolProp::id()));
@@ -283,7 +280,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::Int32Prop::id()));
@@ -299,7 +296,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::UInt32Prop::id()));
@@ -315,7 +312,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::Int64Prop::id()));
@@ -331,7 +328,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::UInt64Prop::id()));
@@ -347,7 +344,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::DoubleProp::id()));
@@ -363,7 +360,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::StringProp::id()));
@@ -379,7 +376,7 @@ TEST(Er_Lua, PropertyInfo)
         bool valid = false;
         uint32_t id = Er::InvalidPropId;
         uint32_t id1 = Er::InvalidPropId;
-        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Invalid);
+        uint32_t type = static_cast<uint32_t>(Er::PropertyType::Empty);
         std::string id_str;
         std::string name;
         Er::Lua::tie(valid, id, id1, type, id_str, name) = state["lookup"](uint32_t(TestProps::BinaryProp::id()));

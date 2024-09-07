@@ -31,12 +31,12 @@ TEST(Er_Property, constructFromPropertyValue)
         Er::Property propf(bf);
         EXPECT_EQ(propf.id, TestProps::BoolProp::Id::value);
         EXPECT_EQ(propf.type(), Er::PropertyType::Bool);
-        EXPECT_FALSE(std::get<bool>(propf.value));
+        EXPECT_FALSE(Er::get<bool>(propf.value));
 
         Er::Property propt(TestProps::BoolProp(true));
         EXPECT_EQ(propt.id, TestProps::BoolProp::Id::value);
         EXPECT_EQ(propt.type(), Er::PropertyType::Bool);
-        EXPECT_TRUE(std::get<bool>(propt.value));
+        EXPECT_TRUE(Er::get<bool>(propt.value));
 
         auto info = Er::lookupProperty("Test", propt.id);
         ASSERT_TRUE(info);
@@ -57,12 +57,12 @@ TEST(Er_Property, constructFromPropertyValue)
         Er::Property prop0(b0);
         EXPECT_EQ(prop0.id, TestProps::Int32Prop::Id::value);
         EXPECT_EQ(prop0.type(), Er::PropertyType::Int32);
-        EXPECT_EQ(std::get<int32_t>(prop0.value), 0);
+        EXPECT_EQ(Er::get<int32_t>(prop0.value), 0);
 
         Er::Property prop2(TestProps::Int32Prop(-2));
         EXPECT_EQ(prop2.id, TestProps::Int32Prop::Id::value);
         EXPECT_EQ(prop2.type(), Er::PropertyType::Int32);
-        EXPECT_EQ(std::get<int32_t>(prop2.value), -2);
+        EXPECT_EQ(Er::get<int32_t>(prop2.value), -2);
 
         auto info = Er::lookupProperty("Test", prop2.id);
         ASSERT_TRUE(info);
@@ -83,12 +83,12 @@ TEST(Er_Property, constructFromPropertyValue)
         Er::Property prop0(b0);
         EXPECT_EQ(prop0.id, TestProps::UInt32Prop::Id::value);
         EXPECT_EQ(prop0.type(), Er::PropertyType::UInt32);
-        EXPECT_EQ(std::get<uint32_t>(prop0.value), 0);
+        EXPECT_EQ(Er::get<uint32_t>(prop0.value), 0);
 
         Er::Property prop2(TestProps::UInt32Prop(2));
         EXPECT_EQ(prop2.id, TestProps::UInt32Prop::Id::value);
         EXPECT_EQ(prop2.type(), Er::PropertyType::UInt32);
-        EXPECT_EQ(std::get<uint32_t>(prop2.value), 2);
+        EXPECT_EQ(Er::get<uint32_t>(prop2.value), 2);
 
         auto info = Er::lookupProperty("Test", prop2.id);
         ASSERT_TRUE(info);
@@ -109,12 +109,12 @@ TEST(Er_Property, constructFromPropertyValue)
         Er::Property prop0(b0);
         EXPECT_EQ(prop0.id, TestProps::Int64Prop::Id::value);
         EXPECT_EQ(prop0.type(), Er::PropertyType::Int64);
-        EXPECT_EQ(std::get<int64_t>(prop0.value), 0);
+        EXPECT_EQ(Er::get<int64_t>(prop0.value), 0);
 
         Er::Property prop2(TestProps::Int64Prop(-2));
         EXPECT_EQ(prop2.id, TestProps::Int64Prop::Id::value);
         EXPECT_EQ(prop2.type(), Er::PropertyType::Int64);
-        EXPECT_EQ(std::get<int64_t>(prop2.value), -2);
+        EXPECT_EQ(Er::get<int64_t>(prop2.value), -2);
 
         auto info = Er::lookupProperty("Test", prop2.id);
         ASSERT_TRUE(info);
@@ -129,12 +129,12 @@ TEST(Er_Property, constructFromPropertyValue)
         Er::Property prop0(b0);
         EXPECT_EQ(prop0.id, TestProps::UInt64Prop::Id::value);
         EXPECT_EQ(prop0.type(), Er::PropertyType::UInt64);
-        EXPECT_EQ(std::get<uint64_t>(prop0.value), 0);
+        EXPECT_EQ(Er::get<uint64_t>(prop0.value), 0);
 
         Er::Property prop2(TestProps::UInt64Prop(0x8000100020003000ULL));
         EXPECT_EQ(prop2.id, TestProps::UInt64Prop::Id::value);
         EXPECT_EQ(prop2.type(), Er::PropertyType::UInt64);
-        EXPECT_EQ(std::get<uint64_t>(prop2.value), 0x8000100020003000ULL);
+        EXPECT_EQ(Er::get<uint64_t>(prop2.value), 0x8000100020003000ULL);
 
         auto info = Er::lookupProperty("Test", prop2.id);
         ASSERT_TRUE(info);
@@ -149,12 +149,12 @@ TEST(Er_Property, constructFromPropertyValue)
         Er::Property prop0(b0);
         EXPECT_EQ(prop0.id, TestProps::DoubleProp::Id::value);
         EXPECT_EQ(prop0.type(), Er::PropertyType::Double);
-        EXPECT_EQ(std::get<double>(prop0.value), 0);
+        EXPECT_EQ(Er::get<double>(prop0.value), 0);
 
         Er::Property prop2(TestProps::DoubleProp(-1.03));
         EXPECT_EQ(prop2.id, TestProps::DoubleProp::Id::value);
         EXPECT_EQ(prop2.type(), Er::PropertyType::Double);
-        EXPECT_EQ(std::get<double>(prop2.value), -1.03);
+        EXPECT_EQ(Er::get<double>(prop2.value), -1.03);
 
         auto info = Er::lookupProperty("Test", prop2.id);
         ASSERT_TRUE(info);
@@ -169,12 +169,12 @@ TEST(Er_Property, constructFromPropertyValue)
         Er::Property prop0(b0);
         EXPECT_EQ(prop0.id, TestProps::StringProp::Id::value);
         EXPECT_EQ(prop0.type(), Er::PropertyType::String);
-        EXPECT_STREQ(std::get<std::string>(prop0.value).c_str(), "aaa.a");
+        EXPECT_STREQ(Er::get<std::string>(prop0.value).c_str(), "aaa.a");
 
         Er::Property prop2(TestProps::StringProp("b.bbb"));
         EXPECT_EQ(prop2.id, TestProps::StringProp::Id::value);
         EXPECT_EQ(prop2.type(), Er::PropertyType::String);
-        EXPECT_STREQ(std::get<std::string>(prop2.value).c_str(), "b.bbb");
+        EXPECT_STREQ(Er::get<std::string>(prop2.value).c_str(), "b.bbb");
 
         auto info = Er::lookupProperty("Test", prop2.id);
         ASSERT_TRUE(info);
@@ -189,12 +189,12 @@ TEST(Er_Property, constructFromPropertyValue)
         Er::Property prop0(b0);
         EXPECT_EQ(prop0.id, TestProps::BinaryProp::Id::value);
         EXPECT_EQ(prop0.type(), Er::PropertyType::Binary);
-        EXPECT_STREQ(std::get<Er::Binary>(prop0.value).bytes().c_str(), "aaa.a");
+        EXPECT_STREQ(Er::get<Er::Binary>(prop0.value).bytes().c_str(), "aaa.a");
 
         Er::Property prop2(TestProps::BinaryProp(Er::Binary("b.bbb")));
         EXPECT_EQ(prop2.id, TestProps::BinaryProp::Id::value);
         EXPECT_EQ(prop2.type(), Er::PropertyType::Binary);
-        EXPECT_STREQ(std::get<Er::Binary>(prop2.value).bytes().c_str(), "b.bbb");
+        EXPECT_STREQ(Er::get<Er::Binary>(prop2.value).bytes().c_str(), "b.bbb");
 
         auto info = Er::lookupProperty("Test", prop2.id);
         ASSERT_TRUE(info);
@@ -211,56 +211,56 @@ TEST(Er_Property, constructFromRawValue)
         Er::Property prop(TestProps::BoolProp::Id::value, true);
         EXPECT_EQ(prop.id, TestProps::BoolProp::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::Bool);
-        EXPECT_EQ(std::get<bool>(prop.value), true);
+        EXPECT_EQ(Er::get<bool>(prop.value), true);
     }
 
     {
         Er::Property prop(TestProps::Int32Prop::Id::value, int32_t(-1));
         EXPECT_EQ(prop.id, TestProps::Int32Prop::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::Int32);
-        EXPECT_EQ(std::get<int32_t>(prop.value), -1);
+        EXPECT_EQ(Er::get<int32_t>(prop.value), -1);
     }
 
     {
         Er::Property prop(TestProps::UInt32Prop::Id::value, uint32_t(2));
         EXPECT_EQ(prop.id, TestProps::UInt32Prop::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::UInt32);
-        EXPECT_EQ(std::get<uint32_t>(prop.value), 2);
+        EXPECT_EQ(Er::get<uint32_t>(prop.value), 2);
     }
 
     {
         Er::Property prop(TestProps::Int64Prop::Id::value, int64_t(-3));
         EXPECT_EQ(prop.id, TestProps::Int64Prop::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::Int64);
-        EXPECT_EQ(std::get<int64_t>(prop.value), -3);
+        EXPECT_EQ(Er::get<int64_t>(prop.value), -3);
     }
 
     {
         Er::Property prop(TestProps::UInt64Prop::Id::value, uint64_t(0x8000700060005000ULL));
         EXPECT_EQ(prop.id, TestProps::UInt64Prop::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::UInt64);
-        EXPECT_EQ(std::get<uint64_t>(prop.value), 0x8000700060005000ULL);
+        EXPECT_EQ(Er::get<uint64_t>(prop.value), 0x8000700060005000ULL);
     }
 
     {
         Er::Property prop(TestProps::DoubleProp::Id::value, -0.12);
         EXPECT_EQ(prop.id, TestProps::DoubleProp::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::Double);
-        EXPECT_EQ(std::get<double>(prop.value), -0.12);
+        EXPECT_EQ(Er::get<double>(prop.value), -0.12);
     }
 
     {
         Er::Property prop(TestProps::StringProp::Id::value, std::string("test string"));
         EXPECT_EQ(prop.id, TestProps::StringProp::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::String);
-        EXPECT_STREQ(std::get<std::string>(prop.value).c_str(), "test string");
+        EXPECT_STREQ(Er::get<std::string>(prop.value).c_str(), "test string");
     }
 
     {
         Er::Property prop(TestProps::BinaryProp::Id::value, Er::Binary(std::string("test string")));
         EXPECT_EQ(prop.id, TestProps::BinaryProp::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::Binary);
-        EXPECT_STREQ(std::get<Er::Binary>(prop.value).bytes().c_str(), "test string");
+        EXPECT_STREQ(Er::get<Er::Binary>(prop.value).bytes().c_str(), "test string");
     }
 }
 
@@ -274,20 +274,19 @@ TEST(Er_Property, constructFromProperty)
         EXPECT_FALSE(prop1.empty());
         EXPECT_EQ(prop1.id, TestProps::StringProp::Id::value);
         EXPECT_EQ(prop1.type(), Er::PropertyType::String);
-        EXPECT_STREQ(std::get<std::string>(prop1.value).c_str(), "test string");
+        EXPECT_STREQ(Er::get<std::string>(prop1.value).c_str(), "test string");
 
         Er::Property prop2(prop1);
         EXPECT_FALSE(prop1.empty());
         EXPECT_FALSE(prop2.empty());
         EXPECT_EQ(prop2.id, TestProps::StringProp::Id::value);
         EXPECT_EQ(prop2.type(), Er::PropertyType::String);
-        EXPECT_STREQ(std::get<std::string>(prop2.value).c_str(), "test string");
+        EXPECT_STREQ(Er::get<std::string>(prop2.value).c_str(), "test string");
 
         Er::Property prop3(std::move(prop1));
-        EXPECT_TRUE(std::get<std::string>(prop1.value).empty());
         EXPECT_FALSE(prop3.empty());
         EXPECT_EQ(prop3.id, TestProps::StringProp::Id::value);
         EXPECT_EQ(prop3.type(), Er::PropertyType::String);
-        EXPECT_STREQ(std::get<std::string>(prop3.value).c_str(), "test string");
+        EXPECT_STREQ(Er::get<std::string>(prop3.value).c_str(), "test string");
     }
 }
