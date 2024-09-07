@@ -226,8 +226,7 @@ void ProcessListCollector::updateProcess(ProcessInfoCollectionDiff& result, Prop
         
         if (required[Er::ProcessMgr::ProcessProps::PropIndices::State])
         {
-            std::string state({ stat.state });
-            updateProperty<Er::ProcessMgr::ProcessProps::State>(replaceProps, info->properties, pdiff, nextProp++, std::move(state));
+            updateProperty<Er::ProcessMgr::ProcessProps::State>(replaceProps, info->properties, pdiff, nextProp++, Er::ProcessMgr::ProcessProps::State::ValueType(stat.state));
         }
 
         if (required[Er::ProcessMgr::ProcessProps::PropIndices::Comm])

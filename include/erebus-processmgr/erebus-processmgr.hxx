@@ -34,6 +34,13 @@ static const std::string_view KillProcess = "KillProcess";
 } // namespace ProcessRequests {}
 
 
+struct ProcessStateFormatter
+{
+    void operator()(uint32_t val, std::ostream& s)
+    {
+        s << char(val);
+    }
+};
 
 struct CpuTimeFormatter
 {
@@ -90,7 +97,7 @@ using Comm = PropertyValue<std::string, ER_PROPID("process.comm"), "Program Name
 using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Command Line">;
 using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable">;
 using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
-using State = PropertyValue<std::string, ER_PROPID("process.state"), "State">;
+using State = PropertyValue<uint32_t, ER_PROPID("process.state"), "State", ProcessStateFormatter>;
 using ThreadCount = PropertyValue<int64_t, ER_PROPID("process.nthreads"), "Thread Count">;
 using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", CpuTimeFormatter>;
 using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", CpuTimeFormatter>;
