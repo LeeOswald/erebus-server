@@ -90,7 +90,7 @@ bool updatePropertyValueAt(PropertyBag& bag, std::size_t index, typename PropT::
     ErAssert(index < bag.size());
     ErAssert(bag[index].id == Id::value);
 
-    if (std::get<Type>(bag[index].value) != v)
+    if (Er::get<Type>(bag[index].value) != v)
     {        
         bag[index] = Property(Id::value, v);
         return true;
@@ -108,7 +108,7 @@ bool updatePropertyValueAt(PropertyBag& bag, std::size_t index, typename PropT::
     ErAssert(index < bag.size());
     ErAssert(bag[index].id == Id::value);
 
-    if (std::get<Type>(bag[index].value) != v)
+    if (Er::get<Type>(bag[index].value) != v)
     {        
         bag[index] = Property(Id::value, std::move(v));
         return true;

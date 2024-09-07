@@ -56,157 +56,183 @@ public:
     Variant(nullptr_t) = delete;
 
     constexpr Variant(bool v) noexcept
-        : m_type(Type::Bool)
+        : m_u()
+        , m_type(Type::Bool)
     {
         m_u.v_bool = v;
     }
 
     constexpr Variant(int32_t v) noexcept
-        : m_type(Type::Int32)
+        : m_u()
+        , m_type(Type::Int32)
     {
         m_u.v_int32 = v;
     }
 
     constexpr Variant(uint32_t v) noexcept
-        : m_type(Type::UInt32)
+        : m_u()
+        , m_type(Type::UInt32)
     {
         m_u.v_uint32 = v;
     }
 
     constexpr Variant(int64_t v) noexcept
-        : m_type(Type::Int64)
+        : m_u()
+        , m_type(Type::Int64)
     {
         m_u.v_int64 = v;
     }
 
     constexpr Variant(uint64_t v) noexcept
-        : m_type(Type::UInt64)
+        : m_u()
+        , m_type(Type::UInt64)
     {
         m_u.v_uint64 = v;
     }
 
     constexpr Variant(double v) noexcept
-        : m_type(Type::Double)
+        : m_u()
+        , m_type(Type::Double)
     {
         m_u.v_double = v;
     }
 
     constexpr Variant(const std::string& v) noexcept
-        : m_type(Type::String)
+        : m_u()
+        , m_type(Type::String)
     {
         m_u.v_string = new std::string(v);
     }
 
     constexpr Variant(std::string&& v) noexcept
-        : m_type(Type::String)
+        : m_u()
+        , m_type(Type::String)
     {
         m_u.v_string = new std::string(std::move(v));
     }
 
     constexpr Variant(const Binary& v) noexcept
-        : m_type(Type::Binary)
+        : m_u()
+        , m_type(Type::Binary)
     {
         m_u.v_binary = new Binary(v);
     }
 
     constexpr Variant(Binary&& v) noexcept
-        : m_type(Type::Binary)
+        : m_u()
+        , m_type(Type::Binary)
     {
         m_u.v_binary = new Binary(std::move(v));
     }
 
     constexpr Variant(const BoolV& v) noexcept
-        : m_type(Type::Bools)
+        : m_u()
+        , m_type(Type::Bools)
     {
         m_u.a_bool = new BoolV(v);
     }
 
     constexpr Variant(BoolV&& v) noexcept
-        : m_type(Type::Bools)
+        : m_u()
+        , m_type(Type::Bools)
     {
         m_u.a_bool = new BoolV(std::move(v));
     }
 
     constexpr Variant(const Int32V& v) noexcept
-        : m_type(Type::Int32s)
+        : m_u()
+        , m_type(Type::Int32s)
     {
         m_u.a_int32 = new Int32V(v);
     }
 
     constexpr Variant(Int32V&& v) noexcept
-        : m_type(Type::Int32s)
+        : m_u()
+        , m_type(Type::Int32s)
     {
         m_u.a_int32 = new Int32V(std::move(v));
     }
 
     constexpr Variant(const UInt32V& v) noexcept
-        : m_type(Type::UInt32s)
+        : m_u()
+        , m_type(Type::UInt32s)
     {
         m_u.a_uint32 = new UInt32V(v);
     }
 
     constexpr Variant(UInt32V&& v) noexcept
-        : m_type(Type::UInt32s)
+        : m_u()
+        , m_type(Type::UInt32s)
     {
         m_u.a_uint32 = new UInt32V(std::move(v));
     }
 
     constexpr Variant(const Int64V& v) noexcept
-        : m_type(Type::Int64s)
+        : m_u()
+        , m_type(Type::Int64s)
     {
         m_u.a_int64 = new Int64V(v);
     }
 
     constexpr Variant(Int64V&& v) noexcept
-        : m_type(Type::Int64s)
+        : m_u()
+        , m_type(Type::Int64s)
     {
         m_u.a_int64 = new Int64V(std::move(v));
     }
 
     constexpr Variant(const UInt64V& v) noexcept
-        : m_type(Type::UInt64s)
+        : m_u()
+        , m_type(Type::UInt64s)
     {
         m_u.a_uint64 = new UInt64V(v);
     }
 
     constexpr Variant(UInt64V&& v) noexcept
-        : m_type(Type::UInt64s)
+        : m_u()
+        , m_type(Type::UInt64s)
     {
         m_u.a_uint64 = new UInt64V(std::move(v));
     }
 
     constexpr Variant(const DoubleV& v) noexcept
-        : m_type(Type::Doubles)
+        : m_u()
+        , m_type(Type::Doubles)
     {
         m_u.a_double = new DoubleV(v);
     }
 
     constexpr Variant(DoubleV&& v) noexcept
-        : m_type(Type::Doubles)
+        : m_u()
+        , m_type(Type::Doubles)
     {
         m_u.a_double = new DoubleV(std::move(v));
     }
 
     constexpr Variant(const StringV& v) noexcept
-        : m_type(Type::Strings)
+        : m_u()
+        , m_type(Type::Strings)
     {
         m_u.a_string = new StringV(v);
     }
 
     constexpr Variant(StringV&& v) noexcept
-        : m_type(Type::Strings)
+        : m_u()
+        , m_type(Type::Strings)
     {
         m_u.a_string = new StringV(std::move(v));
     }
 
     constexpr Variant(const BinaryV& v) noexcept
-        : m_type(Type::Binaries)
+        : m_u()
+        , m_type(Type::Binaries)
     {
         m_u.a_binary = new BinaryV(v);
     }
 
     constexpr Variant(BinaryV&& v) noexcept
-        : m_type(Type::Binaries)
+        : m_u()
+        , m_type(Type::Binaries)
     {
         m_u.a_binary = new BinaryV(std::move(v));
     }
@@ -218,7 +244,8 @@ public:
     }
 
     constexpr Variant(const Variant& other)
-        : m_type(other.m_type)
+        : m_u()
+        , m_type(other.m_type)
     {
         if (other.m_type < Type::String)
             m_u._largest = other.m_u._largest;
