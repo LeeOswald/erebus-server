@@ -211,5 +211,102 @@ void Variant::_cloneBinaryV(const Variant& other)
     m_u.a_binary = new BinaryV(*other.m_u.a_binary);
 }
 
+bool Variant::_eq(const Variant& other) const noexcept
+{
+    using EqFn = bool (Variant::*)(const Variant&) const noexcept;
+
+    static EqFn s_eqFns[] =
+    {
+        &Variant::_eqString,
+        &Variant::_eqBinary,
+        &Variant::_eqBoolV,
+        &Variant::_eqInt32V,
+        &Variant::_eqUInt32V,
+        &Variant::_eqInt64V,
+        &Variant::_eqUInt64V,
+        &Variant::_eqDoubleV,
+        &Variant::_eqStringV,
+        &Variant::_eqBinaryV
+    };
+
+    if (m_type < Type::String)
+    {
+        return m_u._largest == other.m_u._largest;
+    }
+
+    auto idx = static_cast<std::size_t>(m_type) - static_cast<std::size_t>(Type::String);
+    ErAssert(idx < _countof(s_eqFns));
+    return std::invoke(s_eqFns[idx], *this, other);
+}
+
+bool Variant::_eqString(const Variant& other) const noexcept
+{
+    auto& v1 = getString();
+    auto& v2 = other.getString();
+    return v1 == v2;
+}
+
+bool Variant::_eqBinary(const Variant& other) const noexcept
+{
+    auto& v1 = getBinary();
+    auto& v2 = other.getBinary();
+    return v1 == v2;
+}
+
+bool Variant::_eqBoolV(const Variant& other) const noexcept
+{
+    auto& v1 = getBools();
+    auto& v2 = other.getBools();
+    return v1 == v2;
+}
+
+bool Variant::_eqInt32V(const Variant& other) const noexcept
+{
+    auto& v1 = getInt32s();
+    auto& v2 = other.getInt32s();
+    return v1 == v2;
+}
+
+bool Variant::_eqUInt32V(const Variant& other) const noexcept
+{
+    auto& v1 = getUInt32s();
+    auto& v2 = other.getUInt32s();
+    return v1 == v2;
+}
+
+bool Variant::_eqInt64V(const Variant& other) const noexcept
+{
+    auto& v1 = getInt64s();
+    auto& v2 = other.getInt64s();
+    return v1 == v2;
+}
+
+bool Variant::_eqUInt64V(const Variant& other) const noexcept
+{
+    auto& v1 = getUInt64s();
+    auto& v2 = other.getUInt64s();
+    return v1 == v2;
+}
+
+bool Variant::_eqDoubleV(const Variant& other) const noexcept
+{
+    auto& v1 = getDoubles();
+    auto& v2 = other.getDoubles();
+    return v1 == v2;
+}
+
+bool Variant::_eqStringV(const Variant& other) const noexcept
+{
+    auto& v1 = getStrings();
+    auto& v2 = other.getStrings();
+    return v1 == v2;
+}
+
+bool Variant::_eqBinaryV(const Variant& other) const noexcept
+{
+    auto& v1 = getBinaries();
+    auto& v2 = other.getBinaries();
+    return v1 == v2;
+}
 
 } // namespace Er {}

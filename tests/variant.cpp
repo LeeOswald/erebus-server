@@ -905,3 +905,183 @@ TEST(Variant, construction_assignment)
         EXPECT_STREQ(rc4[2].data(), "ccc");
     }
 }
+
+TEST(Variant, compare)
+{
+    // empty
+    {
+        Er::Variant v1;
+        Er::Variant v2;
+        Er::Variant v3(1);
+
+        EXPECT_TRUE(v1 == v2);
+        EXPECT_FALSE(v1 != v2);
+        EXPECT_FALSE(v1 == v3);
+        EXPECT_TRUE(v1 != v3);
+    }
+
+    // bool
+    {
+        Er::Variant v1(true);
+        Er::Variant v2(false);
+        Er::Variant v3(true);
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // int32
+    {
+        Er::Variant v1(int32_t(-10));
+        Er::Variant v2(int32_t(30)); 
+        Er::Variant v3(int32_t(-10));
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // uint32
+    {
+        Er::Variant v1(uint32_t(10));
+        Er::Variant v2(uint32_t(30));
+        Er::Variant v3(uint32_t(10));
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // int64
+    {
+        Er::Variant v1(int64_t(-9223372036854775803LL));
+        Er::Variant v2(int64_t(22LL));
+        Er::Variant v3(int64_t(-9223372036854775803LL));
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // uint64
+    {
+        Er::Variant v1(uint64_t(0x8000000000000005ULL));
+        Er::Variant v2(uint64_t(5ULL));
+        Er::Variant v3(uint64_t(0x8000000000000005ULL));
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // double
+    {
+        Er::Variant v1(3.0);
+        Er::Variant v2(-3.0);
+        Er::Variant v3(3.0);
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // string
+    {
+        std::string v1("Test");
+        std::string v2("Test1");
+        std::string v3("Test");
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // binary
+    {
+        Er::Binary v1("Test");
+        Er::Binary v2("Test1");
+        Er::Binary v3("Test");
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // bool vector
+    {
+        std::vector<bool> v1{ true, false, true };
+        std::vector<bool> v2{ false, false, true };
+        std::vector<bool> v3{ true, false, true };
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // int32 vector
+    {
+        std::vector<int32_t> v1{ -1, 2, -3 };
+        std::vector<int32_t> v2{ -1, -2, -3 };
+        std::vector<int32_t> v3{ -1, 2, -3 };
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // uint32 vector
+    {
+        std::vector<uint32_t> v1{ 1, 2, 3 };
+        std::vector<uint32_t> v2{ 1, 32, 3 };
+        std::vector<uint32_t> v3{ 1, 2, 3 };
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // int64 vector
+    {
+        std::vector<int64_t> v1{ -1, int64_t(-9223372036854775803LL), -3 };
+        std::vector<int64_t> v2{ -1, 2, -3 };
+        std::vector<int64_t> v3{ -1, int64_t(-9223372036854775803LL), -3 };
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // uint64 vector
+    {
+        std::vector<uint64_t> v1{ 1, uint64_t(0x8000000000000005ULL), 3 };
+        std::vector<uint64_t> v2{ 1, 2, 3 };
+        std::vector<uint64_t> v3{ 1, uint64_t(0x8000000000000005ULL), 3 };
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // string vector
+    {
+        std::vector<std::string> v1{ "true", "false", "true" };
+        std::vector<std::string> v2{ "true", "false", "false" };
+        std::vector<std::string> v3{ "true", "false", "true" };
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+
+    // binaries vector
+    {
+        std::vector<Er::Binary> v1{ Er::Binary("aaa"), Er::Binary("bbb"), Er::Binary("ccc") };
+        std::vector<Er::Binary> v2{ Er::Binary("aaa"), Er::Binary("bbb"), Er::Binary("eee") };
+        std::vector<Er::Binary> v3{ Er::Binary("aaa"), Er::Binary("bbb"), Er::Binary("ccc") };
+        EXPECT_FALSE(v1 == v2);
+        EXPECT_TRUE(v1 != v2);
+        EXPECT_TRUE(v1 == v3);
+        EXPECT_FALSE(v1 != v3);
+    }
+}

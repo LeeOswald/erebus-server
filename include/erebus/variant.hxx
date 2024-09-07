@@ -217,7 +217,7 @@ public:
         std::swap(m_u._largest, other.m_u._largest);
     }
 
-    Variant(const Variant& other)
+    constexpr Variant(const Variant& other)
         : m_type(other.m_type)
     {
         if (other.m_type < Type::String)
@@ -233,7 +233,7 @@ public:
         return *this;
     }
 
-    Variant(Variant&& other) noexcept
+    constexpr Variant(Variant&& other) noexcept
         : Variant()
     {
         swap(other);
@@ -246,120 +246,137 @@ public:
         return *this;
     }
 
-    [[nodiscard]] Type type() const noexcept
+    [[nodiscard]] constexpr Type type() const noexcept
     {
         return m_type;
     }
 
-    [[nodiscard]] bool empty() const noexcept
+    [[nodiscard]] constexpr bool empty() const noexcept
     {
         return m_type == Type::Empty;
     }
 
-    [[nodiscard]] bool getBool() const noexcept
+    [[nodiscard]] constexpr const bool& getBool() const noexcept
     {
         ErAssert(m_type == Type::Bool);
         return m_u.v_bool;
     }
 
-    [[nodiscard]] int32_t getInt32() const noexcept
+    [[nodiscard]] constexpr const int32_t& getInt32() const noexcept
     {
         ErAssert(m_type == Type::Int32);
         return m_u.v_int32;
     }
 
-    [[nodiscard]] uint32_t getUInt32() const noexcept
+    [[nodiscard]] constexpr const uint32_t& getUInt32() const noexcept
     {
         ErAssert(m_type == Type::UInt32);
         return m_u.v_uint32;
     }
 
-    [[nodiscard]] int64_t getInt64() const noexcept
+    [[nodiscard]] constexpr const int64_t& getInt64() const noexcept
     {
         ErAssert(m_type == Type::Int64);
         return m_u.v_int64;
     }
 
-    [[nodiscard]] uint64_t getUInt64() const noexcept
+    [[nodiscard]] constexpr const uint64_t& getUInt64() const noexcept
     {
         ErAssert(m_type == Type::UInt64);
         return m_u.v_uint64;
     }
 
-    [[nodiscard]] double getDouble() const noexcept
+    [[nodiscard]] constexpr const double& getDouble() const noexcept
     {
         ErAssert(m_type == Type::Double);
         return m_u.v_double;
     }
 
-    [[nodiscard]] const std::string& getString() const noexcept
+    [[nodiscard]] constexpr const std::string& getString() const noexcept
     {
         ErAssert(m_type == Type::String);
         ErAssert(m_u.v_string);
         return *m_u.v_string;
     }
 
-    [[nodiscard]] const Binary& getBinary() const noexcept
+    [[nodiscard]] constexpr const Binary& getBinary() const noexcept
     {
         ErAssert(m_type == Type::Binary);
         ErAssert(m_u.v_binary);
         return *m_u.v_binary;
     }
 
-    [[nodiscard]] const BoolV& getBools() const noexcept
+    [[nodiscard]] constexpr const BoolV& getBools() const noexcept
     {
         ErAssert(m_type == Type::Bools);
         ErAssert(m_u.a_bool);
         return *m_u.a_bool;
     }
 
-    [[nodiscard]] const Int32V& getInt32s() const noexcept
+    [[nodiscard]] constexpr const Int32V& getInt32s() const noexcept
     {
         ErAssert(m_type == Type::Int32s);
         ErAssert(m_u.a_int32);
         return *m_u.a_int32;
     }
 
-    [[nodiscard]] const UInt32V& getUInt32s() const noexcept
+    [[nodiscard]] constexpr const UInt32V& getUInt32s() const noexcept
     {
         ErAssert(m_type == Type::UInt32s);
         ErAssert(m_u.a_uint32);
         return *m_u.a_uint32;
     }
 
-    [[nodiscard]] const Int64V& getInt64s() const noexcept
+    [[nodiscard]] constexpr const Int64V& getInt64s() const noexcept
     {
         ErAssert(m_type == Type::Int64s);
         ErAssert(m_u.a_int64);
         return *m_u.a_int64;
     }
 
-    [[nodiscard]] const UInt64V& getUInt64s() const noexcept
+    [[nodiscard]] constexpr const UInt64V& getUInt64s() const noexcept
     {
         ErAssert(m_type == Type::UInt64s);
         ErAssert(m_u.a_uint64);
         return *m_u.a_uint64;
     }
 
-    [[nodiscard]] const DoubleV& getDoubles() const noexcept
+    [[nodiscard]] constexpr const DoubleV& getDoubles() const noexcept
     {
         ErAssert(m_type == Type::Doubles);
         ErAssert(m_u.a_double);
         return *m_u.a_double;
     }
 
-    [[nodiscard]] const StringV& getStrings() const noexcept
+    [[nodiscard]] constexpr const StringV& getStrings() const noexcept
     {
         ErAssert(m_type == Type::Strings);
         ErAssert(m_u.a_string);
         return *m_u.a_string;
     }
 
-    [[nodiscard]] const BinaryV& getBinaries() const noexcept
+    [[nodiscard]] constexpr const BinaryV& getBinaries() const noexcept
     {
         ErAssert(m_type == Type::Binaries);
         ErAssert(m_u.a_binary);
         return *m_u.a_binary;
+    }
+
+    [[nodiscard]] constexpr bool operator==(const Variant& other) const noexcept
+    {
+        if (m_type != other.m_type)
+            return false;
+
+        if (m_type == Type::Empty)
+            return true;
+
+        if (m_u._largest == other.m_u._largest)
+            return true;
+
+        if (m_type < Type::String)
+            return false; // enough for scalar types
+
+        return _eq(other);
     }
 
 private:
@@ -385,6 +402,17 @@ private:
     void _cloneDoubleV(const Variant& other);
     void _cloneStringV(const Variant& other);
     void _cloneBinaryV(const Variant& other);
+    bool _eq(const Variant& other) const noexcept;
+    bool _eqString(const Variant& other) const noexcept;
+    bool _eqBinary(const Variant& other) const noexcept;
+    bool _eqBoolV(const Variant& other) const noexcept;
+    bool _eqInt32V(const Variant& other) const noexcept;
+    bool _eqUInt32V(const Variant& other) const noexcept;
+    bool _eqInt64V(const Variant& other) const noexcept;
+    bool _eqUInt64V(const Variant& other) const noexcept;
+    bool _eqDoubleV(const Variant& other) const noexcept;
+    bool _eqStringV(const Variant& other) const noexcept;
+    bool _eqBinaryV(const Variant& other) const noexcept;
 
     union
     {
@@ -411,5 +439,105 @@ private:
 
     Type m_type;
 };
+
+template <typename T>
+const T& get(const Variant& v) noexcept;
+
+template <>
+[[nodiscard]] inline const bool& get<>(const Variant& v) noexcept
+{
+    return v.getBool();
+}
+
+template <>
+[[nodiscard]] inline const int32_t& get<>(const Variant& v) noexcept
+{
+    return v.getInt32();
+}
+
+template <>
+[[nodiscard]] inline const uint32_t& get<>(const Variant& v) noexcept
+{
+    return v.getUInt32();
+}
+
+template <>
+[[nodiscard]] inline const int64_t& get<>(const Variant& v) noexcept
+{
+    return v.getInt64();
+}
+
+template <>
+[[nodiscard]] inline const uint64_t& get<>(const Variant& v) noexcept
+{
+    return v.getUInt64();
+}
+
+template <>
+[[nodiscard]] inline const double& get<>(const Variant& v) noexcept
+{
+    return v.getDouble();
+}
+
+template <>
+[[nodiscard]] inline const std::string& get<>(const Variant& v) noexcept
+{
+    return v.getString();
+}
+
+template <>
+[[nodiscard]] inline const Binary& get<>(const Variant& v) noexcept
+{
+    return v.getBinary();
+}
+
+template <>
+[[nodiscard]] inline const Variant::BoolV& get<>(const Variant& v) noexcept
+{
+    return v.getBools();
+}
+
+template <>
+[[nodiscard]] inline const Variant::Int32V& get<>(const Variant& v) noexcept
+{
+    return v.getInt32s();
+}
+
+template <>
+[[nodiscard]] inline const Variant::UInt32V& get<>(const Variant& v) noexcept
+{
+    return v.getUInt32s();
+}
+
+template <>
+[[nodiscard]] inline const Variant::Int64V& get<>(const Variant& v) noexcept
+{
+    return v.getInt64s();
+}
+
+template <>
+[[nodiscard]] inline const Variant::UInt64V& get<>(const Variant& v) noexcept
+{
+    return v.getUInt64s();
+}
+
+template <>
+[[nodiscard]] inline const Variant::DoubleV& get<>(const Variant& v) noexcept
+{
+    return v.getDoubles();
+}
+
+template <>
+[[nodiscard]] inline const Variant::StringV& get<>(const Variant& v) noexcept
+{
+    return v.getStrings();
+}
+
+template <>
+[[nodiscard]] inline const Variant::BinaryV& get<>(const Variant& v) noexcept
+{
+    return v.getBinaries();
+}
+
 
 } // namespace Er {}
