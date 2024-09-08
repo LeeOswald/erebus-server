@@ -45,6 +45,16 @@ concept SupportedPropertyType =
 
 using PropertyType = Variant::Type;
 
+using BoolVector = Variant::BoolVector;
+using Int32Vector = Variant::Int32Vector;
+using UInt32Vector = Variant::UInt32Vector;
+using Int64Vector = Variant::Int64Vector;
+using UInt64Vector = Variant::UInt64Vector;
+using DoubleVector = Variant::DoubleVector;
+using StringVector = Variant::StringVector;
+using BinaryVector = Variant::BinaryVector;
+
+
 constexpr const char* propertyTypeToString(PropertyType type) noexcept
 {
     switch (type)
@@ -140,6 +150,54 @@ template <>
 struct PropertyTypeFrom<Binary>
 {
     static constexpr PropertyType type = PropertyType::Binary;
+};
+
+template <>
+struct PropertyTypeFrom<BoolVector>
+{
+    static constexpr PropertyType type = PropertyType::Bools;
+};
+
+template <>
+struct PropertyTypeFrom<Int32Vector>
+{
+    static constexpr PropertyType type = PropertyType::Int32s;
+};
+
+template <>
+struct PropertyTypeFrom<UInt32Vector>
+{
+    static constexpr PropertyType type = PropertyType::UInt32s;
+};
+
+template <>
+struct PropertyTypeFrom<Int64Vector>
+{
+    static constexpr PropertyType type = PropertyType::Int64s;
+};
+
+template <>
+struct PropertyTypeFrom<UInt64Vector>
+{
+    static constexpr PropertyType type = PropertyType::UInt64s;
+};
+
+template <>
+struct PropertyTypeFrom<DoubleVector>
+{
+    static constexpr PropertyType type = PropertyType::Doubles;
+};
+
+template <>
+struct PropertyTypeFrom<StringVector>
+{
+    static constexpr PropertyType type = PropertyType::Strings;
+};
+
+template <>
+struct PropertyTypeFrom<BinaryVector>
+{
+    static constexpr PropertyType type = PropertyType::Binaries;
 };
 
 

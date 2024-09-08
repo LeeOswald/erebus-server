@@ -159,56 +159,56 @@ void Variant::_cloneBoolV(const Variant& other)
 {
     ErAssert(other.m_type == Type::Bools);
     ErAssert(other.m_u.a_bool);
-    m_u.a_bool = new BoolV(*other.m_u.a_bool);
+    m_u.a_bool = new BoolVector(*other.m_u.a_bool);
 }
 
 void Variant::_cloneInt32V(const Variant& other)
 {
     ErAssert(other.m_type == Type::Int32s);
     ErAssert(other.m_u.a_int32);
-    m_u.a_int32 = new Int32V(*other.m_u.a_int32);
+    m_u.a_int32 = new Int32Vector(*other.m_u.a_int32);
 }
 
 void Variant::_cloneUInt32V(const Variant& other)
 {
     ErAssert(other.m_type == Type::UInt32s);
     ErAssert(other.m_u.a_uint32);
-    m_u.a_uint32 = new UInt32V(*other.m_u.a_uint32);
+    m_u.a_uint32 = new UInt32Vector(*other.m_u.a_uint32);
 }
 
 void Variant::_cloneInt64V(const Variant& other)
 {
     ErAssert(other.m_type == Type::Int64s);
     ErAssert(other.m_u.a_int64);
-    m_u.a_int64 = new Int64V(*other.m_u.a_int64);
+    m_u.a_int64 = new Int64Vector(*other.m_u.a_int64);
 }
 
 void Variant::_cloneUInt64V(const Variant& other)
 {
     ErAssert(other.m_type == Type::UInt64s);
     ErAssert(other.m_u.a_uint64);
-    m_u.a_uint64 = new UInt64V(*other.m_u.a_uint64);
+    m_u.a_uint64 = new UInt64Vector(*other.m_u.a_uint64);
 }
 
 void Variant::_cloneDoubleV(const Variant& other)
 {
     ErAssert(other.m_type == Type::Doubles);
     ErAssert(other.m_u.a_double);
-    m_u.a_double = new DoubleV(*other.m_u.a_double);
+    m_u.a_double = new DoubleVector(*other.m_u.a_double);
 }
 
 void Variant::_cloneStringV(const Variant& other)
 {
     ErAssert(other.m_type == Type::Strings);
     ErAssert(other.m_u.a_string);
-    m_u.a_string = new StringV(*other.m_u.a_string);
+    m_u.a_string = new StringVector(*other.m_u.a_string);
 }
 
 void Variant::_cloneBinaryV(const Variant& other)
 {
     ErAssert(other.m_type == Type::Binaries);
     ErAssert(other.m_u.a_binary);
-    m_u.a_binary = new BinaryV(*other.m_u.a_binary);
+    m_u.a_binary = new BinaryVector(*other.m_u.a_binary);
 }
 
 bool Variant::_eq(const Variant& other) const noexcept

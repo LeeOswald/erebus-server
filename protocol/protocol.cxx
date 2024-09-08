@@ -67,7 +67,7 @@ void assignPropertyBinary(erebus::Property& out, const Property& in)
 void assignPropertyBools(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::Bools));
-    auto& src = get<Variant::BoolV>(in.value);
+    auto& src = get<BoolVector>(in.value);
     auto dst = out.mutable_a_bool();
     for (auto v : src)
     {
@@ -78,7 +78,7 @@ void assignPropertyBools(erebus::Property& out, const Property& in)
 void assignPropertyInt32s(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::Int32s));
-    auto& src = get<Variant::Int32V>(in.value);
+    auto& src = get<Int32Vector>(in.value);
     auto dst = out.mutable_a_int32();
     for (auto v : src)
     {
@@ -89,7 +89,7 @@ void assignPropertyInt32s(erebus::Property& out, const Property& in)
 void assignPropertyUInt32s(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::UInt32s));
-    auto& src = get<Variant::UInt32V>(in.value);
+    auto& src = get<UInt32Vector>(in.value);
     auto dst = out.mutable_a_uint32();
     for (auto v : src)
     {
@@ -100,7 +100,7 @@ void assignPropertyUInt32s(erebus::Property& out, const Property& in)
 void assignPropertyInt64s(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::Int64s));
-    auto& src = get<Variant::Int64V>(in.value);
+    auto& src = get<Int64Vector>(in.value);
     auto dst = out.mutable_a_int64();
     for (auto v : src)
     {
@@ -111,7 +111,7 @@ void assignPropertyInt64s(erebus::Property& out, const Property& in)
 void assignPropertyUInt64s(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::UInt64s));
-    auto& src = get<Variant::UInt64V>(in.value);
+    auto& src = get<UInt64Vector>(in.value);
     auto dst = out.mutable_a_uint64();
     for (auto v : src)
     {
@@ -122,7 +122,7 @@ void assignPropertyUInt64s(erebus::Property& out, const Property& in)
 void assignPropertyDoubles(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::Doubles));
-    auto& src = get<Variant::DoubleV>(in.value);
+    auto& src = get<DoubleVector>(in.value);
     auto dst = out.mutable_a_double();
     for (auto v : src)
     {
@@ -133,7 +133,7 @@ void assignPropertyDoubles(erebus::Property& out, const Property& in)
 void assignPropertyStrings(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::Strings));
-    auto& src = get<Variant::StringV>(in.value);
+    auto& src = get<StringVector>(in.value);
     auto dst = out.mutable_a_string();
     for (auto& v : src)
     {
@@ -144,7 +144,7 @@ void assignPropertyStrings(erebus::Property& out, const Property& in)
 void assignPropertyBinaries(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::Binaries));
-    auto& src = get<Variant::BinaryV>(in.value);
+    auto& src = get<BinaryVector>(in.value);
     auto dst = out.mutable_a_binary();
     for (auto& v : src)
     {
@@ -200,7 +200,7 @@ Property getPropertyBinary(const erebus::Property& in)
 
 Property getPropertyBools(const erebus::Property& in)
 {
-    Variant::BoolV v;
+    BoolVector v;
     auto& a = in.a_bool();
     auto size = a.a_size();
     if (size)
@@ -217,7 +217,7 @@ Property getPropertyBools(const erebus::Property& in)
 
 Property getPropertyInt32s(const erebus::Property& in)
 {
-    Variant::Int32V v;
+    Int32Vector v;
     auto& a = in.a_int32();
     auto size = a.a_size();
     if (size)
@@ -234,7 +234,7 @@ Property getPropertyInt32s(const erebus::Property& in)
 
 Property getPropertyUInt32s(const erebus::Property& in)
 {
-    Variant::UInt32V v;
+    UInt32Vector v;
     auto& a = in.a_uint32();
     auto size = a.a_size();
     if (size)
@@ -251,7 +251,7 @@ Property getPropertyUInt32s(const erebus::Property& in)
 
 Property getPropertyInt64s(const erebus::Property& in)
 {
-    Variant::Int64V v;
+    Int64Vector v;
     auto& a = in.a_int64();
     auto size = a.a_size();
     if (size)
@@ -268,7 +268,7 @@ Property getPropertyInt64s(const erebus::Property& in)
 
 Property getPropertyUInt64s(const erebus::Property& in)
 {
-    Variant::UInt64V v;
+    UInt64Vector v;
     auto& a = in.a_uint64();
     auto size = a.a_size();
     if (size)
@@ -285,7 +285,7 @@ Property getPropertyUInt64s(const erebus::Property& in)
 
 Property getPropertyDoubles(const erebus::Property& in)
 {
-    Variant::DoubleV v;
+    DoubleVector v;
     auto& a = in.a_double();
     auto size = a.a_size();
     if (size)
@@ -302,7 +302,7 @@ Property getPropertyDoubles(const erebus::Property& in)
 
 Property getPropertyStrings(const erebus::Property& in)
 {
-    Variant::StringV v;
+    StringVector v;
     auto& a = in.a_string();
     auto size = a.a_size();
     if (size)
@@ -319,7 +319,7 @@ Property getPropertyStrings(const erebus::Property& in)
 
 Property getPropertyBinaries(const erebus::Property& in)
 {
-    Variant::BinaryV v;
+    BinaryVector v;
     auto& a = in.a_binary();
     auto size = a.a_size();
     if (size)
