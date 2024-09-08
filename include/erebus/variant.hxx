@@ -77,164 +77,141 @@ public:
     }
 
     constexpr Variant(int64_t v) noexcept
-        : m_u()
+        : m_u(v)
         , m_type(Type::Int64)
     {
-        m_u.v_int64 = v;
     }
 
     constexpr Variant(uint64_t v) noexcept
-        : m_u()
+        : m_u(v)
         , m_type(Type::UInt64)
     {
-        m_u.v_uint64 = v;
     }
 
     constexpr Variant(double v) noexcept
-        : m_u()
+        : m_u(v)
         , m_type(Type::Double)
     {
-        m_u.v_double = v;
     }
 
     constexpr Variant(const std::string& v) noexcept
-        : m_u()
+        : m_u(new std::string(v))
         , m_type(Type::String)
     {
-        m_u.v_string = new std::string(v);
     }
 
     constexpr Variant(std::string&& v) noexcept
-        : m_u()
+        : m_u(new std::string(std::move(v)))
         , m_type(Type::String)
     {
-        m_u.v_string = new std::string(std::move(v));
     }
 
     constexpr Variant(const Binary& v) noexcept
-        : m_u()
+        : m_u(new Binary(v))
         , m_type(Type::Binary)
     {
-        m_u.v_binary = new Binary(v);
     }
 
     constexpr Variant(Binary&& v) noexcept
-        : m_u()
+        : m_u(new Binary(std::move(v)))
         , m_type(Type::Binary)
     {
-        m_u.v_binary = new Binary(std::move(v));
     }
 
     constexpr Variant(const BoolVector& v) noexcept
-        : m_u()
+        : m_u(new BoolVector(v))
         , m_type(Type::Bools)
     {
-        m_u.a_bool = new BoolVector(v);
     }
 
     constexpr Variant(BoolVector&& v) noexcept
-        : m_u()
+        : m_u(new BoolVector(std::move(v)))
         , m_type(Type::Bools)
     {
-        m_u.a_bool = new BoolVector(std::move(v));
     }
 
     constexpr Variant(const Int32Vector& v) noexcept
-        : m_u()
+        : m_u(new Int32Vector(v))
         , m_type(Type::Int32s)
     {
-        m_u.a_int32 = new Int32Vector(v);
     }
 
     constexpr Variant(Int32Vector&& v) noexcept
-        : m_u()
+        : m_u(new Int32Vector(std::move(v)))
         , m_type(Type::Int32s)
     {
-        m_u.a_int32 = new Int32Vector(std::move(v));
     }
 
     constexpr Variant(const UInt32Vector& v) noexcept
-        : m_u()
+        : m_u(new UInt32Vector(v))
         , m_type(Type::UInt32s)
     {
-        m_u.a_uint32 = new UInt32Vector(v);
     }
 
     constexpr Variant(UInt32Vector&& v) noexcept
-        : m_u()
+        : m_u(new UInt32Vector(std::move(v)))
         , m_type(Type::UInt32s)
     {
-        m_u.a_uint32 = new UInt32Vector(std::move(v));
     }
 
     constexpr Variant(const Int64Vector& v) noexcept
-        : m_u()
+        : m_u(new Int64Vector(v))
         , m_type(Type::Int64s)
     {
-        m_u.a_int64 = new Int64Vector(v);
     }
 
     constexpr Variant(Int64Vector&& v) noexcept
-        : m_u()
+        : m_u(new Int64Vector(std::move(v)))
         , m_type(Type::Int64s)
     {
-        m_u.a_int64 = new Int64Vector(std::move(v));
     }
 
     constexpr Variant(const UInt64Vector& v) noexcept
-        : m_u()
+        : m_u(new UInt64Vector(v))
         , m_type(Type::UInt64s)
     {
-        m_u.a_uint64 = new UInt64Vector(v);
     }
 
     constexpr Variant(UInt64Vector&& v) noexcept
-        : m_u()
+        : m_u(new UInt64Vector(std::move(v)))
         , m_type(Type::UInt64s)
     {
-        m_u.a_uint64 = new UInt64Vector(std::move(v));
     }
 
     constexpr Variant(const DoubleVector& v) noexcept
-        : m_u()
+        : m_u(new DoubleVector(v))
         , m_type(Type::Doubles)
     {
-        m_u.a_double = new DoubleVector(v);
     }
 
     constexpr Variant(DoubleVector&& v) noexcept
-        : m_u()
+        : m_u(new DoubleVector(std::move(v)))
         , m_type(Type::Doubles)
     {
-        m_u.a_double = new DoubleVector(std::move(v));
     }
 
     constexpr Variant(const StringVector& v) noexcept
-        : m_u()
+        : m_u(new StringVector(v))
         , m_type(Type::Strings)
     {
-        m_u.a_string = new StringVector(v);
     }
 
     constexpr Variant(StringVector&& v) noexcept
-        : m_u()
+        : m_u(new StringVector(std::move(v)))
         , m_type(Type::Strings)
     {
-        m_u.a_string = new StringVector(std::move(v));
     }
 
     constexpr Variant(const BinaryVector& v) noexcept
-        : m_u()
+        : m_u(new BinaryVector(v))
         , m_type(Type::Binaries)
     {
-        m_u.a_binary = new BinaryVector(v);
     }
 
     constexpr Variant(BinaryVector&& v) noexcept
-        : m_u()
+        : m_u(new BinaryVector(std::move(v)))
         , m_type(Type::Binaries)
     {
-        m_u.a_binary = new BinaryVector(std::move(v));
     }
 
     constexpr void swap(Variant& other) noexcept
@@ -441,7 +418,7 @@ private:
     bool _eqStringV(const Variant& other) const noexcept;
     bool _eqBinaryV(const Variant& other) const noexcept;
 
-    union
+    union Storage
     {
         bool v_bool;
         int32_t v_int32;
@@ -449,6 +426,7 @@ private:
         int64_t v_int64;
         uint64_t v_uint64;
         double v_double;
+        void* _ptr;
         std::string* v_string;
         Binary* v_binary;
         BoolVector* a_bool;
@@ -460,6 +438,31 @@ private:
         StringVector* a_string;
         BinaryVector* a_binary;
         uint64_t _largest; // must be the largest type
+
+        constexpr Storage()
+            : _largest(0)
+        {
+        }
+
+        constexpr Storage(double v)
+            : v_double(v)
+        {
+        }
+
+        constexpr Storage(int64_t v)
+            : v_int64(v)
+        {
+        }
+
+        constexpr Storage(uint64_t v)
+            : v_uint64(v)
+        {
+        }
+
+        constexpr Storage(void* v)
+            : _ptr(v)
+        {
+        }
     } m_u;
 
     static_assert(sizeof(m_u) == sizeof(m_u._largest));
