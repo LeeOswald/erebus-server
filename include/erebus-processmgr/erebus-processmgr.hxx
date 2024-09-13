@@ -28,7 +28,7 @@ namespace ProcessRequests
 {
 
 static const std::string_view ListProcessesDiff = "ListProcessesDiff";
-static const std::string_view ProcessesGlobal = "ProcessesGlobal";
+static const std::string_view GlobalProps = "GlobalProps";
 static const std::string_view KillProcess = "KillProcess";
 
 } // namespace ProcessRequests {}
@@ -103,7 +103,6 @@ using STime = PropertyValue<double, ER_PROPID("stime"), "CPU Time (System)", Cpu
 using UTime = PropertyValue<double, ER_PROPID("utime"), "CPU Time (User)", CpuTimeFormatter>;
 using CpuUsage = PropertyValue<double, ER_PROPID("cpu_usage"), "%CPU", CpuLoadFormatter>;
 
-using Env = PropertyValue<StringVector, ER_PROPID("env"), "Environment", VectorFormatter<PropertyFormatter<std::string>>>;
 
 constexpr PropId IndexToProp[] =
 {
@@ -182,7 +181,6 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(Domain, UTime::make_info(), log);
     registerProperty(Domain, CpuUsage::make_info(), log);
     registerProperty(Domain, Tty::make_info(), log);
-    registerProperty(Domain, Env::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -209,14 +207,57 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::UTime::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::CpuUsage::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Tty::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Env::Id::value), log);
 }
 
 } // namespace Private {}
 
 } // namespace ProcessProps {}
 
-namespace ProcessesGlobal
+
+namespace ProcessPropsExt
+{
+
+using RequiredFields = PropertyValue<uint64_t, ER_PROPID("__required"), "__Fields">;
+using Env = PropertyValue<StringVector, ER_PROPID("env"), "Environment", VectorFormatter<PropertyFormatter<std::string>>>;
+
+
+constexpr PropId IndexToProp[] =
+{
+    /* 0*/ Env::Id::value,
+};
+
+
+struct PropIndices
+{
+    static constexpr Flag Env = 0;
+
+    static constexpr size_t FlagsCount = 64;
+};
+
+
+using PropMask = Flags<PropIndices>;
+
+constexpr const std::string_view Domain = "processext";
+
+namespace Private
+{
+
+inline void registerAll(Er::Log::ILog* log)
+{
+    registerProperty(Domain, Env::make_info(), log);
+}
+
+inline void unregisterAll(Er::Log::ILog* log)
+{
+    unregisterProperty(Domain, lookupProperty(Domain, Env::Id::value), log);
+}
+
+} // namespace Private {}
+
+} // namespace ProcessPropsExt {}
+
+
+namespace GlobalProps
 {
 
 constexpr const std::string_view Domain = "global";
@@ -337,39 +378,39 @@ inline void registerAll(Er::Log::ILog* log)
 
 inline void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::Pid::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::Signal::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::PosixResult::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::ErrorText::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::Pid::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::Signal::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::PosixResult::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::ErrorText::Id::value), log);
     
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::RequiredFields::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::Global::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::RequiredFields::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::Global::Id::value), log);
     
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::ProcessCount::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::RealTime::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::IdleTime::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::UserTime::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::SystemTime::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::VirtualTime::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::TotalTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::ProcessCount::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::RealTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::IdleTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::UserTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::SystemTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::VirtualTime::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::TotalTime::Id::value), log);
 
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::TotalMem::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::UsedMem::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::BuffersMem::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::CachedMem::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::SharedMem::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::AvailableMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::TotalMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::UsedMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::BuffersMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::CachedMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::SharedMem::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::AvailableMem::Id::value), log);
     
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::TotalSwap::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::UsedSwap::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::CachedSwap::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::ZSwapComp::Id::value), log);
-    unregisterProperty(Domain, lookupProperty(Domain, ProcessesGlobal::ZSwapOrig::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::TotalSwap::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::UsedSwap::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::CachedSwap::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::ZSwapComp::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::ZSwapOrig::Id::value), log);
 }
 
 } // namespace Private {}
 
-} // namespace ProcessesGlobal {}
+} // namespace GlobalProps {}
 
 } // namespace ProcessMgr {}
 
