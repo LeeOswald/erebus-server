@@ -80,28 +80,30 @@ namespace ProcessProps
 {
 
 
-using RequiredFields = PropertyValue<uint64_t, ER_PROPID("process.fields"), "__Fields">;
-using Error = PropertyValue<std::string, ER_PROPID("process.error"), "__Error">;
-using Valid = PropertyValue<bool, ER_PROPID("process.valid"), "__Valid">;
-using IsNew = PropertyValue<bool, ER_PROPID("process.new"), "__New">;
-using IsDeleted = PropertyValue<bool, ER_PROPID("process.deleted"), "__Deleted">;
-using Pid = PropertyValue<uint64_t, ER_PROPID("process.pid"), "PID">;
-using PPid = PropertyValue<uint64_t, ER_PROPID("process.ppid"), "Parent PID">;
-using PGrp = PropertyValue<uint64_t, ER_PROPID("process.pgrp"), "Process Group ID">;
-using Tpgid = PropertyValue<uint64_t, ER_PROPID("process.tpgid"), "Process Group ID of the Terminal">;
-using Tty = PropertyValue<int32_t, ER_PROPID("process.tty"), "Terminal">;
-using Session = PropertyValue<uint64_t, ER_PROPID("process.session"), "Session ID">;
-using Ruid = PropertyValue<uint64_t, ER_PROPID("process.ruid"), "User ID">;
-using User = PropertyValue<std::string, ER_PROPID("process.user"), "User Name">;
-using Comm = PropertyValue<std::string, ER_PROPID("process.comm"), "Program Name">;
-using CmdLine = PropertyValue<std::string, ER_PROPID("process.cmdline"), "Command Line">;
-using Exe = PropertyValue<std::string, ER_PROPID("process.exe"), "Executable">;
-using StartTime = PropertyValue<uint64_t, ER_PROPID("process.starttime"), "Start Time", TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
-using State = PropertyValue<uint32_t, ER_PROPID("process.state"), "State", ProcessStateFormatter>;
-using ThreadCount = PropertyValue<int64_t, ER_PROPID("process.nthreads"), "Thread Count">;
-using STime = PropertyValue<double, ER_PROPID("process.stime"), "CPU Time (System)", CpuTimeFormatter>;
-using UTime = PropertyValue<double, ER_PROPID("process.utime"), "CPU Time (User)", CpuTimeFormatter>;
-using CpuUsage = PropertyValue<double, ER_PROPID("process.cpu_usage"), "%CPU", CpuLoadFormatter>;
+using RequiredFields = PropertyValue<uint64_t, ER_PROPID("__required"), "__Fields">;
+using Error = PropertyValue<std::string, ER_PROPID("__error"), "__Error">;
+using Valid = PropertyValue<bool, ER_PROPID("__valid"), "__Valid">;
+using IsNew = PropertyValue<bool, ER_PROPID("__new"), "__New">;
+using IsDeleted = PropertyValue<bool, ER_PROPID("__deleted"), "__Deleted">;
+using Pid = PropertyValue<uint64_t, ER_PROPID("pid"), "PID">;
+using PPid = PropertyValue<uint64_t, ER_PROPID("ppid"), "Parent PID">;
+using PGrp = PropertyValue<uint64_t, ER_PROPID("pgrp"), "Process Group ID">;
+using Tpgid = PropertyValue<uint64_t, ER_PROPID("tpgid"), "Process Group ID of the Terminal">;
+using Tty = PropertyValue<int32_t, ER_PROPID("tty"), "Terminal">;
+using Session = PropertyValue<uint64_t, ER_PROPID("session"), "Session ID">;
+using Ruid = PropertyValue<uint64_t, ER_PROPID("ruid"), "User ID">;
+using User = PropertyValue<std::string, ER_PROPID("user"), "User Name">;
+using Comm = PropertyValue<std::string, ER_PROPID("comm"), "Program Name">;
+using CmdLine = PropertyValue<std::string, ER_PROPID("cmdline"), "Command Line">;
+using Exe = PropertyValue<std::string, ER_PROPID("exe"), "Executable">;
+using StartTime = PropertyValue<uint64_t, ER_PROPID("starttime"), "Start Time", TimeFormatter<"%H:%M:%S %d %b %y", TimeZone::Utc>>;
+using State = PropertyValue<uint32_t, ER_PROPID("state"), "State", ProcessStateFormatter>;
+using ThreadCount = PropertyValue<int64_t, ER_PROPID("nthreads"), "Thread Count">;
+using STime = PropertyValue<double, ER_PROPID("stime"), "CPU Time (System)", CpuTimeFormatter>;
+using UTime = PropertyValue<double, ER_PROPID("utime"), "CPU Time (User)", CpuTimeFormatter>;
+using CpuUsage = PropertyValue<double, ER_PROPID("cpu_usage"), "%CPU", CpuLoadFormatter>;
+
+using Env = PropertyValue<StringVector, ER_PROPID("env"), "Environment", VectorFormatter<PropertyFormatter<std::string>>>;
 
 constexpr PropId IndexToProp[] =
 {
@@ -151,7 +153,7 @@ struct PropIndices
 
 using PropMask = Flags<PropIndices>;
 
-constexpr const std::string_view Domain = "Process";
+constexpr const std::string_view Domain = "process";
 
 namespace Private
 {
@@ -180,6 +182,7 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(Domain, UTime::make_info(), log);
     registerProperty(Domain, CpuUsage::make_info(), log);
     registerProperty(Domain, Tty::make_info(), log);
+    registerProperty(Domain, Env::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -206,6 +209,7 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::UTime::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::CpuUsage::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Tty::Id::value), log);
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Env::Id::value), log);
 }
 
 } // namespace Private {}
@@ -215,36 +219,36 @@ inline void unregisterAll(Er::Log::ILog* log)
 namespace ProcessesGlobal
 {
 
-constexpr const std::string_view Domain = "Processes.Global";
+constexpr const std::string_view Domain = "global";
 
-using Global = PropertyValue<bool, ER_PROPID("processes.global"), "__Global">;
-using Pid = PropertyValue<uint64_t, ER_PROPID("processes.global.pid"), "PID">;
-using Signal = PropertyValue<std::string, ER_PROPID("processes.global.signal"), "Signal">;
-using PosixResult = PropertyValue<int32_t, ER_PROPID("processes.global.posix_result"), "POSIX Result">;
-using ErrorText = PropertyValue<std::string, ER_PROPID("processes.global.error_text"), "Error Message">;
+using Global = PropertyValue<bool, ER_PROPID("__global"), "__Global">;
+using Pid = PropertyValue<uint64_t, ER_PROPID("pid"), "PID">;
+using Signal = PropertyValue<std::string, ER_PROPID("signal"), "Signal">;
+using PosixResult = PropertyValue<int32_t, ER_PROPID("posix_result"), "POSIX Result">;
+using ErrorText = PropertyValue<std::string, ER_PROPID("error_text"), "Error Message">;
 
-using RequiredFields = PropertyValue<uint64_t, ER_PROPID("processes.global.fields"), "__Fields">;
+using RequiredFields = PropertyValue<uint64_t, ER_PROPID("fields"), "__Fields">;
 
-using ProcessCount = PropertyValue<uint64_t, ER_PROPID("processes.global.process_count"), "Total Processes">;
-using RealTime = PropertyValue<double, ER_PROPID("processes.global.real_time"), "Real Time", CpuTimeFormatter>;
-using IdleTime = PropertyValue<double, ER_PROPID("processes.global.idle_time"), "CPU Time (Idle)", CpuTimeFormatter>;
-using UserTime = PropertyValue<double, ER_PROPID("processes.global.user_time"), "CPU Time (User)", CpuTimeFormatter>;
-using SystemTime = PropertyValue<double, ER_PROPID("processes.global.system_time"), "CPU Time (System)", CpuTimeFormatter>;
-using VirtualTime = PropertyValue<double, ER_PROPID("processes.global.virtual_time"), "CPU Time (Virtual)", CpuTimeFormatter>;
-using TotalTime = PropertyValue<double, ER_PROPID("processes.global.total_time"), "Total CPU Time", CpuTimeFormatter>;
+using ProcessCount = PropertyValue<uint64_t, ER_PROPID("process_count"), "Total Processes">;
+using RealTime = PropertyValue<double, ER_PROPID("real_time"), "Real Time", CpuTimeFormatter>;
+using IdleTime = PropertyValue<double, ER_PROPID("idle_time"), "CPU Time (Idle)", CpuTimeFormatter>;
+using UserTime = PropertyValue<double, ER_PROPID("user_time"), "CPU Time (User)", CpuTimeFormatter>;
+using SystemTime = PropertyValue<double, ER_PROPID("system_time"), "CPU Time (System)", CpuTimeFormatter>;
+using VirtualTime = PropertyValue<double, ER_PROPID("virtual_time"), "CPU Time (Virtual)", CpuTimeFormatter>;
+using TotalTime = PropertyValue<double, ER_PROPID("total_time"), "Total CPU Time", CpuTimeFormatter>;
 
-using TotalMem = PropertyValue<uint64_t, ER_PROPID("processes.global.total_mem"), "Total Mem", MemUnitFormatter>;
-using UsedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.used_mem"), "Used Mem", MemUnitFormatter>;
-using BuffersMem = PropertyValue<uint64_t, ER_PROPID("processes.global.buffers_mem"), "Buffers", MemUnitFormatter>;
-using CachedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_mem"), "Cached Mem", MemUnitFormatter>;
-using SharedMem = PropertyValue<uint64_t, ER_PROPID("processes.global.shared_mem"), "Shared Mem", MemUnitFormatter>;
-using AvailableMem = PropertyValue<uint64_t, ER_PROPID("processes.global.avail_mem"), "Available Mem", MemUnitFormatter>;
+using TotalMem = PropertyValue<uint64_t, ER_PROPID("total_mem"), "Total Mem", MemUnitFormatter>;
+using UsedMem = PropertyValue<uint64_t, ER_PROPID("used_mem"), "Used Mem", MemUnitFormatter>;
+using BuffersMem = PropertyValue<uint64_t, ER_PROPID("buffers_mem"), "Buffers", MemUnitFormatter>;
+using CachedMem = PropertyValue<uint64_t, ER_PROPID("cached_mem"), "Cached Mem", MemUnitFormatter>;
+using SharedMem = PropertyValue<uint64_t, ER_PROPID("shared_mem"), "Shared Mem", MemUnitFormatter>;
+using AvailableMem = PropertyValue<uint64_t, ER_PROPID("avail_mem"), "Available Mem", MemUnitFormatter>;
 
-using TotalSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.total_swap"), "Swap Total", MemUnitFormatter>;
-using UsedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.used_swap"), "Swap Used", MemUnitFormatter>;
-using CachedSwap = PropertyValue<uint64_t, ER_PROPID("processes.global.cached_swap"), "Swap Cached", MemUnitFormatter>;
-using ZSwapComp = PropertyValue<uint64_t, ER_PROPID("processes.global.comp_zswap"), "ZSwap Compressed", MemUnitFormatter>;
-using ZSwapOrig = PropertyValue<uint64_t, ER_PROPID("processes.global.orig_zswap"), "ZSwap Original", MemUnitFormatter>;
+using TotalSwap = PropertyValue<uint64_t, ER_PROPID("total_swap"), "Swap Total", MemUnitFormatter>;
+using UsedSwap = PropertyValue<uint64_t, ER_PROPID("used_swap"), "Swap Used", MemUnitFormatter>;
+using CachedSwap = PropertyValue<uint64_t, ER_PROPID("cached_swap"), "Swap Cached", MemUnitFormatter>;
+using ZSwapComp = PropertyValue<uint64_t, ER_PROPID("comp_zswap"), "ZSwap Compressed", MemUnitFormatter>;
+using ZSwapOrig = PropertyValue<uint64_t, ER_PROPID("orig_zswap"), "ZSwap Original", MemUnitFormatter>;
 
 constexpr PropId IndexToProp[] =
 {

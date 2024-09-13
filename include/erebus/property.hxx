@@ -347,13 +347,13 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, Binary>::value>>
     void operator()(const T& v, std::ostream& s) { s << v; }
 };
 
-template <typename T>
+template <typename ItemFormatterT>
 struct VectorFormatter
 {
     template <typename VectorT>
     void operator()(const VectorT& v, std::ostream& s) 
     { 
-        PropertyFormatter<T> f;
+        ItemFormatterT f;
         bool first = true;
         s << "[";
         for (auto& value : v)
