@@ -94,121 +94,121 @@ public:
     {
     }
 
-    constexpr Variant(const std::string& v) noexcept
+    Variant(const std::string& v) noexcept
         : m_u(new std::string(v))
         , m_type(Type::String)
     {
     }
 
-    constexpr Variant(std::string&& v) noexcept
+    Variant(std::string&& v) noexcept
         : m_u(new std::string(std::move(v)))
         , m_type(Type::String)
     {
     }
 
-    constexpr Variant(const Binary& v) noexcept
+    Variant(const Binary& v) noexcept
         : m_u(new Binary(v))
         , m_type(Type::Binary)
     {
     }
 
-    constexpr Variant(Binary&& v) noexcept
+    Variant(Binary&& v) noexcept
         : m_u(new Binary(std::move(v)))
         , m_type(Type::Binary)
     {
     }
 
-    constexpr Variant(const BoolVector& v) noexcept
+    Variant(const BoolVector& v) noexcept
         : m_u(new BoolVector(v))
         , m_type(Type::Bools)
     {
     }
 
-    constexpr Variant(BoolVector&& v) noexcept
+    Variant(BoolVector&& v) noexcept
         : m_u(new BoolVector(std::move(v)))
         , m_type(Type::Bools)
     {
     }
 
-    constexpr Variant(const Int32Vector& v) noexcept
+    Variant(const Int32Vector& v) noexcept
         : m_u(new Int32Vector(v))
         , m_type(Type::Int32s)
     {
     }
 
-    constexpr Variant(Int32Vector&& v) noexcept
+    Variant(Int32Vector&& v) noexcept
         : m_u(new Int32Vector(std::move(v)))
         , m_type(Type::Int32s)
     {
     }
 
-    constexpr Variant(const UInt32Vector& v) noexcept
+    Variant(const UInt32Vector& v) noexcept
         : m_u(new UInt32Vector(v))
         , m_type(Type::UInt32s)
     {
     }
 
-    constexpr Variant(UInt32Vector&& v) noexcept
+    Variant(UInt32Vector&& v) noexcept
         : m_u(new UInt32Vector(std::move(v)))
         , m_type(Type::UInt32s)
     {
     }
 
-    constexpr Variant(const Int64Vector& v) noexcept
+    Variant(const Int64Vector& v) noexcept
         : m_u(new Int64Vector(v))
         , m_type(Type::Int64s)
     {
     }
 
-    constexpr Variant(Int64Vector&& v) noexcept
+    Variant(Int64Vector&& v) noexcept
         : m_u(new Int64Vector(std::move(v)))
         , m_type(Type::Int64s)
     {
     }
 
-    constexpr Variant(const UInt64Vector& v) noexcept
+    Variant(const UInt64Vector& v) noexcept
         : m_u(new UInt64Vector(v))
         , m_type(Type::UInt64s)
     {
     }
 
-    constexpr Variant(UInt64Vector&& v) noexcept
+    Variant(UInt64Vector&& v) noexcept
         : m_u(new UInt64Vector(std::move(v)))
         , m_type(Type::UInt64s)
     {
     }
 
-    constexpr Variant(const DoubleVector& v) noexcept
+    Variant(const DoubleVector& v) noexcept
         : m_u(new DoubleVector(v))
         , m_type(Type::Doubles)
     {
     }
 
-    constexpr Variant(DoubleVector&& v) noexcept
+    Variant(DoubleVector&& v) noexcept
         : m_u(new DoubleVector(std::move(v)))
         , m_type(Type::Doubles)
     {
     }
 
-    constexpr Variant(const StringVector& v) noexcept
+    Variant(const StringVector& v) noexcept
         : m_u(new StringVector(v))
         , m_type(Type::Strings)
     {
     }
 
-    constexpr Variant(StringVector&& v) noexcept
+    Variant(StringVector&& v) noexcept
         : m_u(new StringVector(std::move(v)))
         , m_type(Type::Strings)
     {
     }
 
-    constexpr Variant(const BinaryVector& v) noexcept
+    Variant(const BinaryVector& v) noexcept
         : m_u(new BinaryVector(v))
         , m_type(Type::Binaries)
     {
     }
 
-    constexpr Variant(BinaryVector&& v) noexcept
+    Variant(BinaryVector&& v) noexcept
         : m_u(new BinaryVector(std::move(v)))
         , m_type(Type::Binaries)
     {

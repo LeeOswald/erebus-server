@@ -25,7 +25,7 @@ ProcessListService::ProcessListService(Er::Log::ILog* log)
 void ProcessListService::registerService(Er::Server::IServiceContainer* container)
 {
     container->registerService(Er::ProcessMgr::ProcessRequests::ListProcessesDiff, this);
-    container->registerService(Er::ProcessMgr::ProcessRequests::ProcessesGlobal, this);
+    container->registerService(Er::ProcessMgr::ProcessRequests::GlobalProps, this);
 }
 
 void ProcessListService::unregisterService(Er::Server::IServiceContainer* container)
@@ -76,7 +76,7 @@ Er::PropertyBag ProcessListService::request(std::string_view request, const Er::
 {
     auto session = getSession(sessionId);
 
-    if (request == Er::ProcessMgr::ProcessRequests::ProcessesGlobal)
+    if (request == Er::ProcessMgr::ProcessRequests::GlobalProps)
     {
         auto required = getProcessesGlobalPropMask(args);
         return processesGlobal(session.get(), required, std::nullopt);
@@ -140,20 +140,20 @@ Er::ProcessMgr::ProcessProps::PropMask ProcessListService::getProcessPropMask(co
     return Er::ProcessMgr::ProcessProps::PropMask(mask, Er::ProcessMgr::ProcessProps::PropMask::FromBits);
 }
 
-Er::ProcessMgr::ProcessesGlobal::PropMask ProcessListService::getProcessesGlobalPropMask(const Er::PropertyBag& args)
+Er::ProcessMgr::GlobalProps::PropMask ProcessListService::getProcessesGlobalPropMask(const Er::PropertyBag& args)
 {
     // default mask is 'everything included'
-    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::ProcessesGlobal::RequiredFields>(args, 0xffffffffffffffff);
-    return Er::ProcessMgr::ProcessesGlobal::PropMask(mask, Er::ProcessMgr::ProcessesGlobal::PropMask::FromBits);
+    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::GlobalProps::RequiredFields>(args, 0xffffffffffffffff);
+    return Er::ProcessMgr::GlobalProps::PropMask(mask, Er::ProcessMgr::GlobalProps::PropMask::FromBits);
 }
 
-Er::PropertyBag ProcessListService::processesGlobal(Session* session, Er::ProcessMgr::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount)
+Er::PropertyBag ProcessListService::processesGlobal(Session* session, Er::ProcessMgr::GlobalProps::PropMask required, std::optional<uint64_t> processCount)
 {
     auto bag = m_globalsCollector.collect(required);
     
     if (!processCount)
     {
-        if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::ProcessCount])
+        if (required[Er::ProcessMgr::GlobalProps::PropIndices::ProcessCount])
         {
             auto pids = m_procFs.enumeratePids();
             processCount = pids.size();
@@ -164,9 +164,9 @@ Er::PropertyBag ProcessListService::processesGlobal(Session* session, Er::Proces
         }
     }
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::ProcessCount])
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::ProcessCount])
     {
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::ProcessCount>(bag, *processCount);
+        Er::addProperty<Er::ProcessMgr::GlobalProps::ProcessCount>(bag, *processCount);
     }
 
     return bag;

@@ -53,73 +53,73 @@ Er::PropertyBag GlobalsCollector::collect(PropMask required)
     if (!cpuCount) [[unlikely]]
         cpuCount = 1;
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::RealTime])
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::RealTime])
     {
         auto r = rtime();
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::RealTime>(bag, r);
+        Er::addProperty<Er::ProcessMgr::GlobalProps::RealTime>(bag, r);
     }
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::IdleTime])
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::IdleTime])
     {
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::IdleTime>(bag, idleAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::GlobalProps::IdleTime>(bag, idleAll / cpuCount);
     }
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::UserTime])
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::UserTime])
     {
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::UserTime>(bag, userAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::GlobalProps::UserTime>(bag, userAll / cpuCount);
     }
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::SystemTime])
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::SystemTime])
     {
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::SystemTime>(bag, systemAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::GlobalProps::SystemTime>(bag, systemAll / cpuCount);
     }
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::VirtualTime])
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::VirtualTime])
     {
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::VirtualTime>(bag, virtAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::GlobalProps::VirtualTime>(bag, virtAll / cpuCount);
     }
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::TotalTime])
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::TotalTime])
     {
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::TotalTime>(bag, totalAll / cpuCount);
+        Er::addProperty<Er::ProcessMgr::GlobalProps::TotalTime>(bag, totalAll / cpuCount);
     }
 
     auto mem = m_procFs.readMemStats();
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::TotalMem])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::TotalMem>(bag, mem.totalMem);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::TotalMem])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::TotalMem>(bag, mem.totalMem);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::UsedMem])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::UsedMem>(bag, mem.usedMem);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::UsedMem])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::UsedMem>(bag, mem.usedMem);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::BuffersMem])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::BuffersMem>(bag, mem.buffersMem);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::BuffersMem])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::BuffersMem>(bag, mem.buffersMem);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::CachedMem])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::CachedMem>(bag, mem.cachedMem);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::CachedMem])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::CachedMem>(bag, mem.cachedMem);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::SharedMem])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::SharedMem>(bag, mem.sharedMem);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::SharedMem])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::SharedMem>(bag, mem.sharedMem);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::AvailableMem])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::AvailableMem>(bag, mem.availableMem);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::AvailableMem])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::AvailableMem>(bag, mem.availableMem);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::TotalSwap])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::TotalSwap>(bag, mem.totalSwap);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::TotalSwap])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::TotalSwap>(bag, mem.totalSwap);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::UsedSwap])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::UsedSwap>(bag, mem.usedSwap);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::UsedSwap])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::UsedSwap>(bag, mem.usedSwap);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::CachedSwap])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::CachedSwap>(bag, mem.cachedSwap);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::CachedSwap])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::CachedSwap>(bag, mem.cachedSwap);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::ZSwapComp])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::ZSwapComp>(bag, mem.zswapComp);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::ZSwapComp])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::ZSwapComp>(bag, mem.zswapComp);
 
-    if (required[Er::ProcessMgr::ProcessesGlobal::PropIndices::ZSwapOrig])
-        Er::addProperty<Er::ProcessMgr::ProcessesGlobal::ZSwapOrig>(bag, mem.zswapOrig);
+    if (required[Er::ProcessMgr::GlobalProps::PropIndices::ZSwapOrig])
+        Er::addProperty<Er::ProcessMgr::GlobalProps::ZSwapOrig>(bag, mem.zswapOrig);
 
-    Er::addProperty<Er::ProcessMgr::ProcessesGlobal::Global>(bag, true);
+    Er::addProperty<Er::ProcessMgr::GlobalProps::Global>(bag, true);
 
     return bag;
 }

@@ -107,11 +107,11 @@ Er::PropertyBag ProcessDetailsService::next(StreamId id, SessionId sessionId)
 
 Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
 {
-    auto pid = Er::getPropertyValue<Er::ProcessMgr::ProcessesGlobal::Pid>(args);
+    auto pid = Er::getPropertyValue<Er::ProcessMgr::GlobalProps::Pid>(args);
     if (!pid)
         ErThrow("Process ID expected");
 
-    auto signame = Er::getPropertyValue<Er::ProcessMgr::ProcessesGlobal::Signal>(args);
+    auto signame = Er::getPropertyValue<Er::ProcessMgr::GlobalProps::Signal>(args);
     if (!signame)
         ErThrow("Signal name expected");
 
@@ -123,7 +123,7 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
     auto r = ::kill(*pid, signo);
 
     Er::PropertyBag result;
-    Er::addProperty<Er::ProcessMgr::ProcessesGlobal::PosixResult>(result, r);
+    Er::addProperty<Er::ProcessMgr::GlobalProps::PosixResult>(result, r);
 
     if (r < 0)
     {
@@ -132,7 +132,7 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
         ErLogWarning(m_log, "kill(%zu, %d) -> %d [%s]", *pid, signo, r, decoded.c_str());
         
         if (!decoded.empty())
-            Er::addProperty<Er::ProcessMgr::ProcessesGlobal::ErrorText>(result, std::move(decoded));
+            Er::addProperty<Er::ProcessMgr::GlobalProps::ErrorText>(result, std::move(decoded));
     }
     else
     {

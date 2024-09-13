@@ -16,7 +16,7 @@ class GlobalsCollector final
     : public Er::NonCopyable
 {
 public:
-    using PropMask = Er::ProcessMgr::ProcessesGlobal::PropMask;
+    using PropMask = Er::ProcessMgr::GlobalProps::PropMask;
 
     explicit GlobalsCollector(Er::Log::ILog* log, ProcFs& procFs);
 

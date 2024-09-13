@@ -100,9 +100,9 @@ private:
     };
 
     static Er::ProcessMgr::ProcessProps::PropMask getProcessPropMask(const Er::PropertyBag& args);
-    static Er::ProcessMgr::ProcessesGlobal::PropMask getProcessesGlobalPropMask(const Er::PropertyBag& args);
+    static Er::ProcessMgr::GlobalProps::PropMask getProcessesGlobalPropMask(const Er::PropertyBag& args);
 
-    Er::PropertyBag processesGlobal(Session* session, Er::ProcessMgr::ProcessesGlobal::PropMask required, std::optional<uint64_t> processCount);
+    Er::PropertyBag processesGlobal(Session* session, Er::ProcessMgr::GlobalProps::PropMask required, std::optional<uint64_t> processCount);
 
     std::shared_ptr<Session> getSession(SessionId id);
     void dropStaleSessions() noexcept;
