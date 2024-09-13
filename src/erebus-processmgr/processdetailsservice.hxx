@@ -4,10 +4,7 @@
 #include <erebus-processmgr/erebus-processmgr.hxx>
 #include <erebus-srv/plugin.hxx>
 
-namespace Erp
-{
-
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 
@@ -36,6 +33,4 @@ private:
 
 };
 
-} // namespace ProcessMgr {}
-
-} // namespace Erp {}
+} // namespace Erp::ProcessMgr {}

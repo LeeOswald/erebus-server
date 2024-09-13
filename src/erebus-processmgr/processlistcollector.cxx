@@ -3,10 +3,7 @@
 #include <erebus/system/user.hxx>
 
 
-namespace Erp
-{
-
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 namespace
@@ -53,7 +50,6 @@ void updateProperty(bool replaceProps, Er::PropertyBag& bag, Er::PropertyBag* di
 }
 
 } // namespace {}
-
 
 ProcessListCollector::ProcessListCollector(Er::Log::ILog* log, ProcFs& procFs)
     : m_log(log)
@@ -296,6 +292,5 @@ void ProcessListCollector::updateProcess(ProcessInfoCollectionDiff& result, Prop
     }
 }
 
-} // namespace ProcessMgr {}
+} // namespace Erp::ProcessMgr {}
 
-} // namespace Erp {}

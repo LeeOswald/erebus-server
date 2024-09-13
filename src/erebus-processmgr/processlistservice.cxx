@@ -4,10 +4,7 @@
 #include <erebus/util/format.hxx>
 
 
-namespace Erp
-{
-
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 
@@ -305,6 +302,4 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
     return bag;
 }
 
-} // namespace ProcessMgr {}
-
-} // namespace Erp {}
+} // namespace Erp::ProcessMgr {}

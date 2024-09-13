@@ -14,10 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Erp
-{
-
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 
@@ -124,6 +121,4 @@ private:
     std::unordered_map<StreamId, std::shared_ptr<Session>> m_sessions;
 };
 
-} // namespace ProcessMgr {}
-
-} // namespace Erp {}
+} // namespace Erp::ProcessMgr {}

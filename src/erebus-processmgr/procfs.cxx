@@ -15,10 +15,7 @@
 #include <sys/sysinfo.h>
 
 
-namespace Erp
-{
-
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 namespace 
@@ -730,6 +727,4 @@ MemStats ProcFs::readMemStats() noexcept
 }
 
     
-} // namespace ProcessMgr {}
-
-} // namespace Erp {}
+} // namespace Erp::ProcessMgr {}

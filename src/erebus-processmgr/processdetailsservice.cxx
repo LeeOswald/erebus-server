@@ -6,10 +6,7 @@
 
 #include <signal.h>
 
-namespace Erp
-{
-
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 namespace
@@ -142,6 +139,4 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
     return result;
 }
 
-} // namespace ProcessMgr {}
-
-} // namespace Erp {}
+} // namespace Erp::ProcessMgr {}

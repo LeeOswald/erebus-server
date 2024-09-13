@@ -5,10 +5,8 @@
 
 #include <vector>
 
-namespace Erp
-{
 
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 constexpr uint64_t InvalidPid = uint64_t(-1);
@@ -168,7 +166,4 @@ private:
 
 
 
-
-} // namespace ProcessMgr {}
-
-} // namespace Erp {}
+} // namespace Erp::ProcessMgr {}

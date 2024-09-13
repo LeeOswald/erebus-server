@@ -2,10 +2,7 @@
 
 #include <time.h>
 
-namespace Erp
-{
-
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 namespace
@@ -124,6 +121,4 @@ Er::PropertyBag GlobalsCollector::collect(PropMask required)
     return bag;
 }
 
-} // namespace ProcessMgr {}
-
-} // namespace Erp {}
+} // namespace Erp::ProcessMgr {}

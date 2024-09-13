@@ -8,10 +8,7 @@
 
 #include <atomic>
 
-namespace Erp
-{
-
-namespace ProcessMgr
+namespace Erp::ProcessMgr
 {
 
 class ProcessMgrPlugin final
@@ -83,9 +80,7 @@ private:
 std::atomic<long> ProcessMgrPlugin::g_instances = 0;
 
 
-} // namespace ProcessMgr {}
-
-} // namespace Erp {}
+} // namespace Erp::ProcessMgr {}
 
 
 extern "C"
