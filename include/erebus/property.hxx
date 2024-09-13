@@ -347,6 +347,27 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, Binary>::value>>
     void operator()(const T& v, std::ostream& s) { s << v; }
 };
 
+template <typename T>
+struct VectorFormatter
+{
+    template <typename VectorT>
+    void operator()(const VectorT& v, std::ostream& s) 
+    { 
+        PropertyFormatter<T> f;
+        bool first = true;
+        s << "[";
+        for (auto& value : v)
+        {
+            if (!first)
+                s << ", ";
+            else
+                first = false;
+
+            f(value, s);
+        }
+        s << "]";
+    }
+};
 
 
 enum class TimeZone
