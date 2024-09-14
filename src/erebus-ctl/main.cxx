@@ -32,7 +32,7 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
     {
         std::vector<std::string> parts;
         boost::split(parts, a, boost::is_any_of(".:"));
-        if (parts.size() != 2)
+        if (parts.size() != 3)
         {
             ErThrow(Er::Util::format("Invalid format of domain.property_id:value in [%s]", a.c_str()));
         }
@@ -231,17 +231,17 @@ int main(int argc, char* argv[])
         options.add_options()
             ("help,?", "display this message")
             ("verbose,v", "display debug output")
-            ("endpoint", po::value<std::string>(), "server endpoint")
+            ("endpoint,e", po::value<std::string>(), "server endpoint")
             ("ssl", "enable SSL")
             ("root", po::value<std::string>(&rootFile), "root certificate file path")
             ("cert", po::value<std::string>(&certFile), "client certificate file path")
             ("key", po::value<std::string>(&keyFile), "client certificate key file path")
             ("loop", po::value<int>(&interval)->default_value(0), "repeat the request with an interval")
             ("out", po::value<std::string>(&outFile), "output file name")
-            ("request", po::value<std::string>(&request), "request id")
-            ("stream", po::value<std::string>(&stream), "stream request id")
-            ("domain", po::value<std::string>(&domain), "domain")
-            ("arg", po::value<std::vector<std::string>>(&args), "property id:value")
+            ("request,r", po::value<std::string>(&request), "request id")
+            ("stream,s", po::value<std::string>(&stream), "stream request id")
+            ("domain,d", po::value<std::string>(&domain), "domain")
+            ("arg,a", po::value<std::vector<std::string>>(&args), "property <domain>.<id>:<value>")
         ;
 
         po::variables_map vm;
