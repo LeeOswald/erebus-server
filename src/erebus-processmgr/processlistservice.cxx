@@ -21,8 +21,8 @@ ProcessListService::ProcessListService(Er::Log::ILog* log)
 
 void ProcessListService::registerService(Er::Server::IServiceContainer* container)
 {
-    container->registerService(Er::ProcessMgr::ProcessRequests::ListProcessesDiff, this);
-    container->registerService(Er::ProcessMgr::ProcessRequests::GlobalProps, this);
+    container->registerService(Er::ProcessMgr::Requests::ListProcessesDiff, this);
+    container->registerService(Er::ProcessMgr::Requests::GlobalProps, this);
 }
 
 void ProcessListService::unregisterService(Er::Server::IServiceContainer* container)
@@ -73,7 +73,7 @@ Er::PropertyBag ProcessListService::request(std::string_view request, const Er::
 {
     auto session = getSession(sessionId);
 
-    if (request == Er::ProcessMgr::ProcessRequests::GlobalProps)
+    if (request == Er::ProcessMgr::Requests::GlobalProps)
     {
         auto required = getProcessesGlobalPropMask(args);
         return processesGlobal(session.get(), required, std::nullopt);
@@ -86,7 +86,7 @@ ProcessListService::StreamId ProcessListService::beginStream(std::string_view re
 {
     auto session = getSession(sessionId);
 
-    if (request == Er::ProcessMgr::ProcessRequests::ListProcessesDiff)
+    if (request == Er::ProcessMgr::Requests::ListProcessesDiff)
         return beginProcessDiffStream(args, session.get());
 
     ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
@@ -133,14 +133,14 @@ Er::PropertyBag ProcessListService::next(StreamId id, SessionId sessionId)
 Er::ProcessMgr::ProcessProps::PropMask ProcessListService::getProcessPropMask(const Er::PropertyBag& args)
 {
     // default mask is 'everything included'
-    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::ProcessProps::RequiredFields>(args, 0xffffffffffffffff);
+    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::Props::RequiredFields>(args, 0xffffffffffffffff);
     return Er::ProcessMgr::ProcessProps::PropMask(mask, Er::ProcessMgr::ProcessProps::PropMask::FromBits);
 }
 
 Er::ProcessMgr::GlobalProps::PropMask ProcessListService::getProcessesGlobalPropMask(const Er::PropertyBag& args)
 {
     // default mask is 'everything included'
-    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::GlobalProps::RequiredFields>(args, 0xffffffffffffffff);
+    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::Props::RequiredFields>(args, 0xffffffffffffffff);
     return Er::ProcessMgr::GlobalProps::PropMask(mask, Er::ProcessMgr::GlobalProps::PropMask::FromBits);
 }
 
@@ -251,8 +251,8 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
             return nextProcessDiff(stream, session);
         }
 
-        Er::addProperty<Er::ProcessMgr::ProcessProps::Pid>(bag, stream->processes.removed[stream->next]->pid);
-        Er::addProperty<Er::ProcessMgr::ProcessProps::IsDeleted>(bag, true);
+        Er::addProperty<Er::ProcessMgr::Props::Pid>(bag, stream->processes.removed[stream->next]->pid);
+        Er::addProperty<Er::ProcessMgr::Props::IsDeleted>(bag, true);
 
         ++stream->next;
     }
@@ -272,8 +272,8 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
             Er::addProperty(bag, std::move(prop)); // we can move from 'modified'
         });
 
-        Er::addProperty<Er::ProcessMgr::ProcessProps::Pid>(bag, modified.process->pid);
-        Er::addProperty<Er::ProcessMgr::ProcessProps::Valid>(bag, true);
+        Er::addProperty<Er::ProcessMgr::Props::Pid>(bag, modified.process->pid);
+        Er::addProperty<Er::ProcessMgr::Props::Valid>(bag, true);
 
         ++stream->next;
     }
@@ -285,15 +285,15 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
 
         auto added = stream->processes.added[stream->next];
         if (added->isNew)
-            Er::addProperty<Er::ProcessMgr::ProcessProps::IsNew>(bag, true);
+            Er::addProperty<Er::ProcessMgr::Props::IsNew>(bag, true);
 
         Er::enumerateProperties(added->properties, [&bag](const Er::Property& prop)
         {
             Er::addProperty(bag, prop);
         });
 
-        ErAssert(Er::propertyPresent<Er::ProcessMgr::ProcessProps::Pid>(bag));
-        ErAssert(Er::propertyPresent<Er::ProcessMgr::ProcessProps::Valid>(bag));
+        ErAssert(Er::propertyPresent<Er::ProcessMgr::Props::Pid>(bag));
+        ErAssert(Er::propertyPresent<Er::ProcessMgr::Props::Valid>(bag));
         
         ++stream->next;
     }

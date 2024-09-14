@@ -414,6 +414,39 @@ std::string ProcFs::readCmdLine(uintptr_t pid) noexcept
     return std::string();
 }
 
+std::vector<std::string> ProcFs::readEnv(uint64_t pid) noexcept
+{
+    std::vector<std::string> env;
+
+    try
+    {
+        auto path = root();
+        path.append("/");
+        path.append(std::to_string(pid));
+        path.append("/environ");
+
+        std::ifstream file(path);
+        if (!file.is_open())
+        {
+            ErLogDebug(m_log, "environ for process %zu could not be read", pid);
+        }
+        else
+        {
+            std::string line;
+            while (std::getline(file, line, '\0'))
+            {
+                env.push_back(std::move(line));
+            }
+        }
+    }
+    catch (std::exception& e)
+    {
+        ErLogDebug(m_log, "environ for process %zu could not be read: %s", pid, e.what());
+    }
+
+    return env;
+}
+
 std::vector<uintptr_t> ProcFs::enumeratePids() noexcept
 {
     std::vector<uintptr_t> result;

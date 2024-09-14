@@ -268,9 +268,7 @@ int main(int argc, char* argv[])
         Er::Client::LibParams cltParams(&console, console.level());
         Er::Client::LibScope cs(cltParams);
 
-        Er::ProcessMgr::GlobalProps::Private::registerAll(&console);
-        Er::ProcessMgr::ProcessProps::Private::registerAll(&console);
-        Er::ProcessMgr::ProcessPropsExt::Private::registerAll(&console);
+        Er::ProcessMgr::Private::registerAll(&console);
         Er::Desktop::Props::Private::registerAll(&console);
                 
         bool ssl = (vm.count("ssl") > 0);

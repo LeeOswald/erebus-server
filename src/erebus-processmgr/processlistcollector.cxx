@@ -140,9 +140,9 @@ void ProcessListCollector::updateKernelProcess(ProcessInfoCollectionDiff& result
     // property[0] -> pid
     // property[1] -> valid
     // property[2] -> error
-    updateProperty<Er::ProcessMgr::ProcessProps::Pid>(replaceProps, info->properties, pdiff, 0, KernelPid);
-    updateProperty<Er::ProcessMgr::ProcessProps::Valid>(replaceProps, info->properties, pdiff, 1, true);
-    updateProperty<Er::ProcessMgr::ProcessProps::Error>(replaceProps, info->properties, pdiff, 2, std::string());
+    updateProperty<Er::ProcessMgr::Props::Pid>(replaceProps, info->properties, pdiff, 0, KernelPid);
+    updateProperty<Er::ProcessMgr::Props::Valid>(replaceProps, info->properties, pdiff, 1, true);
+    updateProperty<Er::ProcessMgr::Props::Error>(replaceProps, info->properties, pdiff, 2, std::string());
     
     std::size_t nextProp = 3;
         
@@ -189,9 +189,9 @@ void ProcessListCollector::updateProcess(ProcessInfoCollectionDiff& result, Prop
     // property[0] -> pid
     // property[1] -> valid
     // property[2] -> error
-    updateProperty<Er::ProcessMgr::ProcessProps::Pid>(replaceProps, info->properties, pdiff, 0, stat.pid);
-    updateProperty<Er::ProcessMgr::ProcessProps::Valid>(replaceProps, info->properties, pdiff, 1, stat.valid);
-    updateProperty<Er::ProcessMgr::ProcessProps::Error>(replaceProps, info->properties, pdiff, 2, std::move(stat.error));
+    updateProperty<Er::ProcessMgr::Props::Pid>(replaceProps, info->properties, pdiff, 0, stat.pid);
+    updateProperty<Er::ProcessMgr::Props::Valid>(replaceProps, info->properties, pdiff, 1, stat.valid);
+    updateProperty<Er::ProcessMgr::Props::Error>(replaceProps, info->properties, pdiff, 2, std::move(stat.error));
     
     if (stat.valid)
     {

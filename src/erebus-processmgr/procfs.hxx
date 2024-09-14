@@ -145,13 +145,10 @@ public:
     std::string readComm(uint64_t pid) noexcept;
     std::string readExePath(uint64_t pid) noexcept;
     std::string readCmdLine(uint64_t pid) noexcept;
-
+    std::vector<std::string> readEnv(uint64_t pid) noexcept;
     std::vector<uint64_t> enumeratePids() noexcept;
-    
     uint64_t bootTime() noexcept;
-
     CpuTimesAll readCpuTimes() noexcept;
-
     MemStats readMemStats() noexcept;
 
 private:

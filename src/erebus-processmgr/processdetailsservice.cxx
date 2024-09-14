@@ -63,7 +63,8 @@ ProcessDetailsService::ProcessDetailsService(Er::Log::ILog* log)
 
 void ProcessDetailsService::registerService(Er::Server::IServiceContainer* container)
 {
-    container->registerService(Er::ProcessMgr::ProcessRequests::KillProcess, this);
+    container->registerService(Er::ProcessMgr::Requests::KillProcess, this);
+    container->registerService(Er::ProcessMgr::Requests::ProcessPropsExt, this);
 }
 
 void ProcessDetailsService::unregisterService(Er::Server::IServiceContainer* container)
@@ -82,8 +83,10 @@ void ProcessDetailsService::deleteSession(SessionId id)
 
 Er::PropertyBag ProcessDetailsService::request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
-    if (request == Er::ProcessMgr::ProcessRequests::KillProcess)
+    if (request == Er::ProcessMgr::Requests::KillProcess)
         return killProcess(args);
+    else if (request == Er::ProcessMgr::Requests::ProcessPropsExt)
+        return processPropsExt(args);
 
     ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
 }
@@ -104,11 +107,11 @@ Er::PropertyBag ProcessDetailsService::next(StreamId id, SessionId sessionId)
 
 Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
 {
-    auto pid = Er::getPropertyValue<Er::ProcessMgr::GlobalProps::Pid>(args);
+    auto pid = Er::getPropertyValue<Er::ProcessMgr::Props::Pid>(args);
     if (!pid)
         ErThrow("Process ID expected");
 
-    auto signame = Er::getPropertyValue<Er::ProcessMgr::GlobalProps::Signal>(args);
+    auto signame = Er::getPropertyValue<Er::ProcessMgr::Props::SignalName>(args);
     if (!signame)
         ErThrow("Signal name expected");
 
@@ -120,7 +123,7 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
     auto r = ::kill(*pid, signo);
 
     Er::PropertyBag result;
-    Er::addProperty<Er::ProcessMgr::GlobalProps::PosixResult>(result, r);
+    Er::addProperty<Er::ProcessMgr::Props::PosixResult>(result, r);
 
     if (r < 0)
     {
@@ -129,7 +132,7 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
         ErLogWarning(m_log, "kill(%zu, %d) -> %d [%s]", *pid, signo, r, decoded.c_str());
         
         if (!decoded.empty())
-            Er::addProperty<Er::ProcessMgr::GlobalProps::ErrorText>(result, std::move(decoded));
+            Er::addProperty<Er::ProcessMgr::Props::ErrorText>(result, std::move(decoded));
     }
     else
     {
@@ -138,5 +141,13 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
 
     return result;
 }
+
+Er::PropertyBag ProcessDetailsService::processPropsExt(const Er::PropertyBag& args)
+{
+    Er::PropertyBag result;
+
+    return result;
+}
+
 
 } // namespace Erp::ProcessMgr {}

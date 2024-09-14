@@ -28,8 +28,7 @@ public:
         m_processList.reset();
         m_processDetails.reset();
 
-        Er::ProcessMgr::ProcessProps::Private::unregisterAll(m_params.log);
-        Er::ProcessMgr::GlobalProps::Private::unregisterAll(m_params.log);
+        Er::ProcessMgr::Private::unregisterAll(m_params.log);
 
         g_instances--;
     }
@@ -65,8 +64,7 @@ public:
             m_processDetails->registerService(container);
         }
 
-        Er::ProcessMgr::GlobalProps::Private::registerAll(m_params.log);
-        Er::ProcessMgr::ProcessProps::Private::registerAll(m_params.log);
+        Er::ProcessMgr::Private::registerAll(m_params.log);
     }
 
 private:
