@@ -1,8 +1,7 @@
 
-include(FetchGTest)
 include(GoogleTest)
 
-set(ER_TESTS ertests)
+set(EREBUS_RTL_TESTS erebus-rtl-tests)
 
 
 if(ER_LINUX)
@@ -15,7 +14,7 @@ endif()
 enable_testing()
 
 add_executable(
-    ${ER_TESTS}
+    ${EREBUS_RTL_TESTS}
     common.hpp
     condition.cpp
     exception.cpp
@@ -42,6 +41,6 @@ add_executable(
     ${PLATFORM_SOURCES}
 )
 
-target_link_libraries(${ER_TESTS} gtest_main ${EREBUS_RTLLIB} ${LUA_LIBRARIES})
+target_link_libraries(${EREBUS_RTL_TESTS} gtest_main ${EREBUS_RTLLIB} ${LUA_LIBRARIES})
 
-gtest_discover_tests(${ER_TESTS})
+gtest_discover_tests(${EREBUS_RTL_TESTS})
