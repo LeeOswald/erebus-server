@@ -58,6 +58,7 @@ ProcessDetailsService::~ProcessDetailsService()
 
 ProcessDetailsService::ProcessDetailsService(Er::Log::ILog* log)
     : m_log(log)
+    , m_procFs(log)
 {
 }
 
@@ -145,6 +146,20 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
 Er::PropertyBag ProcessDetailsService::processPropsExt(const Er::PropertyBag& args)
 {
     Er::PropertyBag result;
+
+    // defaut is 'include everything'
+    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::Props::RequiredFields>(args, 0xffffffffffffffff);
+    auto required = Er::ProcessMgr::ProcessPropsExt::PropMask(mask, Er::ProcessMgr::ProcessPropsExt::PropMask::FromBits);
+
+    auto pid = Er::getPropertyValue<Er::ProcessMgr::Props::Pid>(args);
+    if (!pid)
+        ErThrow("Process ID expected");
+
+    if (required[Er::ProcessMgr::ProcessPropsExt::PropIndices::Env])
+    {
+        auto env = m_procFs.readEnv(*pid);
+        Er::addProperty<Er::ProcessMgr::ProcessPropsExt::Env>(result, std::move(env));
+    }
 
     return result;
 }

@@ -4,6 +4,8 @@
 #include <erebus-processmgr/erebus-processmgr.hxx>
 #include <erebus-srv/plugin.hxx>
 
+#include "procfs.hxx"
+
 namespace Erp::ProcessMgr
 {
 
@@ -31,6 +33,7 @@ private:
     Er::PropertyBag processPropsExt(const Er::PropertyBag& args); 
 
     Er::Log::ILog* const m_log;
+    ProcFs m_procFs;
 
 };
 
