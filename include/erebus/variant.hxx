@@ -11,7 +11,7 @@ namespace Er
 class EREBUS_EXPORT Variant final
 {
 public:
-    using BoolVector = std::vector<bool>;
+    using BoolVector = std::vector<Bool>;
     using Int32Vector = std::vector<int32_t>;
     using UInt32Vector = std::vector<uint32_t>;
     using Int64Vector = std::vector<int64_t>;
@@ -55,7 +55,7 @@ public:
 
     Variant(nullptr_t) = delete;
 
-    constexpr Variant(bool v) noexcept
+    constexpr Variant(Bool v) noexcept
         : m_u()
         , m_type(Type::Bool)
     {
@@ -260,7 +260,7 @@ public:
         return m_type == Type::Empty;
     }
 
-    [[nodiscard]] constexpr const bool& getBool() const noexcept
+    [[nodiscard]] constexpr const Bool& getBool() const noexcept
     {
         ErAssert(m_type == Type::Bool);
         return m_u.v_bool;
@@ -420,7 +420,7 @@ private:
 
     union Storage
     {
-        bool v_bool;
+        Bool v_bool;
         int32_t v_int32;
         uint32_t v_uint32;
         int64_t v_int64;
@@ -474,7 +474,7 @@ template <typename T>
 const T& get(const Variant& v) noexcept;
 
 template <>
-[[nodiscard]] inline const bool& get<>(const Variant& v) noexcept
+[[nodiscard]] inline const Bool& get<>(const Variant& v) noexcept
 {
     return v.getBool();
 }

@@ -19,7 +19,7 @@ void assignPropertyEmpty(erebus::Property& out, const Property& in)
 void assignPropertyBool(erebus::Property& out, const Property& in)
 {
     out.set_type(static_cast<uint32_t>(Er::PropertyType::Bool));
-    out.set_v_bool(get<bool>(in.value));
+    out.set_v_bool(get<Bool>(in.value) == True);
 }
 
 void assignPropertyInt32(erebus::Property& out, const Property& in)
@@ -71,7 +71,7 @@ void assignPropertyBools(erebus::Property& out, const Property& in)
     auto dst = out.mutable_a_bool();
     for (auto v : src)
     {
-        dst->add_a(v);
+        dst->add_a(v == True);
     }
 }
 
@@ -160,7 +160,7 @@ Property getPropertyEmpty(const erebus::Property& in)
 
 Property getPropertyBool(const erebus::Property& in)
 {
-    return Property(PropId(in.id()), in.v_bool());
+    return Property(PropId(in.id()), in.v_bool() ? Er::True : Er::False);
 }
 
 Property getPropertyInt32(const erebus::Property& in)
@@ -208,7 +208,7 @@ Property getPropertyBools(const erebus::Property& in)
         v.reserve(size);
         for (int i = 0; i < size; ++i)
         {
-            v.push_back(a.a(i));
+            v.push_back(a.a(i) ? Er::True : Er::False);
         }
     }
 

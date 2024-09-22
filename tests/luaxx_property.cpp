@@ -158,13 +158,13 @@ TEST(Er_Lua, Property)
     state.loadString(test_property_adapter, "test_property_adapter");
 
     {
-        Er::Property prop(TestProps::BoolProp::id(), false);
+        Er::Property prop(TestProps::BoolProp::id(), Er::False);
 
         uint32_t type = state["filter"](&prop);
         EXPECT_EQ(prop.id, TestProps::BoolProp::id());
         ASSERT_EQ(type, static_cast<uint32_t>(TestProps::BoolProp::type()));
         ASSERT_EQ(prop.type(), TestProps::BoolProp::type());
-        EXPECT_EQ(Er::get<bool>(prop.value), true);
+        EXPECT_EQ(Er::get<Er::Bool>(prop.value), Er::True);
     }
     {
         Er::Property prop(TestProps::Int32Prop::id(), int32_t(133));
@@ -410,10 +410,10 @@ TEST(Er_Lua, FormatProperty)
     state.loadString(test_property_format, "test_property_format");
 
     {
-        Er::Property prop(TestProps::BoolProp::id(), true);
+        Er::Property prop(TestProps::BoolProp::id(), Er::True);
 
         std::string str = state["format"](&prop);
-        EXPECT_STREQ(str.c_str(), "true");
+        EXPECT_STREQ(str.c_str(), "True");
     }
 
     {

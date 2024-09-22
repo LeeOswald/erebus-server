@@ -19,7 +19,7 @@ namespace TestProps
 
 constexpr const std::string_view Domain = "Test";
 
-using BoolProp = Er::PropertyValue<bool, ER_PROPID("test_bool"), "Bool", Er::PropertyFormatter<bool>>;
+using BoolProp = Er::PropertyValue<Er::Bool, ER_PROPID("test_bool"), "Bool", Er::PropertyFormatter<Er::Bool>>;
 using Int32Prop = Er::PropertyValue<int32_t, ER_PROPID("test_int32"), "Int32", Er::PropertyFormatter<int32_t>>;
 using UInt32Prop = Er::PropertyValue<uint32_t, ER_PROPID("test_uint32"), "UInt32", Er::PropertyFormatter<uint32_t>>;
 using Int64Prop = Er::PropertyValue<int64_t, ER_PROPID("test_int64"), "Int64", Er::PropertyFormatter<int64_t>>;

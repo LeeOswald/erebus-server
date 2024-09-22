@@ -49,12 +49,12 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
         {
         case Er::PropertyType::Bool:
             {
-                bool v;
+                Er::Bool v;
 
                 if ((parts[2] == "true") || (parts[2] == "1"))
-                    v = true;
+                    v = Er::True;
                 else if ((parts[2] == "false") || (parts[2] == "0"))
-                    v = false;
+                    v = Er::False;
                 else
                     ErThrow(Er::Util::format("Invalid value [%s] for bool property [%s.%s]", parts[2].c_str(), parts[0].c_str(), parts[1].c_str()));
 

@@ -37,26 +37,38 @@ enum class IconState: uint32_t
 
 struct IconStateFormatter
 {
-    void operator()(uint32_t v, std::ostream& s)
+    std::string operator()(ConstPropertyRef v)
     {
-        switch (static_cast<IconState>(v))
+        auto pp = std::get_if<const uint32_t*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
+        switch (static_cast<IconState>(**pp))
         {
-            case IconState::Pending: s << "Pending"; break;
-            case IconState::NotPresent: s << "Not Present"; break;
-            case IconState::Found: s << "Found"; break;
-            default: s << "???"; break;
+            case IconState::Pending: return std::string("Pending");
+            case IconState::NotPresent: return std::string("Not Present");
+            case IconState::Found: return std::string("Found");
+            default: return std::string("???");
         }
     }
 };
 
 struct IconFormatter
 {
-    void operator()(const Binary& ico, std::ostream& s) 
-    { 
+    std::string operator()(ConstPropertyRef v)
+    {
+        auto pp = std::get_if<const Binary*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
+        auto& ico = **pp;
+        std::ostringstream ss;
         if (ico.empty())
-            s << "[null icon]";
+            ss << "[null icon]";
         else
-            s << "[icon (" << ico.size() << " bytes)]";
+            ss << "[icon (" << ico.size() << " bytes)]";
+
+        return ss.str();
     }
 };    
 

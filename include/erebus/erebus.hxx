@@ -52,6 +52,19 @@ auto saturatingSub(T a, T b) noexcept
    return a > b ? a - b : 0;
 }
 
+//
+// we need a fixed-size bool
+//
+enum class Bool: uint8_t 
+{   
+    False = 0,
+    True = 1
+};
+
+constexpr Bool False = Bool::False;
+constexpr Bool True = Bool::True;
+
+
 } // namespace Er {}
 
 #include <erebus/assert.hxx>

@@ -42,15 +42,15 @@ TEST(Variant, construction_assignment)
 
     // bool
     {
-        Er::Variant v1(true);
+        Er::Variant v1(Er::True);
         EXPECT_EQ(v1.type(), Er::Variant::Type::Bool);
         EXPECT_FALSE(v1.empty());
-        EXPECT_EQ(v1.getBool(), true);
+        EXPECT_EQ(v1.getBool(), Er::True);
 
-        Er::Variant v2(false);
+        Er::Variant v2(Er::False);
         EXPECT_EQ(v2.type(), Er::Variant::Type::Bool);
         EXPECT_FALSE(v2.empty());
-        EXPECT_EQ(v2.getBool(), false);
+        EXPECT_EQ(v2.getBool(), Er::False);
 
         // copy-construct
         Er::Variant vc1(v1);
@@ -58,7 +58,7 @@ TEST(Variant, construction_assignment)
         EXPECT_FALSE(v1.empty());
         EXPECT_EQ(vc1.type(), Er::Variant::Type::Bool);
         EXPECT_FALSE(vc1.empty());
-        EXPECT_EQ(vc1.getBool(), true);
+        EXPECT_EQ(vc1.getBool(), Er::True);
 
         // move-construct
         Er::Variant vc2(std::move(v1));
@@ -66,22 +66,22 @@ TEST(Variant, construction_assignment)
         EXPECT_TRUE(v1.empty());
         EXPECT_EQ(vc2.type(), Er::Variant::Type::Bool);
         EXPECT_FALSE(vc2.empty());
-        EXPECT_EQ(vc2.getBool(), true);
+        EXPECT_EQ(vc2.getBool(), Er::True);
 
         // copy-assign
         v1 = vc2;
         EXPECT_EQ(v1.type(), Er::Variant::Type::Bool);
         EXPECT_FALSE(v1.empty());
-        EXPECT_EQ(v1.getBool(), true);
+        EXPECT_EQ(v1.getBool(), Er::True);
         EXPECT_EQ(vc2.type(), Er::Variant::Type::Bool);
         EXPECT_FALSE(vc2.empty());
-        EXPECT_EQ(vc2.getBool(), true);
+        EXPECT_EQ(vc2.getBool(), Er::True);
 
         // move-assign
         v2 = std::move(v1);
         EXPECT_EQ(v2.type(), Er::Variant::Type::Bool);
         EXPECT_FALSE(v2.empty());
-        EXPECT_EQ(v2.getBool(), true);
+        EXPECT_EQ(v2.getBool(), Er::True);
         EXPECT_EQ(v1.type(), Er::Variant::Type::Empty);
         EXPECT_TRUE(v1.empty());
     }
@@ -392,7 +392,7 @@ TEST(Variant, construction_assignment)
 
     // bool vector
     {
-        std::vector<bool> a{ true, false, true };
+        std::vector<Er::Bool> a{ Er::True, Er::False, Er::True };
         
         Er::Variant v1(a);
         EXPECT_FALSE(a.empty());
@@ -400,9 +400,9 @@ TEST(Variant, construction_assignment)
         EXPECT_FALSE(v1.empty());
         auto& r1 = v1.getBools();
         ASSERT_EQ(r1.size(), 3);
-        EXPECT_EQ(r1[0], true);
-        EXPECT_EQ(r1[1], false);
-        EXPECT_EQ(r1[2], true);
+        EXPECT_EQ(r1[0], Er::True);
+        EXPECT_EQ(r1[1], Er::False);
+        EXPECT_EQ(r1[2], Er::True);
 
         Er::Variant v2(std::move(a));
         EXPECT_TRUE(a.empty());
@@ -410,9 +410,9 @@ TEST(Variant, construction_assignment)
         EXPECT_FALSE(v2.empty());
         auto& r2 = v2.getBools();
         ASSERT_EQ(r2.size(), 3);
-        EXPECT_EQ(r2[0], true);
-        EXPECT_EQ(r2[1], false);
-        EXPECT_EQ(r2[2], true);
+        EXPECT_EQ(r2[0], Er::True);
+        EXPECT_EQ(r2[1], Er::False);
+        EXPECT_EQ(r2[2], Er::True);
 
         // copy-construct
         Er::Variant vc1(v2);
@@ -422,9 +422,9 @@ TEST(Variant, construction_assignment)
         EXPECT_FALSE(vc1.empty());
         auto& rc1 = vc1.getBools();
         ASSERT_EQ(rc1.size(), 3);
-        EXPECT_EQ(rc1[0], true);
-        EXPECT_EQ(rc1[1], false);
-        EXPECT_EQ(rc1[2], true);
+        EXPECT_EQ(rc1[0], Er::True);
+        EXPECT_EQ(rc1[1], Er::False);
+        EXPECT_EQ(rc1[2], Er::True);
 
         // move-construct
         Er::Variant vc2(std::move(v2));
@@ -434,9 +434,9 @@ TEST(Variant, construction_assignment)
         EXPECT_FALSE(vc2.empty());
         auto& rc2 = vc2.getBools();
         ASSERT_EQ(rc2.size(), 3);
-        EXPECT_EQ(rc2[0], true);
-        EXPECT_EQ(rc2[1], false);
-        EXPECT_EQ(rc2[2], true);
+        EXPECT_EQ(rc2[0], Er::True);
+        EXPECT_EQ(rc2[1], Er::False);
+        EXPECT_EQ(rc2[2], Er::True);
 
         // copy-assign
         Er::Variant vc3;
@@ -445,9 +445,9 @@ TEST(Variant, construction_assignment)
         EXPECT_FALSE(vc2.empty());
         auto& rc3 = vc3.getBools();
         ASSERT_EQ(rc3.size(), 3);
-        EXPECT_EQ(rc3[0], true);
-        EXPECT_EQ(rc3[1], false);
-        EXPECT_EQ(rc3[2], true);
+        EXPECT_EQ(rc3[0], Er::True);
+        EXPECT_EQ(rc3[1], Er::False);
+        EXPECT_EQ(rc3[2], Er::True);
 
         // move-assign
         Er::Variant vc4;
@@ -456,9 +456,9 @@ TEST(Variant, construction_assignment)
         EXPECT_TRUE(vc2.empty());
         auto& rc4 = vc4.getBools();
         ASSERT_EQ(rc4.size(), 3);
-        EXPECT_EQ(rc4[0], true);
-        EXPECT_EQ(rc4[1], false);
-        EXPECT_EQ(rc4[2], true);
+        EXPECT_EQ(rc4[0], Er::True);
+        EXPECT_EQ(rc4[1], Er::False);
+        EXPECT_EQ(rc4[2], Er::True);
     }
 
     // int32 vector

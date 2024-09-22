@@ -8,6 +8,7 @@
 
 #include <iomanip>
 #include <ostream>
+#include <variant>
 
 
 namespace Er
@@ -17,6 +18,7 @@ namespace Er
 // Properties that can be marshaled through RPC
 //
 
+
 using PropId = uint32_t;
 constexpr PropId InvalidPropId = PropId(-1);
 
@@ -25,7 +27,7 @@ struct PropertyFormatter;
 
 template <typename T>
 concept SupportedPropertyType =
-    std::is_same_v<std::remove_cvref_t<T>, bool> ||
+    std::is_same_v<std::remove_cvref_t<T>, Bool> ||
     std::is_same_v<std::remove_cvref_t<T>, int32_t> ||
     std::is_same_v<std::remove_cvref_t<T>, uint32_t> ||
     std::is_same_v<std::remove_cvref_t<T>, int64_t> ||
@@ -33,7 +35,7 @@ concept SupportedPropertyType =
     std::is_same_v<std::remove_cvref_t<T>, double> ||
     std::is_same_v<std::remove_cvref_t<T>, std::string> ||
     std::is_same_v<std::remove_cvref_t<T>, Binary> ||
-    std::is_same_v<std::remove_cvref_t<T>, std::vector<bool>> ||
+    std::is_same_v<std::remove_cvref_t<T>, std::vector<Bool>> ||
     std::is_same_v<std::remove_cvref_t<T>, std::vector<int32_t>> ||
     std::is_same_v<std::remove_cvref_t<T>, std::vector<uint32_t>> ||
     std::is_same_v<std::remove_cvref_t<T>, std::vector<int64_t>> ||
@@ -54,6 +56,44 @@ using DoubleVector = Variant::DoubleVector;
 using StringVector = Variant::StringVector;
 using BinaryVector = Variant::BinaryVector;
 
+
+using PropertyRef = std::variant<
+    Bool*,
+    int32_t*,
+    uint32_t*,
+    int64_t*,
+    uint64_t*,
+    double*,
+    std::string*,
+    Binary*,
+    std::vector<Bool>*,
+    std::vector<int32_t>*,
+    std::vector<uint32_t>*,
+    std::vector<int64_t>*,
+    std::vector<uint64_t>*,
+    std::vector<double>*,
+    std::vector<std::string>*,
+    std::vector<Binary>*
+>;
+
+using ConstPropertyRef = std::variant<
+    const Bool*,
+    const int32_t*,
+    const uint32_t*,
+    const int64_t*,
+    const uint64_t*,
+    const double*,
+    const std::string*,
+    const Binary*,
+    const std::vector<Bool>*,
+    const std::vector<int32_t>*,
+    const std::vector<uint32_t>*,
+    const std::vector<int64_t>*,
+    const std::vector<uint64_t>*,
+    const std::vector<double>*,
+    const std::vector<std::string>*,
+    const std::vector<Binary>*
+>;
 
 constexpr const char* propertyTypeToString(PropertyType type) noexcept
 {
@@ -81,6 +121,14 @@ constexpr const char* propertyTypeToString(PropertyType type) noexcept
     return "<\?\?\?>";
 }
 
+constexpr bool propertyTypeIsArray(PropertyType type) noexcept
+{
+    if (type >= Er::PropertyType::Bools && type <= Er::PropertyType::Binaries)
+        return true;
+    
+    return false;
+}
+
 
 struct Property;
 
@@ -94,7 +142,7 @@ struct IPropertyInfo
     virtual PropId id() const noexcept = 0;
     virtual const char* id_str() const noexcept = 0;
     virtual const char* name() const noexcept = 0;
-    virtual void format(const Property& v, std::ostream& s) const = 0;
+    virtual std::string to_string(const Property& v) const = 0;
 };
 
 EREBUS_EXPORT std::shared_ptr<IPropertyInfo> lookupProperty(std::string_view domain, PropId id) noexcept;
@@ -105,7 +153,7 @@ template <typename T>
 struct PropertyTypeFrom;
 
 template <>
-struct PropertyTypeFrom<bool>
+struct PropertyTypeFrom<Bool>
 {
     static constexpr PropertyType type = PropertyType::Bool;
 };
@@ -229,7 +277,7 @@ struct PropertyInfo
         return fromStringLiteral<PrName>();
     }
 
-    void format(const Property& v, std::ostream& s) const override;
+    std::string to_string(const Property& v) const override;
 };
 
 
@@ -307,20 +355,36 @@ concept IsPropertyValue =
 
 struct NullPropertyFormatter
 {
-    template <typename T>
-    void operator()([[maybe_unused]] const T& v, [[maybe_unused]] std::ostream& s) {  }
+    std::string operator()([[maybe_unused]] ConstPropertyRef v) 
+    {
+        return std::string();
+    }
 };
 
 template <typename T>
-struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, bool>::value>>
+struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, Bool>::value>>
 {
-    void operator()(const T& v, std::ostream& s) { s << std::boolalpha << v; }
+    std::string operator()(ConstPropertyRef v) 
+    {
+        auto pp = std::get_if<const T*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
+        return (**pp == True) ? "True" : "False";
+    }
 };
 
 template <typename T>
-struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>>
+struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, Bool>::value>>
 {
-    void operator()(const T& v, std::ostream& s) { s << v; }
+    std::string operator()(ConstPropertyRef v) 
+    {
+        auto pp = std::get_if<const T*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
+        return std::to_string(**pp);
+    }
 };
 
 template <typename T>
@@ -330,7 +394,16 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_floating_point<T>::value>>
         : precision(precision)
     {}
 
-    void operator()(const T& v, std::ostream& s) { s << std::fixed << std::setprecision(precision) << v; }
+    std::string operator()(ConstPropertyRef v) 
+    {
+        auto pp = std::get_if<const T*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(precision) << **pp;
+        return ss.str();
+    }
 
     int precision;
 };
@@ -338,34 +411,28 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_floating_point<T>::value>>
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value>>
 {
-    void operator()(const T& v, std::ostream& s) { s << v; }
+    std::string operator()(ConstPropertyRef v) 
+    {
+        auto pp = std::get_if<const T*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
+        return **pp;
+    }
 };
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, Binary>::value>>
 {
-    void operator()(const T& v, std::ostream& s) { s << v; }
-};
+    std::string operator()(ConstPropertyRef v) 
+    {
+        auto pp = std::get_if<const T*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
 
-template <typename ItemFormatterT>
-struct VectorFormatter
-{
-    template <typename VectorT>
-    void operator()(const VectorT& v, std::ostream& s) 
-    { 
-        ItemFormatterT f;
-        bool first = true;
-        s << "[";
-        for (auto& value : v)
-        {
-            if (!first)
-                s << ", ";
-            else
-                first = false;
-
-            f(value, s);
-        }
-        s << "]";
+        std::ostringstream ss;
+        ss << **pp;
+        return ss.str();
     }
 };
 
@@ -381,13 +448,17 @@ struct TimeFormatter
 {
     static constexpr const char* format = fromStringLiteral<Format>();
 
-    void operator()(uint64_t v, std::ostream& s) 
+    std::string operator()(ConstPropertyRef v) 
     {
+        auto pp = std::get_if<const uint64_t*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
         Er::System::Time unpacked;
         if constexpr (Zone == TimeZone::Utc)
-            unpacked = Er::System::Time::gmt(v);
+            unpacked = Er::System::Time::gmt(**pp);
         else
-            unpacked = Er::System::Time::local(v);
+            unpacked = Er::System::Time::local(**pp);
 
         struct tm t = {};
         t.tm_year = unpacked.year;
@@ -397,7 +468,9 @@ struct TimeFormatter
         t.tm_min = unpacked.minute;
         t.tm_sec = unpacked.second;
 
-        s << std::put_time(&t, format);
+        std::ostringstream ss;
+        ss << std::put_time(&t, format);
+        return ss.str();
     }
 };
 
@@ -485,42 +558,147 @@ struct EREBUS_EXPORT Property
         return value == other.value;
     }
 
-    void format(std::ostream& s) const
+    std::string to_string() const
     {
         switch (type())
         {
-        case PropertyType::Empty: s << "<empty>"; break;
-        case PropertyType::Bool: PropertyFormatter<bool>()(get<bool>(value), s); break;
-        case PropertyType::Int32: PropertyFormatter<int32_t>()(get<int32_t>(value), s); break;
-        case PropertyType::UInt32: PropertyFormatter<uint32_t>()(get<uint32_t>(value), s); break;
-        case PropertyType::Int64: PropertyFormatter<int64_t>()(get<int64_t>(value), s); break;
-        case PropertyType::UInt64: PropertyFormatter<uint64_t>()(get<uint64_t>(value), s); break;
-        case PropertyType::Double: PropertyFormatter<double>()(get<double>(value), s); break;
-        case PropertyType::String: PropertyFormatter<std::string>()(get<std::string>(value), s); break;
-        case PropertyType::Binary: PropertyFormatter<Binary>()(get<Binary>(value), s); break;
-        default: s << "<\?\?\?>";
+        case PropertyType::Empty: 
+            return std::string("[empty]");
+        case PropertyType::Bool: 
+            return PropertyFormatter<Bool>()(ConstPropertyRef(&get<Bool>(value)));
+        case PropertyType::Int32: 
+            return PropertyFormatter<int32_t>()(ConstPropertyRef(&get<int32_t>(value)));
+        case PropertyType::UInt32: 
+            return PropertyFormatter<uint32_t>()(ConstPropertyRef(&get<uint32_t>(value)));
+        case PropertyType::Int64: 
+            return PropertyFormatter<int64_t>()(ConstPropertyRef(&get<int64_t>(value)));
+        case PropertyType::UInt64: 
+            return PropertyFormatter<uint64_t>()(ConstPropertyRef(&get<uint64_t>(value)));
+        case PropertyType::Double: 
+            return PropertyFormatter<double>()(ConstPropertyRef(&get<double>(value)));
+        case PropertyType::String: 
+            return PropertyFormatter<std::string>()(ConstPropertyRef(&get<std::string>(value)));
+        case PropertyType::Binary: 
+            return PropertyFormatter<Binary>()(ConstPropertyRef(&get<Binary>(value)));
+        case PropertyType::Bools:
+            return vectorToString<Bool>(get<BoolVector>(value));
+        case PropertyType::Int32s:
+            return vectorToString<int32_t>(get<Int32Vector>(value));
+        case PropertyType::UInt32s:
+            return vectorToString<uint32_t>(get<UInt32Vector>(value));
+        case PropertyType::Int64s:
+            return vectorToString<int64_t>(get<Int64Vector>(value));
+        case PropertyType::UInt64s:
+            return vectorToString<uint64_t>(get<UInt64Vector>(value));
+        case PropertyType::Doubles:
+            return vectorToString<double>(get<DoubleVector>(value));
+        case PropertyType::Strings:
+            return vectorToString<std::string>(get<StringVector>(value));
+        case PropertyType::Binaries:
+            return vectorToString<Binary>(get<BinaryVector>(value));
         }
+
+        return std::string("<\?\?\?>");
     }
 
     Variant value;
     PropId id;
+
+private:
+    template <typename T>
+    static std::string vectorToString(const std::vector<T>& arr)
+    {
+        if (arr.empty())
+            return std::string("[]");
+
+        PropertyFormatter<T> f;
+
+        std::ostringstream ss;
+        ss << "[ ";
+        bool first = true;
+        for (auto& v: arr)
+        {
+            if (first)
+                first = false;
+            else
+                ss << ", ";
+
+            if constexpr (std::is_same_v<T, std::string>)
+                ss << "\"";
+            else if constexpr (std::is_same_v<T, Binary>)
+                ss << "[";
+
+            ss << f(&v);
+
+            if constexpr (std::is_same_v<T, std::string>)
+                ss << "\"";
+            else if constexpr (std::is_same_v<T, Binary>)
+                ss << "]";
+
+        }
+        ss << " ]";
+
+        return ss.str();
+    }
 };
 
 
-template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
-void PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>::format(const Property& v, std::ostream& s) const
+namespace __
 {
-    if (PropertyTypeFrom<ValueType>::type == v.type()) [[likely]]
+
+template <typename T, typename FormatterT>
+static std::string vectorToString(const std::vector<T>& arr, FormatterT& f)
+{
+    if (arr.empty())
+        return std::string("[]");
+
+    std::ostringstream ss;
+    ss << "[ ";
+    bool first = true;
+    for (auto& v: arr)
     {
-        auto const& val = get<ValueType>(v.value);
-        Formatter f;
-        f(val, s);
+        if (first)
+            first = false;
+        else
+            ss << ", ";
+
+        if constexpr (std::is_same_v<T, std::string>)
+            ss << "\"";
+        else if constexpr (std::is_same_v<T, Binary>)
+            ss << "[";
+
+        ss << f(&v);
+
+        if constexpr (std::is_same_v<T, std::string>)
+            ss << "\"";
+        else if constexpr (std::is_same_v<T, Binary>)
+            ss << "]";
+
     }
-    else
-    {
-        s << "<bad property cast>";
-        return;
-    }
+    ss << " ]";
+    return ss.str();
+} 
+
+} // namespace __ {}
+
+
+
+template <SupportedPropertyType ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
+std::string PropertyInfo<ValueT, PrId, PrIdStr, PrName, FormatterT>::to_string(const Property& v) const
+{
+    if (v.empty()) [[unlikely]]
+        return std::string("<empty>");
+
+    if (PropertyTypeFrom<ValueType>::type != v.type()) [[unlikely]]
+        return std::string("<bad property cast>");
+
+    Formatter f;
+    
+    if constexpr (!propertyTypeIsArray(PropertyTypeFrom<ValueType>::type))
+        return f(&get<ValueType>(v.value));
+    else 
+        return __::vectorToString<typename ValueType::value_type>(get<ValueType>(v.value), f);
+
 }
 
 } // namespace Er {}

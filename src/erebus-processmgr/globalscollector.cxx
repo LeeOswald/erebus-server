@@ -116,7 +116,7 @@ Er::PropertyBag GlobalsCollector::collect(PropMask required)
     if (required[Er::ProcessMgr::GlobalProps::PropIndices::ZSwapOrig])
         Er::addProperty<Er::ProcessMgr::GlobalProps::ZSwapOrig>(bag, mem.zswapOrig);
 
-    Er::addProperty<Er::ProcessMgr::GlobalProps::Global>(bag, true);
+    Er::addProperty<Er::ProcessMgr::GlobalProps::Global>(bag, Er::True);
 
     return bag;
 }

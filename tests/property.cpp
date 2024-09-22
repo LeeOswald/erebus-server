@@ -6,7 +6,7 @@
 
 TEST(Er_Property, registration)
 {
-    using SomeProp = Er::PropertyValue<bool, ER_PROPID("some_test_prop"), "SomeBool", Er::PropertyFormatter<bool>>;
+    using SomeProp = Er::PropertyValue<Er::Bool, ER_PROPID("some_test_prop"), "SomeBool", Er::PropertyFormatter<Er::Bool>>;
     Er::registerProperty("Test", SomeProp::make_info(), g_log);
     
     auto somePropById = Er::lookupProperty("Test", SomeProp::Id::value);
@@ -27,22 +27,22 @@ TEST(Er_Property, registration)
 TEST(Er_Property, constructFromPropertyValue)
 {
     {
-        TestProps::BoolProp bf(false);
+        TestProps::BoolProp bf(Er::False);
         Er::Property propf(bf);
         EXPECT_EQ(propf.id, TestProps::BoolProp::Id::value);
         EXPECT_EQ(propf.type(), Er::PropertyType::Bool);
-        EXPECT_FALSE(Er::get<bool>(propf.value));
+        EXPECT_EQ(Er::get<Er::Bool>(propf.value), Er::False);
 
-        Er::Property propt(TestProps::BoolProp(true));
+        Er::Property propt(TestProps::BoolProp(Er::True));
         EXPECT_EQ(propt.id, TestProps::BoolProp::Id::value);
         EXPECT_EQ(propt.type(), Er::PropertyType::Bool);
-        EXPECT_TRUE(Er::get<bool>(propt.value));
+        EXPECT_EQ(Er::get<Er::Bool>(propt.value), Er::True);
 
         auto info = Er::lookupProperty("Test", propt.id);
         ASSERT_TRUE(info);
         EXPECT_NE(propf, propt);
-        EXPECT_EQ(Er::Property(TestProps::BoolProp(true)), Er::Property(TestProps::BoolProp(true)));
-        EXPECT_NE(Er::Property(TestProps::BoolProp(true)), Er::Property(TestProps::Int32Prop(1)));
+        EXPECT_EQ(Er::Property(TestProps::BoolProp(Er::True)), Er::Property(TestProps::BoolProp(Er::True)));
+        EXPECT_NE(Er::Property(TestProps::BoolProp(Er::True)), Er::Property(TestProps::Int32Prop(1)));
         EXPECT_EQ(info->id(), TestProps::BoolProp::Id::value);
         EXPECT_STREQ(info->id_str(), bf.id_str());
         EXPECT_STREQ(info->name(), bf.name());
@@ -208,10 +208,10 @@ TEST(Er_Property, constructFromPropertyValue)
 TEST(Er_Property, constructFromRawValue)
 {
     {
-        Er::Property prop(TestProps::BoolProp::Id::value, true);
+        Er::Property prop(TestProps::BoolProp::Id::value, Er::True);
         EXPECT_EQ(prop.id, TestProps::BoolProp::Id::value);
         EXPECT_EQ(prop.type(), Er::PropertyType::Bool);
-        EXPECT_EQ(Er::get<bool>(prop.value), true);
+        EXPECT_EQ(Er::get<Er::Bool>(prop.value), Er::True);
     }
 
     {

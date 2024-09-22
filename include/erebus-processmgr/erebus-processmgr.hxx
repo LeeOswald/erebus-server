@@ -36,42 +36,69 @@ static const std::string_view KillProcess = "KillProcess";
 
 struct ProcessStateFormatter
 {
-    void operator()(uint32_t val, std::ostream& s)
+    std::string operator()(ConstPropertyRef v)
     {
-        s << char(val);
+        auto pp = std::get_if<const uint32_t*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
+        return std::string(char(**pp), 1);
     }
 };
 
 struct CpuTimeFormatter
 {
-    void operator()(double val, std::ostream& s) 
-    { 
-        s << std::fixed << std::setprecision(2) << val << std::dec;
+    std::string operator()(ConstPropertyRef v)
+    {
+        auto pp = std::get_if<const double*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+        
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(2) << pp << std::dec;
+        return ss.str();
     }
 };
 
 struct CpuLoadFormatter
 {
-    void operator()(double val, std::ostream& s) 
-    { 
+    std::string operator()(ConstPropertyRef v)
+    {
+        auto pp = std::get_if<const double*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+        
+        auto val = **pp;
+        std::ostringstream ss;
+
         val *= 100; 
         val = std::clamp(val, 0.0, 100.0);
-        s << std::fixed << std::setprecision(2) << static_cast<unsigned>(val) << std::dec;
+        ss << std::fixed << std::setprecision(2) << static_cast<unsigned>(val) << std::dec;
+        return ss.str();
     }
 };
 
 struct MemUnitFormatter
 {
-    void operator()(uint64_t val, std::ostream& s)
-    { 
+    std::string operator()(ConstPropertyRef v)
+    {
+        auto pp = std::get_if<const uint64_t*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+        
+        auto val = **pp;
+        std::ostringstream ss;
+ 
         if (val < 10ULL * 1024)
-            s << val << " B";
+            ss << val << " B";
         else if (val < 10ULL * 1024 * 1024)
-            s << (val / 1024) << " kB";
+            ss << (val / 1024) << " kB";
         else if (val < 10ULL * 1024 * 1024 * 1024)
-            s << (val / (1024 * 1024)) << " MB";
+            ss << (val / (1024 * 1024)) << " MB";
         else
-            s << (val / (1024 * 1024 * 1024)) << " GB";
+            ss << (val / (1024 * 1024 * 1024)) << " GB";
+
+        return ss.str();
     }
 };
 
@@ -81,9 +108,9 @@ namespace Props
 
 using RequiredFields = PropertyValue<uint64_t, ER_PROPID("__required"), "__Fields">;
 using Error = PropertyValue<std::string, ER_PROPID("__error"), "__Error">;
-using Valid = PropertyValue<bool, ER_PROPID("__valid"), "__Valid">;
-using IsNew = PropertyValue<bool, ER_PROPID("__new"), "__New">;
-using IsDeleted = PropertyValue<bool, ER_PROPID("__deleted"), "__Deleted">;
+using Valid = PropertyValue<Bool, ER_PROPID("__valid"), "__Valid">;
+using IsNew = PropertyValue<Bool, ER_PROPID("__new"), "__New">;
+using IsDeleted = PropertyValue<Bool, ER_PROPID("__deleted"), "__Deleted">;
 using Pid = PropertyValue<uint64_t, ER_PROPID("pid"), "PID">;
 using SignalName = PropertyValue<std::string, ER_PROPID("signal_name"), "Signal">;
 using PosixResult = PropertyValue<int32_t, ER_PROPID("posix_result"), "POSIX Result">;
@@ -168,7 +195,7 @@ using PropMask = Flags<PropIndices>;
 namespace ProcessPropsExt
 {
 
-using Env = PropertyValue<StringVector, ER_PROPID("env"), "Environment", VectorFormatter<PropertyFormatter<std::string>>>;
+using Env = PropertyValue<StringVector, ER_PROPID("env"), "Environment", PropertyFormatter<std::string>>;
 
 constexpr PropId IndexToProp[] =
 {
@@ -190,7 +217,7 @@ using PropMask = Flags<PropIndices>;
 namespace GlobalProps
 {
 
-using Global = PropertyValue<bool, ER_PROPID("__global"), "__Global">;
+using Global = PropertyValue<Bool, ER_PROPID("__global"), "__Global">;
 
 using ProcessCount = PropertyValue<uint64_t, ER_PROPID("process_count"), "Total Processes">;
 using RealTime = PropertyValue<double, ER_PROPID("real_time"), "Real Time", CpuTimeFormatter>;
