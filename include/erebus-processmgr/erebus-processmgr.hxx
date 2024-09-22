@@ -42,7 +42,8 @@ struct ProcessStateFormatter
         if (!pp || !*pp)
             return std::string("<null>");
 
-        return std::string(char(**pp), 1);
+        auto val = **pp;
+        return std::string(1, char(val));
     }
 };
 
@@ -54,8 +55,9 @@ struct CpuTimeFormatter
         if (!pp || !*pp)
             return std::string("<null>");
         
+        auto val = **pp;
         std::ostringstream ss;
-        ss << std::fixed << std::setprecision(2) << pp << std::dec;
+        ss << std::fixed << std::setprecision(2) << val;
         return ss.str();
     }
 };
@@ -73,7 +75,7 @@ struct CpuLoadFormatter
 
         val *= 100; 
         val = std::clamp(val, 0.0, 100.0);
-        ss << std::fixed << std::setprecision(2) << static_cast<unsigned>(val) << std::dec;
+        ss << std::fixed << std::setprecision(2) << static_cast<unsigned>(val);
         return ss.str();
     }
 };
@@ -92,11 +94,11 @@ struct MemUnitFormatter
         if (val < 10ULL * 1024)
             ss << val << " B";
         else if (val < 10ULL * 1024 * 1024)
-            ss << (val / 1024) << " kB";
+            ss << (val / 1024ULL) << " kB";
         else if (val < 10ULL * 1024 * 1024 * 1024)
-            ss << (val / (1024 * 1024)) << " MB";
+            ss << (val / (1024ULL * 1024)) << " MB";
         else
-            ss << (val / (1024 * 1024 * 1024)) << " GB";
+            ss << (val / (1024ULL * 1024 * 1024)) << " GB";
 
         return ss.str();
     }
