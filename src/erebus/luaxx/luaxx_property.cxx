@@ -36,14 +36,14 @@ bool getPropertyBool(const Er::Property& prop)
 {
     if (prop.type() != PropertyType::Bool) [[unlikely]]
         throw PropertyException(ER_HERE(), "get", prop.id, "Bool", Er::propertyTypeToString(prop.type()));
-    return get<bool>(prop.value);
+    return get<Bool>(prop.value) == True;
 }
 
 void setPropertyBool(Er::Property& prop, bool val)
 {
     if (prop.type() != PropertyType::Bool) [[unlikely]]
         throw PropertyException(ER_HERE(), "set", prop.id, "Bool", Er::propertyTypeToString(prop.type()));
-    prop.value = val;
+    prop.value = val ? True : False;
 }
 
 int32_t getPropertyInt32(const Er::Property& prop)
@@ -185,9 +185,7 @@ public:
         if (!m_pi)
             return std::string();
 
-        std::ostringstream ss;
-        m_pi->format(prop, ss);
-        return ss.str();
+        return m_pi->to_string(prop);
     }
 
 private:

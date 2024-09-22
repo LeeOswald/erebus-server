@@ -19,17 +19,11 @@ inline void dumpPropertyBag(std::string_view domain, const Er::PropertyBag& bag,
         auto propInfo = Er::lookupProperty(domain, prop.id).get();
         if (!propInfo)
         {
-            std::ostringstream ss;
-            prop.format(ss);
-
-            log->writef(Er::Log::Level::Warning, "0x%08x: %s", prop.id, ss.str().c_str());
+            log->writef(Er::Log::Level::Warning, "0x%08x: %s", prop.id, prop.to_string().c_str());
         }
         else
         {
-            std::ostringstream ss;
-            propInfo->format(prop, ss);
-
-            log->writef(Er::Log::Level::Info, "%s: %s", propInfo->name(), ss.str().c_str());
+            log->writef(Er::Log::Level::Info, "%s: %s", propInfo->name(), propInfo->to_string(prop).c_str());
         }
     });
 }

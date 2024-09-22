@@ -252,7 +252,7 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
         }
 
         Er::addProperty<Er::ProcessMgr::Props::Pid>(bag, stream->processes.removed[stream->next]->pid);
-        Er::addProperty<Er::ProcessMgr::Props::IsDeleted>(bag, true);
+        Er::addProperty<Er::ProcessMgr::Props::IsDeleted>(bag, Er::True);
 
         ++stream->next;
     }
@@ -273,7 +273,7 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
         });
 
         Er::addProperty<Er::ProcessMgr::Props::Pid>(bag, modified.process->pid);
-        Er::addProperty<Er::ProcessMgr::Props::Valid>(bag, true);
+        Er::addProperty<Er::ProcessMgr::Props::Valid>(bag, Er::True);
 
         ++stream->next;
     }
@@ -285,7 +285,7 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
 
         auto added = stream->processes.added[stream->next];
         if (added->isNew)
-            Er::addProperty<Er::ProcessMgr::Props::IsNew>(bag, true);
+            Er::addProperty<Er::ProcessMgr::Props::IsNew>(bag, Er::True);
 
         Er::enumerateProperties(added->properties, [&bag](const Er::Property& prop)
         {

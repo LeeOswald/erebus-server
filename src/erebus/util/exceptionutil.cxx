@@ -96,13 +96,11 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
             auto pi = lookupProperty(Er::ExceptionProps::Domain, prop.id);
             if (pi)
             {
-                out << pi->name() << ": ";
-                pi->format(prop, out);
+                out << pi->name() << ": " << pi->to_string(prop);
             }
             else
             {
-                out << "0x" << std::hex << ": ";
-                prop.format(out);
+                out << "0x" << std::hex << ": " << prop.to_string();
             }
         }
     }

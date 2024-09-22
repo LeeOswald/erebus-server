@@ -60,7 +60,16 @@ inline StreamT& operator<<(StreamT& stream, Result code)
 
 struct ResultFormatter
 {
-    void operator()(int32_t v, std::ostream& s) { s << static_cast<Result>(v); }
+    std::string operator()(ConstPropertyRef v) 
+    { 
+        auto pp = std::get_if<const int32_t*>(&v);
+        if (!pp || !*pp)
+            return std::string("<null>");
+
+        std::ostringstream ss;
+        ss << static_cast<Result>(**pp);
+        return ss.str(); 
+    }
 };
 
 
