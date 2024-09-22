@@ -290,3 +290,187 @@ TEST(Er_Property, constructFromProperty)
         EXPECT_STREQ(Er::get<std::string>(prop3.value).c_str(), "test string");
     }
 }
+
+TEST(Er_Property, formatting)
+{
+    // Bool
+    {
+        Er::Property prop1(TestProps::BoolProp{ Er::False });
+        Er::Property prop2(TestProps::BoolProp{ Er::True });
+        
+        auto info1 = Er::lookupProperty(TestProps::Domain, prop1.id);
+        ASSERT_TRUE(info1);
+        auto info2 = Er::lookupProperty(TestProps::Domain, prop2.id);
+        EXPECT_EQ(info2.get(), info1.get());
+        
+        EXPECT_STREQ(info1->to_string(prop1).c_str(), "False");
+        EXPECT_STREQ(prop1.to_string().c_str(), "False");
+        EXPECT_STREQ(info2->to_string(prop2).c_str(), "True");
+        EXPECT_STREQ(prop2.to_string().c_str(), "True");
+    }
+
+    // Int32
+    {
+        Er::Property prop(TestProps::Int32Prop{ -12 });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "-12");
+        EXPECT_STREQ(prop.to_string().c_str(), "-12");
+    }
+
+    // UInt32
+    {
+        Er::Property prop(TestProps::UInt32Prop{ 345 });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "345");
+        EXPECT_STREQ(prop.to_string().c_str(), "345");
+    }
+
+    // Int64
+    {
+        Er::Property prop(TestProps::Int64Prop{ -9223372036854775807LL });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "-9223372036854775807");
+        EXPECT_STREQ(prop.to_string().c_str(), "-9223372036854775807");
+    }
+
+    // UInt64
+    {
+        Er::Property prop(TestProps::Int64Prop{ 223372036854775807LL });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "223372036854775807");
+        EXPECT_STREQ(prop.to_string().c_str(), "223372036854775807");
+    }
+
+    // Double
+    {
+        Er::Property prop(TestProps::DoubleProp{ -123.789065 });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "-123.789");
+        EXPECT_STREQ(prop.to_string().c_str(), "-123.789");
+    }
+
+    // String
+    {
+        Er::Property prop(TestProps::StringProp{ "123.789065" });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "123.789065");
+        EXPECT_STREQ(prop.to_string().c_str(), "123.789065");
+    }
+
+    // Binary
+    {
+        Er::Property prop(TestProps::BinaryProp{ Er::Binary("abcdefgh") });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+        auto s = info->to_string(prop);
+        EXPECT_STREQ(info->to_string(prop).c_str(), "61 62 63 64 65 66 67 68");
+        EXPECT_STREQ(prop.to_string().c_str(), "61 62 63 64 65 66 67 68");
+    }
+
+    // empty vector
+    {
+        Er::Property prop(TestProps::BoolsProp{ std::vector<Er::Bool>{ } });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "[]");
+        EXPECT_STREQ(prop.to_string().c_str(), "[]");
+    }
+
+    // Bools
+    {
+        Er::Property prop(TestProps::BoolsProp{ std::vector<Er::Bool>{ Er::True, Er::False, Er::True } });
+        
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "[ True, False, True ]");
+        EXPECT_STREQ(prop.to_string().c_str(), "[ True, False, True ]");
+    }
+
+    // Int32s
+    {
+        Er::Property prop(TestProps::Int32sProp{ std::vector<int32_t>{ -1, 2, -3 } });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "[ -1, 2, -3 ]");
+        EXPECT_STREQ(prop.to_string().c_str(), "[ -1, 2, -3 ]");
+    }
+
+    // UInt32s
+    {
+        Er::Property prop(TestProps::UInt32sProp{ std::vector<uint32_t>{ 1, 2, 3 } });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "[ 1, 2, 3 ]");
+        EXPECT_STREQ(prop.to_string().c_str(), "[ 1, 2, 3 ]");
+    }
+
+    // Int64s
+    {
+        Er::Property prop(TestProps::Int64sProp{ std::vector<int64_t>{ -1, 2, -3 } });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "[ -1, 2, -3 ]");
+        EXPECT_STREQ(prop.to_string().c_str(), "[ -1, 2, -3 ]");
+    }
+
+    // UInt64s
+    {
+        Er::Property prop(TestProps::UInt64sProp{ std::vector<uint64_t>{ 1, 2, 3 } });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "[ 1, 2, 3 ]");
+        EXPECT_STREQ(prop.to_string().c_str(), "[ 1, 2, 3 ]");
+    }
+
+    // Doubles
+    {
+        Er::Property prop(TestProps::DoublesProp{ std::vector<double>{ -1.203034, 2.233223, -3.32333 } });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "[ -1.203, 2.233, -3.323 ]");
+        EXPECT_STREQ(prop.to_string().c_str(), "[ -1.203, 2.233, -3.323 ]");
+    }
+
+    // Strings
+    {
+        Er::Property prop(TestProps::StringsProp{ std::vector<std::string>{ "aaa", "bbb", "ccc" } });
+
+        auto info = Er::lookupProperty(TestProps::Domain, prop.id);
+        ASSERT_TRUE(info);
+
+        EXPECT_STREQ(info->to_string(prop).c_str(), "[ \"aaa\", \"bbb\", \"ccc\" ]");
+        EXPECT_STREQ(prop.to_string().c_str(), "[ \"aaa\", \"bbb\", \"ccc\" ]");
+    }
+}

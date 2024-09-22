@@ -26,7 +26,16 @@ using Int64Prop = Er::PropertyValue<int64_t, ER_PROPID("test_int64"), "Int64", E
 using UInt64Prop = Er::PropertyValue<uint64_t, ER_PROPID("test_uint64"), "UInt64", Er::PropertyFormatter<uint64_t>>;
 using DoubleProp = Er::PropertyValue<double, ER_PROPID("test_double"), "Double", Er::PropertyFormatter<double>>;
 using StringProp = Er::PropertyValue<std::string, ER_PROPID("test_string"), "String", Er::PropertyFormatter<std::string>>;
-using BinaryProp = Er::PropertyValue < Er::Binary, ER_PROPID("test_bytes"), "Binary", Er::NullPropertyFormatter> ;
+using BinaryProp = Er::PropertyValue < Er::Binary, ER_PROPID("test_binary"), "Binary", Er::PropertyFormatter<Er::Binary>>;
+
+using BoolsProp = Er::PropertyValue<Er::BoolVector, ER_PROPID("test_bools"), "Bools", Er::PropertyFormatter<Er::Bool>>;
+using Int32sProp = Er::PropertyValue<Er::Int32Vector, ER_PROPID("test_int32s"), "Int32s", Er::PropertyFormatter<int32_t>>;
+using UInt32sProp = Er::PropertyValue<Er::UInt32Vector, ER_PROPID("test_uint32s"), "UInt32s", Er::PropertyFormatter<uint32_t>>;
+using Int64sProp = Er::PropertyValue<Er::Int64Vector, ER_PROPID("test_int64s"), "Int64s", Er::PropertyFormatter<int64_t>>;
+using UInt64sProp = Er::PropertyValue<Er::UInt64Vector, ER_PROPID("test_uint64s"), "UInt64s", Er::PropertyFormatter<uint64_t>>;
+using DoublesProp = Er::PropertyValue<Er::DoubleVector, ER_PROPID("test_doubles"), "Doubles", Er::PropertyFormatter<double>>;
+using StringsProp = Er::PropertyValue<Er::StringVector, ER_PROPID("test_strings"), "Strings", Er::PropertyFormatter<std::string>>;
+using BinariesProp = Er::PropertyValue < Er::BinaryVector, ER_PROPID("test_binaries"), "Binaries", Er::PropertyFormatter<Er::Binary>>;
 
 
 inline void registerAll(Er::Log::ILog* log)
@@ -39,6 +48,15 @@ inline void registerAll(Er::Log::ILog* log)
     Er::registerProperty(Domain, DoubleProp::make_info(), log);
     Er::registerProperty(Domain, StringProp::make_info(), log);
     Er::registerProperty(Domain, BinaryProp::make_info(), log);
+
+    Er::registerProperty(Domain, BoolsProp::make_info(), log);
+    Er::registerProperty(Domain, Int32sProp::make_info(), log);
+    Er::registerProperty(Domain, UInt32sProp::make_info(), log);
+    Er::registerProperty(Domain, Int64sProp::make_info(), log);
+    Er::registerProperty(Domain, UInt64sProp::make_info(), log);
+    Er::registerProperty(Domain, DoublesProp::make_info(), log);
+    Er::registerProperty(Domain, StringsProp::make_info(), log);
+    Er::registerProperty(Domain, BinariesProp::make_info(), log);
 }
 
 inline void unregisterAll(Er::Log::ILog* log)
@@ -51,6 +69,15 @@ inline void unregisterAll(Er::Log::ILog* log)
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, DoubleProp::Id::value), log);
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, StringProp::Id::value), log);
     Er::unregisterProperty(Domain, Er::lookupProperty(Domain, BinaryProp::Id::value), log);
+
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, BoolsProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, Int32sProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, UInt32sProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, Int64sProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, UInt64sProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, DoublesProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, StringsProp::Id::value), log);
+    Er::unregisterProperty(Domain, Er::lookupProperty(Domain, BinariesProp::Id::value), log);
 }
 
 inline void registerLuaProps(Er::LuaState& state)
