@@ -33,7 +33,7 @@ TEST(Er_Property, constructFromPropertyValue)
         EXPECT_EQ(propf.type(), Er::PropertyType::Bool);
         EXPECT_EQ(Er::get<Er::Bool>(propf.value), Er::False);
 
-        Er::Property propt(TestProps::BoolProp(Er::True));
+        Er::Property propt{ TestProps::BoolProp(Er::True) };
         EXPECT_EQ(propt.id, TestProps::BoolProp::Id::value);
         EXPECT_EQ(propt.type(), Er::PropertyType::Bool);
         EXPECT_EQ(Er::get<Er::Bool>(propt.value), Er::True);
