@@ -244,7 +244,7 @@ EREBUSCLT_EXPORT void finalize()
     }
 }
 
-EREBUSCLT_EXPORT std::shared_ptr<void> createChannel(const ChannelParams& params)
+EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params)
 {
     bool local = params.endpoint.starts_with("unix:");
 
@@ -274,7 +274,7 @@ EREBUSCLT_EXPORT std::shared_ptr<void> createChannel(const ChannelParams& params
     }
 }
 
-EREBUSCLT_EXPORT std::shared_ptr<IClient> createClient(std::shared_ptr<void> channel, Log::ILog* log)
+EREBUSCLT_EXPORT IClient::Ptr createClient(ChannelPtr channel, Log::ILog* log)
 {
     return std::make_shared<ClientImpl>(std::static_pointer_cast<grpc::Channel>(channel), log);
 }
