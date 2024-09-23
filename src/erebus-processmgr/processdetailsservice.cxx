@@ -148,7 +148,7 @@ Er::PropertyBag ProcessDetailsService::processPropsExt(const Er::PropertyBag& ar
     Er::PropertyBag result;
 
     // defaut is 'include everything'
-    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::Props::RequiredFields>(args, 0xffffffffffffffff);
+    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::ProcessPropsExt::RequiredFields>(args, 0xffffffffffffffff);
     auto required = Er::ProcessMgr::ProcessPropsExt::PropMask(mask, Er::ProcessMgr::ProcessPropsExt::PropMask::FromBits);
 
     auto pid = Er::getPropertyValue<Er::ProcessMgr::Props::Pid>(args);

@@ -108,7 +108,6 @@ struct MemUnitFormatter
 namespace Props
 {
 
-using RequiredFields = PropertyValue<uint64_t, ER_PROPID("__required"), "__Fields">;
 using Error = PropertyValue<std::string, ER_PROPID("__error"), "__Error">;
 using Valid = PropertyValue<Bool, ER_PROPID("__valid"), "__Valid">;
 using IsNew = PropertyValue<Bool, ER_PROPID("__new"), "__New">;
@@ -125,6 +124,7 @@ using ErrorText = PropertyValue<std::string, ER_PROPID("error_text"), "Error Mes
 namespace ProcessProps
 {
 
+using RequiredFields = PropertyValue<uint64_t, ER_PROPID("__processprops_required"), "__Fields">;
 using PPid = PropertyValue<uint64_t, ER_PROPID("ppid"), "Parent PID">;
 using PGrp = PropertyValue<uint64_t, ER_PROPID("pgrp"), "Process Group ID">;
 using Tpgid = PropertyValue<uint64_t, ER_PROPID("tpgid"), "Process Group ID of the Terminal">;
@@ -197,6 +197,8 @@ using PropMask = Flags<PropIndices>;
 namespace ProcessPropsExt
 {
 
+
+using RequiredFields = PropertyValue<uint64_t, ER_PROPID("__processpropsext_required"), "__Fields">;
 using Env = PropertyValue<StringVector, ER_PROPID("env"), "Environment", PropertyFormatter<std::string>>;
 
 constexpr PropId IndexToProp[] =
@@ -219,6 +221,7 @@ using PropMask = Flags<PropIndices>;
 namespace GlobalProps
 {
 
+using RequiredFields = PropertyValue<uint64_t, ER_PROPID("__global_required"), "__Fields">;
 using Global = PropertyValue<Bool, ER_PROPID("__global"), "__Global">;
 
 using ProcessCount = PropertyValue<uint64_t, ER_PROPID("process_count"), "Total Processes">;
@@ -299,7 +302,6 @@ namespace Private
 
 inline void registerAll(Er::Log::ILog* log)
 {
-    registerProperty(Domain, Props::RequiredFields::make_info(), log);
     registerProperty(Domain, Props::Error::make_info(), log);
     registerProperty(Domain, Props::Valid::make_info(), log);
     registerProperty(Domain, Props::IsNew::make_info(), log);
@@ -309,6 +311,7 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(Domain, Props::PosixResult::make_info(), log);
     registerProperty(Domain, Props::ErrorText::make_info(), log);
     
+    registerProperty(Domain, ProcessProps::RequiredFields::make_info(), log);
     registerProperty(Domain, ProcessProps::PPid::make_info(), log);
     registerProperty(Domain, ProcessProps::PGrp::make_info(), log);
     registerProperty(Domain, ProcessProps::Tpgid::make_info(), log);
@@ -326,8 +329,10 @@ inline void registerAll(Er::Log::ILog* log)
     registerProperty(Domain, ProcessProps::CpuUsage::make_info(), log);
     registerProperty(Domain, ProcessProps::Tty::make_info(), log);
 
+    registerProperty(Domain, ProcessPropsExt::RequiredFields::make_info(), log);
     registerProperty(Domain, ProcessPropsExt::Env::make_info(), log);
 
+    registerProperty(Domain, GlobalProps::RequiredFields::make_info(), log);
     registerProperty(Domain, GlobalProps::Global::make_info(), log);
     registerProperty(Domain, GlobalProps::ProcessCount::make_info(), log);
     registerProperty(Domain, GlobalProps::RealTime::make_info(), log);
@@ -352,7 +357,6 @@ inline void registerAll(Er::Log::ILog* log)
 
 inline void unregisterAll(Er::Log::ILog* log)
 {
-    unregisterProperty(Domain, lookupProperty(Domain, Props::RequiredFields::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, Props::Error::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, Props::Valid::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, Props::IsNew::Id::value), log);
@@ -362,6 +366,7 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(Domain, lookupProperty(Domain, Props::PosixResult::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, Props::ErrorText::Id::value), log);
     
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::RequiredFields::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::PPid::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::PGrp::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Tpgid::Id::value), log);
@@ -379,8 +384,10 @@ inline void unregisterAll(Er::Log::ILog* log)
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::CpuUsage::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessProps::Tty::Id::value), log);
 
+    unregisterProperty(Domain, lookupProperty(Domain, ProcessPropsExt::RequiredFields::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, ProcessPropsExt::Env::Id::value), log);
 
+    unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::RequiredFields::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::Global::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::ProcessCount::Id::value), log);
     unregisterProperty(Domain, lookupProperty(Domain, GlobalProps::RealTime::Id::value), log);
