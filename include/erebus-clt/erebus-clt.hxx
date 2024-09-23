@@ -26,6 +26,7 @@ namespace Client
 
 struct IClient
 {
+    using Ptr = std::shared_ptr<IClient>;
     using SessionId = uint32_t;
 
     virtual SessionId beginSession(std::string_view request) = 0;
@@ -95,10 +96,12 @@ struct ChannelParams
     }
 };
 
+using ChannelPtr = std::shared_ptr<void>;
 
-EREBUSCLT_EXPORT std::shared_ptr<void> createChannel(const ChannelParams& params);
 
-EREBUSCLT_EXPORT std::shared_ptr<IClient> createClient(std::shared_ptr<void> channel, Log::ILog* log);
+EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params);
+
+EREBUSCLT_EXPORT IClient::Ptr createClient(ChannelPtr channel, Log::ILog* log);
 
 
 } // namespace Client {}
