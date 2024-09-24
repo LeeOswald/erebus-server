@@ -276,7 +276,7 @@ EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params)
 
 EREBUSCLT_EXPORT IClient::Ptr createClient(ChannelPtr channel, Log::ILog* log)
 {
-    return std::make_shared<ClientImpl>(std::static_pointer_cast<grpc::Channel>(channel), log);
+    return std::make_unique<ClientImpl>(std::static_pointer_cast<grpc::Channel>(channel), log);
 }
 
 } // namespace Client {}

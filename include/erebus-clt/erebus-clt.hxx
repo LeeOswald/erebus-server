@@ -26,7 +26,7 @@ namespace Client
 
 struct IClient
 {
-    using Ptr = std::shared_ptr<IClient>;
+    using Ptr = std::unique_ptr<IClient>;
     using SessionId = uint32_t;
 
     virtual SessionId beginSession(std::string_view request) = 0;
