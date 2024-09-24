@@ -75,7 +75,7 @@ struct CpuLoadFormatter
 
         val *= 100; 
         val = std::clamp(val, 0.0, 100.0);
-        ss << std::fixed << std::setprecision(2) << static_cast<unsigned>(val);
+        ss << static_cast<unsigned>(val);
         return ss.str();
     }
 };
