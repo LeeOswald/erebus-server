@@ -371,9 +371,9 @@ private:
 } // namespace {}
 
 
-std::shared_ptr<IServer> EREBUSSRV_EXPORT create(const Params* params)
+IServer::Ptr EREBUSSRV_EXPORT create(const Params* params)
 {
-    auto result = std::make_shared<ErebusService>(params);
+    auto result = std::make_unique<ErebusService>(params);
     result->start();
     return result;
 }

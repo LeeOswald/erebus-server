@@ -238,7 +238,7 @@ int main(int argc, char* argv[], char* env[])
         Er::Server::LibScope ss(srvLibParams);
 
         // create endpoints
-        std::vector<std::shared_ptr<Er::Server::IServer>> servers;
+        std::vector<Er::Server::IServer::Ptr> servers;
         servers.reserve(cfg.endpoints.size());
         for (auto& ep: cfg.endpoints)
         {
@@ -248,7 +248,7 @@ int main(int argc, char* argv[], char* env[])
             {
                 Er::Server::Params params(ep.endpoint, g_log, ep.ssl, root, certificate, key);
                 auto server = Er::Server::create(&params);
-                servers.push_back(server);
+                servers.push_back(std::move(server));
             });
         }
 
@@ -256,7 +256,7 @@ int main(int argc, char* argv[], char* env[])
             ErThrow("Could not create any server instances");
 
         Er::Private::CoreService coreService(g_log);
-        for (auto srv : servers)
+        for (auto& srv : servers)
         {
             coreService.registerService(srv->serviceContainer());
         }
@@ -296,7 +296,7 @@ int main(int argc, char* argv[], char* env[])
         // cleanup
         logger->write(Er::Log::Level::Info, "Stopping server instances...");
         
-        for (auto srv : servers)
+        for (auto& srv : servers)
         {
             coreService.unregisterService(srv->serviceContainer());
         }

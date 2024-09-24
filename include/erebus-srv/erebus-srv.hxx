@@ -117,12 +117,13 @@ public:
 
 struct IServer
 {
-    virtual ~IServer() {}
+    using Ptr = std::unique_ptr<IServer>;
 
+    virtual ~IServer() {}
     virtual IServiceContainer* serviceContainer() = 0;
 };
 
-std::shared_ptr<IServer> EREBUSSRV_EXPORT create(const Params* params);
+IServer::Ptr EREBUSSRV_EXPORT create(const Params* params);
 
 
 } // namespace Server {}
