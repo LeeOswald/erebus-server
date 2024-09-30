@@ -27,6 +27,7 @@ namespace Requests
 {
 
 static const std::string_view ListProcessesDiff = "ListProcessesDiff";
+static const std::string_view ProcessProps = "ProcessProps";
 static const std::string_view ProcessPropsExt = "ProcessPropsExt";
 static const std::string_view GlobalProps = "GlobalProps";
 static const std::string_view KillProcess = "KillProcess";
