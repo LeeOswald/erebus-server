@@ -30,6 +30,7 @@ public:
 
 private:
     Er::PropertyBag killProcess(const Er::PropertyBag& args); 
+    Er::PropertyBag processProps(const Er::PropertyBag& args); 
     Er::PropertyBag processPropsExt(const Er::PropertyBag& args); 
 
     Er::Log::ILog* const m_log;

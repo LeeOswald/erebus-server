@@ -1,6 +1,7 @@
 #include "processdetailsservice.hxx"
 
 #include <erebus/exception.hxx>
+#include <erebus/system/user.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus/util/posixerror.hxx>
 
@@ -65,6 +66,7 @@ ProcessDetailsService::ProcessDetailsService(Er::Log::ILog* log)
 void ProcessDetailsService::registerService(Er::Server::IServiceContainer* container)
 {
     container->registerService(Er::ProcessMgr::Requests::KillProcess, this);
+    container->registerService(Er::ProcessMgr::Requests::ProcessProps, this);
     container->registerService(Er::ProcessMgr::Requests::ProcessPropsExt, this);
 }
 
@@ -86,6 +88,8 @@ Er::PropertyBag ProcessDetailsService::request(std::string_view request, const E
 {
     if (request == Er::ProcessMgr::Requests::KillProcess)
         return killProcess(args);
+    else if (request == Er::ProcessMgr::Requests::ProcessProps)
+        return processProps(args);
     else if (request == Er::ProcessMgr::Requests::ProcessPropsExt)
         return processPropsExt(args);
 
@@ -155,6 +159,8 @@ Er::PropertyBag ProcessDetailsService::processPropsExt(const Er::PropertyBag& ar
     if (!pid)
         ErThrow("Process ID expected");
 
+    Er::addProperty<Er::ProcessMgr::Props::Pid>(result, *pid);
+
     if (required[Er::ProcessMgr::ProcessPropsExt::PropIndices::Env])
     {
         auto env = m_procFs.readEnv(*pid);
@@ -164,5 +170,92 @@ Er::PropertyBag ProcessDetailsService::processPropsExt(const Er::PropertyBag& ar
     return result;
 }
 
+Er::PropertyBag ProcessDetailsService::processProps(const Er::PropertyBag& args)
+{
+    Er::PropertyBag result;
+
+    // defaut is 'include everything'
+    auto mask = Er::getPropertyValueOr<Er::ProcessMgr::ProcessProps::RequiredFields>(args, 0xffffffffffffffff);
+    auto required = Er::ProcessMgr::ProcessProps::PropMask(mask, Er::ProcessMgr::ProcessProps::PropMask::FromBits);
+
+    auto pid = Er::getPropertyValue<Er::ProcessMgr::Props::Pid>(args);
+    if (!pid)
+        ErThrow("Process ID expected");
+
+    auto stat = m_procFs.readStat(*pid);
+    ErAssert(stat.pid != InvalidPid); // PID is always valid
+
+    Er::addProperty<Er::ProcessMgr::Props::Pid>(result, *pid);
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::PPid])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::PPid>(result, stat.ppid);
+    
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::PGrp])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::PGrp>(result, stat.pgrp);
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::Tpgid])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::Tpgid>(result, stat.tpgid);
+    
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::Session])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::Session>(result, stat.session);
+    
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::Ruid])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::Ruid>(result, stat.ruid);
+    
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::StartTime])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::StartTime>(result, stat.startTime);
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::Tty])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::Tty>(result, stat.tty_nr);
+    
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::State])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::State>(result, Er::ProcessMgr::ProcessProps::State::ValueType(stat.state));
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::Comm])
+    {
+        auto comm = m_procFs.readComm(*pid);
+        if (!comm.empty())
+        {
+            Er::addProperty<Er::ProcessMgr::ProcessProps::Comm>(result, std::move(comm));
+        }
+    }
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::CmdLine])
+    {
+        auto cmdLine = m_procFs.readCmdLine(*pid);
+        if (!cmdLine.empty())
+            Er::addProperty<Er::ProcessMgr::ProcessProps::CmdLine>(result, std::move(cmdLine));
+    }
+
+    if (stat.ppid != KThreadDPid)
+    {
+        if (required[Er::ProcessMgr::ProcessProps::PropIndices::Exe])
+        {
+            auto exe = m_procFs.readExePath(*pid);
+            if (!exe.empty())
+            {
+                Er::addProperty<Er::ProcessMgr::ProcessProps::Exe>(result, std::move(exe));
+            }
+        }
+    }
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::User])
+    {
+        auto user = Er::System::User::lookup(stat.ruid);
+        if (user)
+            Er::addProperty<Er::ProcessMgr::ProcessProps::User>(result, std::move(user->name));
+    }
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::ThreadCount])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::ThreadCount>(result, stat.num_threads);
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::UTime])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::UTime>(result, stat.uTime);
+
+    if (required[Er::ProcessMgr::ProcessProps::PropIndices::STime])
+        Er::addProperty<Er::ProcessMgr::ProcessProps::STime>(result, stat.sTime);
+
+    return result;
+}
 
 } // namespace Erp::ProcessMgr {}
