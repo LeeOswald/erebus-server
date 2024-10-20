@@ -190,8 +190,8 @@ template <typename ServiceTypeT, typename RequestTypeT, typename ResponseTypeT>
 struct UnaryRpcHandlers
     : public RpcHandlers<ServiceTypeT, RequestTypeT, ResponseTypeT>
 {
-    using GRPCResponder = grpc::ServerAsyncResponseWriter<ResponseTypeT>;
-    using RequestRpc = std::function<void(ServiceTypeT*, grpc::ServerContext*, RequestTypeT*, GRPCResponder*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*)>;
+    using ResponseWriter = grpc::ServerAsyncResponseWriter<ResponseTypeT>;
+    using RequestRpc = std::function<void(ServiceTypeT*, grpc::ServerContext*, RequestTypeT*, ResponseWriter*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*)>;
 
     // The actual queuing function on the generated service. This is called when an instance of rpc job is created. 
     RequestRpc requestRpc;
@@ -202,8 +202,8 @@ template<typename ServiceTypeT, typename RequestTypeT, typename ResponseTypeT>
 struct ServerStreamingRpcHandlers 
     : public RpcHandlers<ServiceTypeT, RequestTypeT, ResponseTypeT>
 {
-    using GRPCResponder = grpc::ServerAsyncWriter<ResponseTypeT>;
-    using RequestRpc = std::function<void(ServiceTypeT*, grpc::ServerContext*, RequestTypeT*, GRPCResponder*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*)>;
+    using ResponseWriter = grpc::ServerAsyncWriter<ResponseTypeT>;
+    using RequestRpc = std::function<void(ServiceTypeT*, grpc::ServerContext*, RequestTypeT*, ResponseWriter*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*)>;
 
     // The actual queuing function on the generated service. This is called when an instance of rpc job is created. 
     RequestRpc requestRpc;
@@ -222,7 +222,7 @@ public:
     UnaryRpc(ServiceTypeT* service, grpc::ServerCompletionQueue* cq, ThisRpcTypeJobHandlers jobHandlers)
         : m_service(service)
         , m_cq(cq)
-        , m_responder(&m_serverContext)
+        , m_responseWriter(&m_serverContext)
         , m_handlers(jobHandlers)
     {
         // create TagProcessors that we'll use to interact with gRPC CompletionQueue
@@ -235,7 +235,7 @@ public:
 
         // finally, issue the async request needed by gRPC to start handling this rpc.
         asyncOpStarted(RpcBase::AsyncOpType::RequestQueued);
-        m_handlers.requestRpc(m_service, &m_serverContext, &m_request, &m_responder, m_cq, m_cq, &m_onRead);
+        m_handlers.requestRpc(m_service, &m_serverContext, &m_request, &m_responseWriter, m_cq, m_cq, &m_onRead);
     }
 
 private:
@@ -243,14 +243,12 @@ private:
     {
         auto response = static_cast<const ResponseTypeT*>(responseMsg);
 
-        ErAssert(response);// If no response is available, use RpcBase::finishWithError.
-        if (!response)
-            return false;
+        ErAssert(response); // If no response is available, use RpcBase::finishWithError.
 
         m_response = *response;
 
         asyncOpStarted(RpcBase::AsyncOpType::Finish);
-        m_responder.Finish(m_response, grpc::Status::OK, &m_onFinish);
+        m_responseWriter.Finish(m_response, grpc::Status::OK, &m_onFinish);
 
         return true;
     }
@@ -258,7 +256,7 @@ private:
     bool finishWithErrorImpl(const grpc::Status& error) override
     {
         asyncOpStarted(RpcBase::AsyncOpType::Finish);
-        m_responder.FinishWithError(error, &m_onFinish);
+        m_responseWriter.FinishWithError(error, &m_onFinish);
 
         return true;
     }
@@ -294,7 +292,7 @@ private:
 
     ServiceTypeT* m_service;
     grpc::ServerCompletionQueue* m_cq;
-    typename ThisRpcTypeJobHandlers::GRPCResponder m_responder;
+    typename ThisRpcTypeJobHandlers::ResponseWriter m_responseWriter;
 
     RequestTypeT m_request;
     ResponseTypeT m_response;
@@ -318,7 +316,7 @@ public:
     ServerStreamingRpc(ServiceTypeT* service, grpc::ServerCompletionQueue* cq, ThisRpcTypeJobHandlers jobHandlers)
         : m_service(service)
         , m_cq(cq)
-        , m_responder(&m_serverContext)
+        , m_responseWriter(&m_serverContext)
         , m_handlers(jobHandlers)
         , m_serverStreamingDone(false)
     {
@@ -333,7 +331,7 @@ public:
 
         // finally, issue the async request needed by gRPC to start handling this rpc.
         asyncOpStarted(RpcBase::AsyncOpType::RequestQueued);
-        m_handlers.requestRpc(m_service, &m_serverContext, &m_request, &m_responder, m_cq, m_cq, &m_onRead);
+        m_handlers.requestRpc(m_service, &m_serverContext, &m_request, &m_responseWriter, m_cq, m_cq, &m_onRead);
     }
 
 private:
@@ -369,7 +367,7 @@ private:
     bool finishWithErrorImpl(const grpc::Status& error) override
     {
         asyncOpStarted(RpcBase::AsyncOpType::Finish);
-        m_responder.Finish(error, &m_onFinish);
+        m_responseWriter.Finish(error, &m_onFinish);
 
         return true;
     }
@@ -377,13 +375,13 @@ private:
     void doSendResponse()
     {
         asyncOpStarted(RpcBase::AsyncOpType::Write);
-        m_responder.Write(m_responseQueue.front(), &m_onWrite);
+        m_responseWriter.Write(m_responseQueue.front(), &m_onWrite);
     }
 
     void doFinish()
     {
         asyncOpStarted(RpcBase::AsyncOpType::Finish);
-        m_responder.Finish(grpc::Status::OK, &m_onFinish);
+        m_responseWriter.Finish(grpc::Status::OK, &m_onFinish);
     }
 
     void onRead(bool ok)
@@ -412,8 +410,8 @@ private:
                 {
                     doSendResponse();
                 }
-                else if (m_serverStreamingDone) // Previous write completed and we did not have any pending write. If the application has finished streaming responses, finish the rpc processing.
-                {
+                else if (m_serverStreamingDone) // Previous write completed and we did not have any pending write. 
+                {                               // If the application has finished streaming responses, finish the rpc processing.
                     doFinish();
                 }
             }
@@ -432,7 +430,7 @@ private:
 
     ServiceTypeT* m_service;
     grpc::ServerCompletionQueue* m_cq;
-    typename ThisRpcTypeJobHandlers::GRPCResponder m_responder;
+    typename ThisRpcTypeJobHandlers::ResponseWriter m_responseWriter;
 
     RequestTypeT m_request;
 
