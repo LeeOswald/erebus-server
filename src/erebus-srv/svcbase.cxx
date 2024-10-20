@@ -59,13 +59,10 @@ void ServiceBase::start()
         builder.AddListeningPort(m_params.endpoint, grpc::InsecureServerCredentials());
     }
 
-    // register "service" as the instance through which we'll communicate with
-    // clients. In this case it corresponds to an *synchronous* service
     builder.RegisterService(service());
     m_queue = builder.AddCompletionQueue();
 
-#if !ER_DEBUG
-    if (!m_local)
+    if (!m_local && !m_params.noKeepAlive)
     {
         builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 1 * 60 * 1000);
         builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 20 * 1000);
@@ -73,7 +70,6 @@ void ServiceBase::start()
         builder.AddChannelArgument(GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, 10 * 1000);
         builder.AddChannelArgument(GRPC_ARG_HTTP2_MAX_PING_STRIKES, 5);
     }
-#endif
 
     // finally assemble the server
     auto server = builder.BuildAndStart();
@@ -82,15 +78,15 @@ void ServiceBase::start()
 
     m_server.swap(server);
 
-    m_receiverWorker.reset(new std::thread([this]() { handleRpcs(); }));
+    m_receiverWorker.reset(new std::thread([this]() { receiveRpcs(); }));
     m_processorWorker.reset(new std::thread([this]() { processRpcs(); }));
 }
 
-void ServiceBase::handleRpcs()
+void ServiceBase::receiveRpcs()
 {
-    Er::System::CurrentThread::setName("RPCHandler");
+    Er::System::CurrentThread::setName("RPCReceiver");
 
-    Er::Log::Debug(m_params.log) << "RPC handler thread started";
+    Er::Log::Debug(m_params.log) << "RPC receiver thread started";
 
     createRpcs();
 
@@ -104,12 +100,12 @@ void ServiceBase::handleRpcs()
         // tells us whether there is any kind of event or cq_ is shutting down.
         if (!m_queue->Next((void**)&tagInfo.tagProcessor, &tagInfo.ok))
         {
-            if (!m_stop)
-            {
-                m_params.log->write(Er::Log::Level::Warning, "No more tags in completion queue");
-                break;
-            }
+            m_params.log->write(Er::Log::Level::Debug, "No more tags in completion queue");
+            break;
         }
+
+        if (m_stop)
+            break;
 
         {
             std::lock_guard l(m_mutex);
@@ -119,7 +115,7 @@ void ServiceBase::handleRpcs()
         m_incoming.notify_one();
     }
 
-    Er::Log::Debug(m_params.log) << "RPC handler thread exited";
+    Er::Log::Debug(m_params.log) << "RPC receiver thread exited";
 }
 
 void ServiceBase::processRpcs()
@@ -210,10 +206,14 @@ Er::PropertyBag ServiceBase::unmarshalArgs(const erebus::ServiceRequest* request
     Er::PropertyBag bag;
 
     int count = request->args_size();
-    for (int i = 0; i < count; ++i)
+    if (count > 0)
     {
-        auto& arg = request->args(i);
-        Er::addProperty(bag, Er::Protocol::getProperty(arg));
+        Er::reservePropertyBag(bag, count);
+        for (int i = 0; i < count; ++i)
+        {
+            auto& arg = request->args(i);
+            Er::addProperty(bag, Er::Protocol::getProperty(arg));
+        }
     }
 
     return bag;

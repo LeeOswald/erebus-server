@@ -22,10 +22,10 @@ Property getProperty(const erebus::Property& source);
 namespace Props
 {
 
-constexpr const std::string_view Domain = "GenericRequests";
+constexpr const std::string_view Domain = "server";
 
-using RemoteSystemDesc = PropertyValue<std::string, ER_PROPID("erebus_remote_sys"), "Remote system">;
-using ServerVersionString = PropertyValue<std::string, ER_PROPID("erebus_server_version"), "Erebus server version">;
+using RemoteSystemDesc = PropertyValue<std::string, ER_PROPID("system_description"), "Remote system">;
+using ServerVersionString = PropertyValue<std::string, ER_PROPID("server_version"), "Server version">;
 
 namespace Private
 {
@@ -49,7 +49,7 @@ inline void unregisterAll(Er::Log::ILog* log)
 namespace GenericRequests
 {
 
-static const std::string_view GetVersion = "GetVersion";
+static const std::string_view GetVersion = "get_version";
 
 } // namespace GenericRequests {}
 

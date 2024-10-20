@@ -33,7 +33,7 @@ protected:
     virtual grpc::Service* service() = 0;
     virtual void createRpcs() = 0;
     
-    virtual void handleRpcs();
+    virtual void receiveRpcs();
     virtual void processRpcs();
 
     static void genericDone(Erp::Server::Rpc::RpcBase& rpc, bool rpcCancelled);

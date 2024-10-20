@@ -60,6 +60,7 @@ struct Params
     std::string rootCertificate;
     std::string certificate;
     std::string key;
+    bool noKeepAlive = true;
 
     Params() noexcept = default;
 
