@@ -6,9 +6,9 @@
 #include <erebus/erebus.hxx>
 #include <erebus/knownprops.hxx>
 #include <erebus/luaxx.hxx>
-#include <erebus/syncstream.hxx>
 
 #include <iostream>
+#include <syncstream>
 
 extern Er::Log::ILog* g_log;
 

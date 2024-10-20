@@ -31,7 +31,7 @@ EREBUS_EXPORT void printFailedAssertion(Location&& location, const char* express
         if (!bool(expr)) \
         { \
             ::Er::printFailedAssertion( \
-                ::Er::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace(0, static_cast<std::size_t>(-1))), \
+                ::Er::Location(std::source_location::current(), ::Er::StackTrace(0, static_cast<std::size_t>(-1))), \
                 #expr \
             ); \
             if (::Er::isDebuggerPresent()) \

@@ -1,10 +1,9 @@
 #include "log.hxx"
 
-#include <erebus/syncstream.hxx>
 #include <erebus/util/utf16.hxx>
 
 #include <iostream>
-
+#include <syncstream>
 
 namespace ErCtl
 {
@@ -55,9 +54,9 @@ void Log::delegate(std::shared_ptr<Er::Log::Record> r)
 #endif
 
     if (r->level < Er::Log::Level::Error)
-        Er::osyncstream(std::cout) << message;
+        std::osyncstream(std::cout) << message;
     else
-        Er::osyncstream(std::cerr) << message;
+        std::osyncstream(std::cerr) << message;
 }
 
 } // namespace ErCtl {}
