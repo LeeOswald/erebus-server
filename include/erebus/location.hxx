@@ -34,6 +34,6 @@ struct Location final
 } // namespace Er {}
 
 
-#define ER_HERE() ::Er::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace(0, static_cast<std::size_t>(-1)))
-#define ER_HERE2(skip, count) ::Er::Location(::Er::SourceLocationImpl::current(), ::Er::StackTrace(skip, count)))
-#define ER_SOURCE() ::Er::Location(::Er::SourceLocationImpl::current())
+#define ER_HERE() ::Er::Location(std::source_location::current(), ::Er::StackTrace(0, static_cast<std::size_t>(-1)))
+#define ER_HERE2(skip, count) ::Er::Location(std::source_location::current(), ::Er::StackTrace(skip, count)))
+#define ER_SOURCE() ::Er::Location(std::source_location::current())

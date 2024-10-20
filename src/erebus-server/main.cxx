@@ -3,7 +3,6 @@
 
 #include <erebus/condition.hxx>
 #include <erebus/knownprops.hxx>
-#include <erebus/syncstream.hxx>
 #include <erebus/system/process.hxx>
 #include <erebus/system/thread.hxx>
 #include <erebus/system/user.hxx>
@@ -26,6 +25,7 @@
 #include <filesystem>
 #include <future>
 #include <iostream>
+#include <syncstream>
 #include <vector>
 
 
@@ -51,7 +51,7 @@ void terminateHandler()
         }
         else
         {
-            Er::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str() << std::endl; // force flush
+            std::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str() << std::endl; // force flush
         }
     }
     catch (...)

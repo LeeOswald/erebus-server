@@ -1,6 +1,5 @@
 #include <erebus/debug.hxx>
 #include <erebus/errno.hxx>
-#include <erebus/syncstream.hxx>
 
 #if ER_WINDOWS
 #include <erebus/util/utf16.hxx>
@@ -8,7 +7,7 @@
 
 #include <iostream>
 #include <fstream>
-
+#include <syncstream>
 
 namespace Er
 {
@@ -63,7 +62,7 @@ static void trace_impl(const std::string& text)
 
 static void trace_impl(const std::string& text)
 {
-    Er::osyncstream(std::cout) << text << "\n";
+    std::osyncstream(std::cout) << text << "\n";
 }
 
 #endif

@@ -2,7 +2,6 @@
 
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
-#include <erebus/syncstream.hxx>
 #include <erebus/system/time.hxx>
 #include <erebus/util/format.hxx>
 #include <erebus/util/utf16.hxx>
@@ -21,7 +20,7 @@
 
 
 #include <iostream>
-
+#include <syncstream>
 
 namespace Er
 {
@@ -128,9 +127,9 @@ void Logger::delegate(std::shared_ptr<Er::Log::Record> r)
 #if ER_DEBUG
     // for debug purposes use std::cout
     if (r->level < Er::Log::Level::Warning)
-        Er::osyncstream(std::cout) << message;
+        std::osyncstream(std::cout) << message;
     else
-        Er::osyncstream(std::cerr) << message;
+        std::osyncstream(std::cerr) << message;
 #endif
 
 #if ER_POSIX

@@ -2,25 +2,7 @@
 
 #include <erebus/erebus.hxx>
 
-#if defined(__GNUC__) && (__GNUC__ < 11)
-    #include <experimental/source_location>
-
-    namespace Er
-    {
-        using SourceLocationImpl = std::experimental::source_location;
-
-    } // namespace Er {}
-
-#else
-    #include <source_location>
-
-    namespace Er
-    {
-        using SourceLocationImpl = std::source_location;
-
-    } // namespace Er {}
-
-#endif
+#include <source_location>
 
 namespace Er
 {
@@ -33,7 +15,7 @@ struct SourceLocation
 {
     SourceLocation() noexcept = default;
     
-    SourceLocation(const SourceLocationImpl& source)
+    SourceLocation(const std::source_location& source)
         : m_file(source.file_name())
         , m_line(source.line())
     {

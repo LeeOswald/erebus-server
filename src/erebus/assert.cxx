@@ -1,9 +1,9 @@
 #include <erebus/assert.hxx>
-#include <erebus/syncstream.hxx>
 
 #include <atomic>
 #include <iostream>
 #include <sstream>
+#include <syncstream>
 
 
 namespace Er
@@ -14,7 +14,7 @@ static std::atomic<long> g_activeAssertions{ 0 };
 
 static void defaultPrintFailedAssertionFn(std::string_view message)
 {
-    Er::osyncstream(std::cerr) << message << std::endl; // force flush
+    std::osyncstream(std::cerr) << message << std::endl; // force flush
 }
 
 EREBUS_EXPORT void setPrintFailedAssertionFn(PrintFailedAssertionFn f) noexcept
