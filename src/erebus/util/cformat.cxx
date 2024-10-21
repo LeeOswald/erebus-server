@@ -1,4 +1,4 @@
-#include <erebus/util/format.hxx>
+#include <erebus/util/cformat.hxx>
 
 
 namespace Er

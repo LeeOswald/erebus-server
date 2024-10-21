@@ -80,10 +80,10 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/trackable.hxx
     ../../include/erebus/tree.hxx
     ../../include/erebus/util/autoptr.hxx
+    ../../include/erebus/util/cformat.hxx
     ../../include/erebus/util/crc32.hxx
     ../../include/erebus/util/exceptionutil.hxx
     ../../include/erebus/util/file.hxx
-    ../../include/erebus/util/format.hxx
     ../../include/erebus/util/generichandle.hxx
     ../../include/erebus/util/inifile.hxx
     ../../include/erebus/util/lockfile.hxx
@@ -114,9 +114,9 @@ add_library(${EREBUS_RTLLIB} SHARED
     system/thread.cxx
     system/time.cxx
     system/timestamp.cxx
+    util/cformat.cxx
     util/exceptionutil.cxx
     util/file.cxx
-    util/format.cxx
     util/inifile.cxx
     util/lockfile.cxx
     util/posixerror.cxx
