@@ -73,7 +73,7 @@ private:
         std::string formatted;
         try
         {
-            formatted = Er::Util::formatv(format, args);
+            formatted = Er::Util::cformatv(format, args);
             if ((formatted.length() > 0) && (formatted[formatted.length() - 1] == '\n'))
                 formatted.resize(formatted.length() - 1);
         

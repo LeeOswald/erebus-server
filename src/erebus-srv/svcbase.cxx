@@ -2,7 +2,7 @@
 
 #include <erebus/protocol.hxx>
 #include <erebus/system/thread.hxx>
-#include <erebus/util/format.hxx>
+
 
 namespace Erp
 {

@@ -1,6 +1,5 @@
 #include <erebus/knownprops.hxx>
 #include <erebus/util/exceptionutil.hxx>
-#include <erebus/util/format.hxx>
 
 #include <sstream>
 

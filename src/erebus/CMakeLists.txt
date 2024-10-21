@@ -30,6 +30,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/errno.hxx
     ../../include/erebus/exception.hxx
     ../../include/erebus/flags.hxx
+    ../../include/erebus/format.hxx
     ../../include/erebus/idisposable.hxx
     ../../include/erebus/knownprops.hxx
     ../../include/erebus/location.hxx
@@ -123,7 +124,6 @@ add_library(${EREBUS_RTLLIB} SHARED
     variant.cxx
     ${PLATFORM_SOURCES}
 )
-
 
 add_compile_definitions(EREBUS_EXPORTS=1)
 

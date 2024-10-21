@@ -1,7 +1,6 @@
 #include "processlistservice.hxx"
 
 #include <erebus/exception.hxx>
-#include <erebus/util/format.hxx>
 
 
 namespace Erp::ProcessMgr
@@ -46,7 +45,7 @@ void ProcessListService::deleteSession(SessionId id)
 
     auto it = m_sessions.find(id);
     if (it == m_sessions.end())
-        ErThrow(Er::Util::format("Non-existent session %d", id));
+        ErThrow(Er::format("Non-existent session {}", id));
 
     m_sessions.erase(it);
 
@@ -79,7 +78,7 @@ Er::PropertyBag ProcessListService::request(std::string_view request, const Er::
         return processesGlobal(session.get(), required, std::nullopt);
     }
 
-    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::format("Unsupported request {}", request));
 }
 
 ProcessListService::StreamId ProcessListService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
@@ -89,7 +88,7 @@ ProcessListService::StreamId ProcessListService::beginStream(std::string_view re
     if (request == Er::ProcessMgr::Requests::ListProcessesDiff)
         return beginProcessDiffStream(args, session.get());
 
-    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::format("Unsupported request {}", request));
 }
 
 void ProcessListService::endStream(StreamId id, SessionId sessionId)
@@ -100,7 +99,7 @@ void ProcessListService::endStream(StreamId id, SessionId sessionId)
 
     auto it = session->streams.find(id);
     if (it == session->streams.end())
-        ErThrow(Er::Util::format("Non-existent stream %d:%d", sessionId, id));
+        ErThrow(Er::format("Non-existent stream {}:{}", sessionId, id));
 
     session->streams.erase(it);
 
@@ -116,7 +115,7 @@ Er::PropertyBag ProcessListService::next(StreamId id, SessionId sessionId)
         std::unique_lock l(session->mutex);
         auto it = session->streams.find(id);
         if (it == session->streams.end())
-            ErThrow(Er::Util::format("Non-existent stream %d:%d", sessionId, id));
+            ErThrow(Er::format("Non-existent stream {}:{}", sessionId, id));
 
         stream = it->second;
 

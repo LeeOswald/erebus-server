@@ -4,7 +4,6 @@
 #include <erebus/knownprops.hxx>
 #include <erebus/protocol.hxx>
 #include <erebus/result.hxx>
-#include <erebus/util/format.hxx>
 #include <erebus-clt/erebus-clt.hxx>
 
 #include <atomic>

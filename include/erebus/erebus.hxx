@@ -67,4 +67,5 @@ constexpr Bool True = Bool::True;
 
 } // namespace Er {}
 
+#include <erebus/format.hxx>
 #include <erebus/assert.hxx>

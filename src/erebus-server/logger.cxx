@@ -3,7 +3,6 @@
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
 #include <erebus/system/time.hxx>
-#include <erebus/util/format.hxx>
 #include <erebus/util/utf16.hxx>
 
 #if ER_POSIX

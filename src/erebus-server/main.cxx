@@ -8,9 +8,8 @@
 #include <erebus/system/user.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
-#include <erebus/util/format.hxx>
 #include <erebus/util/pidfile.hxx>
-#include <erebus/util/sha256.hxx>
+
 #if ER_POSIX
     #include <erebus/util/signalhandler.hxx>
 #endif

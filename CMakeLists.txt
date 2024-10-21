@@ -41,6 +41,9 @@ else()
     message(FATAL_ERROR "Unsupported OS")
 endif()
 
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(FetchFmt)
 
 if(MSVC)
