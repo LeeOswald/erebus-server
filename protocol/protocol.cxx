@@ -396,7 +396,7 @@ Property getProperty(const erebus::Property& source)
     
     auto idx = static_cast<std::size_t>(source.type());
     if (idx >= _countof(s_getPropertyFns))
-        ErThrow(Er::Util::format("Unsupported property type %d", idx));
+        ErThrow(Er::format("Unsupported property type {}", idx));
 
     return std::invoke(s_getPropertyFns[idx], source);
 }

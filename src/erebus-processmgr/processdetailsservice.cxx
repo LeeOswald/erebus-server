@@ -2,7 +2,6 @@
 
 #include <erebus/exception.hxx>
 #include <erebus/system/user.hxx>
-#include <erebus/util/format.hxx>
 #include <erebus/util/posixerror.hxx>
 
 #include <signal.h>
@@ -93,12 +92,12 @@ Er::PropertyBag ProcessDetailsService::request(std::string_view request, const E
     else if (request == Er::ProcessMgr::Requests::ProcessPropsExt)
         return processPropsExt(args);
 
-    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::format("Unsupported request {}", request));
 }
 
 ProcessDetailsService::StreamId ProcessDetailsService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
-    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::format("Unsupported request {}", request));
 }
 
 void ProcessDetailsService::endStream(StreamId id, SessionId sessionId)

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <erebus/erebus.hxx>
-#include <fmt/format.h>
+#include <erebus/format.hxx>
+
 
 #if ER_LINUX
     #if defined(__GNUC__) && (defined(__i386) || defined(__x86_64))
@@ -27,7 +27,7 @@ EREBUS_EXPORT void trace(std::string&& message) noexcept;
 template <class... Args>
 void tracef(std::string_view format, Args&&... args) 
 {
-    trace(fmt::vformat(format, fmt::make_format_args(args...)));
+    trace(Format::vformat(format, Format::make_format_args(args...)));
 }
 
 } // namespace Er {}

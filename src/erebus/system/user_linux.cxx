@@ -1,6 +1,5 @@
 #include <erebus/exception.hxx>
 #include <erebus/system/user.hxx>
-#include <erebus/util/format.hxx>
 #include <erebus/util/posixerror.hxx>
 
 #include <pwd.h>
@@ -39,7 +38,7 @@ EREBUS_EXPORT std::optional<Info> lookup(uid_t uid)
         if (result == 0)
             return std::nullopt;
 
-        ErThrowPosixError(Er::Util::format("Could not lookup user %u", uid), result);
+        ErThrowPosixError(Er::format("Could not lookup user {}", uid), result);
     }
 
     Info info;
@@ -57,7 +56,7 @@ EREBUS_EXPORT Info current()
 {
     auto info = lookup(::getuid());
     if (!info)
-        ErThrow(Er::Util::format("Could not lookup user %u", ::getuid()));
+        ErThrow(Er::format("Could not lookup user {}", ::getuid()));
 
     return *info;
 }

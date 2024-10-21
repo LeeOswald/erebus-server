@@ -1,7 +1,6 @@
 #include <erebus/system/thread.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
-#include <erebus/util/format.hxx>
 
 #include "iconcache.hxx"
 
@@ -33,15 +32,15 @@ IconCache::IconCache(Er::Log::ILog* log, std::shared_ptr<Er::Desktop::IIconCache
     if (std::filesystem::exists(path))
     {
         if (!std::filesystem::is_directory(path, ec) || ec)
-            ErThrow(Er::Util::format("%s is not a directry", m_cacheDir.c_str()));
+            ErThrow(Er::format("{} is not a directry", m_cacheDir));
 
         if (::access(m_cacheDir.c_str(), R_OK | W_OK) == -1)
-            ErThrow(Er::Util::format("%s is inaccessible", m_cacheDir.c_str()));
+            ErThrow(Er::format("{} is inaccessible", m_cacheDir));
     }
     else
     {
         if (!std::filesystem::create_directory(path, ec) || ec)
-            ErThrow(Er::Util::format("Failed to create %s: %s", m_cacheDir.c_str(), ec.message().c_str()));
+            ErThrow(Er::format("Failed to create {}: {}", m_cacheDir, ec.message()));
     }
 }
 

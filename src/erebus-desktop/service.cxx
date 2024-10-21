@@ -5,7 +5,7 @@
 #include <erebus-desktop/erebus-desktop.hxx>
 
 #include <erebus/exception.hxx>
-#include <erebus/util/format.hxx>
+
 
 namespace Erp
 {
@@ -46,7 +46,7 @@ void Service::deleteSession(SessionId id)
 
 Service::StreamId Service::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
-    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::format("Unsupported request {}", request));
 }
 
 void Service::endStream(StreamId id, SessionId sessionId)
@@ -65,7 +65,7 @@ Er::PropertyBag Service::request(std::string_view request, const Er::PropertyBag
         return queryIcon(args);
     }
 
-    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::format("Unsupported request {}", request));
 }
 
 Er::PropertyBag Service::queryIcon(const Er::PropertyBag& args)

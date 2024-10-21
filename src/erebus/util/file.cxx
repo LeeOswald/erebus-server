@@ -1,7 +1,7 @@
 #include <erebus/exception.hxx>
 #include <erebus/util/autoptr.hxx>
 #include <erebus/util/file.hxx>
-#include <erebus/util/format.hxx>
+
 #if ER_WINDOWS
     #include <erebus/util/utf16.hxx>
 #endif

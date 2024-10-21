@@ -2,7 +2,6 @@
 #include "svcbase.hxx"
 
 #include <erebus/util/exceptionutil.hxx>
-#include <erebus/util/format.hxx>
 
 #include <shared_mutex>
 #include <unordered_map>
@@ -44,7 +43,7 @@ public:
         std::string id(request);
         auto it = m_services.find(id);
         if (it != m_services.end())
-            ErThrow(Er::Util::format("Service for [%s] is already registered", id.c_str()));
+            ErThrow(Er::format("Service for [{}] is already registered", id));
         
         ErLogInfo(m_params.log, "Registered service %p for [%s]", service, id.c_str());
 

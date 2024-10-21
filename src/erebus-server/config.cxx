@@ -1,7 +1,6 @@
 #include "config.hxx"
 
 #include <erebus/exception.hxx>
-#include <erebus/util/format.hxx>
 
 #include <valijson/adapters/rapidjson_adapter.hpp>
 #include <valijson/utils/rapidjson_utils.hpp>
@@ -113,7 +112,7 @@ rapidjson::Document loadAndValidate(const std::string& path)
     
     rapidjson::Document targetDocument;
     if (!valijson::utils::loadDocument(path, targetDocument)) 
-        ErThrow(Util::format("Failed to load config from [%s]", path.c_str()));
+        ErThrow(format("Failed to load config from [{}]", path));
 
     valijson::Validator validator(valijson::Validator::kStrongTypes);
     valijson::ValidationResults results;
@@ -142,7 +141,7 @@ rapidjson::Document loadAndValidate(const std::string& path)
             ++errorNum;
         }
         
-        ErThrow(Er::Util::format("Failed to validate config: %s", ss.str().c_str()));
+        ErThrow(Er::format("Failed to validate config: {}", ss.str()));
     }
 
     return targetDocument;

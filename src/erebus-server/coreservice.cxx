@@ -2,7 +2,7 @@
 
 #include <erebus/exception.hxx>
 #include <erebus/protocol.hxx>
-#include <erebus/util/format.hxx>
+
 
 #if ER_POSIX
     #include <sys/utsname.h>
@@ -49,7 +49,7 @@ Er::PropertyBag CoreService::request(std::string_view request, const Er::Propert
     if (request == Er::Protocol::GenericRequests::GetVersion)
         return getVersion(args);
     else
-        ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+        ErThrow(Er::format("Unsupported request {}", request));
 }
 
 Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
@@ -63,11 +63,11 @@ Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
     struct utsname u = {};
     if (::uname(&u) == 0)
     {
-        platform = Er::Util::format("%s %s", u.sysname, u.release);
+        platform = Er::format("{} {}", u.sysname, u.release);
     }
 #endif
 
-    auto version = Er::Util::format("%s %d.%d.%d %s", ER_APPLICATION_NAME, ER_VERSION_MAJOR, ER_VERSION_MINOR, ER_VERSION_PATCH, ER_COPYRIGHT);
+    auto version = Er::format("{} {}.{}.{} {}", ER_APPLICATION_NAME, ER_VERSION_MAJOR, ER_VERSION_MINOR, ER_VERSION_PATCH, ER_COPYRIGHT);
 
     Er::addProperty<Er::Protocol::Props::RemoteSystemDesc>(reply, std::move(platform));
     Er::addProperty<Er::Protocol::Props::ServerVersionString>(reply, std::move(version));
@@ -77,7 +77,7 @@ Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
 
 CoreService::StreamId CoreService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
-    ErThrow(Er::Util::format("Unsupported request %s", std::string(request).c_str()));
+    ErThrow(Er::format("Unsupported request {}", request));
 }
 
 void CoreService::endStream(StreamId id, SessionId sessionId)

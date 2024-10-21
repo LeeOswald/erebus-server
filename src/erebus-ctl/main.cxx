@@ -2,7 +2,6 @@
 
 #include <erebus/protocol.hxx>
 #include <erebus/util/file.hxx>
-#include <erebus/util/format.hxx>
 #include <erebus-desktop/erebus-desktop.hxx>
 #include <erebus-processmgr/erebus-processmgr.hxx>
 
@@ -34,13 +33,13 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
         boost::split(parts, a, boost::is_any_of(".:"));
         if (parts.size() != 3)
         {
-            ErThrow(Er::Util::format("Invalid format of domain.property_id:value in [%s]", a.c_str()));
+            ErThrow(Er::format("Invalid format of domain.property_id:value in [{}]", a));
         }
 
         auto propInfo = Er::lookupProperty(parts[0], parts[1].c_str());
         if (!propInfo)
         {
-            ErThrow(Er::Util::format("Unknown property [%s.%s]", parts[0].c_str(), parts[1].c_str()));
+            ErThrow(Er::format("Unknown property [{}.{}]", parts[0], parts[1]));
         }
 
         Er::PropId id = ER_PROPID_(parts[1].c_str());
@@ -56,7 +55,7 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
                 else if ((parts[2] == "false") || (parts[2] == "0"))
                     v = Er::False;
                 else
-                    ErThrow(Er::Util::format("Invalid value [%s] for bool property [%s.%s]", parts[2].c_str(), parts[0].c_str(), parts[1].c_str()));
+                    ErThrow(Er::format("Invalid value [{}] for bool property [{}.{}]", parts[2], parts[0], parts[1]));
 
                 Er::addProperty(parsed, Er::Property(id, v));
             }
@@ -102,7 +101,7 @@ Er::PropertyBag pargseArgs(const std::vector<std::string>& args)
             break;
 
         default:
-            ErThrow(Er::Util::format("Unsupported property type %d for property [%s.%s]", int(propInfo->type()), parts[0].c_str(), parts[1].c_str()));
+            ErThrow(Er::format("Unsupported property type {} for property [{}.{}]", int(propInfo->type()), parts[0], parts[1]));
         }
     }
 

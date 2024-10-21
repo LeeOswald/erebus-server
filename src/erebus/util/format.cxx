@@ -7,7 +7,7 @@ namespace Er
 namespace Util
 {
 
-EREBUS_EXPORT std::string formatv(const char* format, va_list args)
+EREBUS_EXPORT std::string cformatv(const char* format, va_list args)
 {
     if (!format || !*format)
     {
@@ -32,7 +32,7 @@ EREBUS_EXPORT std::string formatv(const char* format, va_list args)
     return buffer;
 }
 
-EREBUS_EXPORT std::string format(const char* format, ...)
+EREBUS_EXPORT std::string cformat(const char* format, ...)
 {
     if (!format || !*format)
     {
@@ -41,7 +41,7 @@ EREBUS_EXPORT std::string format(const char* format, ...)
 
     va_list args;
     va_start(args, format);
-    auto buffer = formatv(format, args);
+    auto buffer = cformatv(format, args);
     va_end(args);
 
     return buffer;

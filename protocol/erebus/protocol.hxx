@@ -4,7 +4,6 @@
 #include <erebus/exception.hxx>
 #include <erebus/property.hxx>
 #include <erebus/knownprops.hxx>
-#include <erebus/util/format.hxx>
 
 #include <erebus/erebus.pb.h>
 

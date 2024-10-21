@@ -1,9 +1,6 @@
 #include "pluginmgr.hxx"
 
-
 #include <erebus/exception.hxx>
-#include <erebus/util/format.hxx>
-#include <erebus/util/stringutil.hxx>
 
 
 namespace Er
@@ -40,12 +37,12 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<
         if (err)
             ErLogError(m_params.log, "%s", err); 
 #endif
-        ErThrow(Er::Util::format("Failed to load plugin [%s]", params.binary.c_str()), Er::ExceptionProps::DecodedError(ec.message()));
+        ErThrow(Er::format("Failed to load plugin [{}]", params.binary), Er::ExceptionProps::DecodedError(ec.message()));
     }
 
     if (!info->dll.has("createPlugin"))
     {
-        ErThrow(Er::Util::format("No createPlugin symbol found in [%s]", params.binary.c_str()));
+        ErThrow(Er::format("No createPlugin symbol found in [{}]", params.binary));
     }
 
     auto entry = info->dll.get<Er::Server::createPlugin>("createPlugin");
@@ -54,7 +51,7 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<
     info->ref.reset(entry(params));
     if (!info->ref)
     {
-        ErThrow(Er::Util::format("createPlugin of [%s] returned NULL", params.binary.c_str()));
+        ErThrow(Er::format("createPlugin of [{}] returned NULL", params.binary));
     }
 
     {

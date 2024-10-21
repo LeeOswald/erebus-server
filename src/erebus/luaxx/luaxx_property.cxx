@@ -1,7 +1,6 @@
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
 #include <erebus/property.hxx>
-#include <erebus/util/format.hxx>
 
 #include <erebus/luaxx/luaxx_int64.hxx>
 #include <erebus/luaxx/luaxx_property.hxx>
@@ -15,7 +14,7 @@ class EREBUS_EXPORT PropertyException
 {
 public:
     explicit PropertyException(Location&& location, const char* action, Er::PropId id, const char* expected, const char* actual)
-        : LuaException(std::move(location), Er::Util::format("Failed to %s property %08x: expected a \'%s\', got \'%s\'", action, id, expected, actual))
+        : LuaException(std::move(location), Er::format("Failed to {} property {:08x}: expected a \'{}\', got \'{}\'", action, id, expected, actual))
     {}
 };
 
