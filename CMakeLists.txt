@@ -30,6 +30,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/a")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+include(Debug)
 
 if(WIN32)
     set(ER_WINDOWS TRUE)
@@ -40,9 +41,16 @@ else()
     message(FATAL_ERROR "Unsupported OS")
 endif()
 
+include(FetchFmt)
+
+if(MSVC)
+    add_compile_options("/utf-8")
+endif()
+
 if(ER_LINUX AND NOT ER_BUILD_CLIENT_LIBS_ONLY)
     include(bpf)
 endif()
+
 
 include(FetchLua)
 
@@ -59,7 +67,7 @@ include_directories(
 )
 
 
-# require Boost
+# Boost
 find_package(Boost REQUIRED COMPONENTS filesystem iostreams system program_options)
 
 

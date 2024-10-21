@@ -129,4 +129,4 @@ add_compile_definitions(EREBUS_EXPORTS=1)
 
 set_property(TARGET ${EREBUS_RTLLIB} PROPERTY PREFIX "")
 
-target_link_libraries(${EREBUS_RTLLIB} PRIVATE ${Boost_LIBRARIES} ${PLATFORM_LIBS} ${LUA_LIBRARIES})
+target_link_libraries(${EREBUS_RTLLIB} PUBLIC ${Boost_LIBRARIES} ${PLATFORM_LIBS} ${LUA_LIBRARIES} fmt::fmt)
