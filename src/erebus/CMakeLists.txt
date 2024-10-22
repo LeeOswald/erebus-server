@@ -72,6 +72,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/sourcelocation.hxx
     ../../include/erebus/stacktrace.hxx
     ../../include/erebus/stringliteral.hxx
+    ../../include/erebus/system/packed_time.hxx
     ../../include/erebus/system/process.hxx
     ../../include/erebus/system/thread.hxx
     ../../include/erebus/system/time.hxx
