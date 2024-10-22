@@ -36,6 +36,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/location.hxx
     ../../include/erebus/lockable.hxx
     ../../include/erebus/log.hxx
+    ../../include/erebus/log2.hxx
     ../../include/erebus/lrucache.hxx
     ../../include/erebus/luaxx.hxx
     ../../include/erebus/luaxx/luaxx_base_fun.hxx
@@ -100,6 +101,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     init.cxx
     knownprops.cxx
     log.cxx
+    log2.cxx
     luaxx.cxx
     luaxx/luaxx_base_fun.cxx
     luaxx/luaxx_exception_handler.cxx
