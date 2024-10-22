@@ -10,12 +10,12 @@ namespace Er
 DecodedStackTrace EREBUS_EXPORT decodeStackTrace(const StackTrace& stack)
 {
     DecodedStackTrace decoded;
-    if (stack.get().empty())
+    if (stack.empty())
         return decoded;
 
-    decoded.reserve(stack.get().size());
+    decoded.reserve(stack.size());
     bool skip = true;
-    for (auto& frame : stack.get())
+    for (auto& frame : stack)
     {
         if (!frame.empty())
         {

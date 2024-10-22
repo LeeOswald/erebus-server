@@ -109,8 +109,9 @@ void formatException(const Er::Exception& e, std::ostringstream& out, int level)
     {
         if (location->source)
         {
-            out << "\n" << indent << smallIndent << "File: " << location->source->file();
+            out << "\n" << indent << smallIndent << "File: " << location->source->file_name();
             out << "\n" << indent << smallIndent << "Line: " << location->source->line();
+            out << "\n" << indent << smallIndent << "Function: " << location->source->function_name();
         }
 
         DecodedStackTrace ds;

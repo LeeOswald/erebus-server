@@ -45,8 +45,9 @@ static std::string formatFailedAssertion(Location&& location, const char* expres
 
     if (tempLocation.source)
     {
-        ss << "File: " << tempLocation.source->file() << "\n";
+        ss << "File: " << tempLocation.source->file_name() << "\n";
         ss << "Line: " << tempLocation.source->line() << "\n";
+        ss << "Function: " << tempLocation.source->function_name() << "\n";
     }
 
     if (!tempLocation.decoded && tempLocation.stack)

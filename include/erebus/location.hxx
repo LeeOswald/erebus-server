@@ -1,32 +1,28 @@
 #pragma once
 
-#include <erebus/sourcelocation.hxx>
 #include <erebus/stacktrace.hxx>
+
+#include <source_location>
+
 
 namespace Er
 {
 
 struct Location final
 {
-    std::optional<SourceLocation> source;
+    std::optional<std::source_location> source;
     std::optional<StackTrace> stack;
     std::optional<DecodedStackTrace> decoded;
 
     Location() noexcept = default;
 
-    Location(SourceLocation&& source) noexcept
-        : source(std::move(source))
+    Location(const std::source_location& source) noexcept
+        : source(source)
     {}
 
-    Location(SourceLocation&& source, StackTrace&& stack) noexcept
-        : source(std::move(source))
+    Location(const std::source_location& source, StackTrace&& stack) noexcept
+        : source(source)
         , stack(std::move(stack))
-    {
-    }
-
-    Location(SourceLocation&& source, DecodedStackTrace&& decoded) noexcept
-        : source(std::move(source))
-        , decoded(std::move(decoded))
     {
     }
 };

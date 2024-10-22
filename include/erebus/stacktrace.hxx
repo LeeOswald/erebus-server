@@ -13,21 +13,7 @@
 namespace Er
 {
 
-struct StackTrace final
-{
-    explicit StackTrace(std::size_t skip, std::size_t count)
-        : m_stack(skip, count)
-    {
-    }
-
-    boost::stacktrace::stacktrace const& get() const noexcept
-    {
-        return m_stack;
-    }
-
-private:
-    boost::stacktrace::stacktrace m_stack;
-};
+using StackTrace = boost::stacktrace::stacktrace;
 
 using DecodedStackTrace = std::vector<std::string>;
 
