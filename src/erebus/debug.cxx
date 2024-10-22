@@ -1,4 +1,4 @@
-#include <erebus/debug.hxx>
+#include <erebus/erebus.hxx>
 #include <erebus/errno.hxx>
 
 #if ER_WINDOWS

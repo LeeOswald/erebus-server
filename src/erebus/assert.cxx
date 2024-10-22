@@ -1,4 +1,4 @@
-#include <erebus/assert.hxx>
+#include <erebus/erebus.hxx>
 
 #include <atomic>
 #include <iostream>

@@ -112,6 +112,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     luaxx/luaxx_state.cxx
     luaxx/luaxx_util.cxx
     stacktrace.cxx
+    system/packed_time.cxx
     system/process.cxx
     system/thread.cxx
     system/time.cxx
