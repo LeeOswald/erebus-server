@@ -65,6 +65,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/luaxx/luaxx_tuple.hxx
     ../../include/erebus/luaxx/luaxx_util.hxx
     ../../include/erebus/mutexpool.hxx
+    ../../include/erebus/null_mutex.hxx
     ../../include/erebus/noncopyable.hxx
     ../../include/erebus/platform.hxx
     ../../include/erebus/property.hxx
@@ -102,6 +103,8 @@ add_library(${EREBUS_RTLLIB} SHARED
     knownprops.cxx
     log.cxx
     log2.cxx
+    log/async_logger.cxx
+    log/tee.cxx
     luaxx.cxx
     luaxx/luaxx_base_fun.cxx
     luaxx/luaxx_exception_handler.cxx

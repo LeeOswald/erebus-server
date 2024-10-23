@@ -24,6 +24,7 @@ struct Record
     System::PackedTime::ValueType time;
     uintptr_t tid = 0;
     std::string message;
+    unsigned indent = 0;
 
     using Ptr = std::shared_ptr<Record>;
 
@@ -50,20 +51,49 @@ struct ISink
     using Ptr = std::shared_ptr<ISink>;
 
     virtual ~ISink() = default;
+    
+    constexpr ISink() noexcept = default;
+    
+    constexpr Level level() const noexcept
+    {
+        return m_level;
+    }
 
-    virtual Level level() const noexcept = 0;
+    Level setLevel(Level level)
+    {
+        auto prev = m_level;
+        m_level = level;
+        doSetLevel(level);
+        return prev;
+    }
+
     virtual void write(Record::Ptr r) = 0;
     virtual void flush() = 0;
-    virtual void indent() = 0;
-    virtual void unindent() = 0;
+    
+protected:
+    virtual void doSetLevel(Level) { }
+
+    Level m_level = Level::Debug;
 };
 
 
-struct ILog
+struct IFilter
     : public ISink
 {
-    virtual void addSink(ISink::Ptr sink) = 0;
-    virtual void removeSink(ISink* sink) = 0;
+    using Ptr = std::shared_ptr<IFilter>;
+
+    virtual void addSink(std::string_view name, ISink::Ptr sink) = 0;
+    virtual void removeSink(std::string_view name) = 0;
+};
+
+
+struct ILogger
+    : public IFilter
+{
+    using Ptr = std::shared_ptr<ILogger>;
+
+    virtual void indent() = 0;
+    virtual void unindent() = 0;
 };
 
 
@@ -72,18 +102,18 @@ struct Indent
 {
     ~Indent()
     {
-        sink->unindent();
+        log->unindent();
     }
 
-    Indent(ISink* sink)
-        : sink(sink)
+    Indent(ILogger* log)
+        : log(log)
     {
-        ErAssert(sink);
-        sink->indent();
+        ErAssert(log);
+        log->indent();
     }
 
 private:
-    ISink* sink;
+    ILogger* log;
 };
 
 
@@ -141,5 +171,17 @@ void fatal(ISink* sink, std::string_view format, Args&&... args)
         sink->flush();
     }
 }
+
+
+enum class ThreadSafe
+{
+    No,
+    Yes
+};
+
+
+EREBUS_EXPORT IFilter::Ptr makeTee(ThreadSafe mode);
+EREBUS_EXPORT ILogger::Ptr makeAsyncLogger();
+
 
 } // namespace Er::Log2 {}
