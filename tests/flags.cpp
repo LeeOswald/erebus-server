@@ -8,22 +8,20 @@ struct F
     static constexpr std::size_t _1 = 1;
     static constexpr std::size_t _20 = 20;
     static constexpr std::size_t _69 = 69;
-    static constexpr std::size_t FlagsCount = 70;
 };
 
-using FF = Er::Flags<F>;
+using FF = Er::FlagsPack<70, F>;
 
 
 struct F16
 {
     static constexpr std::size_t _0 = 0;
     static constexpr std::size_t _15 = 15;
-    static constexpr std::size_t FlagsCount = 16;
 };
 
-using FF16 = Er::Flags<F16>;
+using FF16 = Er::FlagsPack<16, F16>;
 
-TEST(Flags, simple)
+TEST(FlagsPack, simple)
 {
     // default constructor
     {

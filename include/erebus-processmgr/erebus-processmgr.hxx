@@ -185,12 +185,10 @@ struct PropIndices
     static constexpr Flag UTime = 14;
     static constexpr Flag CpuUsage = 15;
     static constexpr Flag Tty = 16;
-
-    static constexpr size_t FlagsCount = 64;
 };
 
 
-using PropMask = Flags<PropIndices>;
+using PropMask = FlagsPack<64, PropIndices>;
 
 } // namespace ProcessProps {}
 
@@ -210,11 +208,9 @@ constexpr PropId IndexToProp[] =
 struct PropIndices
 {
     static constexpr Flag Env = 0;
-
-    static constexpr size_t FlagsCount = 64;
 };
 
-using PropMask = Flags<PropIndices>;
+using PropMask = FlagsPack<64, PropIndices>;
 
 } // namespace ProcessPropsExt {}
 
@@ -289,12 +285,10 @@ struct PropIndices
     static constexpr Flag CachedSwap = 15;
     static constexpr Flag ZSwapComp = 16;
     static constexpr Flag ZSwapOrig = 17;
-
-    static constexpr size_t FlagsCount = 64;
 };
 
 
-using PropMask = Flags<PropIndices>;
+using PropMask = FlagsPack<64, PropIndices>;
 
 } // namespace GlobalProps {}
 
