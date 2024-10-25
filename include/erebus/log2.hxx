@@ -4,6 +4,8 @@
 #include <erebus/system/packed_time.hxx>
 #include <erebus/system/thread.hxx>
 
+#include <functional>
+
 namespace Er::Log2
 {
 
@@ -18,15 +20,40 @@ enum class Level
 };
 
 
-struct Record
+class Record
 {
-    Level level = Level::Info;
-    System::PackedTime::ValueType time;
-    uintptr_t tid = 0;
-    std::string message;
-    unsigned indent = 0;
-
+public:
     using Ptr = std::shared_ptr<Record>;
+
+    constexpr Level level() const noexcept
+    {
+        return m_level;
+    }
+
+    constexpr System::PackedTime::ValueType time() const noexcept
+    {
+        return m_time;
+    }
+
+    constexpr uintptr_t tid() const noexcept
+    {
+        return m_tid;
+    }
+
+    constexpr const std::string& message() const noexcept
+    {
+        return m_message;
+    }
+
+    constexpr unsigned indent() const noexcept
+    {
+        return m_indent;
+    }
+
+    void setIndent(unsigned indent) noexcept
+    {
+        m_indent = indent;
+    }
 
     template <typename MessageT>
     static Ptr make(Level level, System::PackedTime::ValueType time, uintptr_t tid, MessageT&& message)
@@ -37,12 +64,18 @@ struct Record
 private:
     template <typename MessageT>
     explicit Record(Level level, System::PackedTime::ValueType time, uintptr_t tid, MessageT&& message)
-        : level(level)
-        , time(time)
-        , tid(tid)
-        , message(std::forward<MessageT>(message))
+        : m_level(level)
+        , m_time(time)
+        , m_tid(tid)
+        , m_message(std::forward<MessageT>(message))
     {
     }
+
+    Level m_level = Level::Info;
+    System::PackedTime::ValueType m_time;
+    uintptr_t m_tid = 0;
+    std::string m_message;
+    unsigned m_indent = 0;
 };
 
 
@@ -180,8 +213,26 @@ enum class ThreadSafe
 };
 
 
+struct IFormatter
+{
+    using Ptr = std::shared_ptr<IFormatter>;
+
+    virtual ~IFormatter() = default;
+    virtual std::string format(const Record* r) const = 0;
+};
+
+
 EREBUS_EXPORT IFilter::Ptr makeTee(ThreadSafe mode);
 EREBUS_EXPORT ILogger::Ptr makeAsyncLogger();
 
+EREBUS_EXPORT ISink::Ptr makeFileSink(
+    ThreadSafe mode, 
+    std::string_view fileName, 
+    IFormatter::Ptr formatter,
+    unsigned logsToKeep = 3, 
+    std::uint64_t maxFileSize = std::numeric_limits<std::uint64_t>::max()
+);
 
 } // namespace Er::Log2 {}
+
+#include <erebus/log/simple_formatter.hxx>

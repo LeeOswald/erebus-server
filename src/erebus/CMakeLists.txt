@@ -37,6 +37,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/lockable.hxx
     ../../include/erebus/log.hxx
     ../../include/erebus/log2.hxx
+    ../../include/erebus/log/simple_formatter.hxx
     ../../include/erebus/lrucache.hxx
     ../../include/erebus/luaxx.hxx
     ../../include/erebus/luaxx/luaxx_base_fun.hxx
@@ -102,8 +103,9 @@ add_library(${EREBUS_RTLLIB} SHARED
     init.cxx
     knownprops.cxx
     log.cxx
-    log2.cxx
     log/async_logger.cxx
+    log/file_sink.cxx
+    log/simple_formatter.cxx
     log/tee.cxx
     luaxx.cxx
     luaxx/luaxx_base_fun.cxx

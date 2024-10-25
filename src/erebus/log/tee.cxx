@@ -21,6 +21,9 @@ public:
 
     void write(Record::Ptr r) override
     {
+        if (r->level() < level())
+            return;
+
         std::shared_lock l(m_mutex);
         for (auto& sink : m_sinks)
             sink.second->write(r);

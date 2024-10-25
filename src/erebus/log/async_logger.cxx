@@ -3,9 +3,7 @@
 
 #include <condition_variable>
 #include <mutex>
-#include <queue>
 #include <thread>
-#include <unordered_map>
 #include <vector>
 
 #include <boost/circular_buffer.hpp>
@@ -39,7 +37,10 @@ public:
 
     void write(Record::Ptr r) override
     {
-        r->indent = s_threadData[m_instanceId].indent;
+        if (r->level() < level())
+            return;
+
+        r->setIndent(s_threadData[m_instanceId].indent);
 
         {
             std::unique_lock l(m_mutexQueue);
@@ -64,13 +65,15 @@ public:
     void addSink(std::string_view name, ISink::Ptr sink) override
     {
         std::unique_lock l(m_mutexSinks);
-        m_sinks.insert({ std::string(name), sink });
+        m_sinks.push_back({ name, sink });
     }
 
     void removeSink(std::string_view name) override
     {
         std::unique_lock l(m_mutexSinks);
-        m_sinks.erase(std::string(name));
+        auto it = std::find_if(m_sinks.begin(), m_sinks.end(), [name](const SinkData& d) { return d.name == name; });
+        if (it != m_sinks.end())
+            m_sinks.erase(it);
     }
 
     void indent() override
@@ -90,41 +93,35 @@ private:
         return s_instances.fetch_add(1, std::memory_order_relaxed);
     }
 
-    void run(std::stop_token stop) noexcept
+    void run(std::stop_token stop)
     {
-        try
+        System::CurrentThread::setName("Logger");
+
+        std::vector<Record::Ptr> records;
+        records.reserve(MaxQueueSize);
+
+        while (!stop.stop_requested())
         {
-            System::CurrentThread::setName("Logger");
-
-            std::vector<Record::Ptr> records;
-            records.reserve(MaxQueueSize);
-
-            while (!stop.stop_requested())
             {
+                std::unique_lock lw(m_mutexQueue);
+                m_queueNotEmpty.wait(lw, stop, [this]() { return !m_queue.empty(); });
+
+                while (!stop.stop_requested() && !m_queue.empty())
                 {
-                    std::unique_lock lw(m_mutexQueue);
-                    m_queueNotEmpty.wait(lw, stop, [this]() { return !m_queue.empty(); });
-
-                    while (!stop.stop_requested() && !m_queue.empty())
-                    {
-                        auto record = m_queue.front();
-                        records.push_back(record);
-                        m_queue.pop_front();
-                    }
+                    auto record = m_queue.front();
+                    records.push_back(record);
+                    m_queue.pop_front();
                 }
-
-                // queue is now unlocked
-                if (!records.empty())
-                {
-                    sendToSinks(records, stop);
-                    records.clear();
-                }
-
-                m_queueEmpty.notify_all();
             }
-        }
-        catch (...)
-        {
+
+            // queue is now unlocked
+            if (!records.empty())
+            {
+                sendToSinks(records, stop);
+                records.clear();
+            }
+
+            m_queueEmpty.notify_all();
         }
     }
 
@@ -136,13 +133,23 @@ private:
         {
             for (auto& sink : m_sinks)
             {
-                if (!record)
+                if (sink.healthy)
                 {
-                    sink.second->flush();
-                }
-                else
-                {
-                    sink.second->write(record);
+                    try
+                    {
+                        if (!record)
+                        {
+                            sink.sink->flush();
+                        }
+                        else
+                        {
+                            sink.sink->write(record);
+                        }
+                    }
+                    catch (...)
+                    {
+                        sink.healthy = false;
+                    }
                 }
             }
 
@@ -158,17 +165,30 @@ private:
         ThreadData() noexcept = default;
     };
 
+    struct SinkData
+    {
+        std::string name;
+        ISink::Ptr sink;
+        bool healthy = true;
+
+        SinkData(std::string_view name, ISink::Ptr sink)
+            : name(name)
+            , sink(sink)
+        {
+        }
+    };
+
     static const std::size_t MaxQueueSize = 1024;
     static std::atomic<std::size_t> s_instances;
     static thread_local std::vector<ThreadData> s_threadData;
     
-    std::size_t m_instanceId;
+    const std::size_t m_instanceId;
     std::mutex m_mutexQueue;
     std::condition_variable_any m_queueNotEmpty;
     std::condition_variable_any m_queueEmpty;
     boost::circular_buffer<Record::Ptr> m_queue;
     std::mutex m_mutexSinks;
-    std::unordered_map<std::string, ISink::Ptr> m_sinks;
+    std::vector<SinkData> m_sinks;
     std::jthread m_worker;
 };
 
@@ -178,5 +198,9 @@ thread_local std::vector<AsyncLogger::ThreadData> AsyncLogger::s_threadData;
 } // namespace {}
 
 
+EREBUS_EXPORT ILogger::Ptr makeAsyncLogger()
+{
+    return std::make_shared<AsyncLogger>();
+}
 
 } // namespace Er::Log2 {}
