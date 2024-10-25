@@ -6,8 +6,6 @@
 
 #include <erebus-clt/erebus-clt.hxx>
 
-#include "log.hxx"
-
 
 extern std::optional<int> g_signalReceived;
 
@@ -19,11 +17,11 @@ inline void dumpPropertyBag(std::string_view domain, const Er::PropertyBag& bag,
         auto propInfo = Er::lookupProperty(domain, prop.id).get();
         if (!propInfo)
         {
-            log->writef(Er::Log::Level::Warning, "0x%08x: %s", prop.id, prop.to_string().c_str());
+            Er::Log::write(log, Er::Log::Level::Warning, "{:08x}: {}", prop.id, prop.to_string());
         }
         else
         {
-            log->writef(Er::Log::Level::Info, "%s: %s", propInfo->name(), propInfo->to_string(prop).c_str());
+            Er::Log::write(log, Er::Log::Level::Info, "{}: {}", propInfo->name(), propInfo->to_string(prop));
         }
     });
 }

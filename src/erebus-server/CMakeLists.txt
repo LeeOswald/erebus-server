@@ -3,8 +3,6 @@ add_executable(${EREBUS_SERVER}
     config.hxx
     coreservice.cxx
     coreservice.hxx
-    logger.cxx
-    logger.hxx
     main.cxx
     pluginmgr.cxx
     pluginmgr.hxx

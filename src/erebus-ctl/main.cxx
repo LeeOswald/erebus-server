@@ -136,8 +136,8 @@ bool issueRequest(
                 if (interval <= 0)
                     break;
 
-                log->write(Er::Log::Level::Info, "------------------------------------------------------");
-
+                Er::Log::writeln(log, Er::Log::Level::Info, "------------------------------------------------------");
+                
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
 
                 result = client->request(request, requestArgs, sessionId);
@@ -175,13 +175,13 @@ bool receiveStream(
                 for (auto& item : result)
                 {
                     dumpPropertyBag(domain, item, log);
-                    log->write(Er::Log::Level::Info, "------------------------------------------------------");
+                    Er::Log::writeln(log, Er::Log::Level::Info, "------------------------------------------------------");
                 }
 
                 if (interval <= 0)
                     break;
 
-                log->write(Er::Log::Level::Info, "========================================================");
+                Er::Log::writeln(log, Er::Log::Level::Info, "========================================================");
 
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
 
@@ -194,6 +194,49 @@ bool receiveStream(
         }
     );
 }
+
+Er::Log::ILog::Ptr openLog(bool verbose)
+{
+    auto logger = Er::Log::makeAsyncLogger();
+
+#if ER_WINDOWS
+    if (::IsDebuggerPresent())
+    {
+        auto debugger = Er::Log::makeDebuggerSink(
+            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+            Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Fatal)
+        );
+
+        logger->addSink("debugger", debugger);
+    }
+#endif
+
+    {
+        auto stdoutSink = Er::Log::makeOStreamSink(
+            std::cout,
+            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+            Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Warning)
+        );
+
+        logger->addSink("stdout", stdoutSink);
+
+        auto stderrSink = Er::Log::makeOStreamSink(
+            std::cerr,
+            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+            Er::Log::SimpleFilter::make(Er::Log::Level::Error, Er::Log::Level::Fatal)
+        );
+
+        logger->addSink("stderr", stderrSink);
+    }
+
+    if (verbose)
+        logger->setLevel(Er::Log::Level::Debug);
+    else
+        logger->setLevel(Er::Log::Level::Info);
+
+    return logger;
+}
+
 
 } // namespace {}
 
@@ -261,14 +304,14 @@ int main(int argc, char* argv[])
         auto ep = vm["endpoint"].as<std::string>();
 
         bool verbose = (vm.count("verbose") > 0);
-        ErCtl::Log console(verbose ? Er::Log::Level::Debug : Er::Log::Level::Info);
+        auto logger = openLog(verbose);
 
-        Er::LibScope er(&console);
-        Er::Client::LibParams cltParams(&console, console.level());
+        Er::LibScope er(logger.get());
+        Er::Client::LibParams cltParams(logger.get(), logger->level());
         Er::Client::LibScope cs(cltParams);
 
-        Er::ProcessMgr::Private::registerAll(&console);
-        Er::Desktop::Props::Private::registerAll(&console);
+        Er::ProcessMgr::Private::registerAll(logger.get());
+        Er::Desktop::Props::Private::registerAll(logger.get());
                 
         bool ssl = (vm.count("ssl") > 0);
         std::string root;
@@ -288,12 +331,12 @@ int main(int argc, char* argv[])
         
         if (!request.empty())
         {
-            if (issueRequest(&console, params, request, domain, args, interval))
+            if (issueRequest(logger.get(), params, request, domain, args, interval))
                 result = EXIT_SUCCESS;
         }
         else if (!stream.empty())
         {
-            if (receiveStream(&console, params, stream, domain, args, interval))
+            if (receiveStream(logger.get(), params, stream, domain, args, interval))
                 result = EXIT_SUCCESS;
         }
 

@@ -61,15 +61,15 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<
 
     auto pi = info->ref->info();
 
-    m_params.log->writef(
-        Er::Log::Level::Info, 
-        "Loaded plugin %s ver %u.%u.%u [%s] from [%s]", 
-        pi.name.c_str(), 
+    Er::Log::info(
+        m_params.log,
+        "Loaded plugin {} ver {}.{}.{} [{}] from [{}]", 
+        pi.name, 
         pi.version.major,
         pi.version.minor,
         pi.version.patch,
-        pi.description.c_str(), 
-        params.binary.c_str()
+        pi.description,
+        params.binary
     );
 
     return info->ref.get();

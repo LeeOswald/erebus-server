@@ -67,10 +67,10 @@ int main(int argc, char** argv)
         auto logger = Er::Log::makeAsyncLogger();
 
 #if ER_WINDOWS
+        if (::IsDebuggerPresent())
         {
             auto debugger = Er::Log::makeDebuggerSink(
-                Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
-                Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Fatal)
+                Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid })
             );
 
             logger->addSink("debugger", debugger);
@@ -93,6 +93,8 @@ int main(int argc, char** argv)
             );
 
             logger->addSink("stderr", stderrSink);
+
+            logger->setLevel(Er::Log::Level::Debug);
         }
 
         g_log = logger.get();

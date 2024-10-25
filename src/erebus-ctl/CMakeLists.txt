@@ -1,7 +1,5 @@
 add_executable(${EREBUS_CTL}
     common.hxx
-    log.cxx
-    log.hxx
     main.cxx
 )
 

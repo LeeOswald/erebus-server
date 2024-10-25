@@ -18,7 +18,6 @@
 
 #include "config.hxx"
 #include "coreservice.hxx"
-#include "logger.hxx"
 #include "pluginmgr.hxx"
 
 #include <filesystem>
@@ -45,8 +44,7 @@ void terminateHandler()
 
         if (g_log) 
         {
-            ErLogFatal(g_log, "std::terminate() called from\n%s", ss.str().c_str());
-            g_log->flush();
+            Er::Log::fatal(g_log, "std::terminate() called from\n{}", ss.str());
         }
         else
         {
@@ -68,8 +66,62 @@ void signalHandler(int signo)
 
 void printAssertFn(std::string_view message)
 {
-    g_log->write(Er::Log::Level::Fatal, std::string(message));
-    g_log->flush();
+    Er::Log::writeln(g_log, Er::Log::Level::Fatal, std::string(message));
+}
+
+Er::Log::ILog::Ptr openLog(bool verbose, std::string_view logFile, unsigned logsToKeep, std::uint64_t maxLogSize)
+{
+    auto logger = Er::Log::makeAsyncLogger();
+
+#if ER_WINDOWS
+    if (::IsDebuggerPresent())
+    {
+        auto debugger = Er::Log::makeDebuggerSink(
+            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+            Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Fatal)
+        );
+
+        logger->addSink("debugger", debugger);
+    }
+#endif
+
+    {
+        auto stdoutSink = Er::Log::makeOStreamSink(
+            std::cout,
+            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+            Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Warning)
+        );
+
+        logger->addSink("stdout", stdoutSink);
+
+        auto stderrSink = Er::Log::makeOStreamSink(
+            std::cerr,
+            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+            Er::Log::SimpleFilter::make(Er::Log::Level::Error, Er::Log::Level::Fatal)
+        );
+
+        logger->addSink("stderr", stderrSink);
+    }
+
+    {
+        auto fileSink = Er::Log::makeFileSink(
+            Er::Log::ThreadSafe::No,
+            logFile,
+            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::DateTime, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+            Er::Log::IFilter::Ptr{},
+            logsToKeep,
+            maxLogSize
+        );
+
+        logger->addSink("file", fileSink);
+    }
+
+    if (verbose)
+        logger->setLevel(Er::Log::Level::Debug);
+    else
+        logger->setLevel(Er::Log::Level::Info);
+
+    return logger;
 }
 
 
@@ -195,12 +247,10 @@ int main(int argc, char* argv[], char* env[])
     // setup std::terminate() handler
     std::set_terminate(terminateHandler);
 
-
-    Er::Log::Level logLevel = (cfg.verbose > 0) ? Er::Log::Level::Debug : Er::Log::Level::Info;
-    std::unique_ptr<Er::Private::Logger> logger;
+    Er::Log::ILog::Ptr logger;
     try
     {
-        logger.reset(new Er::Private::Logger(logLevel, cfg.logfile.c_str(), cfg.keeplogs));
+        logger = openLog(cfg.verbose > 0, cfg.logfile, cfg.keeplogs, cfg.maxLogSize);
     }
     catch (std::exception& e)
     {
@@ -213,12 +263,10 @@ int main(int argc, char* argv[], char* env[])
 
     Er::LibScope er(g_log);
 
-    logger->unmute();
-
     try
     {
         auto user = Er::System::User::current();
-        logger->writef(Er::Log::Level::Info, "Starting as user %s", user.name.c_str());
+        Er::Log::info(g_log, "Starting as user %s", user.name);
 
         std::string root;
         std::string certificate;
@@ -241,7 +289,7 @@ int main(int argc, char* argv[], char* env[])
         servers.reserve(cfg.endpoints.size());
         for (auto& ep: cfg.endpoints)
         {
-            logger->writef(Er::Log::Level::Info, "Creating a server instance at [%s]", ep.endpoint.c_str());
+            Er::Log::info(g_log, "Creating a server instance at [{}]", ep.endpoint);
 
             Er::protectedCall<void>(g_log, [&ep, &root, &certificate, &key, &servers]()
             {
@@ -273,7 +321,7 @@ int main(int argc, char* argv[], char* env[])
         {
             if (!plugin.enabled)
             {
-                logger->writef(Er::Log::Level::Info, "Skipping plugin [%s]", plugin.path.c_str());
+                Er::Log::info(g_log, "Skipping plugin [{}]", plugin.path);
                 continue;
             }
             
@@ -284,16 +332,16 @@ int main(int argc, char* argv[], char* env[])
             });
 
             if (!success)
-                logger->writef(Er::Log::Level::Error, "Failed to load plugin [%s]", plugin.path.c_str());
+                Er::Log::error(g_log, "Failed to load plugin [{}]", plugin.path);
         }
 
         // now just sit around and wait
-        logger->write(Er::Log::Level::Info, "Waiting for client connections...");
-
+        Er::Log::writeln(g_log, Er::Log::Level::Info, "Waiting for client connections...");
+        
         g_exitCondition.waitValue(true);
 
         // cleanup
-        logger->write(Er::Log::Level::Info, "Stopping server instances...");
+        Er::Log::writeln(g_log, Er::Log::Level::Info, "Stopping server instances...");
         
         for (auto& srv : servers)
         {
@@ -305,7 +353,7 @@ int main(int argc, char* argv[], char* env[])
         
         if (g_signalReceived)
         {
-            logger->writef(Er::Log::Level::Warning, "Exiting due to signal %d", *g_signalReceived);
+            Er::Log::warning(g_log, "Exiting due to signal {}", *g_signalReceived);
         }
 
         Er::setPrintFailedAssertionFn(nullptr);

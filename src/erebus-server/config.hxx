@@ -29,6 +29,7 @@ struct ServerConfig final
     int verbose = 0;
     std::string logfile;
     int keeplogs = 3;
+    std::uint64_t maxLogSize = std::numeric_limits<std::uint64_t>::max();
     std::string pidfile;
     std::vector<Endpoint> endpoints;
     std::string certificate;

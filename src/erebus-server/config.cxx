@@ -38,6 +38,9 @@ R"(
         "keeplogs": {
             "type": "number"
         },
+        "maxlogsize": {
+            "type": "number"
+        },
         "pidfile": {
             "type": "string"
         },
@@ -165,6 +168,8 @@ ServerConfig loadConfig(const std::string& path)
             cfg.logfile = m->value.GetString();
         else if (!std::strcmp(name, "keeplogs"))
             cfg.keeplogs = m->value.GetInt();
+        else if (!std::strcmp(name, "maxlogsize"))
+            cfg.maxLogSize = m->value.GetUint64() * 1024 * 1024;
         else if (!std::strcmp(name, "pidfile"))
             cfg.pidfile = m->value.GetString();
         else if (!std::strcmp(name, "certificate"))

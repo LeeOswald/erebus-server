@@ -294,7 +294,7 @@ EREBUS_EXPORT ISink::Ptr makeFileSink(
 EREBUS_EXPORT ISink::Ptr makeOStreamSink(std::ostream& stream, IFormatter::Ptr formatter, IFilter::Ptr filter = IFilter::Ptr{});
 
 #if ER_WINDOWS
-EREBUS_EXPORT ISink::Ptr makeDebuggerSink(IFormatter::Ptr formatter, IFilter::Ptr filter);
+EREBUS_EXPORT ISink::Ptr makeDebuggerSink(IFormatter::Ptr formatter, IFilter::Ptr filter = IFilter::Ptr{});
 #endif
 
 
