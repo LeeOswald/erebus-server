@@ -8,6 +8,7 @@ elseif(ER_WINDOWS)
     set(PLATFORM_SOURCES
         ../../include/erebus/util/utf16.hxx
         ../../include/erebus/util/win32error.hxx
+        log/win32_debugger_sink.cxx
         system/user_win32.cxx
         util/utf16_win32.cxx
         util/win32error_win32.cxx
@@ -105,6 +106,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     log.cxx
     log/async_logger.cxx
     log/file_sink.cxx
+    log/ostream_sink.cxx
     log/simple_formatter.cxx
     log/tee.cxx
     luaxx.cxx

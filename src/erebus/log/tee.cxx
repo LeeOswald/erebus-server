@@ -12,7 +12,7 @@ namespace
 
 template <class MutexT>
 class Tee
-    : public IFilter
+    : public ITee
     , public NonCopyable
 {
 public:
@@ -57,7 +57,7 @@ private:
 
 
 
-EREBUS_EXPORT IFilter::Ptr makeTee(ThreadSafe mode)
+EREBUS_EXPORT ITee::Ptr makeTee(ThreadSafe mode)
 {
     if (mode == ThreadSafe::No)
         return std::make_shared<Tee<Er::NullSharedMutex>>();

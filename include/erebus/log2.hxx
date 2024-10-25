@@ -110,10 +110,10 @@ protected:
 };
 
 
-struct IFilter
+struct ITee
     : public ISink
 {
-    using Ptr = std::shared_ptr<IFilter>;
+    using Ptr = std::shared_ptr<ITee>;
 
     virtual void addSink(std::string_view name, ISink::Ptr sink) = 0;
     virtual void removeSink(std::string_view name) = 0;
@@ -121,7 +121,7 @@ struct IFilter
 
 
 struct ILogger
-    : public IFilter
+    : public ITee
 {
     using Ptr = std::shared_ptr<ILogger>;
 
@@ -222,16 +222,61 @@ struct IFormatter
 };
 
 
-EREBUS_EXPORT IFilter::Ptr makeTee(ThreadSafe mode);
+struct IFilter
+{
+    using Ptr = std::shared_ptr<IFilter>;
+
+    virtual ~IFilter() = default;
+    virtual bool filter(const Record* r) const = 0;
+};
+
+
+struct SimpleFilter
+    : public IFilter
+{
+    ~SimpleFilter() = default;
+
+    bool filter(const Record* r) const override
+    {
+        return (r->level() >= m_lowest) && (r->level() <= m_highest);
+    }
+
+    static Ptr make(Level lowest, Level highest)
+    {
+        return std::shared_ptr<SimpleFilter>(new SimpleFilter(lowest, highest));
+    }
+
+private:
+    SimpleFilter(Level lowest, Level highest)
+        : m_lowest(lowest)
+        , m_highest(highest)
+    {
+    }
+
+    Level m_lowest;
+    Level m_highest;
+};
+
+
+EREBUS_EXPORT ITee::Ptr makeTee(ThreadSafe mode);
 EREBUS_EXPORT ILogger::Ptr makeAsyncLogger();
 
 EREBUS_EXPORT ISink::Ptr makeFileSink(
     ThreadSafe mode, 
-    std::string_view fileName, 
+    std::string_view fileName,
     IFormatter::Ptr formatter,
+    IFilter::Ptr filter = IFilter::Ptr{},
     unsigned logsToKeep = 3, 
     std::uint64_t maxFileSize = std::numeric_limits<std::uint64_t>::max()
 );
+
+
+EREBUS_EXPORT ISink::Ptr makeOStreamSink(std::ostream& stream, IFormatter::Ptr formatter, IFilter::Ptr filter = IFilter::Ptr{});
+
+#if ER_WINDOWS
+EREBUS_EXPORT ISink::Ptr makeDebuggerSink(IFormatter::Ptr formatter, IFilter::Ptr filter);
+#endif
+
 
 } // namespace Er::Log2 {}
 

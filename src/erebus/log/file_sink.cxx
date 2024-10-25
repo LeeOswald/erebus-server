@@ -56,8 +56,9 @@ public:
     {
     }
 
-    FileSink(std::string_view fileName, IFormatter::Ptr formatter, unsigned logsToKeep, std::uint64_t maxFileSize)
+    FileSink(std::string_view fileName, IFormatter::Ptr formatter, IFilter::Ptr filter, unsigned logsToKeep, std::uint64_t maxFileSize)
         : m_fileName(fileName)
+        , m_filter(filter)
         , m_formatter(formatter)
         , m_logsToKeep(logsToKeep)
         , m_maxFileSize(maxFileSize)
@@ -69,6 +70,9 @@ public:
     void write(Record::Ptr r) override
     {
         if (r->level() < level())
+            return;
+
+        if (m_filter && !m_filter->filter(r.get()))
             return;
         
         auto formatted = m_formatter->format(r.get());
@@ -151,6 +155,7 @@ private:
     }
 
     const std::string m_fileName;
+    const IFilter::Ptr m_filter;
     const IFormatter::Ptr m_formatter;
     const unsigned m_logsToKeep;
     const std::uint64_t m_maxFileSize;
@@ -162,12 +167,19 @@ private:
 
 } // namespace {}
 
-EREBUS_EXPORT ISink::Ptr makeFileSink(ThreadSafe mode, std::string_view fileName, IFormatter::Ptr formatter, unsigned logsToKeep, std::uint64_t maxFileSize)
+EREBUS_EXPORT ISink::Ptr makeFileSink(
+    ThreadSafe mode, 
+    std::string_view fileName,
+    IFormatter::Ptr formatter,
+    IFilter::Ptr filter,
+    unsigned logsToKeep, 
+    std::uint64_t maxFileSize
+)
 {
     if (mode == ThreadSafe::No)
-        return std::make_shared<FileSink<NullMutex>>(fileName, formatter, logsToKeep, maxFileSize);
+        return std::make_shared<FileSink<NullMutex>>(fileName, formatter, filter, logsToKeep, maxFileSize);
     else
-        return std::make_shared<FileSink<std::mutex>>(fileName, formatter, logsToKeep, maxFileSize);
+        return std::make_shared<FileSink<std::mutex>>(fileName, formatter, filter, logsToKeep, maxFileSize);
 }
 
 

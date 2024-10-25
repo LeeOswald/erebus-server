@@ -1,0 +1,57 @@
+#include <erebus/log2.hxx>
+
+namespace Er::Log2
+{
+
+namespace
+{
+
+class OStreamSink
+    : public ISink
+    , public NonCopyable
+{
+public:
+    OStreamSink(std::ostream& stream, IFormatter::Ptr formatter, IFilter::Ptr filter)
+        : m_stream(stream)
+        , m_filter(filter)
+        , m_formatter(formatter)
+    {
+    }
+
+    void write(Record::Ptr r) override
+    {
+        if (r->level() < level())
+            return;
+
+        if (m_filter && !m_filter->filter(r.get()))
+            return;
+
+        auto formatted = m_formatter->format(r.get());
+        const auto available = formatted.length();
+        if (!available)
+            return;
+
+        const auto data = formatted.data();
+
+        m_stream.write(data, available);
+    }
+
+    void flush() override
+    {
+        m_stream.flush();
+    }
+
+private:
+    std::ostream& m_stream;
+    const IFilter::Ptr m_filter;
+    const IFormatter::Ptr m_formatter;
+};
+
+} // namespace {}
+
+EREBUS_EXPORT ISink::Ptr makeOStreamSink(std::ostream& stream, IFormatter::Ptr formatter, IFilter::Ptr filter)
+{
+    return std::make_shared<OStreamSink>(stream, formatter, filter);
+}
+
+} // namespace Er::Log2 {}
