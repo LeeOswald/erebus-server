@@ -29,7 +29,7 @@ void rotateLogs(std::string_view logFileName, int keepCount)
     // rename my_log.log -> my_log.log.1, etc
     // deleting oldest files as necessary
 
-    for (int i = keepCount; i > 0; --i)
+    for (int i = keepCount - 1; i >= 0; --i)
     {
         std::string destName = std::string(logFileName) + std::string(".") + std::to_string(i);
         std::error_code ec;
