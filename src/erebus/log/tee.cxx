@@ -1,10 +1,10 @@
-#include <erebus/log2.hxx>
+#include <erebus/log.hxx>
 #include <erebus/null_mutex.hxx>
 
 #include <shared_mutex>
 #include <unordered_map>
 
-namespace Er::Log2
+namespace Er::Log
 {
 
 namespace
@@ -65,4 +65,4 @@ EREBUS_EXPORT ITee::Ptr makeTee(ThreadSafe mode)
         return std::make_shared<Tee<std::shared_mutex>>();
 }
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}

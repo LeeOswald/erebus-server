@@ -1,4 +1,4 @@
-#include <erebus/log2.hxx>
+#include <erebus/log.hxx>
 #include <erebus/system/thread.hxx>
 
 #include <condition_variable>
@@ -8,14 +8,14 @@
 
 #include <boost/circular_buffer.hpp>
 
-namespace Er::Log2
+namespace Er::Log
 {
 
 namespace
 {
 
 class AsyncLogger
-    : public ILogger
+    : public ILog
     , public NonCopyable
 {
 public:
@@ -59,7 +59,7 @@ public:
         m_queueNotEmpty.notify_one();
 
         auto stop = m_worker.get_stop_token();
-        m_queueEmpty.wait(l, stop, [this]() { return !m_queue.empty(); });
+        m_queueEmpty.wait(l, stop, [this]() { return m_queue.empty(); });
     }
 
     void addSink(std::string_view name, ISink::Ptr sink) override
@@ -198,9 +198,9 @@ thread_local std::vector<AsyncLogger::ThreadData> AsyncLogger::s_threadData;
 } // namespace {}
 
 
-EREBUS_EXPORT ILogger::Ptr makeAsyncLogger()
+EREBUS_EXPORT ILog::Ptr makeAsyncLogger()
 {
     return std::make_shared<AsyncLogger>();
 }
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}

@@ -6,7 +6,7 @@
 #include <sstream>
 
 
-namespace Er::Log2
+namespace Er::Log
 {
 
 struct EREBUS_EXPORT SimpleFormatter
@@ -28,4 +28,4 @@ public:
 };
 
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}

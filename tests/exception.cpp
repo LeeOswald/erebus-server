@@ -4,29 +4,6 @@
 #include <erebus/knownprops.hxx>
 #include <erebus/util/exceptionutil.hxx>
 
-namespace
-{
-
-class Logger
-    : public Er::Log::LogBase
-{
-public:
-    explicit Logger(Er::Log::Level level)
-        : Er::Log::LogBase(Er::Log::LogBase::SyncLog, level)
-    {
-        Er::Log::LogBase::addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
-        Er::Log::LogBase::unmute();
-    }
-
-private:
-    void delegate(std::shared_ptr<Er::Log::Record> r)
-    {
-        std::cout << r->message << "\n";
-    }
-};
-
-} // namespace {}
-
 
 TEST(Er_Exception, simple)
 {
@@ -69,8 +46,6 @@ TEST(Er_Exception, known_props)
 
 TEST(Er_Exception, format1)
 {
-    Logger log(Er::Log::Level::Debug);
-
     try
     {
         try
@@ -91,14 +66,12 @@ TEST(Er_Exception, format1)
     }
     catch (std::exception& e)
     {
-        Er::Util::logException(&log, Er::Log::Level::Info, e);
+        Er::Util::logException(g_log, Er::Log::Level::Info, e);
     }
 }
 
 TEST(Er_Exception, format2)
 {
-    Logger log(Er::Log::Level::Debug);
-
     try
     {
         try
@@ -121,6 +94,6 @@ TEST(Er_Exception, format2)
     }
     catch (std::exception& e)
     {
-        Er::Util::logException(&log, Er::Log::Level::Info, e);
+        Er::Util::logException(g_log, Er::Log::Level::Info, e);
     }
 }

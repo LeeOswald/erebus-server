@@ -29,21 +29,17 @@ ResultT protectedCall(Er::Log::ILog* log, WorkT work, Args&&... args)
     catch (Er::Exception& e)
     {
         if (log)
-        {
-            log->write(Er::Log::Level::Error, Er::Util::formatException(e));
-        }
+            Util::logException(log, Er::Log::Level::Error, e);
     }
     catch (std::exception& e)
     {
         if (log)
-        {
-            log->write(Er::Log::Level::Error, Er::Util::formatException(e));
-        }
+            Util::logException(log, Er::Log::Level::Error, e);
     }
     catch (...)
     {
         if (log)
-            log->writef(Er::Log::Level::Error, "Unexpected exception");
+            Log::writeln(log, Er::Log::Level::Error, "Unexpected exception");
     }
 
     return ResultT();

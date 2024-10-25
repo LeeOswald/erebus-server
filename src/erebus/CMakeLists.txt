@@ -37,7 +37,6 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/location.hxx
     ../../include/erebus/lockable.hxx
     ../../include/erebus/log.hxx
-    ../../include/erebus/log2.hxx
     ../../include/erebus/log/simple_formatter.hxx
     ../../include/erebus/lrucache.hxx
     ../../include/erebus/luaxx.hxx
@@ -103,7 +102,6 @@ add_library(${EREBUS_RTLLIB} SHARED
     exception.cxx
     init.cxx
     knownprops.cxx
-    log.cxx
     log/async_logger.cxx
     log/file_sink.cxx
     log/ostream_sink.cxx

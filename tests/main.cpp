@@ -18,37 +18,6 @@ Er::Log::ILog* g_log = nullptr;
 
 int InstanceCounter::instances = 0;
 
-class Logger
-    : public Er::Log::LogBase
-{
-public:
-    ~Logger()
-    {
-        Er::Log::LogBase::flush();
-        Er::Log::LogBase::removeDelegate("this");
-    }
-
-    explicit Logger(Er::Log::Level level)
-        : Er::Log::LogBase(Er::Log::LogBase::SyncLog, level)
-    {
-        Er::Log::LogBase::addDelegate("this", [this](std::shared_ptr<Er::Log::Record> r) { delegate(r); });
-        Er::Log::LogBase::unmute();
-    }
-
-private:
-    void delegate(std::shared_ptr<Er::Log::Record> r)
-    {
-        if (r->level < Er::Log::Level::Warning)
-            std::osyncstream(std::cout) << r->message << std::endl;
-        else 
-            std::osyncstream(std::cerr) << r->message << std::endl;
-
-#if ER_WINDOWS && ER_DEBUG
-        if (::IsDebuggerPresent())
-            ::OutputDebugStringW(Er::Util::utf8ToUtf16(r->message).append(L"\n").c_str());
-#endif
-    }
-};
 
 void terminateHandler()
 {
@@ -95,9 +64,39 @@ int main(int argc, char** argv)
 
     try
     {
-        Logger log(Er::Log::Level::Debug);
-        g_log = &log;
-        Er::LibScope er(&log);
+        auto logger = Er::Log::makeAsyncLogger();
+
+#if ER_WINDOWS
+        {
+            auto debugger = Er::Log::makeDebuggerSink(
+                Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+                Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Fatal)
+            );
+
+            logger->addSink("debugger", debugger);
+        }
+#endif
+
+        {
+            auto stdoutSink = Er::Log::makeOStreamSink(
+                std::cout,
+                Er::Log::SimpleFormatter::make({ }),
+                Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Warning)
+            );
+
+            logger->addSink("stdout", stdoutSink);
+
+            auto stderrSink = Er::Log::makeOStreamSink(
+                std::cerr,
+                Er::Log::SimpleFormatter::make({ }),
+                Er::Log::SimpleFilter::make(Er::Log::Level::Error, Er::Log::Level::Fatal)
+            );
+
+            logger->addSink("stderr", stderrSink);
+        }
+
+        g_log = logger.get();
+        Er::LibScope er(g_log);
 
 
 #if ER_POSIX
@@ -110,11 +109,11 @@ int main(int argc, char** argv)
         ::sigprocmask(SIG_UNBLOCK, &mask, nullptr);
 #endif
 
-        TestProps::registerAll(&log);
+        TestProps::registerAll(g_log);
     
         ret = RUN_ALL_TESTS();
 
-        TestProps::unregisterAll(&log);
+        TestProps::unregisterAll(g_log);
         g_log = nullptr;
     }
     catch (std::exception& e)

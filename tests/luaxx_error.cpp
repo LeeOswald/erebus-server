@@ -119,6 +119,7 @@ TEST(Lua, call_undefined_function2)
 #endif
     CapturedStderr capture;
     state["err_func1"](1, 2);
+
     EXPECT_NE(capture.Content().find(expected), std::string::npos);
 
     EXPECT_EQ(state.size(), 0);
@@ -132,7 +133,7 @@ TEST(Lua, call_stackoverflow)
     const char* expected = "stack overflow";
     CapturedStderr capture;
     state["do_overflow"]();
-    auto co = capture.Content();
+
     EXPECT_NE(capture.Content().find(expected), std::string::npos);
 
     EXPECT_EQ(state.size(), 0);
@@ -152,6 +153,7 @@ TEST(Lua, parameter_conversion_error)
         largeStringToPreventSSO,
         "not a number",
         largeStringToPreventSSO);
+
     EXPECT_NE(capture.Content().find(expected), std::string::npos);
 
     EXPECT_EQ(state.size(), 0);

@@ -1,5 +1,5 @@
 #include <erebus/exception.hxx>
-#include <erebus/log2.hxx>
+#include <erebus/log.hxx>
 #include <erebus/null_mutex.hxx>
 #include <erebus/util/generichandle.hxx>
 
@@ -18,7 +18,7 @@
 #include <erebus/util/win32error.hxx>
 #endif
 
-namespace Er::Log2
+namespace Er::Log
 {
 
 namespace
@@ -183,4 +183,4 @@ EREBUS_EXPORT ISink::Ptr makeFileSink(
 }
 
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}

@@ -1,20 +1,12 @@
 #pragma once
 
-#include <erebus/system/time.hxx>
+#include <erebus/format.hxx>
+#include <erebus/system/packed_time.hxx>
+#include <erebus/system/thread.hxx>
 
-#include <condition_variable>
 #include <functional>
-#include <iomanip>
-#include <mutex>
-#include <queue>
-#include <sstream>
-#include <thread>
-#include <vector>
 
-namespace Er
-{
-
-namespace Log
+namespace Er::Log
 {
 
 enum class Level
@@ -24,245 +16,288 @@ enum class Level
     Warning,
     Error,
     Fatal,
-    Off // should go last
+    Off
 };
 
 
-struct Record
+class Record
 {
-    Level level = Level::Info;
-    System::Time time;
-    uintptr_t tid = 0;
-    std::string message;
+public:
+    using Ptr = std::shared_ptr<Record>;
 
-    Record() noexcept = default;
+    constexpr Level level() const noexcept
+    {
+        return m_level;
+    }
+
+    constexpr System::PackedTime::ValueType time() const noexcept
+    {
+        return m_time;
+    }
+
+    constexpr uintptr_t tid() const noexcept
+    {
+        return m_tid;
+    }
+
+    constexpr const std::string& message() const noexcept
+    {
+        return m_message;
+    }
+
+    constexpr unsigned indent() const noexcept
+    {
+        return m_indent;
+    }
+
+    void setIndent(unsigned indent) noexcept
+    {
+        m_indent = indent;
+    }
 
     template <typename MessageT>
-    explicit Record(Level level, const System::Time& time, uintptr_t tid, MessageT&& message)
-        : level(level)
-        , time(time)
-        , tid(tid)
-        , message(std::forward<MessageT>(message))
+    static Ptr make(Level level, System::PackedTime::ValueType time, uintptr_t tid, MessageT&& message)
+    {
+        return std::shared_ptr<Record>(new Record(level, time, tid, std::forward<MessageT>(message)));
+    }
+
+private:
+    template <typename MessageT>
+    explicit Record(Level level, System::PackedTime::ValueType time, uintptr_t tid, MessageT&& message)
+        : m_level(level)
+        , m_time(time)
+        , m_tid(tid)
+        , m_message(std::forward<MessageT>(message))
     {
     }
+
+    Level m_level = Level::Info;
+    System::PackedTime::ValueType m_time;
+    uintptr_t m_tid = 0;
+    std::string m_message;
+    unsigned m_indent = 0;
 };
 
 
-using Delegate = std::function<void(std::shared_ptr<Record>)>;
+struct ISink
+{
+    using Ptr = std::shared_ptr<ISink>;
+
+    virtual ~ISink() = default;
+    
+    constexpr ISink() noexcept = default;
+    
+    constexpr Level level() const noexcept
+    {
+        return m_level;
+    }
+
+    Level setLevel(Level level)
+    {
+        auto prev = m_level;
+        m_level = level;
+        doSetLevel(level);
+        return prev;
+    }
+
+    virtual void write(Record::Ptr r) = 0;
+    virtual void flush() = 0;
+    
+protected:
+    virtual void doSetLevel(Level) { }
+
+    Level m_level = Level::Debug;
+};
+
+
+struct ITee
+    : public ISink
+{
+    using Ptr = std::shared_ptr<ITee>;
+
+    virtual void addSink(std::string_view name, ISink::Ptr sink) = 0;
+    virtual void removeSink(std::string_view name) = 0;
+};
 
 
 struct ILog
+    : public ITee
 {
-    virtual Level level() const noexcept = 0;
-    virtual bool writev(Level l, const char* format, va_list args) noexcept = 0;
-    virtual bool writef(Level l, const char* format, ...) noexcept = 0;
-    virtual bool write(Level l, std::string&& s) noexcept = 0;
-    virtual bool write(std::shared_ptr<Record> r) noexcept = 0;
-    virtual void flush() noexcept = 0;
+    using Ptr = std::shared_ptr<ILog>;
 
-protected:
-    virtual ~ILog() {}
+    virtual void indent() = 0;
+    virtual void unindent() = 0;
 };
 
 
-struct ILogControl
+struct Indent
+    : public NonCopyable
 {
-    virtual void setLevel(Level l) noexcept = 0;
-    virtual void addDelegate(std::string_view id, Delegate d) noexcept = 0;
-    virtual void removeDelegate(std::string_view id) noexcept = 0;
-    virtual void mute() noexcept = 0;
-    virtual void unmute() noexcept = 0;
-
-protected:
-    virtual ~ILogControl() {}
-};
-
-
-class EREBUS_EXPORT LogBase
-    : public ILog
-    , public ILogControl
-    , public Er::NonCopyable
-{
-public:
-    struct SyncLogT
+    ~Indent()
     {
-    };
-
-    struct AsyncLogT
-    {
-    };
-
-    static constexpr SyncLogT SyncLog{};
-    static constexpr AsyncLogT AsyncLog{};
-
-    ~LogBase();
-    explicit LogBase(AsyncLogT, Level level, size_t maxQueue = std::numeric_limits<size_t>::max()) noexcept;
-    explicit LogBase(SyncLogT, Level level) noexcept;
-
-    Level level() const noexcept override;
-    bool writev(Level l, const char* format, va_list args) noexcept override;
-    bool writef(Level l, const char* format, ...) noexcept override;
-    bool write(Level l, std::string&& s) noexcept override;
-    bool write(std::shared_ptr<Record> r) noexcept override;
-    void flush() noexcept override;
-
-    void setLevel(Level l) noexcept override;
-    void addDelegate(std::string_view id, Delegate d) noexcept override;
-    void removeDelegate(std::string_view id) noexcept override;
-    void mute() noexcept override;
-    void unmute() noexcept override;
-        
-private:
-    void _flush() noexcept;
-    void run(std::stop_token stop) noexcept;
-
-    struct DelegateInfo
-    {
-        std::string id;
-        Delegate d;
-
-        DelegateInfo() noexcept = default;
-
-        DelegateInfo(std::string_view id, Delegate d)
-            : id(id)
-            , d(d)
-        {}
-    };
-
-    bool m_sync;
-    Level m_level;
-    size_t m_maxQueue;
-    std::mutex m_delegatesMutex;
-    std::vector<DelegateInfo> m_delegates;
-    std::mutex m_wQueueMutex;
-    std::queue<std::shared_ptr<Record>> m_wQueue;
-    std::condition_variable_any m_event;
-    std::mutex m_rQueueMutex;
-    std::queue<std::shared_ptr<Record>> m_rQueue;
-    std::jthread m_worker;
-    bool m_mute = true;
-};
-
-
-class LogWrapperBase
-    : public Er::NonCopyable
-{
-public:
-    ~LogWrapperBase()
-    {
-        flush();
+        log->unindent();
     }
 
-    explicit LogWrapperBase(ILog* log, Level level) noexcept
-        : m_log(log)
-        , m_level(level)
+    Indent(ILog* log)
+        : log(log)
     {
-    }
-
-    void flush() noexcept
-    {
-        if (m_level < m_log->level())
-            return;
-
-        try
-        {
-            m_log->write(m_level, m_stream.str());
-            m_stream = std::ostringstream();
-        }
-        catch (...)
-        {
-        }
-    }
-
-    template <typename T>
-    LogWrapperBase& operator<<(T&& v) noexcept
-    {
-        if (m_level < m_log->level())
-            return *this;
-
-        try
-        {
-            m_stream << std::forward<T>(v);
-        }
-        catch (...)
-        {
-        }
-        return *this;
+        ErAssert(log);
+        log->indent();
     }
 
 private:
-    ILog* m_log;
-    Level m_level;
-    Location m_location;
-    std::ostringstream m_stream;
+    ILog* log;
 };
 
 
-class Debug final
-    : public LogWrapperBase
+inline void writeln(ISink* sink, Level level, const std::string& text)
 {
-public:
-    explicit Debug(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Debug)
-    {}
-};
+    sink->write(Record::make(
+        level,
+        System::PackedTime::now(),
+        System::CurrentThread::id(),
+        text
+    ));
+}
 
-class Info final
-    : public LogWrapperBase
+inline void writeln(ISink* sink, Level level, std::string&& text)
 {
-public:
-    explicit Info(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Info)
-    {}
-};
+    sink->write(Record::make(
+        level,
+        System::PackedTime::now(),
+        System::CurrentThread::id(),
+        std::move(text)
+    ));
+}
 
-class Warning final
-    : public LogWrapperBase
+template <class... Args>
+void write(ISink* sink, Level level, std::string_view format, Args&&... args)
 {
-public:
-    explicit Warning(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Warning)
-    {}
-};
+    sink->write(Record::make(
+        level, 
+        System::PackedTime::now(), 
+        System::CurrentThread::id(), 
+        Format::vformat(format, Format::make_format_args(args...))
+    ));
+}
 
-class Error final
-    : public LogWrapperBase
+template <class... Args>
+void debug(ISink* sink, std::string_view format, Args&&... args)
 {
-public:
-    explicit Error(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Error)
-    {}
-};
+    if (sink->level() <= Level::Debug)
+        write(sink, Level::Debug, format, std::forward<Args>(args)...);
+}
 
-class Fatal final
-    : public LogWrapperBase
+template <class... Args>
+void info(ISink* sink, std::string_view format, Args&&... args)
 {
-public:
-    explicit Fatal(ILog* log) noexcept
-        : LogWrapperBase(log, Level::Fatal)
-    {}
+    if (sink->level() <= Level::Info)
+        write(sink, Level::Info, format, std::forward<Args>(args)...);
+}
+
+template <class... Args>
+void warning(ISink* sink, std::string_view format, Args&&... args)
+{
+    if (sink->level() <= Level::Warning)
+    {
+        write(sink, Level::Warning, format, std::forward<Args>(args)...);
+        sink->flush();
+    }
+}
+
+template <class... Args>
+void error(ISink* sink, std::string_view format, Args&&... args)
+{
+    if (sink->level() <= Level::Error)
+    {
+        write(sink, Level::Error, format, std::forward<Args>(args)...);
+        sink->flush();
+    }
+}
+
+template <class... Args>
+void fatal(ISink* sink, std::string_view format, Args&&... args)
+{
+    if (sink->level() <= Level::Fatal)
+    {
+        write(sink, Level::Fatal, format, std::forward<Args>(args)...);
+        sink->flush();
+    }
+}
+
+
+enum class ThreadSafe
+{
+    No,
+    Yes
 };
 
-} // namespace Log {}
 
-} // namespace Er {}
+struct IFormatter
+{
+    using Ptr = std::shared_ptr<IFormatter>;
 
-
-
-#define ErLogDebug(log, ...) \
-    (log->level() <= ::Er::Log::Level::Debug) && log->writef(::Er::Log::Level::Debug, __VA_ARGS__)
-
-#define ErLogInfo(log, ...) \
-    (log->level() <= ::Er::Log::Level::Info) && log->writef(::Er::Log::Level::Info, __VA_ARGS__)
-
-#define ErLogWarning(log, ...) \
-    (log->level() <= ::Er::Log::Level::Warning) && log->writef(::Er::Log::Level::Warning, __VA_ARGS__)
-
-#define ErLogError(log, ...) \
-    (log->level() <= ::Er::Log::Level::Error) && log->writef(::Er::Log::Level::Error, __VA_ARGS__)
-
-#define ErLogFatal(log, ...) \
-    (log->level() <= ::Er::Log::Level::Fatal) && log->writef(::Er::Log::Level::Fatal, __VA_ARGS__)
+    virtual ~IFormatter() = default;
+    virtual std::string format(const Record* r) const = 0;
+};
 
 
+struct IFilter
+{
+    using Ptr = std::shared_ptr<IFilter>;
 
+    virtual ~IFilter() = default;
+    virtual bool filter(const Record* r) const = 0;
+};
+
+
+struct SimpleFilter
+    : public IFilter
+{
+    ~SimpleFilter() = default;
+
+    bool filter(const Record* r) const override
+    {
+        return (r->level() >= m_lowest) && (r->level() <= m_highest);
+    }
+
+    static Ptr make(Level lowest, Level highest)
+    {
+        return std::shared_ptr<SimpleFilter>(new SimpleFilter(lowest, highest));
+    }
+
+private:
+    SimpleFilter(Level lowest, Level highest)
+        : m_lowest(lowest)
+        , m_highest(highest)
+    {
+    }
+
+    Level m_lowest;
+    Level m_highest;
+};
+
+
+EREBUS_EXPORT ITee::Ptr makeTee(ThreadSafe mode);
+EREBUS_EXPORT ILog::Ptr makeAsyncLogger();
+
+EREBUS_EXPORT ISink::Ptr makeFileSink(
+    ThreadSafe mode, 
+    std::string_view fileName,
+    IFormatter::Ptr formatter,
+    IFilter::Ptr filter = IFilter::Ptr{},
+    unsigned logsToKeep = 3, 
+    std::uint64_t maxFileSize = std::numeric_limits<std::uint64_t>::max()
+);
+
+
+EREBUS_EXPORT ISink::Ptr makeOStreamSink(std::ostream& stream, IFormatter::Ptr formatter, IFilter::Ptr filter = IFilter::Ptr{});
+
+#if ER_WINDOWS
+EREBUS_EXPORT ISink::Ptr makeDebuggerSink(IFormatter::Ptr formatter, IFilter::Ptr filter);
+#endif
+
+
+} // namespace Er::Log {}
+
+#include <erebus/log/simple_formatter.hxx>

@@ -1,6 +1,6 @@
-#include <erebus/log2.hxx>
+#include <erebus/log.hxx>
 
-namespace Er::Log2
+namespace Er::Log
 {
 
 namespace
@@ -55,11 +55,11 @@ public:
 
             switch (r->level())
             {
-            case Log2::Level::Debug: ss << "D"; break;
-            case Log2::Level::Info: ss << "I"; break;
-            case Log2::Level::Warning: ss << "W"; break;
-            case Log2::Level::Error: ss << "E"; break;
-            case Log2::Level::Fatal: ss << "!"; break;
+            case Log::Level::Debug: ss << "D"; break;
+            case Log::Level::Info: ss << "I"; break;
+            case Log::Level::Warning: ss << "W"; break;
+            case Log::Level::Error: ss << "E"; break;
+            case Log::Level::Fatal: ss << "!"; break;
             default: ss << "?"; break;
             }
 
@@ -121,4 +121,4 @@ IFormatter::Ptr SimpleFormatter::make(SimpleFormatter::Options options, unsigned
     return std::make_shared<SimpleFormatterImpl>(options, indentSize);
 }
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}

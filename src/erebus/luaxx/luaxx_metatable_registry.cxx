@@ -36,7 +36,7 @@ public:
             if (r.second)
             {
                 // really added
-                ErLogDebug(m_log, "Registered type [%s] -> %p", name, entry);
+                Er::Log::debug(m_log, "Registered type [{}] -> {}", name, Format::ptr(entry));
             }
 
             return entry;

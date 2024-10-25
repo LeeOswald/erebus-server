@@ -1,7 +1,7 @@
-#include <erebus/log2.hxx>
+#include <erebus/log.hxx>
 #include <erebus/util/utf16.hxx>
 
-namespace Er::Log2
+namespace Er::Log
 {
 
 namespace
@@ -54,4 +54,4 @@ EREBUS_EXPORT ISink::Ptr makeDebuggerSink(IFormatter::Ptr formatter, IFilter::Pt
     return std::make_shared<DebuggerSink>(formatter, filter);
 }
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}

@@ -21,7 +21,6 @@ add_executable(
     exception.cpp
     flags.cpp
     inifile.cpp
-    log.cpp
     lrucache.cpp
     luaxx_class.cpp
     luaxx_error.cpp

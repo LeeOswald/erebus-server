@@ -197,24 +197,12 @@ EREBUS_EXPORT std::string formatException(const Er::Exception& e) noexcept
 
 EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const std::exception& e) noexcept
 {
-    if (!log)
-        return;
-
-    if (level >= log->level())
-    {
-        log->write(level, formatException(e));
-    }
+    Log::writeln(log, level, formatException(e));
 }
 
 EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const Er::Exception& e) noexcept
 {
-    if (!log)
-        return;
-
-    if (level >= log->level())
-    {
-        log->write(level, formatException(e));
-    }
+    Log::write(log, level, formatException(e));
 }
 
 } // namespace Util {}

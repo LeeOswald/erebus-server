@@ -3,6 +3,8 @@
 #include <erebus/luaxx/luaxx_int64.hxx>
 #include <erebus/luaxx/luaxx_property.hxx>
 
+#include <sstream>
+
 namespace Er
 {
 
@@ -52,8 +54,8 @@ int LuaState::_print(lua_State* L)
 
 int LuaState::print()
 {
-    Er::Log::Info log(m_log);
-    log << "[Lua] ";
+    std::ostringstream ss;
+    ss << "[Lua] ";
 
     int n = lua_gettop(m_l);  // number of arguments
     int i;
@@ -62,12 +64,14 @@ int LuaState::print()
         size_t l;
         const char* s = luaL_tolstring(m_l, i, &l);  // convert it to string 
         if (i > 1)  // not the first arg
-            log << " ";
+            ss << " ";
 
-        log << s;
+        ss << s;
         
         lua_pop(m_l, 1);
     }
+
+    Log::writeln(m_log, Log::Level::Info, ss.str());
 
     return 0;
 }

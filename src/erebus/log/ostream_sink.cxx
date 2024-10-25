@@ -1,6 +1,6 @@
-#include <erebus/log2.hxx>
+#include <erebus/log.hxx>
 
-namespace Er::Log2
+namespace Er::Log
 {
 
 namespace
@@ -54,4 +54,4 @@ EREBUS_EXPORT ISink::Ptr makeOStreamSink(std::ostream& stream, IFormatter::Ptr f
     return std::make_shared<OStreamSink>(stream, formatter, filter);
 }
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}
