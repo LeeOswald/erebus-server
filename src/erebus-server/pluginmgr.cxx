@@ -35,7 +35,7 @@ Er::Server::IPlugin* PluginMgr::load(const std::string& path, const std::vector<
 #if ER_LINUX
         auto err = ::dlerror();
         if (err)
-            ErLogError(m_params.log, "%s", err); 
+            Er::Log::writeln(m_params.log, Log::Level::Error, err);
 #endif
         ErThrow(Er::format("Failed to load plugin [{}]", params.binary), Er::ExceptionProps::DecodedError(ec.message()));
     }

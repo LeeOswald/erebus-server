@@ -74,8 +74,9 @@ public:
         {
             Deleter d;
             d(m_h);
-            m_h = h;
         }
+
+        m_h = h;
     }
 
 private:

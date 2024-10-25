@@ -45,7 +45,7 @@ public:
         if (it != m_services.end())
             ErThrow(Er::format("Service for [{}] is already registered", id));
         
-        ErLogInfo(m_params.log, "Registered service %p for [%s]", service, id.c_str());
+        Er::Log::info(m_params.log, "Registered service {} for [{}]", Format::ptr(service), id);
 
         m_services.insert({ std::move(id), service });
     }
@@ -59,7 +59,7 @@ public:
         {
             if (it->second == service)
             {
-                ErLogInfo(m_params.log, "Unregistered service %p", service);
+                Er::Log::info(m_params.log, "Unregistered service {}", Format::ptr(service));
 
                 auto next = std::next(it);
                 m_services.erase(it);
@@ -74,7 +74,7 @@ public:
         }
 
         if (!success)
-            ErLogError(m_params.log, "Service % p is not registered", service);
+            Er::Log::error(m_params.log, "Service {} is not registered", Format::ptr(service));
     }
 
 private:
@@ -117,7 +117,7 @@ private:
         auto it = m_services.find(serviceId);
         if (it == m_services.end())
         {
-            m_params.log->writef(Er::Log::Level::Error, "No handlers for [%s]", serviceId.c_str());
+            Er::Log::error(m_params.log, "No handlers for [{}]", serviceId);
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -171,7 +171,7 @@ private:
         auto it = m_services.find(serviceId);
         if (it == m_services.end())
         {
-            m_params.log->writef(Er::Log::Level::Error, "No handlers for [%s]", serviceId.c_str());
+            Er::Log::error(m_params.log, "No handlers for [{}]", serviceId);
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -231,7 +231,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->writef(Er::Log::Level::Error, "No handlers for [%s]", id.c_str());
+            Er::Log::error(m_params.log, "No handlers for [{}]", id);
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
@@ -288,7 +288,7 @@ private:
         auto it = m_services.find(id);
         if (it == m_services.end())
         {
-            m_params.log->writef(Er::Log::Level::Error, "No handlers for [%s]", id.c_str());
+            Er::Log::error(m_params.log, "No handlers for [{}]", id);
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }

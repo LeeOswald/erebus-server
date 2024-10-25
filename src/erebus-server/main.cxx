@@ -266,7 +266,7 @@ int main(int argc, char* argv[], char* env[])
     try
     {
         auto user = Er::System::User::current();
-        Er::Log::info(g_log, "Starting as user %s", user.name);
+        Er::Log::info(g_log, "Starting as user {}", user.name);
 
         std::string root;
         std::string certificate;

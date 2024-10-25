@@ -29,10 +29,7 @@ public:
         , m_queue(MaxQueueSize)
         , m_worker([this](std::stop_token stop) { run(stop); })
     {
-        if (s_threadData.size() < m_instanceId + 1)
-            s_threadData.resize(m_instanceId + 1);
-        else
-            s_threadData[m_instanceId] = {};
+        *threadData(m_instanceId) = {};
     }
 
     void write(Record::Ptr r) override
@@ -40,7 +37,7 @@ public:
         if (r->level() < level())
             return;
 
-        r->setIndent(s_threadData[m_instanceId].indent);
+        r->setIndent(threadData(m_instanceId)->indent);
 
         {
             std::unique_lock l(m_mutexQueue);
@@ -78,13 +75,15 @@ public:
 
     void indent() override
     {
-        ++s_threadData[m_instanceId].indent;
+        auto td = threadData(m_instanceId);
+        ++td->indent;
     }
 
     void unindent() override
     {
-        ErAssert(s_threadData[m_instanceId].indent > 0);
-        --s_threadData[m_instanceId].indent;
+        auto td = threadData(m_instanceId);
+        ErAssert(td->indent > 0);
+        --td->indent;
     }
 
 private:
@@ -177,6 +176,14 @@ private:
         {
         }
     };
+
+    static ThreadData* threadData(std::size_t instanceId)
+    {
+        if (s_threadData.size() < instanceId + 1)
+            s_threadData.resize(instanceId + 1);
+        
+        return &s_threadData[instanceId];
+    }
 
     static const std::size_t MaxQueueSize = 1024;
     static std::atomic<std::size_t> s_instances;

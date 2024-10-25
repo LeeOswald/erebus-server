@@ -86,7 +86,7 @@ void ServiceBase::receiveRpcs()
 {
     Er::System::CurrentThread::setName("RPCReceiver");
 
-    Er::Log::Debug(m_params.log) << "RPC receiver thread started";
+    Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC receiver thread started");
 
     createRpcs();
 
@@ -100,7 +100,7 @@ void ServiceBase::receiveRpcs()
         // tells us whether there is any kind of event or cq_ is shutting down.
         if (!m_queue->Next((void**)&tagInfo.tagProcessor, &tagInfo.ok))
         {
-            m_params.log->write(Er::Log::Level::Debug, "No more tags in completion queue");
+            Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "No more tags in completion queue");
             break;
         }
 
@@ -115,13 +115,13 @@ void ServiceBase::receiveRpcs()
         m_incoming.notify_one();
     }
 
-    Er::Log::Debug(m_params.log) << "RPC receiver thread exited";
+    Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC receiver thread exited");
 }
 
 void ServiceBase::processRpcs()
 {
     Er::System::CurrentThread::setName("RPCProcessor");
-    Er::Log::Debug(m_params.log) << "RPC processor thread started";
+    Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC processor thread started");
 
     while (!m_stop)
     {
@@ -144,7 +144,7 @@ void ServiceBase::processRpcs()
         }
     }
 
-    Er::Log::Debug(m_params.log) << "RPC processor thread exited";
+    Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC processor thread exited");
 }
 
 void ServiceBase::genericDone(Erp::Server::Rpc::RpcBase& rpc, bool rpcCancelled)

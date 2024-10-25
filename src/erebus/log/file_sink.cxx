@@ -32,7 +32,8 @@ void rotateLogs(std::string_view logFileName, int keepCount)
     for (int i = keepCount; i > 0; --i)
     {
         std::string destName = std::string(logFileName) + std::string(".") + std::to_string(i);
-        std::filesystem::remove(destName);
+        std::error_code ec;
+        std::filesystem::remove(destName, ec);
         
         std::string srcName = std::string(logFileName);
         if (i > 0)
@@ -41,7 +42,9 @@ void rotateLogs(std::string_view logFileName, int keepCount)
             srcName.append(std::to_string(i - 1));
         }
         
-        std::filesystem::rename(srcName, destName);
+        std::filesystem::rename(srcName, destName, ec);
+        // no error handling here
+        // we only care if log file creation fails
     }
 }
 
