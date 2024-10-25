@@ -1,6 +1,7 @@
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
 
+#include <mutex>
 #include <shared_mutex>
 #include <unordered_map>
 

@@ -141,7 +141,7 @@ private:
     void makeLog()
     {
 #if ER_POSIX
-        m_file.reset(::open(m_fileName, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH));
+        m_file.reset(::open(m_fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH));
 #elif ER_WINDOWS
         m_file.reset(::CreateFileW(Er::Util::utf8ToUtf16(m_fileName).c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0));
 #endif

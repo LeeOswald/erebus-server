@@ -11,10 +11,7 @@
 #include <unordered_map>
 
 
-namespace Erp
-{
-
-namespace Desktop
+namespace Erp::Desktop
 {
 
 
@@ -104,6 +101,4 @@ private:
 };
     
 
-} // namespace Desktop {}
-
-} // namespace Erp {}
+} // namespace Erp::Desktop {}

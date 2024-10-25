@@ -133,14 +133,14 @@ Er::PropertyBag ProcessDetailsService::killProcess(const Er::PropertyBag& args)
     {
         auto decoded = Er::Util::posixErrorToString(r);
         
-        ErLogWarning(m_log, "kill(%zu, %d) -> %d [%s]", *pid, signo, r, decoded.c_str());
+        Er::Log::warning(m_log, "kill({}, {}) -> {} [{}]", *pid, signo, r, decoded);
         
         if (!decoded.empty())
             Er::addProperty<Er::ProcessMgr::Props::ErrorText>(result, std::move(decoded));
     }
     else
     {
-        ErLogInfo(m_log, "kill(%zu, %d) -> ok", *pid, signo);
+        Er::Log::info(m_log, "kill({}, {}) -> ok", *pid, signo);
     }
 
     return result;

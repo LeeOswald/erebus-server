@@ -17,12 +17,8 @@
 #include <boost/process/search_path.hpp>
 
 
-namespace Erp
+namespace Erp::Desktop
 {
-
-namespace Desktop
-{
-
 
 namespace
 {
@@ -128,7 +124,7 @@ void DesktopFileCache::addXdgDataDirs(const std::string& packed)
         auto pathStr = path.string();
         if (::access(pathStr.c_str(), R_OK) == -1)
         {
-            Er::Log::Warning(m_log) << "failed to access " << pathStr;
+            Er::Log::warning(m_log, "failed to access {}", pathStr);
             continue;
         }
 
@@ -169,7 +165,7 @@ void DesktopFileCache::addUserDirs(std::stop_token stop)
         auto pathStr = path.string();
         if (::access(pathStr.c_str(), R_OK) == -1)
         {
-            Er::Log::Warning(m_log) << "failed to access " << pathStr;
+            Er::Log::warning(m_log, "failed to access {}", pathStr);
             continue;
         }
 
@@ -201,7 +197,7 @@ void DesktopFileCache::worker(std::stop_token stop)
 
 void DesktopFileCache::parseFiles(const std::string& dir, std::stop_token stop)
 {
-    ErLogDebug(m_log, "Including [%s]", dir.c_str());
+    Er::Log::debug(m_log, "Including [{}]", dir);
 
     std::vector<std::string> filePaths;
     Er::Util::searchFor(
@@ -214,7 +210,7 @@ void DesktopFileCache::parseFiles(const std::string& dir, std::stop_token stop)
         { 
             if (!stop.stop_requested() && std::regex_match(path, DesktopFilePattern))
             {
-                Er::Log::Debug(m_log) << "adding " << path;
+                Er::Log::debug(m_log, "adding {}", path);
                 return true;
             }
             return false;
@@ -252,7 +248,7 @@ DesktopFile::Ptr DesktopFileCache::parseFile(const std::string& filePath) const
     boost::iostreams::mapped_file_source file(filePath);
     if (!file.is_open())
     {
-        Er::Log::Warning(m_log) << "Failed to open [" << filePath << "]";
+        Er::Log::warning(m_log, "Failed to open [{}]", filePath);
         return DesktopFile::Ptr();
     }
     
@@ -266,7 +262,7 @@ DesktopFile::Ptr DesktopFileCache::parseFile(const std::string& filePath) const
     auto exec = Er::Util::IniFile::lookup(ini, std::string_view("Desktop Entry"), std::string_view("Exec"));
     if (!exec) 
     {
-        Er::Log::Warning(m_log) << "No Exec field in " << filePath;
+        Er::Log::warning(m_log, "No Exec field in {}", filePath);
         return std::shared_ptr<DesktopFile>();
     }
 
@@ -275,25 +271,25 @@ DesktopFile::Ptr DesktopFileCache::parseFile(const std::string& filePath) const
     auto exeName = extractExeNameFromCommand(*exec);
     if (exeName.empty())
     {
-        Er::Log::Warning(m_log) << "Unable to extract executable name from [" << *exec << "] in " << filePath;
+        Er::Log::warning(m_log, "Unable to extract executable name from [{}] in {}", *exec, filePath);
         return std::shared_ptr<DesktopFile>();
     }
 
     auto exePath = findExePath(exeName);
     if (!exePath)
     {
-        Er::Log::Warning(m_log) << "Failed to find executable [" << *exec << "] for " << filePath;
+        Er::Log::warning(m_log, "Failed to find executable [{}] for {}", *exec, filePath);
         return std::shared_ptr<DesktopFile>();
     }
 
-    Er::Log::Debug(m_log) << "Found executable [" << exeName << "] -> [" << *exePath << "]";
+    Er::Log::debug(m_log, "Found executable [{}] -> [{}]", exeName, *exePath);
 
     auto realExec = Er::Util::resolveSymlink(*exePath);
     if (realExec)
     {
         e->real_exec = *realExec;
         if (e->real_exec != *exePath)
-            Er::Log::Debug(m_log) << "Resolved [" << *exePath << "] -> [" << *realExec << "]";
+            Er::Log::debug(m_log, "Resolved [{}] -> [{}]", *exePath, *realExec);
     }
     else
     {
@@ -306,7 +302,7 @@ DesktopFile::Ptr DesktopFileCache::parseFile(const std::string& filePath) const
 
     e->icon = *icon;
 
-    Er::Log::Info(m_log) << "Icon [" << e->real_exec << "] -> [" << e->icon << "]";
+    Er::Log::info(m_log, "Icon [{}] -> [{}]", e->real_exec, e->icon);
 
     return e;
 }
@@ -375,6 +371,4 @@ DesktopFile::Ptr DesktopFileCache::lookupByPath(const std::string& path)
 
 
 
-} // namespace Desktop {}
-
-} // namespace Erp {}
+} // namespace Erp::Desktop {}

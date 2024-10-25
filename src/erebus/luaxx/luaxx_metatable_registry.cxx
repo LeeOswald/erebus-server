@@ -1,6 +1,7 @@
 #include <erebus/log.hxx>
 #include <erebus/luaxx/luaxx_metatable_registry.hxx>
 
+#include <mutex>
 #include <shared_mutex>
 #include <unordered_map>
 

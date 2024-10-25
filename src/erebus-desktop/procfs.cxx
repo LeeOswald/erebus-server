@@ -6,10 +6,7 @@
 #include <fstream>
 #include <vector>
 
-namespace Erp
-{
-
-namespace Desktop
+namespace Erp::Desktop
 {
 
 
@@ -52,7 +49,7 @@ std::string ProcFs::readComm(uintptr_t pid) const noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, "comm for process %zu could not be read: %s", pid, e.what());
+        Er::Log::debug(m_log, "comm for process {} could not be read: {}", pid, e.what());
     }
 
     return std::string();
@@ -71,7 +68,7 @@ std::string ProcFs::readExePath(uintptr_t pid) const noexcept
         if (::lstat(path.c_str(), &sb) == -1)
         {
             auto e = errno;
-            ErLogDebug(m_log, "exe link for process %zu could not be opened: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
+            Er::Log::debug(m_log, "exe link for process {} could not be opened: {} {}", pid, e, Er::Util::posixErrorToString(e));
             return std::string();
         }
         else
@@ -86,7 +83,7 @@ std::string ProcFs::readExePath(uintptr_t pid) const noexcept
             if (r < 0)
             {
                 auto e = errno;
-                ErLogDebug(m_log, "Failed to read exe link for process %zu: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
+                Er::Log::debug(m_log, "Failed to read exe link for process {}: {} {}", pid, e, Er::Util::posixErrorToString(e));
                 return std::string();
             }
 
@@ -97,7 +94,7 @@ std::string ProcFs::readExePath(uintptr_t pid) const noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, "exe link for process %zu could not be read: %s", pid, e.what());
+        Er::Log::debug(m_log, "exe link for process {} could not be read: {}", pid, e.what());
     }
 
     return std::string();
@@ -140,7 +137,7 @@ std::unordered_map<std::string, std::string> ProcFs::readEnviron(uint64_t pid) c
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, "environ for process %zu could not be read: %s", pid, e.what());
+        Er::Log::debug(m_log, "environ for process {} could not be read: {}", pid, e.what());
     }
 
     return env;
@@ -148,6 +145,4 @@ std::unordered_map<std::string, std::string> ProcFs::readEnviron(uint64_t pid) c
 
 
 
-} // namespace Desktop {}
-
-} // namespace Erp {}
+} // namespace Erp::Desktop {}

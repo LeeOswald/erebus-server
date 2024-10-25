@@ -1,6 +1,7 @@
 #include <erebus/log.hxx>
 #include <erebus/null_mutex.hxx>
 
+#include <mutex>
 #include <shared_mutex>
 #include <unordered_map>
 

@@ -1,16 +1,12 @@
 #pragma once
 
 #include <erebus-desktop/erebus-desktop.hxx>
-
 #include <erebus/log.hxx>
 
+#include <chrono>
 
-namespace Er
+namespace Er::Desktop
 {
-
-namespace Desktop
-{
-
 
 
 struct IIconCacheIpc
@@ -66,7 +62,5 @@ EREBUSDESKTOP_EXPORT std::string makeIconCachePath(const std::string& cacheDir, 
 
 
 
-} // namespace Desktop {}
-
-} // namespace Er {}
+} // namespace Er::Desktop {}
 

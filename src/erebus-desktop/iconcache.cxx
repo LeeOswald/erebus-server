@@ -7,10 +7,7 @@
 #include <filesystem>
 #include <sys/stat.h>
 
-namespace Erp
-{
-
-namespace Desktop
+namespace Erp::Desktop
 {
 
 
@@ -61,7 +58,7 @@ std::shared_ptr<IconCache::IconInfo> IconCache::searchCacheDir(const std::string
         return existing->second;
     }
 
-    Er::Log::Info(m_log) << "Found icon [" << name << "] -> [" << iconPath << "]";
+    Er::Log::info(m_log, "Found icon [{}] -> [{}]", name, iconPath);
 
     auto info = std::make_shared<IconInfo>(std::move(iconPath));
     list.insert({ name, info });
@@ -84,7 +81,7 @@ std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& n
                 { 
                     if (IconInfo::Clock::now() - existing->second->timestamp < IconRequestExpired)
                     {
-                        Er::Log::Debug(m_log) << "Icon [" << name << "] has already been requested";
+                        Er::Log::debug(m_log, "Icon [{}] has already been requested", name);
                         return existing->second; // already requested
                     }
                 }
@@ -96,7 +93,7 @@ std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& n
 
         if (m_iconCacheIpc->requestIcon(Er::Desktop::IIconCacheIpc::IconRequest(name, uint16_t(size)), Timeout))
         {
-            Er::Log::Debug(m_log) << "Requested icon [" << name << "]";
+            Er::Log::debug(m_log, "Requested icon [{}]", name);
 
             // mark icon as 'requested'
             {
@@ -118,13 +115,13 @@ std::shared_ptr<IconCache::IconInfo> IconCache::requestIcon(const std::string& n
         Er::Util::logException(m_log, Er::Log::Level::Error, e);
     }
 
-    Er::Log::Warning(m_log) << "requestIcon() failed";
+    Er::Log::warning(m_log, "requestIcon() failed");
     return std::make_shared<IconInfo>(Er::Desktop::IconState::NotPresent);
 }
 
 void IconCache::iconWorker(std::stop_token stop) noexcept
 {
-    Er::Log::Debug(m_log) << "Icon cache worker started";
+    Er::Log::debug(m_log, "Icon cache worker started");
     Er::System::CurrentThread::setName("IconWorker");
 
     while (!stop.stop_requested())
@@ -132,7 +129,7 @@ void IconCache::iconWorker(std::stop_token stop) noexcept
         receiveIcon();
     }
 
-    Er::Log::Debug(m_log) << "IconWorker exited";
+    Er::Log::debug(m_log, "IconWorker exited");
 }
 
 void IconCache::receiveIcon() noexcept
@@ -153,12 +150,12 @@ void IconCache::receiveIcon() noexcept
 
             if (response->result != Er::Desktop::IIconCacheIpc::IconResponse::Result::Ok)
             {
-                Er::Log::Info(m_log) << "Icon [" << response->request.name << "] was not found";
+                Er::Log::info(m_log, "Icon [{}] was not found", response->request.name);
                 list.insert({ response->request.name, std::make_shared<IconInfo>(Er::Desktop::IconState::NotPresent) });
             }
             else
             {
-                Er::Log::Info(m_log) << "Found icon [" << response->request.name << "] -> [" << response->path << "]";
+                Er::Log::info(m_log, "Found icon [{}] -> [{}]", response->request.name, response->path);
                 list.insert({ response->request.name, std::make_shared<IconInfo>(response->path) });
             }
         }
@@ -208,7 +205,7 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
 
         if (existing)
         {
-            Er::Log::Debug(m_log) << "Found cached icon [" << iconInfo->path << "]";
+            Er::Log::debug(m_log, "Found cached icon [{}]", iconInfo->path);
             return *existing;
         }
 
@@ -226,20 +223,18 @@ std::shared_ptr<IconCache::IconData> IconCache::lookupByName(const std::string& 
             // failed for whatever reason; don't try to load this icon file again
             auto dummy = std::make_shared<IconData>(Er::Desktop::IconState::NotPresent);
             cache.put(iconInfo->path, dummy);
-            Er::Log::Error(m_log) << "Could not load icon file [" << iconInfo->path << "]";
+            Er::Log::error(m_log, "Could not load icon file [{}]", iconInfo->path);
             return dummy;
         }
 
         // add to LRU cache
         auto icon = std::make_shared<IconData>(std::move(data));
         cache.put(iconInfo->path, icon);
-        Er::Log::Info(m_log) << "Cached icon [" << iconInfo->path << "]";
+        Er::Log::info(m_log, "Cached icon [{}]", iconInfo->path);
         return icon;
     }
 }
 
 
 
-} // namespace Desktop {}
-
-} // namespace Erp {}
+} // namespace Erp::Desktop {}

@@ -7,10 +7,7 @@
 #include <erebus/exception.hxx>
 
 
-namespace Erp
-{
-
-namespace Desktop
+namespace Erp::Desktop
 {
 
 
@@ -111,6 +108,4 @@ Er::PropertyBag Service::packIcon(std::shared_ptr<IconCache::IconData> icon)
 }
 
 
-} // namespace Desktop {}
-
-} // namespace Erp {}
+} // namespace Erp::Desktop {}

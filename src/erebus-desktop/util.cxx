@@ -6,10 +6,7 @@
 
 
 
-namespace Er
-{
-
-namespace Desktop
+namespace Er::Desktop
 {
 
 
@@ -35,6 +32,4 @@ EREBUSDESKTOP_EXPORT std::string makeIconCachePath(const std::string& cacheDir, 
     return path.string();
 }
 
-} // namespace Desktop {}
-
-} // namespace Er {}
+} // namespace Er::Desktop {}

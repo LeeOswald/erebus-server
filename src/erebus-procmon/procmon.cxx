@@ -1,6 +1,6 @@
 #include <erebus/exception.hxx>
 #include <erebus/log.hxx>
-#include <erebus/util/format.hxx>
+#include <erebus/util/cformat.hxx>
 
 #include "process_spy.hxx"
 
@@ -77,7 +77,7 @@ private:
             if ((formatted.length() > 0) && (formatted[formatted.length() - 1] == '\n'))
                 formatted.resize(formatted.length() - 1);
         
-            g_log->write(l, std::move(formatted));
+            Er::Log::writeln(g_log, l, std::move(formatted));
         }
         catch (std::exception&)
         {

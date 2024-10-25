@@ -4,10 +4,7 @@
 #include <boost/interprocess/ipc/message_queue.hpp>
 #include <boost/thread/thread_time.hpp>
 
-namespace Er
-{
-
-namespace Desktop
+namespace Er::Desktop
 {
 
 namespace
@@ -204,6 +201,4 @@ EREBUSDESKTOP_EXPORT std::shared_ptr<IIconCacheIpc> openIconCacheIpc(const char*
     return std::make_shared<IconCacheIpcImpl>(IconCacheIpcImpl::Open, queueNameIn, queueNameOut);
 }
 
-} // namespace Desktop {}
-
-} // namespace Er {}
+} // namespace Er::Desktop {}

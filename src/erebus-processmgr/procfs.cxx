@@ -61,7 +61,7 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
         if (::stat64(path.c_str(), &fileStat) == -1)
         {
             auto e = errno;
-            ErLogDebug(m_log, "Process %zu not found: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
+            Er::Log::debug(m_log, "Process {} not found: {} {}", pid, e, Er::Util::posixErrorToString(e));
             result.error = "Process not found";
             return result;
         }
@@ -74,7 +74,7 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
         if (!stat.good())
         {
             auto e = errno;
-            ErLogDebug(m_log, "Process %zu could not be opened: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
+            Er::Log::debug(m_log, "Process {} could not be opened: {} {}", pid, e, Er::Util::posixErrorToString(e));
             result.error = "Failed to open process";
             return result;
         }
@@ -96,7 +96,7 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
                     end = std::strrchr(end, ')'); // avoid process names like ":-) 1 2 3"
                     if (!end || !*end)
                     {
-                        ErLogDebug(m_log, "Invalid stat record for process %zu: [%s]", pid, s.c_str());
+                        Er::Log::debug(m_log, "Invalid stat record for process {}: [{}]", pid, s);
                         result.error = "Invalid process stat record";
                         return result; 
                     }
@@ -283,7 +283,7 @@ Stat ProcFs::readStat(uintptr_t pid) noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, "stat for process %zu could not be read: %s", pid, e.what());
+        Er::Log::debug(m_log, "stat for process {} could not be read: {}", pid, e.what());
         result.error = e.what();
     }
 
@@ -309,7 +309,7 @@ std::string ProcFs::readComm(uintptr_t pid) noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, "comm for process %zu could not be read: %s", pid, e.what());
+        Er::Log::debug(m_log, "comm for process {} could not be read: {}", pid, e.what());
     }
 
     return std::string();
@@ -331,7 +331,7 @@ std::string ProcFs::readExePath(uintptr_t pid) noexcept
         if (::lstat(path.c_str(), &sb) == -1)
         {
             auto e = errno;
-            ErLogDebug(m_log, "exe link for process %zu could not be opened: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
+            Er::Log::debug(m_log, "exe link for process {} could not be opened: {} {}", pid, e, Er::Util::posixErrorToString(e));
             return std::string();
         }
         else
@@ -346,7 +346,7 @@ std::string ProcFs::readExePath(uintptr_t pid) noexcept
             if (r < 0)
             {
                 auto e = errno;
-                ErLogDebug(m_log, "Failed to read exe link for process %zu: %d %s", pid, e, Er::Util::posixErrorToString(e).c_str());
+                Er::Log::debug(m_log, "Failed to read exe link for process {}: {} {}", pid, e, Er::Util::posixErrorToString(e));
                 return std::string();
             }
 
@@ -357,7 +357,7 @@ std::string ProcFs::readExePath(uintptr_t pid) noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, "exe link for process %zu could not be read: %s", pid, e.what());
+        Er::Log::debug(m_log, "exe link for process {} could not be read: {}", pid, e.what());
     }
 
     return std::string();
@@ -379,7 +379,7 @@ std::string ProcFs::readCmdLine(uintptr_t pid) noexcept
         std::ifstream stream(path);
         if (!stream.good())
         {
-            ErLogDebug(m_log, "Failed to open cmdline for process %zu", pid);
+            Er::Log::debug(m_log, "Failed to open cmdline for process {}", pid);
         }
         else
         {
@@ -407,7 +407,7 @@ std::string ProcFs::readCmdLine(uintptr_t pid) noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, "cmdline for process %zu could not be read: %s", pid, e.what());
+        Er::Log::debug(m_log, "cmdline for process {} could not be read: {}", pid, e.what());
     }
 
     return std::string();
@@ -427,7 +427,7 @@ std::vector<std::string> ProcFs::readEnv(uint64_t pid) noexcept
         std::ifstream file(path);
         if (!file.is_open())
         {
-            ErLogDebug(m_log, "environ for process %zu could not be read", pid);
+            Er::Log::debug(m_log, "environ for process {} could not be read", pid);
         }
         else
         {
@@ -440,7 +440,7 @@ std::vector<std::string> ProcFs::readEnv(uint64_t pid) noexcept
     }
     catch (std::exception& e)
     {
-        ErLogDebug(m_log, "environ for process %zu could not be read: %s", pid, e.what());
+        Er::Log::debug(m_log, "environ for process {} could not be read: {}", pid, e.what());
     }
 
     return env;
@@ -473,7 +473,7 @@ std::vector<uintptr_t> ProcFs::enumeratePids() noexcept
             }
             catch (std::exception& e)
             {
-                ErLogDebug(m_log, "Failed to parse PID %s: %s", ent->d_name, e.what());
+                Er::Log::debug(m_log, "Failed to parse PID {}: {}", ent->d_name, e.what());
                 continue;
             }
 
@@ -503,7 +503,7 @@ uint64_t ProcFs::getBootTimeImpl() noexcept
     std::ifstream stream(path);
     if (!stream.good())
     {
-        ErLogError(m_log, "Failed to open %s", path.c_str());
+        Er::Log::error(m_log, "Failed to open {}", path);
         return 0;
     }
     else
@@ -554,7 +554,7 @@ CpuTimesAll ProcFs::readCpuTimes() noexcept
         std::ifstream stream(path);
         if (!stream.good())
         {
-            ErLogError(m_log, "Failed to open %s", path.c_str());
+            Er::Log::error(m_log, "Failed to open {}", path);
             return all;
         }
 
@@ -661,7 +661,7 @@ MemStats ProcFs::readMemStats() noexcept
         std::ifstream stream(path);
         if (!stream.good())
         {
-            ErLogError(m_log, "Failed to open %s", path.c_str());
+            Er::Log::error(m_log, "Failed to open {}", path);
             return mem;
         }
 

@@ -16,10 +16,7 @@
 #endif
 
 
-namespace Er
-{
-
-namespace Desktop
+namespace Er::Desktop
 {
 
 enum class IconSize : uint32_t
@@ -120,6 +117,4 @@ static const std::string_view QueryIcon = "QueryIcon";
 
 } // namespace Requests {}
 
-} // namespace Desktop {}
-
-} // namespace Er {}
+} // namespace Er::Desktop {}

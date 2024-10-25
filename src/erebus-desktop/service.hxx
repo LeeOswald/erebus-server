@@ -4,10 +4,7 @@
 #include <erebus-srv/erebus-srv.hxx>
 
 
-namespace Erp
-{
-
-namespace Desktop
+namespace Erp::Desktop
 {
 
 
@@ -43,6 +40,4 @@ private:
 };
 
 
-} // namespace Desktop {}
-
-} // namespace Erp {}
+} // namespace Erp::Desktop {}

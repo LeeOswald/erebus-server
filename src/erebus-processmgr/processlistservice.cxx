@@ -178,7 +178,7 @@ void ProcessListService::dropStaleStreams(Session* session) noexcept
         if (d.count() > kStreamTimeoutSeconds)
         {
             auto next = std::next(it);
-            ErLogWarning(m_log, "Dropping stale stream %d", it->first);
+            Er::Log::warning(m_log, "Dropping stale stream {}", it->first);
             session->streams.erase(it);
             it = next;
         }
@@ -199,7 +199,7 @@ void ProcessListService::dropStaleSessions() noexcept
         if (d.count() > kSessionTimeoutSeconds)
         {
             auto next = std::next(it);
-            ErLogWarning(m_log, "Dropping stale session %d", it->first);
+            Er::Log::warning(m_log, "Dropping stale session {}", it->first);
             m_sessions.erase(it);
             it = next;
         }
