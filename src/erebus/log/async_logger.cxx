@@ -21,23 +21,27 @@ class AsyncLogger
 public:
     ~AsyncLogger()
     {
-        s_instances--;
+        releaseInstanceId(m_instanceId);
     }
 
     AsyncLogger()
-        : m_instanceId(makeInstanceId())
+        : m_instanceId(allocateInstanceId())
         , m_queue(MaxQueueSize)
         , m_worker([this](std::stop_token stop) { run(stop); })
     {
-        *threadData(m_instanceId) = {};
     }
 
     void write(Record::Ptr r) override
     {
+        if (!r) [[unlikely]]
+            return;
+
         if (r->level() < level())
             return;
 
-        r->setIndent(threadData(m_instanceId)->indent);
+        auto indent = threadData().indent;
+        if (indent != r->indent())
+            r = Record::setIndent(r, indent);
 
         {
             std::unique_lock l(m_mutexQueue);
@@ -75,23 +79,18 @@ public:
 
     void indent() override
     {
-        auto td = threadData(m_instanceId);
-        ++td->indent;
+        auto& td = threadData();
+        ++td.indent;
     }
 
     void unindent() override
     {
-        auto td = threadData(m_instanceId);
-        ErAssert(td->indent > 0);
-        --td->indent;
+        auto& td = threadData();
+        ErAssert(td.indent > 0);
+        --td.indent;
     }
 
 private:
-    static std::size_t makeInstanceId() noexcept
-    {
-        return s_instances.fetch_add(1, std::memory_order_relaxed);
-    }
-
     void run(std::stop_token stop)
     {
         System::CurrentThread::setName("Logger");
@@ -157,13 +156,6 @@ private:
         }
     }
 
-    struct ThreadData
-    {
-        unsigned indent = 0;
-
-        ThreadData() noexcept = default;
-    };
-
     struct SinkData
     {
         std::string name;
@@ -177,17 +169,81 @@ private:
         }
     };
 
-    static ThreadData* threadData(std::size_t instanceId)
+    struct GlobalData
+        : public NonCopyable
     {
-        if (s_threadData.size() < instanceId + 1)
-            s_threadData.resize(instanceId + 1);
+        struct InstanceData
+        {
+            static const std::size_t InvalidInstanceId = std::numeric_limits<std::size_t>::max();
+
+            std::size_t instanceId = InvalidInstanceId;
+
+            constexpr InstanceData() noexcept = default;
+        };
+
+        std::mutex mutex;
+        std::vector<InstanceData> instanceData;
+
+        GlobalData() noexcept = default;
+    };
+
+    [[nodiscard]] static GlobalData& globalData() noexcept
+    {
+        static GlobalData gd;
+        return gd;
+    }
+
+    [[nodiscard]] static std::size_t allocateInstanceId()
+    {
+        auto& g = globalData();
+        std::unique_lock l(g.mutex);
+
+        std::size_t id = 0;
+        for (;;)
+        {
+            if (g.instanceData.size() < id + 1)
+            {
+                g.instanceData.resize(id + 1);
+                ErAssert(g.instanceData[id].instanceId == GlobalData::InstanceData::InvalidInstanceId);
+                g.instanceData[id].instanceId = id;
+                return id;
+            }
+
+            if (g.instanceData[id].instanceId == GlobalData::InstanceData::InvalidInstanceId)
+            {
+                g.instanceData[id].instanceId = id;
+                return id;
+            }
+
+            ++id;
+        }
+    }
+
+    static void releaseInstanceId(std::size_t id) noexcept
+    {
+        auto& g = globalData();
+        std::unique_lock l(g.mutex);
+        g.instanceData[id].instanceId = GlobalData::InstanceData::InvalidInstanceId;
+    }
+
+    struct ThreadData
+    {
+        unsigned indent = 0;
+
+        ThreadData() noexcept = default;
+    };
+
+    [[nodiscard]] ThreadData& threadData()
+    {
+        static thread_local std::vector<ThreadData> td;
         
-        return &s_threadData[instanceId];
+        if (td.size() < m_instanceId + 1)
+            td.resize(m_instanceId + 1);
+
+        return td[m_instanceId];
     }
 
     static const std::size_t MaxQueueSize = 1024;
-    static std::atomic<std::size_t> s_instances;
-    static thread_local std::vector<ThreadData> s_threadData;
     
     const std::size_t m_instanceId;
     std::mutex m_mutexQueue;
@@ -198,9 +254,6 @@ private:
     std::vector<SinkData> m_sinks;
     std::jthread m_worker;
 };
-
-std::atomic<std::size_t> AsyncLogger::s_instances = 0;
-thread_local std::vector<AsyncLogger::ThreadData> AsyncLogger::s_threadData;
 
 } // namespace {}
 
