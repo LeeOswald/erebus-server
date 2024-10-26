@@ -12,61 +12,51 @@ namespace
 
 void assignPropertyEmpty(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Empty));
     out.clear_value();
 }
 
 void assignPropertyBool(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Bool));
     out.set_v_bool(get<Bool>(in.value) == True);
 }
 
 void assignPropertyInt32(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Int32));
     out.set_v_int32(get<int32_t>(in.value));
 }
 
 void assignPropertyUInt32(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::UInt32));
     out.set_v_uint32(get<uint32_t>(in.value));
 }
 
 void assignPropertyInt64(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Int64));
     out.set_v_int64(get<int64_t>(in.value));
 }
 
 void assignPropertyUInt64(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::UInt64));
     out.set_v_uint64(get<uint64_t>(in.value));
 }
 
 void assignPropertyDouble(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Double));
     out.set_v_double(get<double>(in.value));
 }
 
 void assignPropertyString(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::String));
     out.set_v_string(get<std::string>(in.value));
 }
 
 void assignPropertyBinary(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Binary));
     out.set_v_binary(get<Binary>(in.value).bytes());
 }
 
 void assignPropertyBools(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Bools));
     auto& src = get<BoolVector>(in.value);
     auto dst = out.mutable_a_bool();
     for (auto v : src)
@@ -77,7 +67,6 @@ void assignPropertyBools(erebus::Property& out, const Property& in)
 
 void assignPropertyInt32s(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Int32s));
     auto& src = get<Int32Vector>(in.value);
     auto dst = out.mutable_a_int32();
     for (auto v : src)
@@ -88,7 +77,6 @@ void assignPropertyInt32s(erebus::Property& out, const Property& in)
 
 void assignPropertyUInt32s(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::UInt32s));
     auto& src = get<UInt32Vector>(in.value);
     auto dst = out.mutable_a_uint32();
     for (auto v : src)
@@ -99,7 +87,6 @@ void assignPropertyUInt32s(erebus::Property& out, const Property& in)
 
 void assignPropertyInt64s(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Int64s));
     auto& src = get<Int64Vector>(in.value);
     auto dst = out.mutable_a_int64();
     for (auto v : src)
@@ -110,7 +97,6 @@ void assignPropertyInt64s(erebus::Property& out, const Property& in)
 
 void assignPropertyUInt64s(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::UInt64s));
     auto& src = get<UInt64Vector>(in.value);
     auto dst = out.mutable_a_uint64();
     for (auto v : src)
@@ -121,7 +107,6 @@ void assignPropertyUInt64s(erebus::Property& out, const Property& in)
 
 void assignPropertyDoubles(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Doubles));
     auto& src = get<DoubleVector>(in.value);
     auto dst = out.mutable_a_double();
     for (auto v : src)
@@ -132,7 +117,6 @@ void assignPropertyDoubles(erebus::Property& out, const Property& in)
 
 void assignPropertyStrings(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Strings));
     auto& src = get<StringVector>(in.value);
     auto dst = out.mutable_a_string();
     for (auto& v : src)
@@ -143,7 +127,6 @@ void assignPropertyStrings(erebus::Property& out, const Property& in)
 
 void assignPropertyBinaries(erebus::Property& out, const Property& in)
 {
-    out.set_type(static_cast<uint32_t>(Er::PropertyType::Binaries));
     auto& src = get<BinaryVector>(in.value);
     auto dst = out.mutable_a_binary();
     for (auto& v : src)
@@ -362,6 +345,24 @@ void assignProperty(erebus::Property& out, const Property& source)
         &assignPropertyBinaries
     };
 
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Empty) == 0);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Bool) == 1);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Int32) == 2);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::UInt32) == 3);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Int64) == 4);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::UInt64) == 5);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Double) == 6);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::String) == 7);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Binary) == 8);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Bools) == 9);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Int32s) == 10);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::UInt32s) == 11);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Int64s) == 12);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::UInt64s) == 13);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Doubles) == 14);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Strings) == 15);
+    static_assert(static_cast<std::size_t>(Er::PropertyType::Binaries) == 16);
+
     out.set_id(source.id);
 
     auto idx = static_cast<std::size_t>(source.type());
@@ -393,8 +394,26 @@ Property getProperty(const erebus::Property& source)
         &getPropertyStrings,
         &getPropertyBinaries
     };
+
+    static_assert(erebus::Property::kVVoid == 2);
+    static_assert(erebus::Property::kVBool == 3);
+    static_assert(erebus::Property::kVInt32 == 4);
+    static_assert(erebus::Property::kVUint32 == 5);
+    static_assert(erebus::Property::kVInt64 == 6);
+    static_assert(erebus::Property::kVUint64 == 7);
+    static_assert(erebus::Property::kVDouble == 8);
+    static_assert(erebus::Property::kVString == 9);
+    static_assert(erebus::Property::kVBinary == 10);
+    static_assert(erebus::Property::kABool == 11);
+    static_assert(erebus::Property::kAInt32 == 12);
+    static_assert(erebus::Property::kAUint32 == 13);
+    static_assert(erebus::Property::kAInt64 == 14);
+    static_assert(erebus::Property::kAUint64 == 15);
+    static_assert(erebus::Property::kADouble == 16);
+    static_assert(erebus::Property::kAString == 17);
+    static_assert(erebus::Property::kABinary == 18);
     
-    auto idx = static_cast<std::size_t>(source.type());
+    auto idx = static_cast<std::size_t>(source.value_case()) - 2;
     if (idx >= _countof(s_getPropertyFns))
         ErThrow(Er::format("Unsupported property type {}", idx));
 
