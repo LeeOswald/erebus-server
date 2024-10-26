@@ -1,7 +1,7 @@
 #pragma once
 
 #include <erebus/stringliteral.hxx>
-#include <erebus/system/time.hxx>
+#include <erebus/system/packed_time.hxx>
 #include <erebus/util/crc32.hxx>
 #include <erebus/variant.hxx>
 
@@ -454,19 +454,12 @@ struct TimeFormatter
         if (!pp || !*pp)
             return std::string("<null>");
 
-        Er::System::Time unpacked;
-        if constexpr (Zone == TimeZone::Utc)
-            unpacked = Er::System::Time::gmt(**pp);
-        else
-            unpacked = Er::System::Time::local(**pp);
-
         struct tm t = {};
-        t.tm_year = unpacked.year;
-        t.tm_mon = unpacked.month;
-        t.tm_mday = unpacked.day;
-        t.tm_hour = unpacked.hour;
-        t.tm_min = unpacked.minute;
-        t.tm_sec = unpacked.second;
+        Er::System::PackedTime packed(**pp);
+        if constexpr (Zone == TimeZone::Utc)
+            t = packed.toUtc();
+        else
+            t = packed.toLocalTime();
 
         std::ostringstream ss;
         ss << std::put_time(&t, format);

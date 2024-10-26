@@ -77,7 +77,6 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/system/packed_time.hxx
     ../../include/erebus/system/process.hxx
     ../../include/erebus/system/thread.hxx
-    ../../include/erebus/system/time.hxx
     ../../include/erebus/system/timestamp.hxx
     ../../include/erebus/system/user.hxx
     ../../include/erebus/trace.hxx
@@ -121,7 +120,6 @@ add_library(${EREBUS_RTLLIB} SHARED
     system/packed_time.cxx
     system/process.cxx
     system/thread.cxx
-    system/time.cxx
     system/timestamp.cxx
     util/cformat.cxx
     util/exceptionutil.cxx
