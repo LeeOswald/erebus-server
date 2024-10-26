@@ -80,6 +80,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/system/time.hxx
     ../../include/erebus/system/timestamp.hxx
     ../../include/erebus/system/user.hxx
+    ../../include/erebus/trace.hxx
     ../../include/erebus/trackable.hxx
     ../../include/erebus/tree.hxx
     ../../include/erebus/util/autoptr.hxx

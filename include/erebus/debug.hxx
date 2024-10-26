@@ -1,6 +1,5 @@
 #pragma once
 
-
 #if ER_LINUX
     #if defined(__GNUC__) && (defined(__i386) || defined(__x86_64))
         #define _ER_TRAP() asm volatile ("int $3") /* NOLINT */
@@ -20,12 +19,6 @@ namespace Er
 
 EREBUS_EXPORT bool isDebuggerPresent();
 
-EREBUS_EXPORT void trace(std::string&& message) noexcept;
-
-template <class... Args>
-void tracef(std::string_view format, Args&&... args) 
-{
-    trace(Er::Format::vformat(format, Er::Format::make_format_args(args...)));
-}
-
 } // namespace Er {}
+
+

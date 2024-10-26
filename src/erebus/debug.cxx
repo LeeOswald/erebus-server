@@ -1,13 +1,8 @@
 #include <erebus/erebus.hxx>
 #include <erebus/errno.hxx>
 
-#if ER_WINDOWS
-#include <erebus/util/utf16.hxx>
-#endif
-
-#include <iostream>
 #include <fstream>
-#include <syncstream>
+
 
 namespace Er
 {
@@ -47,35 +42,5 @@ EREBUS_EXPORT bool isDebuggerPresent()
 }
 
 #endif
-
-#if ER_WINDOWS
-
-static void trace_impl(const std::string& text)
-{
-    auto textu16 = Er::Util::utf8ToUtf16(text);
-    textu16.append(L"\n");
-
-    ::OutputDebugStringW(textu16.c_str());
-}
-
-#else
-
-static void trace_impl(const std::string& text)
-{
-    std::osyncstream(std::cout) << text << "\n";
-}
-
-#endif
-
-
-EREBUS_EXPORT void trace(std::string&& message) noexcept
-{
-#if ER_WINDOWS
-    if (!::IsDebuggerPresent())
-        return;
-#endif
-
-    trace_impl(message);
-}
 
 } // namespace Er {}

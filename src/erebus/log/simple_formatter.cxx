@@ -28,7 +28,7 @@ public:
             else
                 time = pt.toLocalTime();
 
-            msec = pt.subSecond();
+            msec = pt.subSecond() / 1000;
         }
 
         std::ostringstream ss;

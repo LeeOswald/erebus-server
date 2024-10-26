@@ -4,7 +4,6 @@
 #include <erebus/system/packed_time.hxx>
 #include <erebus/system/thread.hxx>
 
-#include <functional>
 
 namespace Er::Log
 {
@@ -25,38 +24,46 @@ class Record
 public:
     using Ptr = std::shared_ptr<Record>;
 
-    constexpr Level level() const noexcept
+    [[nodiscard]] constexpr Level level() const noexcept
     {
         return m_level;
     }
 
-    constexpr System::PackedTime::ValueType time() const noexcept
+    [[nodiscard]] constexpr System::PackedTime::ValueType time() const noexcept
     {
         return m_time;
     }
 
-    constexpr uintptr_t tid() const noexcept
+    [[nodiscard]] constexpr uintptr_t tid() const noexcept
     {
         return m_tid;
     }
 
-    constexpr const std::string& message() const noexcept
+    [[nodiscard]] constexpr const std::string& message() const noexcept
     {
         return m_message;
     }
 
-    constexpr unsigned indent() const noexcept
+    [[nodiscard]] constexpr unsigned indent() const noexcept
     {
         return m_indent;
     }
 
-    void setIndent(unsigned indent) noexcept
+    [[nodiscard]] static Ptr setIndent(Ptr r, unsigned indent) noexcept
     {
-        m_indent = indent;
+        if (r.use_count() == 1) [[likely]]
+        {
+            r->m_indent = indent;
+            return r;
+        }
+
+        auto copy = std::shared_ptr<Record>(new Record(r->m_level, r->m_time, r->m_tid, r->m_message));
+        copy->m_indent = indent;
+        return copy;
     }
 
     template <typename MessageT>
-    static Ptr make(Level level, System::PackedTime::ValueType time, uintptr_t tid, MessageT&& message)
+    [[nodiscard]] static Ptr make(Level level, System::PackedTime::ValueType time, uintptr_t tid, MessageT&& message)
     {
         return std::shared_ptr<Record>(new Record(level, time, tid, std::forward<MessageT>(message)));
     }
@@ -199,10 +206,7 @@ template <class... Args>
 void warning(ISink* sink, std::string_view format, Args&&... args)
 {
     if (sink->level() <= Level::Warning)
-    {
         write(sink, Level::Warning, format, std::forward<Args>(args)...);
-        sink->flush();
-    }
 }
 
 template <class... Args>
@@ -278,6 +282,9 @@ private:
 };
 
 
+EREBUS_EXPORT ILog* defaultLog() noexcept;
+
+
 EREBUS_EXPORT ITee::Ptr makeTee(ThreadSafe mode);
 EREBUS_EXPORT ILog::Ptr makeAsyncLogger();
 
@@ -301,3 +308,5 @@ EREBUS_EXPORT ISink::Ptr makeDebuggerSink(IFormatter::Ptr formatter, IFilter::Pt
 } // namespace Er::Log {}
 
 #include <erebus/log/simple_formatter.hxx>
+
+
