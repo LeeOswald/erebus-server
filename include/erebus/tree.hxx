@@ -4,12 +4,14 @@
 #include <erebus/exception.hxx>
 #include <erebus/util/ptrutils.hxx>
 
+#include <unordered_map>
+
 
 namespace Er
 {
 
 //    
-// Multifurcating tree with insertion/removal hooks
+// Tree with insertion/removal hooks
 //    
     
 template <class T>
