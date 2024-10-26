@@ -49,17 +49,11 @@ public:
         return m_indent;
     }
 
-    [[nodiscard]] static Ptr setIndent(Ptr r, unsigned indent) noexcept
+    void setIndent(unsigned indent) noexcept
     {
-        if (r.use_count() == 1) [[likely]]
-        {
-            r->m_indent = indent;
-            return r;
-        }
-
-        auto copy = std::shared_ptr<Record>(new Record(r->m_level, r->m_time, r->m_tid, r->m_message));
-        copy->m_indent = indent;
-        return copy;
+        // use in the top level logger only
+        // since the structure may be shared between many consumers
+        m_indent = indent;
     }
 
     template <typename MessageT>

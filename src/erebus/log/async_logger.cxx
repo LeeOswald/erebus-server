@@ -40,8 +40,8 @@ public:
             return;
 
         auto indent = threadData().indent;
-        if (indent != r->indent())
-            r = Record::setIndent(r, indent);
+        if (indent > 0)
+            r->setIndent(indent);
 
         {
             std::unique_lock l(m_mutexQueue);
