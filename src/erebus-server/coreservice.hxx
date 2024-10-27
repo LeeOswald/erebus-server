@@ -3,10 +3,7 @@
 #include <erebus-srv/erebus-srv.hxx>
 
 
-namespace Er
-{
-
-namespace Private
+namespace Erp::Server
 {
 
 class CoreService
@@ -34,6 +31,4 @@ private:
 };
 
 
-} // namespace Private {}
-
-} // namespace Er {}
+} // namespace Erp::Server {}

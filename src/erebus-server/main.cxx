@@ -302,7 +302,7 @@ int main(int argc, char* argv[], char* env[])
         if (servers.empty())
             ErThrow("Could not create any server instances");
 
-        Er::Private::CoreService coreService(g_log);
+        Erp::Server::CoreService coreService(g_log);
         for (auto& srv : servers)
         {
             coreService.registerService(srv->serviceContainer());

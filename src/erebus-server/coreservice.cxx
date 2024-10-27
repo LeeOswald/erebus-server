@@ -2,6 +2,7 @@
 
 #include <erebus/exception.hxx>
 #include <erebus/protocol.hxx>
+#include <erebus-srv/global_requests.hxx>
 
 
 #if ER_POSIX
@@ -10,10 +11,9 @@
 
 #include "erebus-version.h"
 
-namespace Er
-{
+#include <erebus/trace.hxx>
 
-namespace Private
+namespace Erp::Server
 {
 
 CoreService::~CoreService()
@@ -27,7 +27,7 @@ CoreService::CoreService(Er::Log::ILog* log)
 
 void CoreService::registerService(Er::Server::IServiceContainer* container)
 {
-    container->registerService(Er::Protocol::GenericRequests::GetVersion, this);
+    container->registerService(Er::Server::Requests::GetVersion, this);
 }
 
 void CoreService::unregisterService(Er::Server::IServiceContainer* container)
@@ -46,7 +46,8 @@ void CoreService::deleteSession(SessionId id)
 
 Er::PropertyBag CoreService::request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
 {
-    if (request == Er::Protocol::GenericRequests::GetVersion)
+    TraceMethod("CoreService");
+    if (request == Er::Server::Requests::GetVersion)
         return getVersion(args);
     else
         ErThrow(Er::format("Unsupported request {}", request));
@@ -54,6 +55,7 @@ Er::PropertyBag CoreService::request(std::string_view request, const Er::Propert
 
 Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
 {
+    TraceMethod("CoreService");
     Er::PropertyBag reply;
 
 #if ER_WINDOWS
@@ -69,8 +71,8 @@ Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
 
     auto version = Er::format("{} {}.{}.{} {}", ER_APPLICATION_NAME, ER_VERSION_MAJOR, ER_VERSION_MINOR, ER_VERSION_PATCH, ER_COPYRIGHT);
 
-    Er::addProperty<Er::Protocol::Props::RemoteSystemDesc>(reply, std::move(platform));
-    Er::addProperty<Er::Protocol::Props::ServerVersionString>(reply, std::move(version));
+    Er::addProperty<Er::Server::Props::SystemName>(reply, std::move(platform));
+    Er::addProperty<Er::Server::Props::ServerVersion>(reply, std::move(version));
 
     return reply;
 }
@@ -90,6 +92,4 @@ Er::PropertyBag CoreService::next(StreamId id, SessionId sessionId)
 }
 
 
-} // namespace Private {}
-
-} // namespace Er {}
+} // namespace Erp::Server {}

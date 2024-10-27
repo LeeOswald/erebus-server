@@ -6,10 +6,7 @@
 
 #include <vector>
 
-namespace Er
-{
-
-namespace Server
+namespace Er::Server
 {
 
 struct IServiceContainer;
@@ -76,6 +73,4 @@ typedef IPlugin* (createPlugin)(const PluginParams&);
 
 
 
-} // namespace Server {}
-    
-} // namespace Er {}    
+} // namespace Er::Server {}    

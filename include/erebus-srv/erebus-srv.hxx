@@ -1,9 +1,7 @@
 #pragma once
 
-#include <erebus/erebus.hxx>
 #include <erebus/log.hxx>
 #include <erebus/propertybag.hxx>
-#include <erebus/condition.hxx>
 
 
 
@@ -18,10 +16,7 @@
 #endif
 
 
-namespace Er
-{
-
-namespace Server
+namespace Er::Server
 {
 
 
@@ -127,6 +122,4 @@ struct IServer
 IServer::Ptr EREBUSSRV_EXPORT create(const Params* params);
 
 
-} // namespace Server {}
-    
-} // namespace Er {}
+} // namespace Er::Server {}

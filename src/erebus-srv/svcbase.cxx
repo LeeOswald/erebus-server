@@ -3,16 +3,15 @@
 #include <erebus/protocol.hxx>
 #include <erebus/system/thread.hxx>
 
+#include <erebus/trace.hxx>
 
-namespace Erp
-{
-
-namespace Server
+namespace Erp::Server
 {
 
 
 ServiceBase::~ServiceBase()
 {
+    TraceMethod("ServiceBase");
     m_stop = true;
     m_incoming.notify_one();
 
@@ -37,11 +36,12 @@ ServiceBase::ServiceBase(const Er::Server::Params* params)
     : m_params(*params)
     , m_local(params->endpoint.starts_with("unix:"))
 {
-
+    TraceMethod("ServiceBase");
 }
 
 void ServiceBase::start()
 {
+    TraceMethod("ServiceBase");
     grpc::ServerBuilder builder;
 
     if (!m_local && m_params.ssl)
@@ -84,6 +84,7 @@ void ServiceBase::start()
 
 void ServiceBase::receiveRpcs()
 {
+    TraceMethod("ServiceBase");
     Er::System::CurrentThread::setName("RPCReceiver");
 
     Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC receiver thread started");
@@ -120,6 +121,7 @@ void ServiceBase::receiveRpcs()
 
 void ServiceBase::processRpcs()
 {
+    TraceMethod("ServiceBase");
     Er::System::CurrentThread::setName("RPCProcessor");
     Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC processor thread started");
 
@@ -149,6 +151,7 @@ void ServiceBase::processRpcs()
 
 void ServiceBase::genericDone(Erp::Server::Rpc::RpcBase& rpc, bool rpcCancelled)
 {
+    TraceFunction();
     delete (&rpc);
 }
 
@@ -232,6 +235,4 @@ void ServiceBase::marshalReplyProps(const Er::PropertyBag& props, erebus::Servic
     });
 }
 
-} // namespace Server {}
-
-} // namespace Erp {}
+} // namespace Erp::Server {}

@@ -13,10 +13,7 @@
 #include <mutex>
 #include <thread>
 
-namespace Erp
-{
-
-namespace Server
+namespace Erp::Server
 {
 
 
@@ -59,6 +56,4 @@ protected:
 
 
 
-} // namespace Server {}
-
-} // namespace Erp {}
+} // namespace Erp::Server {}

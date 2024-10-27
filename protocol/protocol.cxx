@@ -1,9 +1,7 @@
+#include <erebus/exception.hxx>
 #include <erebus/protocol.hxx>
 
-namespace Er
-{
-
-namespace Protocol
+namespace Er::Protocol
 {
 
 namespace
@@ -421,6 +419,4 @@ Property getProperty(const erebus::Property& source)
 }
 
 
-} // namespace Protocol {}
-
-} // namespace Er {}
+} // namespace Er::Protocol {}

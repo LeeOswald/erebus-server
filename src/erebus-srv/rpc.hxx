@@ -8,15 +8,10 @@
 #include <functional>
 #include <list>
 
-
-namespace Erp
-{
-
-namespace Server
-{
+#include <erebus/trace.hxx>
 
 
-namespace Rpc
+namespace Erp::Server::Rpc
 {
 
 using TagProcessor = std::function<void(bool)>;
@@ -37,6 +32,7 @@ class RpcBase
 public:
     virtual ~RpcBase()
     {
+        TraceMethod("RpcBase");
     };
 
     RpcBase()
@@ -45,6 +41,7 @@ public:
         , m_asyncWriteInProgress(false)
         , m_onDoneCalled(false)
     {
+        TraceMethod("RpcBase");
     }
 
     const grpc::ServerContext& getServerContext() const
@@ -66,6 +63,7 @@ public:
     // Tag processor for the 'done' event of this rpc from gRPC library
     void onDone(bool /*ok*/)
     {
+        TraceMethod("RpcBase");
         m_onDoneCalled = true;
         if (m_asyncOpCounter == 0)
             done();
@@ -89,6 +87,7 @@ protected:
 
     void asyncOpStarted(AsyncOpType opType)
     {
+        TraceMethod("RpcBase");
         ++m_asyncOpCounter;
 
         switch (opType)
@@ -106,6 +105,7 @@ protected:
     // returns true if the rpc processing should keep going. false otherwise.
     bool asyncOpFinished(AsyncOpType opType)
     {
+        TraceMethod("RpcBase");
         --m_asyncOpCounter;
 
         switch (opType)
@@ -225,6 +225,7 @@ public:
         , m_responseWriter(&m_serverContext)
         , m_handlers(jobHandlers)
     {
+        TraceMethod("UnaryRpc");
         // create TagProcessors that we'll use to interact with gRPC CompletionQueue
         m_onRead = std::bind(&UnaryRpc::onRead, this, std::placeholders::_1);
         m_onFinish = std::bind(&UnaryRpc::onFinish, this, std::placeholders::_1);
@@ -241,6 +242,7 @@ public:
 private:
     bool sendResponseImpl(const google::protobuf::Message* responseMsg) override
     {
+        TraceMethod("UnaryRpc");
         auto response = static_cast<const ResponseTypeT*>(responseMsg);
 
         ErAssert(response); // If no response is available, use RpcBase::finishWithError.
@@ -255,6 +257,7 @@ private:
 
     bool finishWithErrorImpl(const grpc::Status& error) override
     {
+        TraceMethod("UnaryRpc");
         asyncOpStarted(RpcBase::AsyncOpType::Finish);
         m_responseWriter.FinishWithError(error, &m_onFinish);
 
@@ -263,6 +266,7 @@ private:
 
     void onRead(bool ok)
     {
+        TraceMethod("UnaryRpc");
         // A request has come on the service which can now be handled. Create a new rpc of this type to allow the server to handle next request.
         m_handlers.createRpc(m_service, m_cq);
 
@@ -282,11 +286,13 @@ private:
 
     void onFinish(bool ok)
     {
+        TraceMethod("UnaryRpc");
         asyncOpFinished(RpcBase::AsyncOpType::Finish);
     }
 
     void done() override
     {
+        TraceMethod("UnaryRpc");
         m_handlers.done(*this, m_serverContext.IsCancelled());
     }
 
@@ -320,6 +326,7 @@ public:
         , m_handlers(jobHandlers)
         , m_serverStreamingDone(false)
     {
+        TraceMethod("ServerStreamingRpc");
         // create TagProcessors that we'll use to interact with gRPC CompletionQueue
         m_onRead = std::bind(&ServerStreamingRpc::onRead, this, std::placeholders::_1);
         m_onWrite = std::bind(&ServerStreamingRpc::onWrite, this, std::placeholders::_1);
@@ -340,6 +347,7 @@ private:
     // The application can send a null response in order to indicate the completion of server side streaming. 
     bool sendResponseImpl(const google::protobuf::Message* responseMsg) override
     {
+        TraceMethod("ServerStreamingRpc");
         auto response = static_cast<const ResponseTypeT*>(responseMsg);
 
         if (response)
@@ -366,6 +374,7 @@ private:
 
     bool finishWithErrorImpl(const grpc::Status& error) override
     {
+        TraceMethod("ServerStreamingRpc");
         asyncOpStarted(RpcBase::AsyncOpType::Finish);
         m_responseWriter.Finish(error, &m_onFinish);
 
@@ -374,18 +383,21 @@ private:
 
     void doSendResponse()
     {
+        TraceMethod("ServerStreamingRpc");
         asyncOpStarted(RpcBase::AsyncOpType::Write);
         m_responseWriter.Write(m_responseQueue.front(), &m_onWrite);
     }
 
     void doFinish()
     {
+        TraceMethod("ServerStreamingRpc");
         asyncOpStarted(RpcBase::AsyncOpType::Finish);
         m_responseWriter.Finish(grpc::Status::OK, &m_onFinish);
     }
 
     void onRead(bool ok)
     {
+        TraceMethod("ServerStreamingRpc");
         m_handlers.createRpc(m_service, m_cq);
 
         if (asyncOpFinished(RpcBase::AsyncOpType::RequestQueued))
@@ -399,6 +411,7 @@ private:
 
     void onWrite(bool ok)
     {
+        TraceMethod("ServerStreamingRpc");
         if (asyncOpFinished(RpcBase::AsyncOpType::Write))
         {
             // Get rid of the message that just finished.
@@ -420,11 +433,13 @@ private:
 
     void onFinish(bool ok)
     {
+        TraceMethod("ServerStreamingRpc");
         asyncOpFinished(RpcBase::AsyncOpType::Finish);
     }
 
     void done() override
     {
+        TraceMethod("ServerStreamingRpc");
         m_handlers.done(*this, m_serverContext.IsCancelled());
     }
 
@@ -448,8 +463,4 @@ private:
 
 
 
-} // namespace Rpc {}
-
-} // namespace Server {}
-
-} // namespace Erp {}
+} // namespace Erp::Server::Rpc {}

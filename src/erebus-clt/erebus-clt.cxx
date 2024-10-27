@@ -5,6 +5,7 @@
 #include <erebus/protocol.hxx>
 #include <erebus/result.hxx>
 #include <erebus-clt/erebus-clt.hxx>
+#include <erebus-srv/global_requests.hxx>
 
 #include <atomic>
 #include <sstream>
@@ -218,7 +219,7 @@ EREBUSCLT_EXPORT void initialize(const LibParams& params)
     if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
     {
         g_libParams = params;
-        Er::Protocol::Props::Private::registerAll(params.log);
+        Er::Server::Props::Private::registerAll(params.log);
         
         ::grpc_init();
 
@@ -238,7 +239,7 @@ EREBUSCLT_EXPORT void finalize()
     {
         ::grpc_shutdown();
         
-        Er::Protocol::Props::Private::unregisterAll(g_libParams.log);
+        Er::Server::Props::Private::unregisterAll(g_libParams.log);
         g_libParams = LibParams();
     }
 }

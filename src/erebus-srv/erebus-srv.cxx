@@ -4,7 +4,7 @@
 
 #include <erebus/erebus.grpc.pb.h>
 #include <erebus-srv/erebus-srv.hxx>
-#include <erebus/protocol.hxx>
+#include <erebus-srv/global_requests.hxx>
 
 
 #include <atomic>
@@ -45,7 +45,7 @@ EREBUSSRV_EXPORT void initialize(const LibParams& params)
 {
     if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
     {
-        Er::Protocol::Props::Private::registerAll(params.log);
+        Er::Server::Props::Private::registerAll(params.log);
 
         g_libParams = params;
 
@@ -69,7 +69,7 @@ EREBUSSRV_EXPORT void finalize()
     {
         ::grpc_shutdown();
 
-        Er::Protocol::Props::Private::unregisterAll(g_libParams.log);
+        Er::Server::Props::Private::unregisterAll(g_libParams.log);
 
         g_libParams = LibParams();
     }
