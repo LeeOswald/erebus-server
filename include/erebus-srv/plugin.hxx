@@ -27,7 +27,7 @@ struct PluginParams
     };
 
     Er::Log::ILog* log = nullptr;
-    std::vector<IServiceContainer*> containers;
+    IServiceContainer* container = nullptr;
     std::string binary;
     std::vector<Arg> args;
 };

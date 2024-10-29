@@ -14,13 +14,13 @@
 namespace Erp::Server::Rpc
 {
 
-using TagProcessor = std::function<void(bool)>;
+using TagHandler = std::function<void(bool)>;
 
 struct TagInfo
 {
-    TagProcessor* tagProcessor = nullptr; // the function to be called to process incoming event
-    bool ok = false;                      // the result of tag processing as indicated by gRPC library
-
+    TagHandler* handler = nullptr; // the function to be called to process incoming event
+    bool ok = false;               // the result of tag processing as indicated by gRPC library
+    
     constexpr TagInfo() noexcept = default;
 };
 
@@ -82,14 +82,30 @@ protected:
         Finish
     };
 
+    static std::string_view asyncOpName(AsyncOpType type)
+    {
+        switch (type)
+        {
+        case Erp::Server::Rpc::RpcBase::AsyncOpType::Invalid: return "Invalid";
+        case Erp::Server::Rpc::RpcBase::AsyncOpType::RequestQueued: return "RequestQueued";
+        case Erp::Server::Rpc::RpcBase::AsyncOpType::Read: return "Read";
+        case Erp::Server::Rpc::RpcBase::AsyncOpType::Write: return "Write";
+        case Erp::Server::Rpc::RpcBase::AsyncOpType::Finish: return "Finish";
+        }
+
+        return "?";
+    }
+
     virtual bool sendResponseImpl(const google::protobuf::Message* response) = 0;
     virtual bool finishWithErrorImpl(const grpc::Status& error) = 0;
 
     void asyncOpStarted(AsyncOpType opType)
     {
         TraceMethod("RpcBase");
-        ++m_asyncOpCounter;
+        Trace("opType = {}", asyncOpName(opType));
 
+        ++m_asyncOpCounter;
+        
         switch (opType)
         {
         case AsyncOpType::Read:
@@ -97,6 +113,7 @@ protected:
             break;
         case AsyncOpType::Write:
             m_asyncWriteInProgress = true;
+            Trace("asyncWriteInProgress -> TRUE");
         default:
             break;
         }
@@ -106,6 +123,8 @@ protected:
     bool asyncOpFinished(AsyncOpType opType)
     {
         TraceMethod("RpcBase");
+        Trace("opType = {}", asyncOpName(opType));
+        
         --m_asyncOpCounter;
 
         switch (opType)
@@ -115,6 +134,7 @@ protected:
             break;
         case AsyncOpType::Write:
             m_asyncWriteInProgress = false;
+            Trace("asyncWriteInProgress -> FALSE");
         default:
             break;
         }
@@ -158,8 +178,10 @@ private:
     // 1. The client issues an rpc request. 
     // 2. The server handles the rpc and calls Finish with response. At this point, ServerContext::IsCancelled is NOT true.
     // 3. The client process abruptly exits. 
-    // 4. The completion queue dispatches an OnDone tag followed by the OnFinish tag. If the application cleans up the state in OnDone, OnFinish invocation would result in undefined behavior. 
-    // This actually feels like a pretty odd behavior of the gRPC library (it is most likely a result of our multi-threaded usage) so we account for that by keeping track of whether the OnDone was called earlier. 
+    // 4. The completion queue dispatches an OnDone tag followed by the OnFinish tag. If the application cleans up the state in OnDone, OnFinish 
+    // invocation would result in undefined behavior. 
+    // This actually feels like a pretty odd behavior of the gRPC library (it is most likely a result of our multi-threaded usage) so we account for that 
+    // by keeping track of whether the OnDone was called earlier. 
     // As far as the application is considered, the rpc is only 'done' when no async Ops are pending. 
     bool m_onDoneCalled;
 };
@@ -234,8 +256,11 @@ public:
         // set up the completion queue to inform us when gRPC is done with this rpc.
         m_serverContext.AsyncNotifyWhenDone(&m_onDone);
 
+        Trace("SrvCtx {} -> AsyncNotifyWhenDone({})", Er::Format::ptr(&m_serverContext), Er::Format::ptr(&m_onDone));
+
         // finally, issue the async request needed by gRPC to start handling this rpc.
         asyncOpStarted(RpcBase::AsyncOpType::RequestQueued);
+
         m_handlers.requestRpc(m_service, &m_serverContext, &m_request, &m_responseWriter, m_cq, m_cq, &m_onRead);
     }
 
@@ -305,9 +330,9 @@ private:
 
     ThisRpcTypeJobHandlers m_handlers;
 
-    TagProcessor m_onRead;
-    TagProcessor m_onFinish;
-    TagProcessor m_onDone;
+    TagHandler m_onRead;
+    TagHandler m_onFinish;
+    TagHandler m_onDone;
 };
 
 
@@ -336,6 +361,8 @@ public:
         // set up the completion queue to inform us when gRPC is done with this rpc.
         m_serverContext.AsyncNotifyWhenDone(&m_onDone);
 
+        Trace("SrvCtx {} -> AsyncNotifyWhenDone({})", Er::Format::ptr(&m_serverContext), Er::Format::ptr(&m_onDone));
+
         // finally, issue the async request needed by gRPC to start handling this rpc.
         asyncOpStarted(RpcBase::AsyncOpType::RequestQueued);
         m_handlers.requestRpc(m_service, &m_serverContext, &m_request, &m_responseWriter, m_cq, m_cq, &m_onRead);
@@ -356,11 +383,17 @@ private:
 
             if (!asyncWriteInProgress())
             {
+                Trace("Sending ping");
                 doSendResponse();
+            }
+            else
+            {
+                Trace("Not sending ping yet: write in progress");
             }
         }
         else
         {
+            Trace("End of pings");
             m_serverStreamingDone = true;
 
             if (!asyncWriteInProgress())
@@ -402,10 +435,15 @@ private:
 
         if (asyncOpFinished(RpcBase::AsyncOpType::RequestQueued))
         {
+            Trace("Processing next request");
             if (ok)
             {
                 m_handlers.processIncomingRequest(*this, &m_request);
             }
+        }
+        else
+        {
+            Trace("Previous request not completed yet");
         }
     }
 
@@ -421,13 +459,20 @@ private:
             {
                 if (!m_responseQueue.empty()) // If we have more messages waiting to be sent, send them.
                 {
+                    Trace("More responses to send...");
                     doSendResponse();
                 }
                 else if (m_serverStreamingDone) // Previous write completed and we did not have any pending write. 
                 {                               // If the application has finished streaming responses, finish the rpc processing.
+                    
+                    Trace("Server streaming done...");
                     doFinish();
                 }
             }
+        }
+        else
+        {
+            Trace("Previous request not completed yet");
         }
     }
 
@@ -451,10 +496,10 @@ private:
 
     ThisRpcTypeJobHandlers m_handlers;
 
-    TagProcessor m_onRead;
-    TagProcessor m_onWrite;
-    TagProcessor m_onFinish;
-    TagProcessor m_onDone;
+    TagHandler m_onRead;
+    TagHandler m_onWrite;
+    TagHandler m_onFinish;
+    TagHandler m_onDone;
 
     std::list<ResponseTypeT> m_responseQueue;
     bool m_serverStreamingDone;

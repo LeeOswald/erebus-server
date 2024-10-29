@@ -268,54 +268,58 @@ int main(int argc, char* argv[], char* env[])
         auto user = Er::System::User::current();
         Er::Log::info(g_log, "Starting as user {}", user.name);
 
-        std::string root;
-        std::string certificate;
-        std::string key;
-
-        if (!cfg.rootCA.empty())
-            root = Er::Util::loadTextFile(cfg.rootCA);
-
-        if (!cfg.certificate.empty())
-            certificate = Er::Util::loadTextFile(cfg.certificate);
-
-        if (!cfg.privateKey.empty())
-            key = Er::Util::loadTextFile(cfg.privateKey);
-    
         Er::Server::LibParams srvLibParams(g_log, g_log->level());
         Er::Server::LibScope ss(srvLibParams);
 
-        // create endpoints
-        std::vector<Er::Server::IServer::Ptr> servers;
-        servers.reserve(cfg.endpoints.size());
-        for (auto& ep: cfg.endpoints)
-        {
-            Er::Log::info(g_log, "Creating a server instance at [{}]", ep.endpoint);
+        Er::Server::IServer::Ptr server;
+        Er::Server::Params params(g_log);
+        params.endpoints.reserve(cfg.endpoints.size());
 
-            Er::protectedCall<void>(g_log, [&ep, &root, &certificate, &key, &servers]()
+        for (auto& ep : cfg.endpoints)
+        {
+            if (ep.ssl)
             {
-                Er::Server::Params params(ep.endpoint, g_log, ep.ssl, root, certificate, key);
-                auto server = Er::Server::create(&params);
-                servers.push_back(std::move(server));
-            });
+                if (!Er::protectedCall<bool>(g_log, [&ep, &params]()
+                {
+                    std::string rootCA;
+                    if (!ep.rootCA.empty())
+                        rootCA = Er::Util::loadTextFile(ep.rootCA);
+
+                    std::string certificate;
+                    if (!ep.certificate.empty())
+                        certificate = Er::Util::loadTextFile(ep.certificate);
+
+                    std::string privateKey;
+                    if (!ep.privateKey.empty())
+                        privateKey = Er::Util::loadTextFile(ep.privateKey);
+
+                    params.endpoints.push_back(Er::Server::Params::Endpoint(ep.endpoint, rootCA, certificate, privateKey));
+
+                    return true;
+                }))
+                {
+                    Er::Log::info(g_log, "SSL certificates could not be loaded for [{}]", ep.endpoint);
+                }
+            }
+            else
+            {
+                params.endpoints.push_back(Er::Server::Params::Endpoint(ep.endpoint));
+            }
+
         }
 
-        if (servers.empty())
-            ErThrow("Could not create any server instances");
-
+        Er::Log::info(g_log, "Creating a new server instance");
+        
+        server = Er::Server::create(params);
+        
         Erp::Server::CoreService coreService(g_log);
-        for (auto& srv : servers)
-        {
-            coreService.registerService(srv->serviceContainer());
-        }
-
+        coreService.registerService(server->serviceContainer());
+        
         // load plugins
         Er::Server::PluginParams pluginParams;
         pluginParams.log = g_log;
-        for (auto& srv: servers)
-        {
-            pluginParams.containers.push_back(srv->serviceContainer());
-        }
-
+        pluginParams.container = server->serviceContainer();
+       
         Er::Private::PluginMgr pluginMgr(pluginParams);
         for (auto& plugin: cfg.plugins)
         {
@@ -343,13 +347,10 @@ int main(int argc, char* argv[], char* env[])
         // cleanup
         Er::Log::writeln(g_log, Er::Log::Level::Info, "Stopping server instances...");
         
-        for (auto& srv : servers)
-        {
-            coreService.unregisterService(srv->serviceContainer());
-        }
+        coreService.unregisterService(server->serviceContainer());
 
         pluginMgr.unloadAll();
-        servers.clear();
+        server.reset();
         
         if (g_signalReceived)
         {

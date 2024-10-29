@@ -28,7 +28,11 @@ std::wstring getUserName()
         {
             user.resize(length);
             if (::GetUserNameExW(NameSamCompatible, user.data(), &length))
+            {
+                // trim trailing '\0'
+                user.resize(std::wcslen(user.data()));
                 return user;
+            }
         }
     }
 

@@ -26,8 +26,8 @@ public:
         TraceMethod("ErebusService");
     }
 
-    explicit ErebusService(const Params* params)
-        : Erp::Server::ServiceBase(params)
+    explicit ErebusService(const Params& params)
+        : Erp::Server::ServiceBase(&m_service, params)
     {
         TraceMethod("ErebusService");
     }
@@ -79,147 +79,21 @@ public:
     }
 
 private:
-    grpc::Service* service() override
-    {
-        return &m_service;
-    }
-
-    void createRpcs() override
+    void createRpcs(grpc::ServerCompletionQueue* cq) override
     {
         TraceMethod("ErebusService");
-        createAllocateSessionRpc();
-        createDeleteSessionRpc();
-        createGenericRpc();
-        createGenericStream();
+
+        createGenericRpc(cq);
+        createGenericStream(cq);
     }
 
-    void createAllocateSessionRpc()
-    {
-        TraceMethod("ErebusService");
-        Erp::Server::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::AllocateSessionRequest, erebus::AllocateSessionReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createAllocateSessionRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) 
-        { 
-            ErebusService::processAllocateSessionRpc(rpc, message); 
-        };
-
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestAllocateSession;
-
-        new Erp::Server::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::AllocateSessionRequest, erebus::AllocateSessionReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processAllocateSessionRpc(Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        TraceMethod("ErebusService");
-        auto request = static_cast<const erebus::AllocateSessionRequest*>(message);
-        erebus::AllocateSessionReply response;
-
-        std::shared_lock l(m_servicesLock);
-        
-        auto& serviceId = request->request();
-
-        auto it = m_services.find(serviceId);
-        if (it == m_services.end())
-        {
-            Er::Log::error(m_params.log, "No handlers for [{}]", serviceId);
-            rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
-            return;
-        }
-
-        auto service = it->second;
-
-        try
-        {
-            auto sessionId = service->allocateSession();
-            response.set_sessionid(sessionId);
-        }
-        catch (Er::Exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-
-            marshalException(response.mutable_header(), e);
-        }
-        catch (std::exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-
-            marshalException(response.mutable_header(), e);
-        }
-        
-        rpc.sendResponse(&response);
-    }
-
-    void createDeleteSessionRpc()
-    {
-        TraceMethod("ErebusService");
-        Erp::Server::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::DeleteSessionRequest, erebus::GenericReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createDeleteSessionRpc, this);
-
-        rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) 
-        { 
-            ErebusService::processDeleteSessionRpc(rpc, message); 
-        };
-        
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestDeleteSession;
-
-        new Erp::Server::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::DeleteSessionRequest, erebus::GenericReply>(&m_service, m_queue.get(), rpcHandlers);
-    }
-
-    void processDeleteSessionRpc(Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
-    {
-        TraceMethod("ErebusService");
-        auto request = static_cast<const erebus::DeleteSessionRequest*>(message);
-        erebus::GenericReply response;
-
-        std::shared_lock l(m_servicesLock);
-        
-        auto& serviceId = request->request();
-
-        auto it = m_services.find(serviceId);
-        if (it == m_services.end())
-        {
-            Er::Log::error(m_params.log, "No handlers for [{}]", serviceId);
-            rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
-            return;
-        }
-
-        auto service = it->second;
-
-        try
-        {
-            auto sessionId = request->sessionid();
-            service->deleteSession(sessionId);
-            
-        }
-        catch (Er::Exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-
-            marshalException(&response, e);
-        }
-        catch (std::exception& e)
-        {
-            Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
-
-            marshalException(&response, e);
-        }
-        
-        rpc.sendResponse(&response);
-    }
-
-    void createGenericRpc()
+    
+    void createGenericRpc(grpc::ServerCompletionQueue* cq)
     {
         TraceMethod("ErebusService");
         Erp::Server::Rpc::UnaryRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
 
-        rpcHandlers.createRpc = std::bind(&ErebusService::createGenericRpc, this);
+        rpcHandlers.createRpc = std::bind(&ErebusService::createGenericRpc, this, cq);
 
         rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) 
         { 
@@ -230,7 +104,26 @@ private:
 
         rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestGenericRpc;
 
-        new Erp::Server::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, m_queue.get(), rpcHandlers);
+        new Erp::Server::Rpc::UnaryRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, cq, rpcHandlers);
+    }
+
+    void createGenericStream(grpc::ServerCompletionQueue* cq)
+    {
+        TraceMethod("ErebusService");
+        Erp::Server::Rpc::ServerStreamingRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
+
+        rpcHandlers.createRpc = std::bind(&ErebusService::createGenericStream, this, cq);
+
+        rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
+        {
+            ErebusService::processGenericStream(rpc, message);
+        };
+
+        rpcHandlers.done = &genericDone;
+
+        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestGenericStream;
+
+        new Erp::Server::Rpc::ServerStreamingRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, cq, rpcHandlers);
     }
 
     void processGenericRpc(Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
@@ -240,63 +133,45 @@ private:
         erebus::ServiceReply response;
 
         auto& id = request->request();
-        uint32_t sessionId = 0;
-        if (request->has_sessionid())
-            sessionId = request->sessionid();
-
-        response.set_sessionid(sessionId);
-
-        std::shared_lock l(m_servicesLock);
         
-        auto it = m_services.find(id);
-        if (it == m_services.end())
+        IService* service = nullptr;
+        {
+            std::shared_lock l(m_servicesLock);
+
+            auto it = m_services.find(id);
+            if (it != m_services.end())
+            {
+                service = it->second;
+            }
+        }
+
+        if (!service)
         {
             Er::Log::error(m_params.log, "No handlers for [{}]", id);
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
-
-        auto service = it->second;
-
+        
         try
         {
             auto args = unmarshalArgs(request);
-            auto result = service->request(id, args, sessionId);
+            auto result = service->request(id, args);
             marshalReplyProps(result, &response);
         }
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
 
-            marshalException(response.mutable_header(), e);
+            marshalException(&response, e);
         }
         catch (std::exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
 
-            marshalException(response.mutable_header(), e);
+            marshalException(&response, e);
         }
         
         rpc.sendResponse(&response);
-    }
-
-    void createGenericStream()
-    {
-        TraceMethod("ErebusService");
-        Erp::Server::Rpc::ServerStreamingRpcHandlers<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply> rpcHandlers;
-
-        rpcHandlers.createRpc = std::bind(&ErebusService::createGenericStream, this);
-
-        rpcHandlers.processIncomingRequest = [this](Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message) 
-        { 
-            ErebusService::processGenericStream(rpc, message); 
-        };
-
-        rpcHandlers.done = &genericDone;
-
-        rpcHandlers.requestRpc = &erebus::Erebus::AsyncService::RequestGenericStream;
-
-        new Erp::Server::Rpc::ServerStreamingRpc<erebus::Erebus::AsyncService, erebus::ServiceRequest, erebus::ServiceReply>(&m_service, m_queue.get(), rpcHandlers);
     }
 
     void processGenericStream(Erp::Server::Rpc::RpcBase& rpc, const google::protobuf::Message* message)
@@ -305,36 +180,36 @@ private:
         auto request = static_cast<const erebus::ServiceRequest*>(message);
         
         auto& id = request->request();
-        uint32_t sessionId = 0;
-        if (request->has_sessionid())
-            sessionId = request->sessionid();
 
-        std::shared_lock l(m_servicesLock);
-        
-        auto it = m_services.find(id);
-        if (it == m_services.end())
+        IService* service = nullptr;
+        {
+            std::shared_lock l(m_servicesLock);
+
+            auto it = m_services.find(id);
+            if (it != m_services.end())
+            {
+                service = it->second;
+            }
+        }
+
+        if (!service)
         {
             Er::Log::error(m_params.log, "No handlers for [{}]", id);
             rpc.finishWithError(grpc::Status(grpc::UNIMPLEMENTED, "Not implemented"));
             return;
         }
 
-        auto service = it->second;
-
         try
         {
             auto args = unmarshalArgs(request);
-            auto streamId = service->beginStream(id, args, sessionId);
+            auto streamId = service->beginStream(id, args);
             bool stop = false;
             do
             {
                 erebus::ServiceReply response;
-                if (sessionId)
-                        response.set_sessionid(sessionId);
-
                 try
                 {
-                    auto item = service->next(streamId, sessionId);
+                    auto item = service->next(streamId);
                     if (item.empty())
                     {
                         stop = true;
@@ -348,14 +223,14 @@ private:
                 {
                     Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
 
-                    marshalException(response.mutable_header(), e);
+                    marshalException(&response, e);
                     stop = true;
                 }
                 catch (std::exception& e)
                 {
                     Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
 
-                    marshalException(response.mutable_header(), e);
+                    marshalException(&response, e);
                     stop = true;
                 }
 
@@ -363,14 +238,14 @@ private:
 
             } while (!stop);
             
-            service->endStream(streamId, sessionId);
+            service->endStream(streamId);
         }
         catch (Er::Exception& e)
         {
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
 
             erebus::ServiceReply response;
-            marshalException(response.mutable_header(), e);
+            marshalException(&response, e);
             rpc.sendResponse(&response);
         }
         catch (std::exception& e)
@@ -378,14 +253,13 @@ private:
             Er::Util::logException(m_params.log, Er::Log::Level::Error, e);
 
             erebus::ServiceReply response;
-            marshalException(response.mutable_header(), e);
+            marshalException(&response, e);
             rpc.sendResponse(&response);
         }
         
         // end of stream
         rpc.sendResponse(nullptr);
     }
-
 
     erebus::Erebus::AsyncService m_service;
     std::shared_mutex m_servicesLock;
@@ -396,7 +270,7 @@ private:
 } // namespace {}
 
 
-IServer::Ptr EREBUSSRV_EXPORT create(const Params* params)
+IServer::Ptr EREBUSSRV_EXPORT create(const Params& params)
 {
     auto result = std::make_unique<ErebusService>(params);
     result->start();

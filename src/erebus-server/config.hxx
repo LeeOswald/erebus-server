@@ -17,6 +17,9 @@ struct ServerConfig final
     {
         std::string endpoint;
         bool ssl = false;
+        std::string certificate;
+        std::string privateKey;
+        std::string rootCA;
     };
 
     struct Plugin final
@@ -32,9 +35,7 @@ struct ServerConfig final
     std::uint64_t maxLogSize = std::numeric_limits<std::uint64_t>::max();
     std::string pidfile;
     std::vector<Endpoint> endpoints;
-    std::string certificate;
-    std::string privateKey;
-    std::string rootCA;
+    
     std::vector<Plugin> plugins;
 };
 

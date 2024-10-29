@@ -7,35 +7,35 @@ message Void {
 }
 
 message Int32Array {
-    repeated int32 a = 1;
+  repeated int32 a = 1;
 }
 
 message UInt32Array {
-    repeated uint32 a = 1;
+  repeated uint32 a = 1;
 }
 
 message Int64Array {
-    repeated int64 a = 1;
+  repeated int64 a = 1;
 }
 
 message UInt64Array {
-    repeated uint64 a = 1;
+  repeated uint64 a = 1;
 }
 
 message DoubleArray {
-    repeated double a = 1;
+  repeated double a = 1;
 }
 
 message BoolArray {
-    repeated bool a = 1;
+  repeated bool a = 1;
 }
 
 message StringArray {
-    repeated string a = 1;
+  repeated string a = 1;
 }
 
 message BytesArray {
-    repeated bytes a = 1;
+  repeated bytes a = 1;
 }
 
 message Property {
@@ -62,43 +62,21 @@ message Property {
 }
 
 message Exception {
-  optional string message = 3;
-  repeated Property props = 4;
-}
-
-message GenericReply {
-  optional Exception exception = 1;  
+  optional string message = 1;
+  repeated Property props = 2;
 }
 
 service Erebus {
-  rpc AllocateSession(AllocateSessionRequest) returns(AllocateSessionReply) {}
-  rpc DeleteSession(DeleteSessionRequest) returns(GenericReply) {}
   rpc GenericRpc(ServiceRequest) returns(ServiceReply) {}
   rpc GenericStream(ServiceRequest) returns(stream ServiceReply) {}
 }
 
-message AllocateSessionRequest {
-  string request = 1; // used as a request handler ID
-}
-
-message AllocateSessionReply {
-  GenericReply header = 1;
-  uint32 SessionId = 2;
-}
-
-message DeleteSessionRequest {
-  string request = 1; // used as a request handler ID
-  uint32 SessionId = 2;
-}
-
 message ServiceRequest {
   string request = 1;
-  optional uint32 sessionId = 2;
-  repeated Property args = 3;
+  repeated Property args = 2;
 }
 
 message ServiceReply {
-  GenericReply header = 1;
-  optional uint32 sessionId = 2;
-  repeated Property props = 3;
+  optional Exception exception = 1;  
+  repeated Property props = 2;
 }

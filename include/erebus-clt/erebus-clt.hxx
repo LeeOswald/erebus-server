@@ -4,7 +4,7 @@
 #include <erebus/log.hxx>
 #include <erebus/propertybag.hxx>
 
-#include <vector>
+#include <functional>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     #ifdef EREBUSCLT_EXPORTS
@@ -17,24 +17,19 @@
 #endif
 
 
-namespace Er
-{
-    
-namespace Client
+namespace Er::Client
 {
 
 
 struct IClient
 {
     using Ptr = std::unique_ptr<IClient>;
-    using SessionId = uint32_t;
+    using StreamReader = std::function<bool(Er::PropertyBag&&)>;
 
-    virtual SessionId beginSession(std::string_view request) = 0;
-    virtual void endSession(std::string_view request, SessionId id) = 0;
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, SessionId) = 0;
-    virtual std::vector<Er::PropertyBag> requestStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) = 0;
+    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0;
+    virtual void requestStream(std::string_view request, const Er::PropertyBag& args, StreamReader reader) = 0;
 
-    virtual ~IClient() {}
+    virtual ~IClient() = default;
 };
 
 struct LibParams
@@ -77,6 +72,7 @@ struct ChannelParams
     std::string rootCertificate;
     std::string certificate;
     std::string key;
+    bool noKeepAlive = true;
 
     ChannelParams() noexcept = default;
 
@@ -104,6 +100,4 @@ EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params);
 EREBUSCLT_EXPORT IClient::Ptr createClient(ChannelPtr channel, Log::ILog* log);
 
 
-} // namespace Client {}
-    
-} // namespace Er {}
+} // namespace Er::Client {}

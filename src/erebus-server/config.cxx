@@ -32,25 +32,16 @@ R"(
             "minimum": 0,
             "maximum": 1
         },
-        "logfile": {
+        "log_file": {
             "type": "string"
         },
-        "keeplogs": {
+        "keep_logs": {
             "type": "number"
         },
-        "maxlogsize": {
+        "max_log_size": {
             "type": "number"
         },
-        "pidfile": {
-            "type": "string"
-        },
-        "certificate": {
-            "type": "string"
-        },
-        "key": {
-            "type": "string"
-        },
-        "root": {
+        "pid_file": {
             "type": "string"
         },
         "endpoints": {
@@ -63,6 +54,15 @@ R"(
                     },
                     "ssl": {
                         "type": "boolean"
+                    },
+                    "certificate": {
+                        "type": "string"
+                    },
+                    "private_key": {
+                        "type": "string"
+                    },
+                    "root_ca": {
+                        "type": "string"
                     }
                 },
                 "required": ["endpoint"]
@@ -98,7 +98,7 @@ R"(
             }
         }
     },
-    "required": ["logfile", "endpoints", "plugins"]
+    "required": ["log_file", "endpoints", "plugins", "pid_file"]
 }
 )";
 
@@ -164,20 +164,14 @@ ServerConfig loadConfig(const std::string& path)
         auto name = m->name.GetString();
         if (!std::strcmp(name, "verbose"))
             cfg.verbose = m->value.GetInt();
-        else if (!std::strcmp(name, "logfile"))
+        else if (!std::strcmp(name, "log_file"))
             cfg.logfile = m->value.GetString();
-        else if (!std::strcmp(name, "keeplogs"))
+        else if (!std::strcmp(name, "keep_logs"))
             cfg.keeplogs = m->value.GetInt();
-        else if (!std::strcmp(name, "maxlogsize"))
+        else if (!std::strcmp(name, "max_log_size"))
             cfg.maxLogSize = m->value.GetUint64() * 1024 * 1024;
-        else if (!std::strcmp(name, "pidfile"))
+        else if (!std::strcmp(name, "pid_file"))
             cfg.pidfile = m->value.GetString();
-        else if (!std::strcmp(name, "certificate"))
-            cfg.certificate = m->value.GetString();
-        else if (!std::strcmp(name, "key"))
-            cfg.privateKey = m->value.GetString();
-        else if (!std::strcmp(name, "root"))
-            cfg.rootCA = m->value.GetString();
         else if (!std::strcmp(name, "endpoints"))
         {
             for (size_t index = 0; index < m->value.Size(); ++index)
@@ -192,6 +186,12 @@ ServerConfig loadConfig(const std::string& path)
                         ep.endpoint = m->value.GetString();
                     else if (!std::strcmp(name, "ssl"))
                         ep.ssl = m->value.GetBool();
+                    else if (!std::strcmp(name, "certificate"))
+                        ep.certificate = m->value.GetString();
+                    else if (!std::strcmp(name, "private_key"))
+                        ep.privateKey = m->value.GetString();
+                    else if (!std::strcmp(name, "root_ca"))
+                        ep.rootCA = m->value.GetString();
                 }
 
                 cfg.endpoints.push_back(std::move(ep));

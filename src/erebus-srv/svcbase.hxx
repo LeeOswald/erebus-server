@@ -22,36 +22,92 @@ class EREBUSSRV_EXPORT ServiceBase
 {
 public:
     ~ServiceBase();
-    explicit ServiceBase(const Er::Server::Params* params);
+    explicit ServiceBase(grpc::Service* service, const Er::Server::Params& params);
 
     virtual void start();
 
 protected:
-    virtual grpc::Service* service() = 0;
-    virtual void createRpcs() = 0;
-    
-    virtual void receiveRpcs();
-    virtual void processRpcs();
+    struct TagQueue
+        : public Er::NonCopyable
+    {
+        std::mutex mutex;
+        std::condition_variable available;
+        Erp::Server::Rpc::TagList tags;
+    };
 
+    struct RpcReceiver
+        : public Er::NonCopyable
+    {
+        ServiceBase* owner;
+        Er::Log::ILog* log;
+        std::unique_ptr<grpc::ServerCompletionQueue> cq;
+        TagQueue& incoming;
+        std::jthread thread;
+
+        ~RpcReceiver()
+        {
+            thread.request_stop();
+            cq->Shutdown();
+            // drain the CQ
+            void* tag = nullptr;
+            bool ok = false;
+            while (cq->Next(&tag, &ok))
+            {
+            }
+        }
+
+        RpcReceiver(ServiceBase* owner, Er::Log::ILog* log, std::unique_ptr<grpc::ServerCompletionQueue>&& cq, TagQueue& incoming)
+            : owner(owner)
+            , log(log)
+            , cq(std::move(cq))
+            , incoming(incoming)
+            , thread([this](std::stop_token stop) { run(stop); })
+        {
+        }
+
+        void run(std::stop_token stop);
+    };
+
+    struct RpcHandler
+        : public Er::NonCopyable
+    {
+        ServiceBase* owner;
+        Er::Log::ILog* log;
+        TagQueue& incoming;
+        std::jthread thread1;
+        std::jthread thread2;
+
+        ~RpcHandler() = default;
+
+        RpcHandler(ServiceBase* owner, Er::Log::ILog* log, TagQueue& incoming)
+            : owner(owner)
+            , log(log)
+            , incoming(incoming)
+            , thread1([this](std::stop_token stop) { run(stop); })
+            , thread2([this](std::stop_token stop) { run(stop); })
+        {
+        }
+
+        void run(std::stop_token stop);
+    };
+    
+    virtual void createRpcs(grpc::ServerCompletionQueue* cq) = 0;
+    
     static void genericDone(Erp::Server::Rpc::RpcBase& rpc, bool rpcCancelled);
 
-    static void marshalException(erebus::GenericReply* reply, const std::exception& e);
-    static void marshalException(erebus::GenericReply* reply, const Er::Exception& e);
-    static void marshalException(erebus::GenericReply* reply, Er::Result code, std::string_view message);
+    static void marshalException(erebus::ServiceReply* reply, const std::exception& e);
+    static void marshalException(erebus::ServiceReply* reply, const Er::Exception& e);
+    static void marshalException(erebus::ServiceReply* reply, Er::Result code, std::string_view message);
 
     static Er::PropertyBag unmarshalArgs(const erebus::ServiceRequest* request);
     static void marshalReplyProps(const Er::PropertyBag& props, erebus::ServiceReply* reply);
 
-    bool m_stop = false;
+    grpc::Service* m_service;
     Er::Server::Params m_params;
-    bool m_local;
-    std::unique_ptr<grpc::ServerCompletionQueue> m_queue;
+    TagQueue m_incoming;
     std::unique_ptr<grpc::Server> m_server;
-    std::mutex m_mutex;
-    std::condition_variable m_incoming;
-    Erp::Server::Rpc::TagList m_incomingTags;
-    std::unique_ptr<std::thread> m_receiverWorker;
-    std::unique_ptr<std::thread> m_processorWorker;
+    std::unique_ptr<RpcReceiver> m_receiver;
+    std::vector<std::unique_ptr<RpcHandler>> m_handlers;
 };
 
 

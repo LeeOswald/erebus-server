@@ -5,6 +5,7 @@
 #include <erebus-desktop/erebus-desktop.hxx>
 #include <erebus-processmgr/erebus-processmgr.hxx>
 
+#include <chrono>
 #include <iostream>
 #include <thread>
 
@@ -124,10 +125,15 @@ bool issueRequest(
         {
             auto channel = Er::Client::createChannel(params);
             auto client = Er::Client::createClient(channel, log);
-            auto sessionId = client->beginSession(request);
+
             auto requestArgs = pargseArgs(args);
 
-            auto result = client->request(request, requestArgs, sessionId);
+            auto timeStart = std::chrono::high_resolution_clock::now();
+            auto result = client->request(request, requestArgs);
+            auto timeStop = std::chrono::high_resolution_clock::now();
+
+            auto dura = timeStop - timeStart;
+            auto msecs = std::chrono::duration_cast<std::chrono::milliseconds>(dura).count();
 
             while (!g_signalReceived)
             {
@@ -136,14 +142,18 @@ bool issueRequest(
                 if (interval <= 0)
                     break;
 
+                Er::Log::write(log, Er::Log::Level::Info, "RTT: {} ms", msecs);
                 Er::Log::writeln(log, Er::Log::Level::Info, "------------------------------------------------------");
                 
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
 
-                result = client->request(request, requestArgs, sessionId);
-            }
+                timeStart = std::chrono::high_resolution_clock::now();
+                result = client->request(request, requestArgs);
+                timeStop = std::chrono::high_resolution_clock::now();
 
-            client->endSession(request, sessionId);
+                dura = timeStop - timeStart;
+                msecs = std::chrono::duration_cast<std::chrono::milliseconds>(dura).count();
+            }
 
             return true;
         }
@@ -155,40 +165,38 @@ bool receiveStream(
     const Er::Client::ChannelParams& params, 
     const std::string& request,
     const std::string& domain,
-    const std::vector<std::string>& args,
-    int interval
+    const std::vector<std::string>& args
     )
 {
     return Er::protectedCall<bool>(
         log,
-        [log, &params, &request, &domain, &args, interval]()
+        [log, &params, &request, &domain, &args]()
         {
             auto channel = Er::Client::createChannel(params);
             auto client = Er::Client::createClient(channel, log);
-            auto sessionId = client->beginSession(request);
+
             auto requestArgs = pargseArgs(args);
 
-            auto result = client->requestStream(request, requestArgs, sessionId);
-      
-            while (!g_signalReceived)
-            {
-                for (auto& item : result)
+            auto timeStart = std::chrono::high_resolution_clock::now();
+            client->requestStream(
+                request, 
+                requestArgs, 
+                [log, domain, &timeStart](Er::PropertyBag&& item) -> bool
                 {
+                    if (g_signalReceived)
+                        return false;
+
+                    auto timeStop = std::chrono::high_resolution_clock::now();
+                    auto dura = timeStop - timeStart;
+                    auto msecs = std::chrono::duration_cast<std::chrono::milliseconds>(dura).count();
+
                     dumpPropertyBag(domain, item, log);
-                    Er::Log::writeln(log, Er::Log::Level::Info, "------------------------------------------------------");
+                    Er::Log::write(log, Er::Log::Level::Info, "Time delta: {} ms", msecs);
+                    
+                    timeStart = timeStop;
+                    return true;
                 }
-
-                if (interval <= 0)
-                    break;
-
-                Er::Log::writeln(log, Er::Log::Level::Info, "========================================================");
-
-                std::this_thread::sleep_for(std::chrono::seconds(interval));
-
-                result = client->requestStream(request, requestArgs, sessionId);
-            }
-
-            client->endSession(request, sessionId);
+            );
 
             return true;
         }
@@ -336,7 +344,7 @@ int main(int argc, char* argv[])
         }
         else if (!stream.empty())
         {
-            if (receiveStream(logger.get(), params, stream, domain, args, interval))
+            if (receiveStream(logger.get(), params, stream, domain, args))
                 result = EXIT_SUCCESS;
         }
 

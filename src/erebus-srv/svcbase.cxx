@@ -12,29 +12,16 @@ namespace Erp::Server
 ServiceBase::~ServiceBase()
 {
     TraceMethod("ServiceBase");
-    m_stop = true;
-    m_incoming.notify_one();
 
     m_server->Shutdown();
-    m_queue->Shutdown();
-
-    // drain the CQ
-    void* ignoredTag = nullptr;
-    bool ignoredOk = false;
-    while (m_queue->Next(&ignoredTag, &ignoredOk))
-    {
-    }
-
-    if (m_receiverWorker->joinable())
-        m_receiverWorker->join();
-
-    if (m_processorWorker->joinable())
-        m_processorWorker->join();
+    
+    m_receiver.reset();
+    m_handlers.clear();
 }
 
-ServiceBase::ServiceBase(const Er::Server::Params* params)
-    : m_params(*params)
-    , m_local(params->endpoint.starts_with("unix:"))
+ServiceBase::ServiceBase(grpc::Service* service, const Er::Server::Params& params)
+    : m_service(service)
+    , m_params(params)
 {
     TraceMethod("ServiceBase");
 }
@@ -44,33 +31,38 @@ void ServiceBase::start()
     TraceMethod("ServiceBase");
     grpc::ServerBuilder builder;
 
-    if (!m_local && m_params.ssl)
+    for (auto& ep : m_params.endpoints)
     {
-        grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { m_params.key, m_params.certificate };
-        grpc::SslServerCredentialsOptions sslOps(GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY);
-        sslOps.pem_root_certs = m_params.rootCertificate;
-        sslOps.pem_key_cert_pairs.push_back(keycert);
-        auto creds = grpc::SslServerCredentials(sslOps);
-        builder.AddListeningPort(m_params.endpoint, creds);
-    }
-    else
-    {
-        // no authentication
-        builder.AddListeningPort(m_params.endpoint, grpc::InsecureServerCredentials());
+        if (ep.ssl)
+        {
+            grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { ep.privateKey, ep.certificate };
+            grpc::SslServerCredentialsOptions sslOps(GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY);
+            sslOps.pem_root_certs = ep.certificate;
+            sslOps.pem_key_cert_pairs.push_back(keycert);
+            auto creds = grpc::SslServerCredentials(sslOps);
+            builder.AddListeningPort(ep.endpoint, creds);
+        }
+        else
+        {
+            // no authentication
+            builder.AddListeningPort(ep.endpoint, grpc::InsecureServerCredentials());
+        }
     }
 
-    builder.RegisterService(service());
-    m_queue = builder.AddCompletionQueue();
-
-    if (!m_local && !m_params.noKeepAlive)
+    if (m_params.keepAlive)
     {
-        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 1 * 60 * 1000);
-        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 20 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 1 * 30 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 60 * 1000);
         builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
-        builder.AddChannelArgument(GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, 10 * 1000);
+        builder.AddChannelArgument(GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, 5 * 1000);
         builder.AddChannelArgument(GRPC_ARG_HTTP2_MAX_PING_STRIKES, 5);
     }
 
+    builder.RegisterService(m_service);
+    
+    // create completion queues
+    auto cq = builder.AddCompletionQueue();
+    
     // finally assemble the server
     auto server = builder.BuildAndStart();
     if (!server)
@@ -78,75 +70,95 @@ void ServiceBase::start()
 
     m_server.swap(server);
 
-    m_receiverWorker.reset(new std::thread([this]() { receiveRpcs(); }));
-    m_processorWorker.reset(new std::thread([this]() { processRpcs(); }));
+    // create RPC handlers
+    m_handlers.reserve(m_params.workerThreads);
+    for (unsigned i = 0; i < m_params.workerThreads; ++i)
+    {
+        m_handlers.emplace_back(new RpcHandler(this, m_params.log, m_incoming));
+    }
+
+    // create RPC receiver
+    m_receiver.reset(new RpcReceiver(this, m_params.log, std::move(cq), m_incoming));
 }
 
-void ServiceBase::receiveRpcs()
+void ServiceBase::RpcReceiver::run(std::stop_token stop)
 {
-    TraceMethod("ServiceBase");
-    Er::System::CurrentThread::setName("RPCReceiver");
+    TraceMethod("ServiceBase.RpcReceiver");
+    Er::System::CurrentThread::setName("RpcReceiver");
 
-    Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC receiver thread started");
+    Er::Log::writeln(log, Er::Log::Level::Debug, "RPC receiver thread started");
 
-    createRpcs();
+    owner->createRpcs(cq.get());
 
-    Erp::Server::Rpc::TagInfo tagInfo;
-    while (!m_stop)
+    Erp::Server::Rpc::TagInfo tag;
+    while (!stop.stop_requested())
     {
         // Block waiting to read the next event from the completion queue. The
         // event is uniquely identified by its tag, which in this case is the
         // memory address of a CallData instance.
         // The return value of Next should always be checked. This return value
-        // tells us whether there is any kind of event or cq_ is shutting down.
-        if (!m_queue->Next((void**)&tagInfo.tagProcessor, &tagInfo.ok))
+        // tells us whether there is any kind of event or CQ is shutting down.
+        if (!cq->Next((void**)&tag.handler, &tag.ok))
         {
-            Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "No more tags in completion queue");
+            Er::Log::writeln(log, Er::Log::Level::Debug, "No more tags in completion queue");
             break;
         }
 
-        if (m_stop)
+        if (stop.stop_requested())
             break;
 
+        Er::Log::debug(log, "Tag received {}", Er::Format::ptr(tag.handler));
+
         {
-            std::lock_guard l(m_mutex);
-            m_incomingTags.push_back(tagInfo);
+            std::lock_guard l(incoming.mutex);
+            incoming.tags.push_back(tag);
         }
 
-        m_incoming.notify_one();
+        incoming.available.notify_one();
     }
 
-    Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC receiver thread exited");
+    Er::Log::writeln(log, Er::Log::Level::Debug, "RPC receiver thread exited");
 }
 
-void ServiceBase::processRpcs()
+void ServiceBase::RpcHandler::run(std::stop_token stop)
 {
-    TraceMethod("ServiceBase");
-    Er::System::CurrentThread::setName("RPCProcessor");
-    Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC processor thread started");
+    TraceMethod("ServiceBase.RpcHandler");
+    Er::System::CurrentThread::setName("RpcHandler");
 
-    while (!m_stop)
+    Er::Log::writeln(log, Er::Log::Level::Debug, "RPC handler thread started");
+
+    while (!stop.stop_requested())
     {
-        std::unique_lock l(m_mutex);
+        decltype(incoming.tags) tags;
 
-        m_incoming.wait(l, [this]() { return m_stop || !m_incomingTags.empty(); });
-
-        if (m_stop)
-            break;
-
-        auto tags = std::move(m_incomingTags);
-        l.unlock();
-
-        while (!tags.empty())
         {
-            auto tagInfo = tags.front();
-            tags.pop_front();
-            (*(tagInfo.tagProcessor))(tagInfo.ok);
+            std::unique_lock l(incoming.mutex);
 
+            incoming.available.wait(l, [this, &stop]() { return stop.stop_requested() || !incoming.tags.empty(); });
+
+            if (stop.stop_requested())
+                break;
+
+            if (incoming.tags.empty())
+                continue;
+
+            auto tag = incoming.tags.front();
+            incoming.tags.pop_front();
+            tags.push_back(tag);
+        }
+
+        while (!stop.stop_requested() && !tags.empty())
+        {
+            auto tag = tags.front();
+            tags.pop_front();
+
+            Er::Log::debug(log, "Stole tag {}", Er::Format::ptr(tag.handler));
+
+            (*(tag.handler))(tag.ok);
         }
     }
 
-    Er::Log::writeln(m_params.log, Er::Log::Level::Debug, "RPC processor thread exited");
+    Er::Log::writeln(log, Er::Log::Level::Debug, "RPC handler thread exited");
 }
 
 void ServiceBase::genericDone(Erp::Server::Rpc::RpcBase& rpc, bool rpcCancelled)
@@ -155,7 +167,7 @@ void ServiceBase::genericDone(Erp::Server::Rpc::RpcBase& rpc, bool rpcCancelled)
     delete (&rpc);
 }
 
-void ServiceBase::marshalException(erebus::GenericReply* reply, const std::exception& e)
+void ServiceBase::marshalException(erebus::ServiceReply* reply, const std::exception& e)
 {
     auto what = e.what();
     if (!what || !*what)
@@ -165,7 +177,7 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const std::excep
     *exception->mutable_message() = std::string_view(what);
 }
 
-void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Exception& e)
+void ServiceBase::marshalException(erebus::ServiceReply* reply, const Er::Exception& e)
 {
     std::string_view what;
     auto msg = e.message();
@@ -191,7 +203,7 @@ void ServiceBase::marshalException(erebus::GenericReply* reply, const Er::Except
     }
 }
 
-void ServiceBase::marshalException(erebus::GenericReply* reply, Er::Result code, std::string_view message)
+void ServiceBase::marshalException(erebus::ServiceReply* reply, Er::Result code, std::string_view message)
 {
     auto exception = reply->mutable_exception();
     

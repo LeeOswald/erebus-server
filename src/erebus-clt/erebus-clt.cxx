@@ -10,10 +10,7 @@
 #include <atomic>
 #include <sstream>
 
-namespace Er
-{
-
-namespace Client
+namespace Er::Client
 {
 
 namespace
@@ -35,35 +32,10 @@ public:
     {
     }
 
-    SessionId beginSession(std::string_view req) override
-    {
-        erebus::AllocateSessionRequest request;
-        request.set_request(std::string(req));
-
-        erebus::AllocateSessionReply reply;
-        grpc::ClientContext context;
-        grpc::Status status = m_stub->AllocateSession(&context, request, &reply);
-        throwIfFailed(status, &reply.header());
-
-        return reply.sessionid();
-    }
-
-    void endSession(std::string_view req, SessionId id) override
-    {
-        erebus::DeleteSessionRequest request;
-        request.set_request(std::string(req));
-
-        erebus::GenericReply reply;
-        grpc::ClientContext context;
-        grpc::Status status = m_stub->DeleteSession(&context, request, &reply);
-        throwIfFailed(status, &reply);
-    }
-
-    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args, SessionId sessionId) override
+    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
-        request.set_sessionid(sessionId);
 
         // marshal properties
         Er::enumerateProperties(args, [&request](const Property& arg)
@@ -75,7 +47,7 @@ public:
         erebus::ServiceReply reply;
         grpc::ClientContext context;
         grpc::Status status = m_stub->GenericRpc(&context, request, &reply);
-        throwIfFailed(status, &reply.header());
+        throwIfFailed(status, &reply);
 
         // unmarshal properties
         Er::PropertyBag bag;
@@ -89,11 +61,10 @@ public:
         return bag;
     }
 
-    std::vector<Er::PropertyBag> requestStream(std::string_view req, const Er::PropertyBag& args, SessionId sessionId) override
+    void requestStream(std::string_view req, const Er::PropertyBag& args, StreamReader reader) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
-        request.set_sessionid(sessionId);
 
         // marshal properties
         Er::enumerateProperties(args, [&request](const Property& arg)
@@ -109,22 +80,23 @@ public:
         erebus::ServiceReply reply;
         while (stream->Read(&reply))
         {
-            throwIfFailed(grpc::Status::OK, &reply.header());
+            throwIfFailed(grpc::Status::OK, &reply);
 
             // unmarshal properties
             Er::PropertyBag bag;
             int count = reply.props_size();
+            Er::Log::debug(m_log, "Received {} props", count);
             for (int i = 0; i < count; ++i)
             {
                 auto& prop = reply.props(i);
                 Er::addProperty(bag, Er::Protocol::getProperty(prop));
             }
 
-            if (!bag.empty())
-                out.push_back(std::move(bag));
+            if (!reader(std::move(bag)))
+                break;
         }
 
-        return out;
+        Er::Log::debug(m_log, "End of stream");
     }
 
 private:
@@ -153,7 +125,7 @@ private:
         }
     }
 
-    void throwIfFailed(grpc::Status status, const erebus::GenericReply* reply)
+    void throwIfFailed(grpc::Status status, const erebus::ServiceReply* reply)
     {
         if (!status.ok())
         {
@@ -249,14 +221,13 @@ EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params)
     bool local = params.endpoint.starts_with("unix:");
 
     grpc::ChannelArguments args;
-#if !ER_DEBUG
-    if (!local)
+
+    if (!params.noKeepAlive)
     {
         args.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, 20 * 1000);
         args.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 10 * 1000);
         args.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
     }
-#endif
 
     if (!local && params.ssl)
     {
@@ -279,6 +250,4 @@ EREBUSCLT_EXPORT IClient::Ptr createClient(ChannelPtr channel, Log::ILog* log)
     return std::make_unique<ClientImpl>(std::static_pointer_cast<grpc::Channel>(channel), log);
 }
 
-} // namespace Client {}
-
-} // namespace Er {}
+} // namespace Er::Client {}
