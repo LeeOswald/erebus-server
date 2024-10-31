@@ -9,9 +9,6 @@
 namespace Er::Server
 {
 
-struct IServiceContainer;
-
-
 struct PluginParams
 {
     struct Arg
@@ -27,7 +24,7 @@ struct PluginParams
     };
 
     Er::Log::ILog* log = nullptr;
-    IServiceContainer* container = nullptr;
+    IServer* container = nullptr;
     std::string binary;
     std::vector<Arg> args;
 };

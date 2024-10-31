@@ -21,4 +21,6 @@ add_compile_definitions(EREBUSDESKTOP_EXPORTS=1)
 
 set_property(TARGET ${EREBUS_DESKTOPLIB} PROPERTY PREFIX "")
 
+target_precompile_headers(${EREBUS_DESKTOPLIB} PRIVATE ../../include/erebus/erebus.hxx)
+
 target_link_libraries(${EREBUS_DESKTOPLIB} PRIVATE ${Boost_LIBRARIES} ${EREBUS_RTLLIB})

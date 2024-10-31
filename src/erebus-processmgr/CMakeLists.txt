@@ -17,4 +17,6 @@ add_compile_definitions(ER_PROCESSMGR_EXPORTS=1)
 
 set_property(TARGET ${EREBUS_PROCESSMGR} PROPERTY PREFIX "")
 
+target_precompile_headers(${EREBUS_PROCESSMGR} PRIVATE ../../include/erebus/erebus.hxx)
+
 target_link_libraries(${EREBUS_PROCESSMGR} PRIVATE ${EREBUS_RTLLIB}) 

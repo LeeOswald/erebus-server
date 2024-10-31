@@ -8,4 +8,6 @@ add_compile_definitions(EREBUSCLT_EXPORTS=1)
 
 set_property(TARGET ${EREBUS_CLTLIB} PROPERTY PREFIX "")
 
+target_precompile_headers(${EREBUS_CLTLIB} PRIVATE ../../include/erebus/erebus.hxx)
+
 target_link_libraries(${EREBUS_CLTLIB} PRIVATE ${EREBUS_RTLLIB} ${GRPC_LIBS} ${EREBUS_PROTOLIB})

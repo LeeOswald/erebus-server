@@ -18,8 +18,8 @@ public:
     ~CoreService();
     explicit CoreService(Er::Log::ILog* log);
 
-    void registerService(Er::Server::IServiceContainer* container);
-    void unregisterService(Er::Server::IServiceContainer* container);
+    void registerService(Er::Server::IServer* container);
+    void unregisterService(Er::Server::IServer* container);
 
     Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) override;
     StreamId beginStream(std::string_view request, const Er::PropertyBag& args) override;

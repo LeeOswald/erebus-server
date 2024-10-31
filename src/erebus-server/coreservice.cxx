@@ -14,7 +14,6 @@
 
 #include "erebus-version.h"
 
-#include <erebus/trace.hxx>
 
 namespace Erp::Server
 {
@@ -52,20 +51,22 @@ CoreService::CoreService(Er::Log::ILog* log)
 {
 }
 
-void CoreService::registerService(Er::Server::IServiceContainer* container)
+void CoreService::registerService(Er::Server::IServer* container)
 {
     container->registerService(Er::Server::Requests::GetVersion, this);
     container->registerService(Er::Server::Requests::Ping, this);
 }
 
-void CoreService::unregisterService(Er::Server::IServiceContainer* container)
+void CoreService::unregisterService(Er::Server::IServer* container)
 {
     container->unregisterService(this);
 }
 
 Er::PropertyBag CoreService::request(std::string_view request, const Er::PropertyBag& args)
 {
-    TraceMethod("CoreService");
+    Er::Log::debug(m_log, "CoreService::request");
+    Er::Log::Indent idt(m_log);
+
     if (request == Er::Server::Requests::GetVersion)
         return getVersion(args);
     else if (request == Er::Server::Requests::Ping)
@@ -76,7 +77,9 @@ Er::PropertyBag CoreService::request(std::string_view request, const Er::Propert
 
 Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
 {
-    TraceMethod("CoreService");
+    Er::Log::debug(m_log, "CoreService::request");
+    Er::Log::Indent idt(m_log);
+
     Er::PropertyBag reply;
 
 #if ER_WINDOWS
@@ -100,7 +103,9 @@ Er::PropertyBag CoreService::getVersion(const Er::PropertyBag& args)
 
 Er::PropertyBag CoreService::ping(const Er::PropertyBag& args)
 {
-    TraceMethod("CoreService");
+    Er::Log::debug(m_log, "CoreService::ping");
+    Er::Log::Indent idt(m_log);
+
     Er::PropertyBag reply;
 
     auto sender = Er::getPropertyValue<Er::Server::Props::PingSender>(args);
@@ -118,7 +123,8 @@ Er::PropertyBag CoreService::ping(const Er::PropertyBag& args)
 
 CoreService::StreamId CoreService::beginStream(std::string_view request, const Er::PropertyBag& args)
 {
-    TraceMethod("CoreService");
+    Er::Log::debug(m_log, "CoreService::beginStream");
+    Er::Log::Indent idt(m_log);
 
     if (request == Er::Server::Requests::Ping)
         return beginPingStream(args);
@@ -128,7 +134,8 @@ CoreService::StreamId CoreService::beginStream(std::string_view request, const E
 
 void CoreService::endStream(StreamId id)
 {
-    TraceMethod("CoreService");
+    Er::Log::debug(m_log, "CoreService::endStream");
+    Er::Log::Indent idt(m_log);
 
     {
         std::lock_guard l(m_mutexStreams);
@@ -148,7 +155,8 @@ void CoreService::endStream(StreamId id)
 
 Er::PropertyBag CoreService::next(StreamId id)
 {
-    TraceMethod("CoreService");
+    Er::Log::debug(m_log, "CoreService::next");
+    Er::Log::Indent idt(m_log);
 
     Stream::Ptr stream;
     

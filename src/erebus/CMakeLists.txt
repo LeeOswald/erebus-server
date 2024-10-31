@@ -79,7 +79,6 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/system/thread.hxx
     ../../include/erebus/system/timestamp.hxx
     ../../include/erebus/system/user.hxx
-    ../../include/erebus/trace.hxx
     ../../include/erebus/trackable.hxx
     ../../include/erebus/tree.hxx
     ../../include/erebus/util/autoptr.hxx
@@ -135,5 +134,7 @@ add_library(${EREBUS_RTLLIB} SHARED
 add_compile_definitions(EREBUS_EXPORTS=1)
 
 set_property(TARGET ${EREBUS_RTLLIB} PROPERTY PREFIX "")
+
+target_precompile_headers(${EREBUS_RTLLIB} PRIVATE ../../include/erebus/erebus.hxx)
 
 target_link_libraries(${EREBUS_RTLLIB} PUBLIC ${Boost_LIBRARIES} ${PLATFORM_LIBS} ${LUA_LIBRARIES} fmt::fmt)

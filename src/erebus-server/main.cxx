@@ -313,12 +313,12 @@ int main(int argc, char* argv[], char* env[])
         server = Er::Server::create(params);
         
         Erp::Server::CoreService coreService(g_log);
-        coreService.registerService(server->serviceContainer());
+        coreService.registerService(server.get());
         
         // load plugins
         Er::Server::PluginParams pluginParams;
         pluginParams.log = g_log;
-        pluginParams.container = server->serviceContainer();
+        pluginParams.container = server.get();
        
         Er::Private::PluginMgr pluginMgr(pluginParams);
         for (auto& plugin: cfg.plugins)
@@ -347,7 +347,7 @@ int main(int argc, char* argv[], char* env[])
         // cleanup
         Er::Log::writeln(g_log, Er::Log::Level::Info, "Stopping server instances...");
         
-        coreService.unregisterService(server->serviceContainer());
+        coreService.unregisterService(server.get());
 
         pluginMgr.unloadAll();
         server.reset();

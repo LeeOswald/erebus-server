@@ -22,7 +22,7 @@ namespace Er::Server
 
 struct IService
 {
-    using StreamId = uint32_t;
+    using StreamId = uintptr_t;
     
     virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0; 
     virtual StreamId beginStream(std::string_view request, const Er::PropertyBag& args) = 0;
@@ -30,17 +30,7 @@ struct IService
     virtual Er::PropertyBag next(StreamId id) = 0;
 
 protected:
-    virtual ~IService() {}
-};
-
-
-struct IServiceContainer
-{
-    virtual void registerService(std::string_view request, IService* service) = 0;
-    virtual void unregisterService(IService* service) = 0;
-
-protected:
-    virtual ~IServiceContainer() {}
+    virtual ~IService() = default;
 };
 
 
@@ -70,7 +60,6 @@ struct Params
     };
 
     Er::Log::ILog* log = nullptr;
-    unsigned workerThreads = 2;
     std::vector<Endpoint> endpoints;
     bool keepAlive = true;
 
@@ -118,8 +107,9 @@ struct IServer
 {
     using Ptr = std::unique_ptr<IServer>;
 
-    virtual ~IServer() {}
-    virtual IServiceContainer* serviceContainer() = 0;
+    virtual ~IServer() = default;
+    virtual void registerService(std::string_view request, IService* service) = 0;
+    virtual void unregisterService(IService* service) = 0;
 };
 
 IServer::Ptr EREBUSSRV_EXPORT create(const Params& params);
