@@ -49,7 +49,7 @@ private:
             Er::Log::Indent idt(m_log);
         }
 
-        void Begin(Er::Server::IService* service, std::string_view request, const Er::PropertyBag& args)
+        void Begin(Er::Server::IService* service, std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
         {
             Er::Log::debug(m_log, "{}.ServiceReplyStream::Begin", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
@@ -60,7 +60,7 @@ private:
             bool error = false;
             try
             {
-                m_streamId = service->beginStream(request, args);
+                m_streamId = service->beginStream(request, cookie, args);
             }
             catch (Er::Exception& e)
             {

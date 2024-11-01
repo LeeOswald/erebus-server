@@ -1,18 +1,14 @@
 #pragma once
 
+
 #include <erebus-processmgr/erebus-processmgr.hxx>
+#include <erebus-srv/cookies.hxx>
 #include <erebus-srv/plugin.hxx>
 
 #include "globalscollector.hxx"
 #include "processlistcollector.hxx"
 #include "procfs.hxx"
 
-
-#include <chrono>
-#include <mutex>
-#include <shared_mutex>
-#include <unordered_map>
-#include <vector>
 
 namespace Erp::ProcessMgr
 {
@@ -26,34 +22,25 @@ public:
     ~ProcessListService();
     explicit ProcessListService(Er::Log::ILog* log);
 
-    void registerService(Er::Server::IServiceContainer* container);
-    void unregisterService(Er::Server::IServiceContainer* container);
+    void registerService(Er::Server::IServer* container);
+    void unregisterService(Er::Server::IServer* container);
 
-    SessionId allocateSession() override;
-    void deleteSession(SessionId id)  override;
-    Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) override; 
-    StreamId beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) override;
-    void endStream(StreamId id, SessionId sessionId) override;
-    Er::PropertyBag next(StreamId id, SessionId sessionId) override;
+    Er::PropertyBag request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) override; 
+    [[nodiscard]] StreamId beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) override;
+    void endStream(StreamId id) override;
+    Er::PropertyBag next(StreamId id) override;
 
 private:
-    struct Stream;
-
     struct Session
         : public Er::NonCopyable
     {
-        std::mutex mutex;
-        std::chrono::steady_clock::time_point touched = std::chrono::steady_clock::now();
-        SessionId id;
-        std::unordered_map<StreamId, std::shared_ptr<Stream>> streams;
-        StreamId nextStreamId = 1;
+        Session() noexcept = default;
 
         std::unique_ptr<ProcessListCollector> collector;
-
-        explicit Session(SessionId id) noexcept
-            : id(id)
-        {}
     };
+
+    using Sessions = Er::Server::Cookies<std::string, Session>;
+    using SessionRef = Sessions::Ref;
 
     struct Stream
         : public Er::NonCopyable
@@ -63,21 +50,21 @@ private:
             ProcessListDiff
         };
 
-        std::chrono::steady_clock::time_point touched = std::chrono::steady_clock::now();
-        Type type;
-        StreamId id;
+        const Type type;
 
-        explicit Stream(Type type, StreamId id) noexcept
+        virtual ~Stream() = default;
+
+        constexpr Stream(Type type) noexcept
             : type(type)
-            , id(id)
         {}
     };
-
+    
     struct ProcessListDiffStream final
         : public Stream
     {
-        explicit ProcessListDiffStream(StreamId id, Er::PropertyBag&& globals, ProcessListCollector::ProcessInfoCollectionDiff&& processes) noexcept
-            : Stream(Type::ProcessListDiff, id)
+        explicit ProcessListDiffStream(SessionRef&& session, Er::PropertyBag&& globals, ProcessListCollector::ProcessInfoCollectionDiff&& processes) noexcept
+            : Stream(Type::ProcessListDiff)
+            , session(std::move(session))
             , globals(std::move(globals))
             , processes(std::move(processes))
         {}
@@ -90,6 +77,7 @@ private:
             Added
         };
 
+        SessionRef session;
         Er::PropertyBag globals;
         ProcessListCollector::ProcessInfoCollectionDiff processes;
         Stage stage = Stage::Globals;
@@ -99,26 +87,15 @@ private:
     static Er::ProcessMgr::ProcessProps::PropMask getProcessPropMask(const Er::PropertyBag& args);
     static Er::ProcessMgr::GlobalProps::PropMask getProcessesGlobalPropMask(const Er::PropertyBag& args);
 
-    Er::PropertyBag processesGlobal(Session* session, Er::ProcessMgr::GlobalProps::PropMask required, std::optional<uint64_t> processCount);
+    Er::PropertyBag processesGlobal(Er::ProcessMgr::GlobalProps::PropMask required, std::optional<uint64_t> processCount);
 
-    std::shared_ptr<Session> getSession(SessionId id);
-    void dropStaleSessions() noexcept;
-
-    void dropStaleStreams(Session* session) noexcept;
-
-    StreamId beginProcessDiffStream(const Er::PropertyBag& args, Session* session);
-    Er::PropertyBag nextProcessDiff(ProcessListDiffStream* stream, Session* session);
-
-    const unsigned kSessionTimeoutSeconds = 60 * 60;
-    const unsigned kStreamTimeoutSeconds = 60;
+    [[nodiscard]] StreamId beginProcessDiffStream(SessionRef&& session, const Er::PropertyBag& args);
+    Er::PropertyBag nextProcessDiff(ProcessListDiffStream* stream);
 
     Er::Log::ILog* const m_log;
     ProcFs m_procFs;
     GlobalsCollector m_globalsCollector;
-   
-    std::shared_mutex m_mutex;
-    SessionId m_nextSessionId = 1;
-    std::unordered_map<StreamId, std::shared_ptr<Session>> m_sessions;
+    Sessions m_sessions;
 };
 
 } // namespace Erp::ProcessMgr {}

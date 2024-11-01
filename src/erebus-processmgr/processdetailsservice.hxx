@@ -18,15 +18,13 @@ public:
     ~ProcessDetailsService();
     explicit ProcessDetailsService(Er::Log::ILog* log);
 
-    void registerService(Er::Server::IServiceContainer* container);
-    void unregisterService(Er::Server::IServiceContainer* container);
+    void registerService(Er::Server::IServer* container);
+    void unregisterService(Er::Server::IServer* container);
 
-    SessionId allocateSession() override;
-    void deleteSession(SessionId id)  override;
-    Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) override; 
-    StreamId beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId) override;
-    void endStream(StreamId id, SessionId sessionId) override;
-    Er::PropertyBag next(StreamId id, SessionId sessionId) override;
+    Er::PropertyBag request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) override; 
+    StreamId beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) override;
+    void endStream(StreamId id) override;
+    Er::PropertyBag next(StreamId id) override;
 
 private:
     Er::PropertyBag killProcess(const Er::PropertyBag& args); 

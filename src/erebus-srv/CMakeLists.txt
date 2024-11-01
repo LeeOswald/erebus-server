@@ -1,5 +1,6 @@
 
 add_library(${EREBUS_SRVLIB} SHARED
+    ../../include/erebus-srv/cookies.hxx
     ../../include/erebus-srv/erebus-srv.hxx
     ../../include/erebus-srv/global_requests.hxx
     ../../include/erebus-srv/plugin.hxx

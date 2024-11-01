@@ -21,8 +21,8 @@ public:
     void registerService(Er::Server::IServer* container);
     void unregisterService(Er::Server::IServer* container);
 
-    Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) override;
-    StreamId beginStream(std::string_view request, const Er::PropertyBag& args) override;
+    Er::PropertyBag request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) override;
+    StreamId beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) override;
     void endStream(StreamId id) override;
     Er::PropertyBag next(StreamId id) override;
 

@@ -26,11 +26,7 @@ class DesktopPlugin final
 public:
     ~DesktopPlugin()
     {
-        // unregister services
-        for (auto container: m_params.containers)
-        {
-            m_service->unregisterService(container);
-        }
+        m_service->unregisterService(m_params.container);
 
         Props::Private::unregisterAll(m_params.log);
 
@@ -86,10 +82,7 @@ public:
         }
 
         m_service.reset(new Erp::Desktop::Service(m_params.log, m_iconResolver, m_iconCache));
-        for (auto container: m_params.containers)
-        {
-            m_service->registerService(container);
-        }
+        m_service->registerService(m_params.container);
     }
 
 private:

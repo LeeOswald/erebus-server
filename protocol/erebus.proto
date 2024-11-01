@@ -73,7 +73,8 @@ service Erebus {
 
 message ServiceRequest {
   string request = 1;
-  repeated Property args = 2;
+  optional string cookie = 2;
+  repeated Property args = 3;
 }
 
 message ServiceReply {

@@ -24,8 +24,8 @@ struct IService
 {
     using StreamId = uintptr_t;
     
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0; 
-    virtual StreamId beginStream(std::string_view request, const Er::PropertyBag& args) = 0;
+    virtual Er::PropertyBag request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) = 0; 
+    [[nodiscard]] virtual StreamId beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) = 0;
     virtual void endStream(StreamId id) = 0;
     virtual Er::PropertyBag next(StreamId id) = 0;
 
@@ -112,7 +112,7 @@ struct IServer
     virtual void unregisterService(IService* service) = 0;
 };
 
-IServer::Ptr EREBUSSRV_EXPORT create(const Params& params);
+[[nodiscard]] IServer::Ptr EREBUSSRV_EXPORT create(const Params& params);
 
 
 } // namespace Er::Server {}

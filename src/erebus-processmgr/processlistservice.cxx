@@ -15,115 +15,56 @@ ProcessListService::ProcessListService(Er::Log::ILog* log)
     : m_log(log)
     , m_procFs(log)
     , m_globalsCollector(m_log, m_procFs)
+    , m_sessions(std::chrono::seconds(60))
 {
 }
 
-void ProcessListService::registerService(Er::Server::IServiceContainer* container)
+void ProcessListService::registerService(Er::Server::IServer* container)
 {
     container->registerService(Er::ProcessMgr::Requests::ListProcessesDiff, this);
     container->registerService(Er::ProcessMgr::Requests::GlobalProps, this);
 }
 
-void ProcessListService::unregisterService(Er::Server::IServiceContainer* container)
+void ProcessListService::unregisterService(Er::Server::IServer* container)
 {
     container->unregisterService(this);
 }
 
-ProcessListService::SessionId ProcessListService::allocateSession()
+Er::PropertyBag ProcessListService::request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
 {
-    std::unique_lock l(m_mutex);
-    auto id = m_nextSessionId++;
-
-    m_sessions.insert({ id, std::make_shared<Session>(id) });
-
-    return id;
-}
-
-void ProcessListService::deleteSession(SessionId id)
-{
-    std::unique_lock l(m_mutex);
-
-    auto it = m_sessions.find(id);
-    if (it == m_sessions.end())
-        ErThrow(Er::format("Non-existent session {}", id));
-
-    m_sessions.erase(it);
-
-    dropStaleSessions();
-}
-
-std::shared_ptr<ProcessListService::Session> ProcessListService::getSession(SessionId id)
-{
-    std::unique_lock l(m_mutex);
-
-    auto it = m_sessions.find(id);
-    if (it == m_sessions.end())
-        ErThrow("Session not found");
-
-    {
-        std::unique_lock l(it->second->mutex);
-        it->second->touched = std::chrono::steady_clock::now();
-    }
-
-    return it->second;
-}
-
-Er::PropertyBag ProcessListService::request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
-{
-    auto session = getSession(sessionId);
-
     if (request == Er::ProcessMgr::Requests::GlobalProps)
     {
         auto required = getProcessesGlobalPropMask(args);
-        return processesGlobal(session.get(), required, std::nullopt);
+        return processesGlobal(required, std::nullopt);
     }
 
     ErThrow(Er::format("Unsupported request {}", request));
 }
 
-ProcessListService::StreamId ProcessListService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
+ProcessListService::StreamId ProcessListService::beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
 {
-    auto session = getSession(sessionId);
+    auto session = m_sessions.allocate(std::string(cookie));
+    if (!session)
+        ErThrow(Er::format("Cookie {} is in use", cookie));
 
     if (request == Er::ProcessMgr::Requests::ListProcessesDiff)
-        return beginProcessDiffStream(args, session.get());
+        return beginProcessDiffStream(std::move(session), args);
 
     ErThrow(Er::format("Unsupported request {}", request));
 }
 
-void ProcessListService::endStream(StreamId id, SessionId sessionId)
+void ProcessListService::endStream(StreamId id)
 {
-    auto session = getSession(sessionId);
-
-    std::unique_lock l(session->mutex);
-
-    auto it = session->streams.find(id);
-    if (it == session->streams.end())
-        ErThrow(Er::format("Non-existent stream {}:{}", sessionId, id));
-
-    session->streams.erase(it);
-
-    dropStaleStreams(session.get());
+    auto stream = reinterpret_cast<Stream*>(id);
+    delete stream;
 }
 
-Er::PropertyBag ProcessListService::next(StreamId id, SessionId sessionId)
+Er::PropertyBag ProcessListService::next(StreamId id)
 {
-    auto session = getSession(sessionId);
-
-    std::shared_ptr<Stream> stream;
-    {
-        std::unique_lock l(session->mutex);
-        auto it = session->streams.find(id);
-        if (it == session->streams.end())
-            ErThrow(Er::format("Non-existent stream {}:{}", sessionId, id));
-
-        stream = it->second;
-
-        stream->touched = std::chrono::steady_clock::now();
-    }
+    auto stream = reinterpret_cast<Stream*>(id);
 
     if (stream->type == Stream::Type::ProcessListDiff)
-        return nextProcessDiff(static_cast<ProcessListDiffStream*>(stream.get()), session.get());
+        return nextProcessDiff(static_cast<ProcessListDiffStream*>(stream));
 
     ErAssert(!"Unknown stream type");
     return Er::PropertyBag();
@@ -143,7 +84,7 @@ Er::ProcessMgr::GlobalProps::PropMask ProcessListService::getProcessesGlobalProp
     return Er::ProcessMgr::GlobalProps::PropMask(mask, Er::ProcessMgr::GlobalProps::PropMask::FromBits);
 }
 
-Er::PropertyBag ProcessListService::processesGlobal(Session* session, Er::ProcessMgr::GlobalProps::PropMask required, std::optional<uint64_t> processCount)
+Er::PropertyBag ProcessListService::processesGlobal(Er::ProcessMgr::GlobalProps::PropMask required, std::optional<uint64_t> processCount)
 {
     auto bag = m_globalsCollector.collect(required);
     
@@ -168,70 +109,21 @@ Er::PropertyBag ProcessListService::processesGlobal(Session* session, Er::Proces
     return bag;
 }
 
-void ProcessListService::dropStaleStreams(Session* session) noexcept
+ProcessListService::StreamId ProcessListService::beginProcessDiffStream(SessionRef&& session, const Er::PropertyBag& args)
 {
-    auto now = std::chrono::steady_clock::now();
+    if (!session.get().collector)
+        session.get().collector.reset(new ProcessListCollector(m_log, m_procFs));
 
-    for (auto it = session->streams.begin(); it != session->streams.end();)
-    {
-        auto d = std::chrono::duration_cast<std::chrono::seconds>(now - it->second->touched);
-        if (d.count() > kStreamTimeoutSeconds)
-        {
-            auto next = std::next(it);
-            Er::Log::warning(m_log, "Dropping stale stream {}", it->first);
-            session->streams.erase(it);
-            it = next;
-        }
-        else
-        {
-            ++it;
-        }
-    }
-}
-
-void ProcessListService::dropStaleSessions() noexcept
-{
-    auto now = std::chrono::steady_clock::now();
-
-    for (auto it = m_sessions.begin(); it != m_sessions.end();)
-    {
-        auto d = std::chrono::duration_cast<std::chrono::seconds>(now - it->second->touched);
-        if (d.count() > kSessionTimeoutSeconds)
-        {
-            auto next = std::next(it);
-            Er::Log::warning(m_log, "Dropping stale session {}", it->first);
-            m_sessions.erase(it);
-            it = next;
-        }
-        else
-        {
-            ++it;
-        }
-    }
-}
-
-ProcessListService::StreamId ProcessListService::beginProcessDiffStream(const Er::PropertyBag& args, Session* session)
-{
     auto requiredProcess = getProcessPropMask(args);
-    if (!session->collector)
-        session->collector.reset(new ProcessListCollector(m_log, m_procFs));
-        
-    auto processesDiff = session->collector->update(requiredProcess);
+    auto processesDiff = session.get().collector->update(requiredProcess);
 
     auto requiredGlobals = getProcessesGlobalPropMask(args);
-    auto globals = processesGlobal(session, requiredGlobals, processesDiff.processCount);
+    auto globals = processesGlobal(requiredGlobals, processesDiff.processCount);
 
-    std::unique_lock l(session->mutex);
-
-    auto streamId = session->nextStreamId++;
-
-    auto stream = std::make_unique<ProcessListDiffStream>(streamId, std::move(globals), std::move(processesDiff));
-    session->streams.insert({ streamId, std::move(stream) });
-
-    return streamId;
+    return reinterpret_cast<StreamId>(new ProcessListDiffStream(std::move(session), std::move(globals), std::move(processesDiff)));
 }
 
-Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* stream, Session* session)
+Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* stream)
 {
     Er::PropertyBag bag;
 
@@ -247,7 +139,7 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
         {
             stream->stage = ProcessListDiffStream::Stage::Modified;
             stream->next = 0;
-            return nextProcessDiff(stream, session);
+            return nextProcessDiff(stream);
         }
 
         Er::addProperty<Er::ProcessMgr::Props::Pid>(bag, stream->processes.removed[stream->next]->pid);
@@ -262,7 +154,7 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
         {
             stream->stage = ProcessListDiffStream::Stage::Added;
             stream->next = 0;
-            return nextProcessDiff(stream, session);
+            return nextProcessDiff(stream);
         }
 
         auto& modified = stream->processes.modified[stream->next];
@@ -300,5 +192,6 @@ Er::PropertyBag ProcessListService::nextProcessDiff(ProcessListDiffStream* strea
 
     return bag;
 }
+
 
 } // namespace Erp::ProcessMgr {}

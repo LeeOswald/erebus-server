@@ -62,7 +62,7 @@ void CoreService::unregisterService(Er::Server::IServer* container)
     container->unregisterService(this);
 }
 
-Er::PropertyBag CoreService::request(std::string_view request, const Er::PropertyBag& args)
+Er::PropertyBag CoreService::request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
 {
     Er::Log::debug(m_log, "CoreService::request");
     Er::Log::Indent idt(m_log);
@@ -121,7 +121,7 @@ Er::PropertyBag CoreService::ping(const Er::PropertyBag& args)
     return reply;
 }
 
-CoreService::StreamId CoreService::beginStream(std::string_view request, const Er::PropertyBag& args)
+CoreService::StreamId CoreService::beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
 {
     Er::Log::debug(m_log, "CoreService::beginStream");
     Er::Log::Indent idt(m_log);
@@ -213,8 +213,6 @@ Er::PropertyBag CoreService::nextPing(StreamId id, PingStream* streamData)
         Er::addProperty<Er::Server::Props::PingSender>(reply, *streamData->sender);
 
     Er::Log::debug(m_log, "Next ping for stream {}", id);
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     return reply;
 }

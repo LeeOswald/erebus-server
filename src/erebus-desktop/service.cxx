@@ -22,40 +22,31 @@ Service::Service(Er::Log::ILog* log, std::shared_ptr<Erp::Desktop::IconResolver>
 {
 }
 
-void Service::registerService(Er::Server::IServiceContainer* container)
+void Service::registerService(Er::Server::IServer* container)
 {
     container->registerService(Er::Desktop::Requests::QueryIcon, this);
 }
 
-void Service::unregisterService(Er::Server::IServiceContainer* container)
+void Service::unregisterService(Er::Server::IServer* container)
 {
     container->unregisterService(this);
 }
 
-Service::SessionId Service::allocateSession()
-{
-    return 0;
-}
-
-void Service::deleteSession(SessionId id)
-{
-}
-
-Service::StreamId Service::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
+Service::StreamId Service::beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
 {
     ErThrow(Er::format("Unsupported request {}", request));
 }
 
-void Service::endStream(StreamId id, SessionId sessionId)
+void Service::endStream(StreamId id)
 {
 }
 
-Er::PropertyBag Service::next(StreamId id, SessionId sessionId)
+Er::PropertyBag Service::next(StreamId id)
 {
     return Er::PropertyBag();
 }
 
-Er::PropertyBag Service::request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
+Er::PropertyBag Service::request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
 {
     if (request == Er::Desktop::Requests::QueryIcon)
     {

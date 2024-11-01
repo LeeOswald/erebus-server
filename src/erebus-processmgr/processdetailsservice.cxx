@@ -62,28 +62,19 @@ ProcessDetailsService::ProcessDetailsService(Er::Log::ILog* log)
 {
 }
 
-void ProcessDetailsService::registerService(Er::Server::IServiceContainer* container)
+void ProcessDetailsService::registerService(Er::Server::IServer* container)
 {
     container->registerService(Er::ProcessMgr::Requests::KillProcess, this);
     container->registerService(Er::ProcessMgr::Requests::ProcessProps, this);
     container->registerService(Er::ProcessMgr::Requests::ProcessPropsExt, this);
 }
 
-void ProcessDetailsService::unregisterService(Er::Server::IServiceContainer* container)
+void ProcessDetailsService::unregisterService(Er::Server::IServer* container)
 {
     container->unregisterService(this);
 }
 
-ProcessDetailsService::SessionId ProcessDetailsService::allocateSession()
-{
-    return SessionId(1);
-}
-
-void ProcessDetailsService::deleteSession(SessionId id)
-{
-}
-
-Er::PropertyBag ProcessDetailsService::request(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
+Er::PropertyBag ProcessDetailsService::request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
 {
     if (request == Er::ProcessMgr::Requests::KillProcess)
         return killProcess(args);
@@ -95,16 +86,16 @@ Er::PropertyBag ProcessDetailsService::request(std::string_view request, const E
     ErThrow(Er::format("Unsupported request {}", request));
 }
 
-ProcessDetailsService::StreamId ProcessDetailsService::beginStream(std::string_view request, const Er::PropertyBag& args, SessionId sessionId)
+ProcessDetailsService::StreamId ProcessDetailsService::beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
 {
     ErThrow(Er::format("Unsupported request {}", request));
 }
 
-void ProcessDetailsService::endStream(StreamId id, SessionId sessionId)
+void ProcessDetailsService::endStream(StreamId id)
 {
 }
 
-Er::PropertyBag ProcessDetailsService::next(StreamId id, SessionId sessionId)
+Er::PropertyBag ProcessDetailsService::next(StreamId id)
 {
     return Er::PropertyBag();
 }

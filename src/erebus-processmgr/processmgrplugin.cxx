@@ -18,12 +18,8 @@ class ProcessMgrPlugin final
 public:
     ~ProcessMgrPlugin()
     {
-        // unregister services
-        for (auto container: m_params.containers)
-        {
-            m_processList->unregisterService(container);
-            m_processDetails->unregisterService(container);
-        }
+        m_processList->unregisterService(m_params.container);
+        m_processDetails->unregisterService(m_params.container);
 
         m_processList.reset();
         m_processDetails.reset();
@@ -58,11 +54,8 @@ public:
         m_processList.reset(new Erp::ProcessMgr::ProcessListService(m_params.log));
         m_processDetails.reset(new Erp::ProcessMgr::ProcessDetailsService(m_params.log));
         
-        for (auto container: m_params.containers)
-        {
-            m_processList->registerService(container);
-            m_processDetails->registerService(container);
-        }
+        m_processList->registerService(m_params.container);
+        m_processDetails->registerService(m_params.container);
 
         Er::ProcessMgr::Private::registerAll(m_params.log);
     }

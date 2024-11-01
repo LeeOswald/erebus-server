@@ -129,7 +129,7 @@ bool issueRequest(
             auto requestArgs = pargseArgs(args);
 
             auto timeStart = std::chrono::high_resolution_clock::now();
-            auto result = client->request(request, requestArgs);
+            auto result = client->request(request, requestArgs, std::chrono::milliseconds(5000));
             auto timeStop = std::chrono::high_resolution_clock::now();
 
             auto dura = timeStop - timeStart;
@@ -148,7 +148,7 @@ bool issueRequest(
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
 
                 timeStart = std::chrono::high_resolution_clock::now();
-                result = client->request(request, requestArgs);
+                result = client->request(request, requestArgs, std::chrono::milliseconds(5000));
                 timeStop = std::chrono::high_resolution_clock::now();
 
                 dura = timeStop - timeStart;
@@ -181,6 +181,7 @@ bool receiveStream(
             client->requestStream(
                 request, 
                 requestArgs, 
+                std::chrono::milliseconds(5000),
                 [log, domain, &timeStart](Er::PropertyBag&& item) -> bool
                 {
                     if (g_signalReceived)

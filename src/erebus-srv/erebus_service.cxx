@@ -144,10 +144,15 @@ grpc::ServerUnaryReactor* ErebusCbService::GenericRpc(grpc::CallbackServerContex
     Er::Log::Indent idt(m_params.log);
 
     auto reactor = context->DefaultReactor();
+    if (context->IsCancelled()) [[unlikely]]
+    {
+        Er::Log::warning(m_params.log, "Request cancelled");
+        return reactor;
+    }
 
     auto& requestStr = request->request();
     auto service = findService(requestStr);
-    if (!service)
+    if (!service) [[unlikely]]
     {
         auto msg = Er::format("No handlers for [{}]", requestStr);
         Er::Log::writeln(m_params.log, Er::Log::Level::Error, msg);
@@ -155,10 +160,14 @@ grpc::ServerUnaryReactor* ErebusCbService::GenericRpc(grpc::CallbackServerContex
         return reactor;
     }
 
+    std::string_view cookie;
+    if (request->has_cookie())
+        cookie = request->cookie();
+
     try
     {
         auto args = unmarshalArgs(request);
-        auto result = service->request(requestStr, args);
+        auto result = service->request(requestStr, cookie, args);
         marshalReplyProps(result, reply);
     }
     catch (Er::Exception& e)
@@ -193,11 +202,15 @@ grpc::ServerWriteReactor<erebus::ServiceReply>* ErebusCbService::GenericStream(g
         return reactor.release();
     }
 
+    std::string_view cookie;
+    if (request->has_cookie())
+        cookie = request->cookie();
+
     std::string errorMsg;
     try
     {
         auto args = unmarshalArgs(request);
-        reactor->Begin(service, requestStr, args);
+        reactor->Begin(service, requestStr, cookie, args);
         return reactor.release();
     }
     catch (Er::Exception& e)

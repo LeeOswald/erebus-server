@@ -8,6 +8,7 @@
 #include <erebus-srv/global_requests.hxx>
 
 #include <atomic>
+#include <random>
 #include <sstream>
 
 namespace Er::Client
@@ -29,13 +30,15 @@ public:
     explicit ClientImpl(std::shared_ptr<grpc::Channel> channel, Er::Log::ILog* log)
         : m_stub(erebus::Erebus::NewStub(channel))
         , m_log(log)
+        , m_cookie(makeCookie())
     {
     }
 
-    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args) override
+    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args, std::chrono::milliseconds timeout) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
+        request.set_cookie(m_cookie);
 
         // marshal properties
         Er::enumerateProperties(args, [&request](const Property& arg)
@@ -46,8 +49,11 @@ public:
 
         erebus::ServiceReply reply;
         grpc::ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + timeout);
+
         grpc::Status status = m_stub->GenericRpc(&context, request, &reply);
-        throwIfFailed(status, &reply);
+        throwIfFailed(status);
+        throwIfFailed(reply);
 
         // unmarshal properties
         Er::PropertyBag bag;
@@ -61,10 +67,11 @@ public:
         return bag;
     }
 
-    void requestStream(std::string_view req, const Er::PropertyBag& args, StreamReader reader) override
+    void requestStream(std::string_view req, const Er::PropertyBag& args, std::chrono::milliseconds timeout, StreamReader reader) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
+        request.set_cookie(m_cookie);
 
         // marshal properties
         Er::enumerateProperties(args, [&request](const Property& arg)
@@ -74,18 +81,19 @@ public:
         });
 
         grpc::ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + timeout);
+        
         std::shared_ptr<grpc::ClientReader<erebus::ServiceReply>> stream(m_stub->GenericStream(&context, request));
         
         std::vector<Er::PropertyBag> out;
         erebus::ServiceReply reply;
         while (stream->Read(&reply))
         {
-            throwIfFailed(grpc::Status::OK, &reply);
+            throwIfFailed(reply);
 
             // unmarshal properties
             Er::PropertyBag bag;
             int count = reply.props_size();
-            Er::Log::debug(m_log, "Received {} props", count);
             for (int i = 0; i < count; ++i)
             {
                 auto& prop = reply.props(i);
@@ -95,8 +103,6 @@ public:
             if (!reader(std::move(bag)))
                 break;
         }
-
-        Er::Log::debug(m_log, "End of stream");
     }
 
 private:
@@ -125,21 +131,21 @@ private:
         }
     }
 
-    void throwIfFailed(grpc::Status status, const erebus::ServiceReply* reply)
+    static void throwIfFailed(grpc::Status status)
     {
         if (!status.ok())
         {
             auto mappedStatus = mapGrpcStatus(status.error_code());
             ErThrow("RPC call failed", ::Er::ExceptionProps::ResultCode(static_cast<int32_t>(mappedStatus)), ::Er::ExceptionProps::DecodedError(status.error_message()));
         }
+    }
 
-        if (!reply)
-            return;
-
-        if (reply->has_exception())
+    static void throwIfFailed(const erebus::ServiceReply& reply)
+    {
+        if (reply.has_exception())
         {
             // unmarshal and throw the exception
-            auto& exception = reply->exception();
+            auto& exception = reply.exception();
             std::string_view message;
             if (exception.has_message())
                 message = exception.message();
@@ -160,8 +166,27 @@ private:
         }
     }
 
+    static std::string makeCookie()
+    {
+        static const char ValidChars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
+        static const size_t ValidCharsCount = sizeof(ValidChars) - 1;
+        static const size_t CookieLength = 32;
+
+        std::uniform_int_distribution<> charDistrib(0, ValidCharsCount - 1);
+
+        static std::random_device rd;
+        std::mt19937 random(rd());
+
+        std::string cookie(CookieLength, ' ');
+        for (size_t i = 0; i < CookieLength; ++i)
+            cookie[i] = ValidChars[charDistrib(random)];
+
+        return cookie;
+    }
+
     std::unique_ptr<erebus::Erebus::Stub> m_stub;
     Er::Log::ILog* const m_log;
+    std::string m_cookie;
 };
 
 
@@ -222,7 +247,7 @@ EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params)
 
     grpc::ChannelArguments args;
 
-    if (!params.noKeepAlive)
+    if (params.keepAlive)
     {
         args.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, 20 * 1000);
         args.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 10 * 1000);

@@ -4,6 +4,7 @@
 #include <erebus/log.hxx>
 #include <erebus/propertybag.hxx>
 
+#include <chrono>
 #include <functional>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -26,8 +27,8 @@ struct IClient
     using Ptr = std::unique_ptr<IClient>;
     using StreamReader = std::function<bool(Er::PropertyBag&&)>;
 
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0;
-    virtual void requestStream(std::string_view request, const Er::PropertyBag& args, StreamReader reader) = 0;
+    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::chrono::milliseconds timeout) = 0;
+    virtual void requestStream(std::string_view request, const Er::PropertyBag& args, std::chrono::milliseconds timeout, StreamReader reader) = 0;
 
     virtual ~IClient() = default;
 };
@@ -72,7 +73,7 @@ struct ChannelParams
     std::string rootCertificate;
     std::string certificate;
     std::string key;
-    bool noKeepAlive = true;
+    bool keepAlive = true;
 
     ChannelParams() noexcept = default;
 
