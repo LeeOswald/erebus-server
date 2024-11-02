@@ -1,5 +1,6 @@
 #include "common.hxx"
 
+#include <erebus/stopwatch.hxx>
 #include <erebus/protocol.hxx>
 #include <erebus/util/file.hxx>
 #include <erebus-desktop/erebus-desktop.hxx>
@@ -128,12 +129,13 @@ bool issueRequest(
 
             auto requestArgs = pargseArgs(args);
 
-            auto timeStart = std::chrono::high_resolution_clock::now();
-            auto result = client->request(request, requestArgs, std::chrono::milliseconds(5000));
-            auto timeStop = std::chrono::high_resolution_clock::now();
+            Er::PropertyBag result;
 
-            auto dura = timeStop - timeStart;
-            auto msecs = std::chrono::duration_cast<std::chrono::milliseconds>(dura).count();
+            Er::Stopwatch<> sw;
+            {
+                Er::Stopwatch<>::Scope sws(sw);
+                result = client->request(request, requestArgs, std::chrono::milliseconds(5000));
+            }
 
             while (!g_signalReceived)
             {
@@ -142,17 +144,16 @@ bool issueRequest(
                 if (interval <= 0)
                     break;
 
-                Er::Log::write(log, Er::Log::Level::Info, "RTT: {} ms", msecs);
+                Er::Log::write(log, Er::Log::Level::Info, "RTT: {} ms", sw.value().count());
                 Er::Log::writeln(log, Er::Log::Level::Info, "------------------------------------------------------");
+                sw.reset();
                 
                 std::this_thread::sleep_for(std::chrono::seconds(interval));
 
-                timeStart = std::chrono::high_resolution_clock::now();
-                result = client->request(request, requestArgs, std::chrono::milliseconds(5000));
-                timeStop = std::chrono::high_resolution_clock::now();
-
-                dura = timeStop - timeStart;
-                msecs = std::chrono::duration_cast<std::chrono::milliseconds>(dura).count();
+                {
+                    Er::Stopwatch<>::Scope sws(sw);
+                    result = client->request(request, requestArgs, std::chrono::milliseconds(5000));
+                }
             }
 
             return true;
@@ -177,24 +178,25 @@ bool receiveStream(
 
             auto requestArgs = pargseArgs(args);
 
-            auto timeStart = std::chrono::high_resolution_clock::now();
+            Er::Stopwatch<> sw;
+            sw.start();
+
             client->requestStream(
                 request, 
                 requestArgs, 
                 std::chrono::milliseconds(5000),
-                [log, domain, &timeStart](Er::PropertyBag&& item) -> bool
+                [log, domain, &sw](Er::PropertyBag&& item) -> bool
                 {
                     if (g_signalReceived)
                         return false;
-
-                    auto timeStop = std::chrono::high_resolution_clock::now();
-                    auto dura = timeStop - timeStart;
-                    auto msecs = std::chrono::duration_cast<std::chrono::milliseconds>(dura).count();
+                    
+                    sw.stop();
 
                     dumpPropertyBag(domain, item, log);
-                    Er::Log::write(log, Er::Log::Level::Info, "Time delta: {} ms", msecs);
+                    Er::Log::write(log, Er::Log::Level::Info, "Time delta: {} ms", sw.value().count());
                     
-                    timeStart = timeStop;
+                    sw.reset();
+                    sw.start();
                     return true;
                 }
             );
@@ -267,7 +269,6 @@ int main(int argc, char* argv[])
     std::string certFile;
     std::string keyFile;
     int interval = 0;
-    std::string outFile;
     std::string request;
     std::string domain;
     std::string stream;
@@ -288,7 +289,6 @@ int main(int argc, char* argv[])
             ("cert", po::value<std::string>(&certFile), "client certificate file path")
             ("key", po::value<std::string>(&keyFile), "client certificate key file path")
             ("loop", po::value<int>(&interval)->default_value(0), "repeat the request with an interval")
-            ("out", po::value<std::string>(&outFile), "output file name")
             ("request,r", po::value<std::string>(&request), "request id")
             ("stream,s", po::value<std::string>(&stream), "stream request id")
             ("domain,d", po::value<std::string>(&domain), "domain")

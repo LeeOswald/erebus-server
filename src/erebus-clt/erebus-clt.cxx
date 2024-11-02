@@ -101,7 +101,10 @@ public:
             }
 
             if (!reader(std::move(bag)))
+            {
+                context.TryCancel();
                 break;
+            }
         }
     }
 
