@@ -69,6 +69,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/null_mutex.hxx
     ../../include/erebus/noncopyable.hxx
     ../../include/erebus/platform.hxx
+    ../../include/erebus/program.hxx
     ../../include/erebus/property.hxx
     ../../include/erebus/propertybag.hxx
     ../../include/erebus/result.hxx
@@ -116,6 +117,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     luaxx/luaxx_selector.cxx
     luaxx/luaxx_state.cxx
     luaxx/luaxx_util.cxx
+    program.cxx
     stacktrace.cxx
     system/packed_time.cxx
     system/process.cxx

@@ -19,13 +19,13 @@ namespace Server
 namespace
 {
 
-LibParams g_libParams;
+Er::Log::ILog* g_log = nullptr;
 std::atomic<long> g_initialized = 0;
 
 
 void gprLogFunction(gpr_log_func_args* args)
 {
-    if (g_libParams.log)
+    if (g_log)
     {
         Er::Log::Level level = Er::Log::Level::Debug;
         switch (args->severity)
@@ -34,24 +34,24 @@ void gprLogFunction(gpr_log_func_args* args)
         case GPR_LOG_SEVERITY_ERROR: level = Log::Level::Error; break;
         }
 
-        Er::Log::write(g_libParams.log, level, "[gRPC] {}", args->message);
+        Er::Log::write(g_log, level, "[gRPC] {}", args->message);
     }
 }
 
 } // namespace {}
 
 
-EREBUSSRV_EXPORT void initialize(const LibParams& params)
+EREBUSSRV_EXPORT void initialize(Er::Log::ILog* log)
 {
     if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
     {
-        Er::Server::Props::Private::registerAll(params.log);
+        Er::Server::Props::Private::registerAll(log);
 
-        g_libParams = params;
+        g_log = log;
 
         ::grpc_init();
 
-        if (params.level == Log::Level::Debug)
+        if (log->level() == Log::Level::Debug)
             ::gpr_set_log_verbosity(GPR_LOG_SEVERITY_DEBUG);
         else
             ::gpr_set_log_verbosity(GPR_LOG_SEVERITY_INFO);
@@ -69,9 +69,9 @@ EREBUSSRV_EXPORT void finalize()
     {
         ::grpc_shutdown();
 
-        Er::Server::Props::Private::unregisterAll(g_libParams.log);
+        Er::Server::Props::Private::unregisterAll(g_log);
 
-        g_libParams = LibParams();
+        g_log = nullptr;
     }
 }
 

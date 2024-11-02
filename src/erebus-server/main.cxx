@@ -1,18 +1,9 @@
-#include <boost/program_options.hpp>
-#include <boost/stacktrace.hpp>
-
-#include <erebus/condition.hxx>
 #include <erebus/knownprops.hxx>
-#include <erebus/system/process.hxx>
-#include <erebus/system/thread.hxx>
+#include <erebus/program.hxx>
 #include <erebus/system/user.hxx>
 #include <erebus/util/exceptionutil.hxx>
 #include <erebus/util/file.hxx>
 #include <erebus/util/pidfile.hxx>
-
-#if ER_POSIX
-    #include <erebus/util/signalhandler.hxx>
-#endif
 
 #include <erebus-srv/erebus-srv.hxx>
 
@@ -20,266 +11,143 @@
 #include "coreservice.hxx"
 #include "pluginmgr.hxx"
 
-#include <filesystem>
-#include <future>
 #include <iostream>
-#include <syncstream>
-#include <vector>
-
 
 namespace
 {
 
-Er::Log::ILog* g_log = nullptr;
-Er::Event g_exitCondition(false);
-std::optional<int> g_signalReceived;
-
-
-void terminateHandler()
+class ErebusServerApplication final
+    : public Er::Program
 {
-    try
-    {
-        std::ostringstream ss;
-        ss << boost::stacktrace::stacktrace();
+public:
+    using Base = Er::Program;
 
-        if (g_log) 
-        {
-            Er::Log::fatal(g_log, "std::terminate() called from\n{}", ss.str());
-        }
-        else
-        {
-            std::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str() << std::endl; // force flush
-        }
-    }
-    catch (...)
+    ErebusServerApplication() noexcept
+        : Base()
     {
     }
 
-    std::abort();
-}
-
-void signalHandler(int signo)
-{
-    g_signalReceived = signo;
-    g_exitCondition.setAndNotifyAll(true);
-}
-
-void printAssertFn(std::string_view message)
-{
-    Er::Log::writeln(g_log, Er::Log::Level::Fatal, std::string(message));
-}
-
-Er::Log::ILog::Ptr openLog(bool verbose, std::string_view logFile, unsigned logsToKeep, std::uint64_t maxLogSize)
-{
-    auto logger = Er::Log::makeAsyncLogger();
-
-#if ER_WINDOWS
-    if (::IsDebuggerPresent())
+private:
+    void addCmdLineOptions(boost::program_options::options_description& options) override
     {
-        auto debugger = Er::Log::makeDebuggerSink(
-            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
-            Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Fatal)
-        );
-
-        logger->addSink("debugger", debugger);
-    }
-#endif
-
-    {
-        auto stdoutSink = Er::Log::makeOStreamSink(
-            std::cout,
-            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
-            Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Warning)
-        );
-
-        logger->addSink("stdout", stdoutSink);
-
-        auto stderrSink = Er::Log::makeOStreamSink(
-            std::cerr,
-            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
-            Er::Log::SimpleFilter::make(Er::Log::Level::Error, Er::Log::Level::Fatal)
-        );
-
-        logger->addSink("stderr", stderrSink);
-    }
-
-    {
-        auto fileSink = Er::Log::makeFileSink(
-            Er::Log::ThreadSafe::No,
-            logFile,
-            Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::DateTime, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
-            Er::Log::IFilter::Ptr{},
-            logsToKeep,
-            maxLogSize
-        );
-
-        logger->addSink("file", fileSink);
-    }
-
-    if (verbose)
-        logger->setLevel(Er::Log::Level::Debug);
-    else
-        logger->setLevel(Er::Log::Level::Info);
-
-    return logger;
-}
-
-
-} // namespace {}
-
-
-int main(int argc, char* argv[], char* env[])
-{
-#if ER_WINDOWS
-    ::SetConsoleOutputCP(CP_UTF8);
-#endif
-
-    // set current dir the same as exe dir
-    {
-        std::filesystem::path exe(Er::System::CurrentProcess::exe());
-        auto dir = exe.parent_path();
-        std::error_code ec;
-        std::filesystem::current_path(dir, ec);
-    }
-
-    // parse command line
-    std::string cfgFile;
-
-    namespace po = boost::program_options;
-    
-    po::variables_map vm;
-    try
-    {
-        po::options_description cmdOpts("Command line options");
-        cmdOpts.add_options()
-            ("help,?", "display this message")
-            ("config", po::value<std::string>(&cfgFile)->default_value("erebus-server.cfg"), "configuration file path")
-#if ER_POSIX
-            ("daemon,d", "run as a daemon")
+        options.add_options()
+            ("config", boost::program_options::value<std::string>(&m_cfgFile)->default_value("erebus-server.cfg"), "configuration file path")
+#if ER_LINUX
             ("noroot", "don't require root privileges")
 #endif
             ;
-
-        
-        po::store(po::parse_command_line(argc, argv, cmdOpts), vm);
-        po::notify(vm);
-
-        if (vm.count("help"))
-        {
-            std::cout << cmdOpts << std::endl;
-            return EXIT_SUCCESS;
-        }
-
-#if ER_POSIX
-        if (!vm.contains("noroot") && (::geteuid() != 0))
-        {
-            std::cerr << "Root privileges required\n";
-            return EXIT_FAILURE;
-        }
-#endif
-        
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Failed to parse the command line: " << e.what() << std::endl;
-        return EXIT_FAILURE;
     }
 
-    // parse config file
-    Er::Private::ServerConfig cfg;
-    try
-    {
-        cfg = Er::Private::loadConfig(cfgFile);
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Failed to load the configuration: " << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-        
-    if (cfg.endpoints.empty())
-    {
-        std::cerr << "No server endpoints specified.\n";
-        return EXIT_FAILURE;
-    }
-
-    // aren't we going to be a daemon?
-#if ER_POSIX
-    if (vm.count("daemon"))
-        Er::System::CurrentProcess::daemonize();
-#endif
-
-    std::unique_ptr<Er::Util::PidFile> pidFile;
-    if (!cfg.pidfile.empty())
+    bool doLoadConfiguration() override
     {
         try
         {
-            pidFile.reset(new Er::Util::PidFile(cfg.pidfile));
+            m_config = Er::Private::loadConfig(m_cfgFile);
+            return true;
         }
         catch (std::exception& e)
         {
-            auto existing = Er::Util::PidFile::read(cfg.pidfile);
-            std::cerr << e.what() << std::endl;
-            if (existing)
-                std::cerr << "Found running server instance with PID " << *existing << std::endl;
-
-            return EXIT_FAILURE;
+            std::cerr << "Failed to load the configuration: " << e.what() << std::endl;
         }
+
+        return false;
     }
-    
-    // setup signal handler
-#if ER_POSIX
-    Er::Util::SignalHandler sh({SIGINT, SIGTERM, SIGPIPE, SIGHUP});
-    std::future<int> futureSigHandler =
-        // spawn a thread that handles signals
-        sh.asyncWaitHandler(
-            [](int signo)
-            {
-                signalHandler(signo);
-                return true;
-            }
-        );
-#else
-    ::signal(SIGINT, signalHandler);
-    ::signal(SIGTERM, signalHandler);
+
+    void addLoggers(Er::Log::ILog* logger) override
+    {
+#if ER_WINDOWS
+        if (::IsDebuggerPresent())
+        {
+            auto debugger = Er::Log::makeDebuggerSink(
+                Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+                Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Fatal)
+            );
+
+            logger->addSink("debugger", debugger);
+        }
 #endif
 
-    // setup std::terminate() handler
-    std::set_terminate(terminateHandler);
+        {
+            auto stdoutSink = Er::Log::makeOStreamSink(
+                std::cout,
+                Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+                Er::Log::SimpleFilter::make(Er::Log::Level::Debug, Er::Log::Level::Warning)
+            );
 
-    Er::Log::ILog::Ptr logger;
-    try
-    {
-        logger = openLog(cfg.verbose > 0, cfg.logfile, cfg.keeplogs, cfg.maxLogSize);
+            logger->addSink("stdout", stdoutSink);
+
+            auto stderrSink = Er::Log::makeOStreamSink(
+                std::cerr,
+                Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::Time, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+                Er::Log::SimpleFilter::make(Er::Log::Level::Error, Er::Log::Level::Fatal)
+            );
+
+            logger->addSink("stderr", stderrSink);
+        }
+
+        {
+            auto fileSink = Er::Log::makeFileSink(
+                Er::Log::ThreadSafe::No,
+                m_config.logFile,
+                Er::Log::SimpleFormatter::make({ Er::Log::SimpleFormatter::Option::DateTime, Er::Log::SimpleFormatter::Option::Level, Er::Log::SimpleFormatter::Option::Tid }),
+                Er::Log::IFilter::Ptr{},
+                m_config.keepLogs,
+                m_config.maxLogSize
+            );
+
+            logger->addSink("file", fileSink);
+        }
     }
-    catch (std::exception& e)
+
+    bool doInitialize() override
     {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
+        // create pidfile
+        std::unique_ptr<Er::Util::PidFile> pidFile;
+        if (!m_config.pidFile.empty())
+        {
+            try
+            {
+                pidFile.reset(new Er::Util::PidFile(m_config.pidFile));
+            }
+            catch (std::exception& e)
+            {
+                Er::Log::warning(log(), "Failed to create PID file {}: {}", m_config.pidFile, e.what());
+                auto existing = Er::Util::PidFile::read(m_config.pidFile);
+                if (existing)
+                    Er::Log::warning(log(), "Found running server instance with PID {}", *existing);
 
-    g_log = logger.get();
-    Er::setPrintFailedAssertionFn(printAssertFn);
+                return false;
+            }
+        }
 
-    Er::LibScope er(g_log);
-
-    try
-    {
         auto user = Er::System::User::current();
-        Er::Log::info(g_log, "Starting as user {}", user.name);
+        Er::Log::info(log(), "Starting as user {}", user.name);
 
-        Er::Server::LibParams srvLibParams(g_log, g_log->level());
-        Er::Server::LibScope ss(srvLibParams);
+        Er::Server::initialize(log());
 
-        Er::Server::IServer::Ptr server;
-        Er::Server::Params params(g_log);
-        params.endpoints.reserve(cfg.endpoints.size());
+        auto serverParams = makeServerParams();
+        Er::Log::info(log(), "Creating a new server instance");
+        m_server = Er::Server::create(serverParams);
 
-        for (auto& ep : cfg.endpoints)
+        Er::Log::info(log(), "Creating core service");
+        m_coreService.reset(new Erp::Server::CoreService(log()));
+        m_coreService->registerService(m_server.get());
+
+        loadPlugins();
+        
+        return true;
+    }
+
+    Er::Server::Params makeServerParams()
+    {
+        Er::Server::Params serverParams(log());
+        serverParams.endpoints.reserve(m_config.endpoints.size());
+
+        for (auto& ep : m_config.endpoints)
         {
             if (ep.ssl)
             {
-                if (!Er::protectedCall<bool>(g_log, [&ep, &params]()
+                if (!Er::protectedCall<bool>(log(), [&ep, &serverParams]()
                 {
                     std::string rootCA;
                     if (!ep.rootCA.empty())
@@ -293,77 +161,114 @@ int main(int argc, char* argv[], char* env[])
                     if (!ep.privateKey.empty())
                         privateKey = Er::Util::loadTextFile(ep.privateKey);
 
-                    params.endpoints.push_back(Er::Server::Params::Endpoint(ep.endpoint, rootCA, certificate, privateKey));
+                    serverParams.endpoints.push_back(Er::Server::Params::Endpoint(ep.endpoint, rootCA, certificate, privateKey));
 
                     return true;
                 }))
                 {
-                    Er::Log::info(g_log, "SSL certificates could not be loaded for [{}]", ep.endpoint);
+                    Er::Log::info(log(), "SSL certificates could not be loaded for [{}]", ep.endpoint);
                 }
             }
             else
             {
-                params.endpoints.push_back(Er::Server::Params::Endpoint(ep.endpoint));
+                serverParams.endpoints.push_back(Er::Server::Params::Endpoint(ep.endpoint));
             }
-
         }
 
-        Er::Log::info(g_log, "Creating a new server instance");
-        
-        server = Er::Server::create(params);
-        
-        Erp::Server::CoreService coreService(g_log);
-        coreService.registerService(server.get());
-        
-        // load plugins
+        return serverParams;
+    }
+
+    void loadPlugins()
+    {
         Er::Server::PluginParams pluginParams;
-        pluginParams.log = g_log;
-        pluginParams.container = server.get();
-       
-        Er::Private::PluginMgr pluginMgr(pluginParams);
-        for (auto& plugin: cfg.plugins)
+        pluginParams.log = log();
+        pluginParams.container = m_server.get();
+
+        m_pluginMgr.reset(new Er::Private::PluginMgr(pluginParams));
+        for (auto& plugin : m_config.plugins)
         {
             if (!plugin.enabled)
             {
-                Er::Log::info(g_log, "Skipping plugin [{}]", plugin.path);
+                Er::Log::info(log(), "Skipping plugin [{}]", plugin.path);
                 continue;
             }
-            
-            auto success = Er::protectedCall<bool>(g_log, [&plugin, &pluginMgr]()
+
+            Er::Log::info(log(), "Loading plugin [{}]", plugin.path);
+
+            auto success = Er::protectedCall<bool>(log(), [this, &plugin]()
             {
-                pluginMgr.load(plugin.path, plugin.args);
+                m_pluginMgr->load(plugin.path, plugin.args);
                 return true;
             });
 
             if (!success)
-                Er::Log::error(g_log, "Failed to load plugin [{}]", plugin.path);
+                Er::Log::error(log(), "Failed to load plugin [{}]", plugin.path);
         }
-
-        // now just sit around and wait
-        Er::Log::writeln(g_log, Er::Log::Level::Info, "Waiting for client connections...");
-        
-        g_exitCondition.waitValue(true);
-
-        // cleanup
-        Er::Log::writeln(g_log, Er::Log::Level::Info, "Stopping server instances...");
-        
-        coreService.unregisterService(server.get());
-
-        pluginMgr.unloadAll();
-        server.reset();
-        
-        if (g_signalReceived)
-        {
-            Er::Log::warning(g_log, "Exiting due to signal {}", *g_signalReceived);
-        }
-
-        Er::setPrintFailedAssertionFn(nullptr);
     }
-    catch (std::exception& e)
+
+    void doFinalize() noexcept override
     {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
+        Er::Log::info(log(), "Unloading plugins");
+
+        if (m_pluginMgr)
+        {
+            m_pluginMgr->unloadAll();
+            m_pluginMgr.reset();
+        }
+
+        if (m_server)
+        {
+            if (m_coreService)
+            {
+                m_coreService->unregisterService(m_server.get());
+                m_coreService.reset();
+            }
+
+            m_server.reset();
+        }
+
+        Er::Server::finalize();
     }
 
-    return EXIT_SUCCESS;
+    int doRun() override
+    {
+        exitCondition().waitValue(true);
+
+        if (signalReceived())
+        {
+            Er::Log::warning(log(), "Exiting due to signal {}", signalReceived());
+        }
+
+        return 0;
+    }
+
+    std::string m_cfgFile;
+    Er::Private::ServerConfig m_config;
+    Er::Server::IServer::Ptr m_server;
+    std::unique_ptr<Erp::Server::CoreService> m_coreService;
+    std::unique_ptr<Er::Private::PluginMgr> m_pluginMgr;
+};
+
+
+} // namespace {}
+
+
+int main(int argc, char* argv[], char* env[])
+{
+#if ER_LINUX
+    bool noroot = ErebusServerApplication::optionPresent(argc, argv, "--noroot", nullptr);
+    if (!noroot && (::geteuid() != 0))
+    {
+        std::cerr << "Root privileges required" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+#endif
+
+    ErebusServerApplication::globalStartup(argc, argv);
+    ErebusServerApplication app;
+
+    auto resut = app.run(argc, argv);
+
+    ErebusServerApplication::globalShutdown();
+    return resut;
 }

@@ -24,7 +24,7 @@ namespace Log
 }
 
 EREBUS_EXPORT void initialize(Er::Log::ILog* log);
-EREBUS_EXPORT void finalize(Er::Log::ILog* log);
+EREBUS_EXPORT void finalize(Er::Log::ILog* log) noexcept;
 
 class LibScope
     : public Er::NonCopyable

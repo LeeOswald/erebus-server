@@ -27,11 +27,6 @@ R"(
     "comment": "JSON Schema for configuration",
     "type": "object",
     "properties": {
-        "verbose": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1
-        },
         "log_file": {
             "type": "string"
         },
@@ -162,16 +157,14 @@ ServerConfig loadConfig(const std::string& path)
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m)
     {
         auto name = m->name.GetString();
-        if (!std::strcmp(name, "verbose"))
-            cfg.verbose = m->value.GetInt();
-        else if (!std::strcmp(name, "log_file"))
-            cfg.logfile = m->value.GetString();
+        if (!std::strcmp(name, "log_file"))
+            cfg.logFile = m->value.GetString();
         else if (!std::strcmp(name, "keep_logs"))
-            cfg.keeplogs = m->value.GetInt();
+            cfg.keepLogs = m->value.GetInt();
         else if (!std::strcmp(name, "max_log_size"))
             cfg.maxLogSize = m->value.GetUint64() * 1024 * 1024;
         else if (!std::strcmp(name, "pid_file"))
-            cfg.pidfile = m->value.GetString();
+            cfg.pidFile = m->value.GetString();
         else if (!std::strcmp(name, "endpoints"))
         {
             for (size_t index = 0; index < m->value.Size(); ++index)

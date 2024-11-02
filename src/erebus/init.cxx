@@ -3,7 +3,12 @@
 #include <erebus/log.hxx>
 #include <erebus/luaxx.hxx>
 
+#if ER_WINDOWS
+#include <erebus/util/utf16.hxx>
+#endif
+
 #include <atomic>
+#include <syncstream>
 
 namespace Er
 {
@@ -19,8 +24,21 @@ public:
     ~DummyLogger() = default;
     DummyLogger() = default;
 
-    void write(Log::Record::Ptr) override
+    void write(Log::Record::Ptr r) override
     {
+        if (r->level() < Log::Level::Error)
+            std::osyncstream(std::cerr) << r->message() << std::endl;
+        else
+            std::osyncstream(std::cout) << r->message() << std::endl;
+
+#if ER_WINDOWS
+        if (::IsDebuggerPresent())
+        {
+            auto u16 = Util::utf8ToUtf16(r->message());
+            u16.append(L"\n");
+            ::OutputDebugStringW(u16.c_str());
+        }
+#endif
     }
 
     void flush() override
@@ -77,7 +95,7 @@ EREBUS_EXPORT void initialize(Er::Log::ILog* log)
     }
 }
 
-EREBUS_EXPORT void finalize(Er::Log::ILog* log)
+EREBUS_EXPORT void finalize(Er::Log::ILog* log) noexcept
 {
     if (g_initialized.fetch_sub(1, std::memory_order_acq_rel) == 1)
     {

@@ -63,44 +63,15 @@ struct Params
     std::vector<Endpoint> endpoints;
     bool keepAlive = true;
 
-    explicit Params(Er::Log::ILog* log)
+    explicit Params(Er::Log::ILog* log) noexcept
         : log(log)
     {
     }
 };
 
 
-struct LibParams
-{
-    Er::Log::ILog* log = nullptr;
-    Er::Log::Level level = Log::Level::Debug;
-
-    constexpr explicit LibParams() noexcept = default;
-
-    constexpr explicit LibParams(Er::Log::ILog* log, Er::Log::Level level) noexcept
-        : log(log)
-        , level(level)
-    {
-    }
-};
-
-EREBUSSRV_EXPORT void initialize(const LibParams& params);
+EREBUSSRV_EXPORT void initialize(Er::Log::ILog* log);
 EREBUSSRV_EXPORT void finalize();
-
-class LibScope
-    : public Er::NonCopyable
-{
-public:
-    ~LibScope()
-    {
-        finalize();
-    }
-
-    LibScope(const LibParams& params)
-    {
-        initialize(params);
-    }
-};
 
 
 struct IServer

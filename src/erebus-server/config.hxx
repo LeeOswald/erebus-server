@@ -29,11 +29,10 @@ struct ServerConfig final
         bool enabled = true;
     };
 
-    int verbose = 0;
-    std::string logfile;
-    int keeplogs = 3;
+    std::string logFile;
+    int keepLogs = 3;
     std::uint64_t maxLogSize = std::numeric_limits<std::uint64_t>::max();
-    std::string pidfile;
+    std::string pidFile;
     std::vector<Endpoint> endpoints;
     
     std::vector<Plugin> plugins;
