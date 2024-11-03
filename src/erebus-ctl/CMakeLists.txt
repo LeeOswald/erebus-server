@@ -1,6 +1,8 @@
 add_executable(${EREBUS_CTL}
     common.hxx
     main.cxx
+    request_runner.hxx
+    stream_runner.hxx
 )
 
 

@@ -26,7 +26,14 @@ std::unique_ptr<SignalWaiter> s_signalWaiter;
 
 void Program::globalStartup(int argc, char** argv) noexcept
 {
+#if ER_POSIX
     bool daemonize = optionPresent(argc, argv, "--daemon", "-d");
+    if (daemonize)
+    {
+        Er::System::CurrentProcess::daemonize();
+        s_isDaemon = true;
+    }
+#endif
 
 #if ER_WINDOWS
     ::SetConsoleOutputCP(CP_UTF8);
@@ -215,6 +222,7 @@ bool Program::initializeRtl() noexcept
 void Program::finalizeRtl() noexcept
 {
     Er::finalize(m_logger.get());
+    m_logger->flush();
     m_logger.reset();
 }
 

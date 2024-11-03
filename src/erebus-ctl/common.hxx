@@ -6,8 +6,9 @@
 
 #include <erebus-clt/erebus-clt.hxx>
 
+#include <iostream>
+#include <mutex>
 
-extern std::optional<int> g_signalReceived;
 
 inline std::string propToString(const Er::Property& prop)
 {
@@ -49,3 +50,5 @@ inline void dumpPropertyBag(std::string_view domain, const Er::PropertyBag& bag,
         }
     });
 }
+
+std::mutex& bulkLogWrite() noexcept;

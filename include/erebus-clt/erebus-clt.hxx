@@ -4,7 +4,6 @@
 #include <erebus/log.hxx>
 #include <erebus/propertybag.hxx>
 
-#include <chrono>
 #include <functional>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -27,43 +26,15 @@ struct IClient
     using Ptr = std::unique_ptr<IClient>;
     using StreamReader = std::function<bool(Er::PropertyBag&&)>;
 
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args, std::chrono::milliseconds timeout) = 0;
-    virtual void requestStream(std::string_view request, const Er::PropertyBag& args, std::chrono::milliseconds timeout, StreamReader reader) = 0;
+    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0;
+    virtual void requestStream(std::string_view request, const Er::PropertyBag& args, StreamReader reader) = 0;
 
     virtual ~IClient() = default;
 };
 
-struct LibParams
-{
-    Er::Log::ILog* log = nullptr;
-    Er::Log::Level level = Log::Level::Debug;
 
-    constexpr explicit LibParams() noexcept = default;
-
-    constexpr explicit LibParams(Er::Log::ILog* log, Er::Log::Level level) noexcept
-        : log(log)
-        , level(level)
-    {
-    }
-};
-
-EREBUSCLT_EXPORT void initialize(const LibParams& params);
+EREBUSCLT_EXPORT void initialize(Er::Log::ILog* log);
 EREBUSCLT_EXPORT void finalize();
-
-class LibScope
-    : public Er::NonCopyable
-{
-public:
-    ~LibScope()
-    {
-        finalize();
-    }
-
-    LibScope(const LibParams& params)
-    {
-        initialize(params);
-    }
-};
 
 
 struct ChannelParams

@@ -20,12 +20,7 @@ class ErebusServerApplication final
     : public Er::Program
 {
 public:
-    using Base = Er::Program;
-
-    ErebusServerApplication() noexcept
-        : Base()
-    {
-    }
+    ErebusServerApplication() noexcept = default;
 
 private:
     void addCmdLineOptions(boost::program_options::options_description& options) override
@@ -42,6 +37,12 @@ private:
     {
         try
         {
+            if (m_cfgFile.empty())
+            {
+                std::cerr << "Configuration file expected\n";
+                return false;
+            }
+
             m_config = Er::Private::loadConfig(m_cfgFile);
             return true;
         }
@@ -134,7 +135,7 @@ private:
         m_coreService->registerService(m_server.get());
 
         loadPlugins();
-        
+
         return true;
     }
 

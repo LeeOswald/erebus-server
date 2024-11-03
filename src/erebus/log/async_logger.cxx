@@ -98,13 +98,13 @@ private:
         std::vector<Record::Ptr> records;
         records.reserve(MaxQueueSize);
 
-        while (!stop.stop_requested())
+        do
         {
             {
                 std::unique_lock lw(m_mutexQueue);
                 m_queueNotEmpty.wait(lw, stop, [this]() { return !m_queue.empty(); });
 
-                while (!stop.stop_requested() && !m_queue.empty())
+                while (!m_queue.empty())
                 {
                     auto record = m_queue.front();
                     records.push_back(record);
@@ -120,7 +120,7 @@ private:
             }
 
             m_queueEmpty.notify_all();
-        }
+        } while (!stop.stop_requested());
     }
 
     void sendToSinks(const std::vector<Record::Ptr>& records, std::stop_token stop)

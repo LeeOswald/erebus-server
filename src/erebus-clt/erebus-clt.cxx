@@ -34,7 +34,7 @@ public:
     {
     }
 
-    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args, std::chrono::milliseconds timeout) override
+    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
@@ -49,8 +49,6 @@ public:
 
         erebus::ServiceReply reply;
         grpc::ClientContext context;
-        context.set_deadline(std::chrono::system_clock::now() + timeout);
-
         grpc::Status status = m_stub->GenericRpc(&context, request, &reply);
         throwIfFailed(status);
         throwIfFailed(reply);
@@ -67,7 +65,7 @@ public:
         return bag;
     }
 
-    void requestStream(std::string_view req, const Er::PropertyBag& args, std::chrono::milliseconds timeout, StreamReader reader) override
+    void requestStream(std::string_view req, const Er::PropertyBag& args, StreamReader reader) override
     {
         erebus::ServiceRequest request;
         request.set_request(std::string(req));
@@ -81,11 +79,8 @@ public:
         });
 
         grpc::ClientContext context;
-        context.set_deadline(std::chrono::system_clock::now() + timeout);
-        
         std::shared_ptr<grpc::ClientReader<erebus::ServiceReply>> stream(m_stub->GenericStream(&context, request));
         
-        std::vector<Er::PropertyBag> out;
         erebus::ServiceReply reply;
         while (stream->Read(&reply))
         {
@@ -193,12 +188,12 @@ private:
 };
 
 
-LibParams g_libParams;
+Er::Log::ILog* g_log = nullptr;
 std::atomic<long> g_initialized = 0;
 
 void gprLogFunction(gpr_log_func_args* args)
 {
-    if (g_libParams.log)
+    if (g_log)
     {
         Er::Log::Level level = Er::Log::Level::Debug;
         switch (args->severity)
@@ -207,23 +202,23 @@ void gprLogFunction(gpr_log_func_args* args)
         case GPR_LOG_SEVERITY_ERROR: level = Log::Level::Error; break;
         }
 
-        Er::Log::write(g_libParams.log, level, "[gRPC] {}", args->message);
+        Er::Log::write(g_log, level, "[gRPC] {}", args->message);
     }
 }
 
 } // namespace {}
 
 
-EREBUSCLT_EXPORT void initialize(const LibParams& params)
+EREBUSCLT_EXPORT void initialize(Er::Log::ILog* log)
 {
     if (g_initialized.fetch_add(1, std::memory_order_acq_rel) == 0)
     {
-        g_libParams = params;
-        Er::Server::Props::Private::registerAll(params.log);
+        g_log = log;
+        Er::Server::Props::Private::registerAll(g_log);
         
         ::grpc_init();
 
-        if (params.level == Log::Level::Debug)
+        if (log->level() == Log::Level::Debug)
             ::gpr_set_log_verbosity(GPR_LOG_SEVERITY_DEBUG);
         else
             ::gpr_set_log_verbosity(GPR_LOG_SEVERITY_INFO);
@@ -239,8 +234,8 @@ EREBUSCLT_EXPORT void finalize()
     {
         ::grpc_shutdown();
         
-        Er::Server::Props::Private::unregisterAll(g_libParams.log);
-        g_libParams = LibParams();
+        Er::Server::Props::Private::unregisterAll(g_log);
+        g_log = nullptr;
     }
 }
 

@@ -49,7 +49,7 @@ EREBUSSRV_EXPORT void initialize(Er::Log::ILog* log)
 
         g_log = log;
 
-        ::grpc_init();
+        //::grpc_init();
 
         if (log->level() == Log::Level::Debug)
             ::gpr_set_log_verbosity(GPR_LOG_SEVERITY_DEBUG);
@@ -67,7 +67,8 @@ EREBUSSRV_EXPORT void finalize()
 {
     if (g_initialized.fetch_sub(1, std::memory_order_acq_rel) == 1)
     {
-        ::grpc_shutdown();
+        //::grpc_shutdown();
+        google::protobuf::ShutdownProtobufLibrary();
 
         Er::Server::Props::Private::unregisterAll(g_log);
 
