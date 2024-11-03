@@ -27,7 +27,7 @@ end
 
 TEST(Lua, metatable_registry_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["get_instance"] = &GetQuxPtr;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz);
     state.loadString(test_metatable_script);
@@ -37,7 +37,7 @@ TEST(Lua, metatable_registry_ptr)
 
 TEST(Lua, metatable_registry_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["get_instance"] = &GetQuxRef;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz);
     state.loadString(test_metatable_script);
@@ -47,7 +47,7 @@ TEST(Lua, metatable_registry_ref)
 
 TEST(Lua, metatable_ptr_member) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["get_instance"] = &GetQuxPtr;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz, "qux", &Qux::qux);
     state.loadString(test_metatable_script);
@@ -57,7 +57,7 @@ TEST(Lua, metatable_ptr_member)
 
 TEST(Lua, metatable_ref_member) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["get_instance"] = &GetQuxRef;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz, "qux", &Qux::qux);
     state.loadString(test_metatable_script);

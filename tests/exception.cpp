@@ -66,7 +66,7 @@ TEST(Er_Exception, format1)
     }
     catch (std::exception& e)
     {
-        Er::Util::logException(g_log, Er::Log::Level::Info, e);
+        Er::Util::logException(Er::Log::defaultLog(), Er::Log::Level::Info, e);
     }
 }
 
@@ -94,6 +94,6 @@ TEST(Er_Exception, format2)
     }
     catch (std::exception& e)
     {
-        Er::Util::logException(g_log, Er::Log::Level::Info, e);
+        Er::Util::logException(Er::Log::defaultLog(), Er::Log::Level::Info, e);
     }
 }

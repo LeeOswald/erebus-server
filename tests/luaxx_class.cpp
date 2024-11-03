@@ -118,7 +118,7 @@ barp = bar : print(2)
 
 TEST(Lua, register_class)
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>("print", &Bar::Print, "get_x", &Bar::GetX);
     state.loadString(test_class_script);
@@ -132,7 +132,7 @@ TEST(Lua, register_class)
 
 TEST(Lua, get_member_variable)
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>("x", &Bar::x);
     state("bar = Bar.new(-2)");
@@ -147,7 +147,7 @@ TEST(Lua, get_member_variable)
 
 TEST(Lua, set_member_variable) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>("x", &Bar::x);
     state("bar = Bar.new(-2)");
@@ -160,7 +160,7 @@ TEST(Lua, set_member_variable)
 
 TEST(Lua, class_field_set) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>("set", &Bar::SetX, "get", &Bar::GetX);
     state("bar = Bar.new(4)");
@@ -192,7 +192,7 @@ end
 
 TEST(Lua, class_gc) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     gc_counter = 0;
     state["GCTest"].SetClass<GCTest>();
@@ -210,7 +210,7 @@ TEST(Lua, class_gc)
 
 TEST(Lua, ctor_wrong_type) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>();
     state["Zoo"].SetClass<Zoo, Bar*>();
@@ -230,7 +230,7 @@ TEST(Lua, ctor_wrong_type)
 
 TEST(Lua, pass_wrong_type) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>();
     state["Zoo"].SetClass<Zoo, Bar*>();
@@ -252,7 +252,7 @@ TEST(Lua, pass_wrong_type)
 
 TEST(Lua, pass_pointer) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>();
     state["Zoo"].SetClass<Zoo, Bar*>("get", &Zoo::GetX);
@@ -266,7 +266,7 @@ TEST(Lua, pass_pointer)
 
 TEST(Lua, pass_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["Zoo"].SetClass<Zoo, Bar*>("change_bar", &Zoo::ChangeBar);
@@ -281,7 +281,7 @@ TEST(Lua, pass_ref)
 
 TEST(Lua, return_pointer) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getPtr);
@@ -295,7 +295,7 @@ TEST(Lua, return_pointer)
 
 TEST(Lua, return_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getRef);
@@ -309,7 +309,7 @@ TEST(Lua, return_ref)
 
 TEST(Lua, return_val) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getValue);
@@ -323,7 +323,7 @@ TEST(Lua, return_val)
 
 TEST(Lua, freestanding_fun_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>();
     state("bar = Bar.new(4)");
@@ -337,7 +337,7 @@ TEST(Lua, freestanding_fun_ref)
 
 TEST(Lua, freestanding_fun_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["Bar"].SetClass<Bar, int>();
     state("bar = Bar.new(4)");
@@ -361,7 +361,7 @@ struct ConstMemberTest
 
 TEST(Lua, const_member_function) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["ConstMemberTest"].SetClass<ConstMemberTest>(
         "get_bool", &ConstMemberTest::get_bool);
@@ -374,7 +374,7 @@ TEST(Lua, const_member_function)
 
 TEST(Lua, const_member_variable) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state["ConstMemberTest"].SetClass<ConstMemberTest>(
         "foo", &ConstMemberTest::foo);

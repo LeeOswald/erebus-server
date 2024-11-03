@@ -68,7 +68,7 @@ end
 
 TEST(Lua, function_reference) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["take_fun_arg"] = &take_fun_arg;
     state.loadString(test_ref_script);
     bool check1 = state["pass_add"](3, 5) == 8;
@@ -80,7 +80,7 @@ TEST(Lua, function_reference)
 
 TEST(Lua, function_in_constructor) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Mutator"].SetClass<Mutator, Er::Lua::function<void(int)>>();
     state.loadString(test_ref_script);
     bool check1 = state["a"] == 4;
@@ -93,7 +93,7 @@ TEST(Lua, function_in_constructor)
 
 TEST(Lua, pass_function_to_lua) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Mutator"].SetClass<Mutator>("foobar", &Mutator::Foobar);
     state.loadString(test_ref_script);
     state("mutator = Mutator.new()");
@@ -108,7 +108,7 @@ TEST(Lua, pass_function_to_lua)
 
 TEST(Lua, call_returned_lua_function) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_ref_script);
     Er::Lua::function<int(int, int)> lua_add = state["add"];
     EXPECT_EQ(lua_add(2, 4), 6);
@@ -117,7 +117,7 @@ TEST(Lua, call_returned_lua_function)
 
 TEST(Lua, call_multivalue_lua_function) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_ref_script);
     Er::Lua::function<std::tuple<int, int>()> lua_add = state["return_two"];
     EXPECT_EQ(lua_add(), std::make_tuple(1, 2));
@@ -126,7 +126,7 @@ TEST(Lua, call_multivalue_lua_function)
 
 TEST(Lua, call_result_is_alive_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
     Er::Lua::function<Er::Lua::Pointer<InstanceCounter>()> createObj = state["createObj"];
@@ -141,7 +141,7 @@ TEST(Lua, call_result_is_alive_ptr)
 
 TEST(Lua, call_result_is_alive_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
     Er::Lua::function<Er::Lua::Reference<InstanceCounter>()> createObj = state["createObj"];
@@ -174,7 +174,7 @@ struct FunctionBar
 
 TEST(Lua, function_call_with_registered_class) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function getX(foo) return foo:get() end");
     Er::Lua::function<int(FunctionFoo &)> getX = state["getX"];
@@ -185,7 +185,7 @@ TEST(Lua, function_call_with_registered_class)
 
 TEST(Lua, function_call_with_registered_class_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function getX(foo) return foo:get() end");
     Er::Lua::function<int(FunctionFoo *)> getX = state["getX"];
@@ -196,7 +196,7 @@ TEST(Lua, function_call_with_registered_class_ptr)
 
 TEST(Lua, function_call_with_registered_class_val) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
     state("function store(foo) globalFoo = foo end");
     state("function getX() return globalFoo:get() end");
@@ -211,7 +211,7 @@ TEST(Lua, function_call_with_registered_class_val)
 
 TEST(Lua, function_call_with_registered_class_val_lifetime) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<InstanceCounter>();
     state("function store(foo) globalFoo = foo end");
     Er::Lua::function<void(InstanceCounter)> store = state["store"];
@@ -225,7 +225,7 @@ TEST(Lua, function_call_with_registered_class_val_lifetime)
 
 TEST(Lua, function_call_with_nullptr_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function makeNil() return nil end");
     Er::Lua::function<FunctionFoo &()> getFoo = state["makeNil"];
@@ -246,7 +246,7 @@ TEST(Lua, function_call_with_nullptr_ref)
 
 TEST(Lua, function_call_with_wrong_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state["Bar"].SetClass<FunctionBar>();
     state("function makeBar() return Bar.new() end");
@@ -268,7 +268,7 @@ TEST(Lua, function_call_with_wrong_ref)
 
 TEST(Lua, function_call_with_wrong_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state["Bar"].SetClass<FunctionBar>();
     state("function makeBar() return Bar.new() end");
@@ -279,7 +279,7 @@ TEST(Lua, function_call_with_wrong_ptr)
 
 TEST(Lua, function_get_registered_class_by_value) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function getFoo() return Foo.new(4) end");
     Er::Lua::function<FunctionFoo()> getFoo = state["getFoo"];

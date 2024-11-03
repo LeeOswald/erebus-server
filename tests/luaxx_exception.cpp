@@ -18,7 +18,7 @@ end
 
 TEST(Lua, catch_exception_from_callback_within_lua) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_exceptions_script);
     state["throw_logic_error"] =
         []() {throw std::logic_error("Message from C++.");};
@@ -32,7 +32,7 @@ TEST(Lua, catch_exception_from_callback_within_lua)
 
 TEST(Lua, catch_unknwon_exception_from_callback_within_lua) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_exceptions_script);
     state["throw_int"] =
         []() {throw 0;};
@@ -46,7 +46,7 @@ TEST(Lua, catch_unknwon_exception_from_callback_within_lua)
 
 TEST(Lua, call_exception_handler_for_exception_from_lua) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_exceptions_script);
     int luaStatusCode = LUA_OK;
     std::string message;
@@ -62,7 +62,7 @@ TEST(Lua, call_exception_handler_for_exception_from_lua)
 
 TEST(Lua, call_exception_handler_for_exception_from_callback) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     int luaStatusCode = LUA_OK;
     std::string message;
     state.setExceptionHandler([&luaStatusCode, &message](int s, std::string msg, std::exception_ptr exception) 
@@ -79,7 +79,7 @@ TEST(Lua, call_exception_handler_for_exception_from_callback)
 
 TEST(Lua, call_exception_handler_while_using_sel_function) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_exceptions_script);
     int luaStatusCode = LUA_OK;
     std::string message;
@@ -95,7 +95,7 @@ TEST(Lua, call_exception_handler_while_using_sel_function)
 
 TEST(Lua, rethrow_exception_for_exception_from_callback) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.setExceptionHandler([](int s, std::string msg, std::exception_ptr exception) 
     {
         if(exception) 
@@ -122,7 +122,7 @@ TEST(Lua, rethrow_exception_for_exception_from_callback)
 
 TEST(Lua, rethrow_using_sel_function) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.setExceptionHandler([](int s, std::string msg, std::exception_ptr exception) 
     {
         if(exception) 
@@ -149,7 +149,7 @@ TEST(Lua, rethrow_using_sel_function)
 
 TEST(Lua, throw_on_exception_using_Load) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.setExceptionHandler([](int s, std::string msg, std::exception_ptr exception) 
     {
         throw std::logic_error(msg);

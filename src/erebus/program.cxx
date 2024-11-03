@@ -235,7 +235,7 @@ int Program::run(int argc, char** argv) noexcept
         
     try
     {
-        result = doRun();
+        result = doRun(argc, argv);
     }
     catch (Exception& e)
     {

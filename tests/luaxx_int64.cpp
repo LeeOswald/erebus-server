@@ -62,7 +62,7 @@ end
 
 TEST(Er_Lua, Int64)
 {
-    Er::LuaState state(g_log);
+    Er::LuaState state(Er::Log::defaultLog());
     
     state.loadString(test_int64, "test_int64");
 
@@ -260,7 +260,7 @@ TEST(Er_Lua, Int64)
 
 TEST(Er_Lua, UInt64)
 {
-    Er::LuaState state(g_log);
+    Er::LuaState state(Er::Log::defaultLog());
 
     state.loadString(test_int64, "test_int64");
 

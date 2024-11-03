@@ -73,7 +73,7 @@ protected:
     virtual void addLoggers(Log::ILog* logger) = 0;
     virtual bool doInitialize() = 0;
     virtual void doFinalize() noexcept = 0;
-    virtual int doRun() = 0;
+    virtual int doRun(int argc, char** argv) = 0;
 
 private:
     bool initialize(int argc, char** argv) noexcept;

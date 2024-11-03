@@ -32,7 +32,7 @@ struct Foo
 
 TEST(Lua, register_obj) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "double_add", &Foo::DoubleAdd);
     const int answer = state["foo_instance"]["double_add"](3);
@@ -42,7 +42,7 @@ TEST(Lua, register_obj)
 
 TEST(Lua, register_obj_member_variable) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "x", &Foo::x);
     state["foo_instance"]["set_x"](3);
@@ -53,7 +53,7 @@ TEST(Lua, register_obj_member_variable)
 
 TEST(Lua, register_obj_to_table)
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     Foo foo1(1);
     Foo foo2(2);
     Foo foo3(3);
@@ -70,7 +70,7 @@ TEST(Lua, register_obj_to_table)
 
 TEST(Lua, mutate_instance) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "set_x", &Foo::SetX);
     state["foo_instance"]["set_x"](4);
@@ -80,7 +80,7 @@ TEST(Lua, mutate_instance)
 
 TEST(Lua, multiple_methods) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance,
                                  "double_add", &Foo::DoubleAdd,
@@ -93,7 +93,7 @@ TEST(Lua, multiple_methods)
 
 TEST(Lua, register_obj_const_member_variable) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "y", &Foo::y);
     const int answer = state["foo_instance"]["y"]();
@@ -106,7 +106,7 @@ TEST(Lua, register_obj_const_member_variable)
 
 TEST(Lua, bind_vector_push_back) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     std::vector<int> test_vector;
     state["vec"].SetObj(test_vector, "push_back",
                         static_cast<void(std::vector<int>::*)(int&&)>(&std::vector<int>::push_back));
@@ -117,7 +117,7 @@ TEST(Lua, bind_vector_push_back)
 
 TEST(Lua, bind_vector_push_back_string) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     std::vector<std::string> test_vector;
     state["vec"].SetObj(test_vector, "push_back",
                         static_cast<void(std::vector<std::string>::*)(std::string&&)>(&std::vector<std::string>::push_back));
@@ -129,7 +129,7 @@ TEST(Lua, bind_vector_push_back_string)
 
 TEST(Lua, bind_vector_push_back_foos) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     std::vector<Foo> test_vector;
     state["Foo"].SetClass<Foo, int>();
     state["vec"].SetObj(test_vector, "push_back",
@@ -173,7 +173,7 @@ struct ObjBar
 
 TEST(Lua, obj_member_return_pointer) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
     FooHolder fh{4};
     state["fh"].SetObj(fh, "get", &FooHolder::getPtr);
@@ -185,7 +185,7 @@ TEST(Lua, obj_member_return_pointer)
 
 TEST(Lua, obj_member_return_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
     FooHolder fh{4};
     state["fh"].SetObj(fh, "get", &FooHolder::getRef);
@@ -197,7 +197,7 @@ TEST(Lua, obj_member_return_ref)
 
 TEST(Lua, obj_member_return_val) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
     FooHolder fh{4};
     state["fh"].SetObj(fh, "get", &FooHolder::getValue);
@@ -209,7 +209,7 @@ TEST(Lua, obj_member_return_val)
 
 TEST(Lua, obj_member_wrong_type) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<Foo, int>();
     state["Bar"].SetClass<ObjBar>();
     FooHolder fh{5};

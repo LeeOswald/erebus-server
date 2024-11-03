@@ -231,7 +231,7 @@ private:
         Er::Server::finalize();
     }
 
-    int doRun() override
+    int doRun(int argc, char** argv) override
     {
         exitCondition().waitValue(true);
 

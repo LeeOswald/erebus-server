@@ -10,9 +10,6 @@
 #include <iostream>
 #include <syncstream>
 
-extern Er::Log::ILog* g_log;
-
-
 
 namespace TestProps
 {

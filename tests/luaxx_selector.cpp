@@ -77,7 +77,7 @@ end
 
 TEST(Lua, select_global) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     int answer = state["my_global"];
     EXPECT_EQ(answer, 4);
@@ -86,7 +86,7 @@ TEST(Lua, select_global)
 
 TEST(Lua, select_field) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     lua_Number answer = state["my_table"]["key"];
     EXPECT_EQ(answer, lua_Number(6.4));
@@ -95,7 +95,7 @@ TEST(Lua, select_field)
 
 TEST(Lua, select_index) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     std::string answer = state["my_table"][3];
     EXPECT_STREQ(answer.c_str(), "hi");
@@ -104,7 +104,7 @@ TEST(Lua, select_index)
 
 TEST(Lua, select_nested_field) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     std::string answer = state["my_table"]["nested"]["foo"];
     EXPECT_STREQ(answer.c_str(), "bar");
@@ -113,7 +113,7 @@ TEST(Lua, select_nested_field)
 
 TEST(Lua, select_nested_index) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     int answer = state["my_table"]["nested"][2];
     EXPECT_EQ(answer, -3);
@@ -122,7 +122,7 @@ TEST(Lua, select_nested_index)
 
 TEST(Lua, select_equality) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     EXPECT_EQ(state["my_table"]["nested"][2], -3);
     EXPECT_EQ(state.size(), 0);
@@ -130,7 +130,7 @@ TEST(Lua, select_equality)
 
 TEST(Lua, select_cast) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     EXPECT_EQ(int(state["global1"]), state["global2"]);
     EXPECT_EQ(state.size(), 0);
@@ -138,7 +138,7 @@ TEST(Lua, select_cast)
 
 TEST(Lua, set_global) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     auto lua_dummy_global = state["dummy_global"];
     lua_dummy_global = 32;
@@ -148,7 +148,7 @@ TEST(Lua, set_global)
 
 TEST(Lua, set_field) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     state["my_table"]["dummy_key"] = "testing";
     std::string s = state["my_table"]["dummy_key"];
@@ -158,7 +158,7 @@ TEST(Lua, set_field)
 
 TEST(Lua, set_index) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     state["my_table"][10] = 3;
     EXPECT_EQ(state["my_table"][10], 3);
@@ -167,7 +167,7 @@ TEST(Lua, set_index)
 
 TEST(Lua, set_nested_field) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     state["my_table"]["nested"]["asdf"] = true;
     EXPECT_TRUE((bool)state["my_table"]["nested"]["asdf"]);
@@ -176,7 +176,7 @@ TEST(Lua, set_nested_field)
 
 TEST(Lua, set_nested_index) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     state["my_table"]["nested"][1] = 2;
     EXPECT_EQ(state["my_table"]["nested"][1], 2);
@@ -185,7 +185,7 @@ TEST(Lua, set_nested_index)
 
 TEST(Lua, create_table_field) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["new_table"]["test"] = 4;
     EXPECT_EQ(state["new_table"]["test"], 4);
     EXPECT_EQ(state.size(), 0);
@@ -193,7 +193,7 @@ TEST(Lua, create_table_field)
 
 TEST(Lua, create_table_index) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["new_table"][3] = 4;
     EXPECT_EQ(state["new_table"][3], 4);
     EXPECT_EQ(state.size(), 0);
@@ -201,7 +201,7 @@ TEST(Lua, create_table_index)
 
 TEST(Lua, cache_selector_field_assignment) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     Er::Lua::Selector s = state["new_table"][3];
     s = 4;
     EXPECT_EQ(state["new_table"][3], 4);
@@ -210,7 +210,7 @@ TEST(Lua, cache_selector_field_assignment)
 
 TEST(Lua, cache_selector_field_access) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["new_table"][3] = 4;
     Er::Lua::Selector s = state["new_table"][3];
     EXPECT_EQ(s, 4);
@@ -219,7 +219,7 @@ TEST(Lua, cache_selector_field_access)
 
 TEST(Lua, cache_selector_function) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     Er::Lua::Selector s = state["set_global"];
     s();
@@ -229,7 +229,7 @@ TEST(Lua, cache_selector_function)
 
 TEST(Lua, function_should_run_once) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state.loadString(test_script);
     auto should_run_once = state["should_run_once"];
     should_run_once();
@@ -239,7 +239,7 @@ TEST(Lua, function_should_run_once)
 
 TEST(Lua, function_result_is_alive_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
     int const instanceCountBeforeCreation = InstanceCounter::instances;
@@ -253,7 +253,7 @@ TEST(Lua, function_result_is_alive_ptr)
 
 TEST(Lua, function_result_is_alive_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Obj"].SetClass<InstanceCounter>();
     state("function createObj() return Obj.new() end");
     int const instanceCountBeforeCreation = InstanceCounter::instances;
@@ -267,7 +267,7 @@ TEST(Lua, function_result_is_alive_ref)
 
 TEST(Lua, get_and_set_Reference_keeps_identity) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Obj"].SetClass<InstanceCounter>();
     state("objA = Obj.new()");
 
@@ -283,7 +283,7 @@ TEST(Lua, get_and_set_Reference_keeps_identity)
 
 TEST(Lua, get_and_set_Pointer_keeps_identity) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Obj"].SetClass<InstanceCounter>();
     state("objA = Obj.new()");
 
@@ -317,7 +317,7 @@ struct SelectorFoo
 
 TEST(Lua, selector_call_with_registered_class) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<SelectorFoo, int>("get", &SelectorFoo::getX);
     state("function getXFromFoo(foo) return foo:get() end");
     SelectorFoo foo{4};
@@ -327,7 +327,7 @@ TEST(Lua, selector_call_with_registered_class)
 
 TEST(Lua, selector_call_with_registered_class_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<SelectorFoo, int>("get", &SelectorFoo::getX);
     state("function getXFromFoo(foo) return foo:get() end");
     SelectorFoo foo{4};
@@ -337,7 +337,7 @@ TEST(Lua, selector_call_with_registered_class_ptr)
 
 TEST(Lua, selector_call_with_wrong_type_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     auto acceptFoo = [] (SelectorFoo *) {};
     state["Foo"].SetClass<SelectorFoo, int>();
     state["Bar"].SetClass<SelectorBar>();
@@ -357,7 +357,7 @@ TEST(Lua, selector_call_with_wrong_type_ptr)
 
 TEST(Lua, selector_call_with_wrong_type_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     auto acceptFoo = [] (SelectorFoo &) {};
     state["Foo"].SetClass<SelectorFoo, int>();
     state["Bar"].SetClass<SelectorBar>();
@@ -377,7 +377,7 @@ TEST(Lua, selector_call_with_wrong_type_ref)
 
 TEST(Lua, selector_call_with_nullptr_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     auto acceptFoo = [] (SelectorFoo &) {};
     state["Foo"].SetClass<SelectorFoo, int>();
     state["acceptFoo"] = acceptFoo;
@@ -395,7 +395,7 @@ TEST(Lua, selector_call_with_nullptr_ref)
 
 TEST(Lua, selector_get_nullptr_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state("bar = nil");
     bool error_encounted = false;
@@ -415,7 +415,7 @@ TEST(Lua, selector_get_nullptr_ref)
 
 TEST(Lua, selector_get_wrong_ref) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state["Bar"].SetClass<SelectorBar>();
     state("bar = Bar.new()");
@@ -436,7 +436,7 @@ TEST(Lua, selector_get_wrong_ref)
 
 TEST(Lua, selector_get_wrong_ref_to_string) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state("bar = \"Not a Foo\"");
     bool expected_message = false;
@@ -456,7 +456,7 @@ TEST(Lua, selector_get_wrong_ref_to_string)
 
 TEST(Lua, selector_get_wrong_ref_to_table) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state("bar = {}");
     bool expected_message = false;
@@ -476,7 +476,7 @@ TEST(Lua, selector_get_wrong_ref_to_table)
 
 TEST(Lua, selector_get_wrong_ref_to_unregistered) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state("foo = Foo.new(4)");
     bool expected_message = false;
@@ -496,7 +496,7 @@ TEST(Lua, selector_get_wrong_ref_to_unregistered)
 
 TEST(Lua, selector_get_wrong_ptr) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
     state["Foo"].SetClass<SelectorFoo, int>();
     state["Bar"].SetClass<SelectorBar>();
     state("bar = Bar.new()");

@@ -4,7 +4,7 @@
 
 TEST(Er_Lua, PropertyTypes)
 {
-    Er::LuaState state(g_log);
+    Er::LuaState state(Er::Log::defaultLog());
 
     uint32_t type = state["Er"]["PropertyType"]["Empty"];
     EXPECT_EQ(type, static_cast<uint32_t>(Er::PropertyType::Empty));
@@ -36,7 +36,7 @@ TEST(Er_Lua, PropertyTypes)
 
 TEST(Er_Lua, registerLuaProps)
 {
-    Er::LuaState state(g_log);
+    Er::LuaState state(Er::Log::defaultLog());
     TestProps::registerLuaProps(state);
 
     {
@@ -152,7 +152,7 @@ end
 
 TEST(Er_Lua, Property)
 {
-    Er::LuaState state(g_log);
+    Er::LuaState state(Er::Log::defaultLog());
     TestProps::registerLuaProps(state);
 
     state.loadString(test_property_adapter, "test_property_adapter");
@@ -244,7 +244,7 @@ end
 
 TEST(Er_Lua, PropertyInfo)
 {
-    Er::LuaState state(g_log);
+    Er::LuaState state(Er::Log::defaultLog());
     TestProps::registerLuaProps(state);
 
     state.loadString(test_property_info, "test_property_info");
@@ -404,7 +404,7 @@ end
 
 TEST(Er_Lua, FormatProperty)
 {
-    Er::LuaState state(g_log);
+    Er::LuaState state(Er::Log::defaultLog());
     TestProps::registerLuaProps(state);
 
     state.loadString(test_property_format, "test_property_format");

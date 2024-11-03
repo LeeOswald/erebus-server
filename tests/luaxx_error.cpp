@@ -32,7 +32,7 @@ private:
 
 TEST(Lua, load_error) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     CapturedStderr capture;
     const char* expected = "cannot open";
@@ -51,7 +51,7 @@ end
 
 TEST(Lua, load_syntax_error) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     const char* expected = "unexpected symbol";
     CapturedStderr capture;
@@ -63,7 +63,7 @@ TEST(Lua, load_syntax_error)
 
 TEST(Lua, do_syntax_error) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     const char* expected = "unexpected symbol";
     CapturedStderr capture;
@@ -96,7 +96,7 @@ end
 
 TEST(Lua, call_undefined_function) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state.loadString(test_test_errror_script);
     const char* expected = "attempt to call a nil value";
@@ -109,7 +109,7 @@ TEST(Lua, call_undefined_function)
 
 TEST(Lua, call_undefined_function2) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state.loadString(test_test_errror_script);
 #if LUA_VERSION_NUM < 503
@@ -127,7 +127,7 @@ TEST(Lua, call_undefined_function2)
 
 TEST(Lua, call_stackoverflow) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     state.loadString(test_test_errror_script);
     const char* expected = "stack overflow";
@@ -141,7 +141,7 @@ TEST(Lua, call_stackoverflow)
 
 TEST(Lua, parameter_conversion_error) 
 {
-    Er::Lua::State state(g_log, true);
+    Er::Lua::State state(Er::Log::defaultLog(), true);
 
     const char * expected =
         "bad argument #2 to 'accept_string_int_string' (number expected, got string)";

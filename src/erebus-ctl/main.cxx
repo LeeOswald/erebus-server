@@ -180,7 +180,7 @@ private:
         Er::Client::finalize();
     }
 
-    int doRun() override
+    int doRun(int argc, char** argv) override
     {
         Er::Client::ChannelParams params(m_endpoint, m_ssl, m_rootCALoaded, m_certificateLoaded, m_privateKeyLoaded);
         auto channel = Er::Client::createChannel(params);

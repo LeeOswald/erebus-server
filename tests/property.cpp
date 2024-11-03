@@ -7,7 +7,7 @@
 TEST(Er_Property, registration)
 {
     using SomeProp = Er::PropertyValue<Er::Bool, ER_PROPID("some_test_prop"), "SomeBool", Er::PropertyFormatter<Er::Bool>>;
-    Er::registerProperty("Test", SomeProp::make_info(), g_log);
+    Er::registerProperty("Test", SomeProp::make_info(), Er::Log::defaultLog());
     
     auto somePropById = Er::lookupProperty("Test", SomeProp::Id::value);
     ASSERT_TRUE(somePropById);
@@ -19,7 +19,7 @@ TEST(Er_Property, registration)
     EXPECT_STREQ(somePropById->id_str(), "some_test_prop");
     EXPECT_STREQ(somePropById->name(), "SomeBool");
 
-    Er::unregisterProperty("Test", Er::lookupProperty("Test", SomeProp::Id::value), g_log);
+    Er::unregisterProperty("Test", Er::lookupProperty("Test", SomeProp::Id::value), Er::Log::defaultLog());
     auto no = Er::lookupProperty("Test", SomeProp::Id::value);
     EXPECT_FALSE(no);
 }

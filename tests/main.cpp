@@ -1,71 +1,30 @@
 #include "common.hpp"
 
-#include <erebus/log.hxx>
-#if ER_WINDOWS
-    #include <erebus/util/utf16.hxx>
-#endif
-
-#include <iostream>
-#include <sstream>
-
-#include <boost/stacktrace.hpp>
-
-#if ER_DEBUG && defined(_MSC_VER)
-#include <crtdbg.h>
-#endif
-
-Er::Log::ILog* g_log = nullptr;
+#include <erebus/program.hxx>
 
 int InstanceCounter::instances = 0;
 
 
-void terminateHandler()
+namespace
 {
-    std::ostringstream ss;
-    ss << boost::stacktrace::stacktrace();
 
-    std::osyncstream(std::cerr) << "std::terminate() called from\n" << ss.str();
-
-    std::abort();
-}
-
-int main(int argc, char** argv)
+class TestApplication final
+    : public Er::Program
 {
-#if ER_POSIX
-    // globally block signals so that child threads, e.g., logger 
-    // inherit signal mask with signals blocked 
-    sigset_t mask;
-    ::sigemptyset(&mask);
-    ::sigaddset(&mask, SIGTERM);
-    ::sigaddset(&mask, SIGHUP);
-    ::sigaddset(&mask, SIGINT);
-    ::sigaddset(&mask, SIGUSR1);
-    ::sigaddset(&mask, SIGUSR2);
-    ::sigprocmask(SIG_BLOCK, &mask, nullptr);
-#endif
+public:
+    TestApplication() noexcept = default;
 
-    // setup std::terminate() handler
-    std::set_terminate(terminateHandler);
-
-#if ER_DEBUG && defined(_MSC_VER)
-    int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
-    tmpFlag |= _CRTDBG_LEAK_CHECK_DF;
-    _CrtSetDbgFlag(tmpFlag);
-    //_CrtSetBreakAlloc(2127);
-#endif
-
-#if ER_WINDOWS
-    ::SetConsoleOutputCP(CP_UTF8);
-#endif
-
-    ::testing::InitGoogleTest(&argc, argv);
-
-    int ret = EXIT_FAILURE;
-
-    try
+private:
+    void addCmdLineOptions(boost::program_options::options_description& options) override
     {
-        auto logger = Er::Log::makeAsyncLogger();
+        options.add_options()
+            ("gtest_list_tests", "list all tests")
+            ("gtest_filter", "run specific tests")
+            ;
+    }
 
+    void addLoggers(Er::Log::ILog* logger) override
+    {
 #if ER_WINDOWS
         if (::IsDebuggerPresent())
         {
@@ -96,33 +55,39 @@ int main(int argc, char** argv)
 
             logger->setLevel(Er::Log::Level::Debug);
         }
-
-        g_log = logger.get();
-        Er::LibScope er(g_log);
-
-
-#if ER_POSIX
-        // unblock signals in the test thread
-        ::sigemptyset(&mask);
-        ::sigaddset(&mask, SIGTERM);
-        ::sigaddset(&mask, SIGINT);
-        ::sigaddset(&mask, SIGUSR1);
-        ::sigaddset(&mask, SIGUSR2);
-        ::sigprocmask(SIG_UNBLOCK, &mask, nullptr);
-#endif
-
-        TestProps::registerAll(g_log);
-    
-        ret = RUN_ALL_TESTS();
-
-        TestProps::unregisterAll(g_log);
-        g_log = nullptr;
     }
-    catch (std::exception& e)
+
+    bool doInitialize() override
     {
-        std::osyncstream(std::cerr) << "Unexpected error: " << e.what() << "\n";
+        TestProps::registerAll(log());
+
+        return true;
     }
 
-    return ret;
+    int doRun(int argc, char** argv) override
+    {
+        ::testing::InitGoogleTest(&argc, argv);
+
+        return RUN_ALL_TESTS();
+    }
+
+    void doFinalize() noexcept override
+    {
+        TestProps::unregisterAll(log());
+    }
+};
+
+} // namespace {}
+
+
+int main(int argc, char** argv)
+{
+    TestApplication::globalStartup(argc, argv);
+    TestApplication app;
+
+    auto resut = app.run(argc, argv);
+
+    TestApplication::globalShutdown();
+    return resut;
 }
 
