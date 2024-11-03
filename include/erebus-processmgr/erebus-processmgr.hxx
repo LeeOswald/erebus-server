@@ -26,11 +26,11 @@ constexpr const std::string_view Domain = "process";
 namespace Requests
 {
 
-static const std::string_view ListProcessesDiff = "ListProcessesDiff";
-static const std::string_view ProcessProps = "ProcessProps";
-static const std::string_view ProcessPropsExt = "ProcessPropsExt";
-static const std::string_view GlobalProps = "GlobalProps";
-static const std::string_view KillProcess = "KillProcess";
+static const std::string_view ListProcessesDiff = "process_list";
+static const std::string_view ProcessProps = "process_props";
+static const std::string_view ProcessPropsExt = "process_props_ext";
+static const std::string_view GlobalProps = "global_props";
+static const std::string_view KillProcess = "kill_process";
 
 } // namespace Requests {}
 

@@ -112,7 +112,7 @@ inline void unregisterAll(Er::Log::ILog* log)
 namespace Requests
 {
 
-static const std::string_view QueryIcon = "QueryIcon";
+static const std::string_view QueryIcon = "query_icon";
 
 
 } // namespace Requests {}
