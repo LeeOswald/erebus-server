@@ -16,11 +16,15 @@ namespace Erp::ProcessMgr
 
 class ProcessListService final
     : public Er::Server::IService
-    , public Er::NonCopyable
+    , public std::enable_shared_from_this<ProcessListService>
 {
 public:
     ~ProcessListService();
-    explicit ProcessListService(Er::Log::ILog* log);
+
+    static auto create(Er::Log::ILog* log)
+    {
+        return std::shared_ptr<ProcessListService>(new ProcessListService(log));
+    }
 
     void registerService(Er::Server::IServer* container);
     void unregisterService(Er::Server::IServer* container);
@@ -31,6 +35,8 @@ public:
     Er::PropertyBag next(StreamId id) override;
 
 private:
+    ProcessListService(Er::Log::ILog* log);
+
     struct Session
         : public Er::NonCopyable
     {

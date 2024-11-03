@@ -21,8 +21,8 @@ ProcessListService::ProcessListService(Er::Log::ILog* log)
 
 void ProcessListService::registerService(Er::Server::IServer* container)
 {
-    container->registerService(Er::ProcessMgr::Requests::ListProcessesDiff, this);
-    container->registerService(Er::ProcessMgr::Requests::GlobalProps, this);
+    container->registerService(Er::ProcessMgr::Requests::ListProcessesDiff, shared_from_this());
+    container->registerService(Er::ProcessMgr::Requests::GlobalProps, shared_from_this());
 }
 
 void ProcessListService::unregisterService(Er::Server::IServer* container)

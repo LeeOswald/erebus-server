@@ -64,9 +64,9 @@ ProcessDetailsService::ProcessDetailsService(Er::Log::ILog* log)
 
 void ProcessDetailsService::registerService(Er::Server::IServer* container)
 {
-    container->registerService(Er::ProcessMgr::Requests::KillProcess, this);
-    container->registerService(Er::ProcessMgr::Requests::ProcessProps, this);
-    container->registerService(Er::ProcessMgr::Requests::ProcessPropsExt, this);
+    container->registerService(Er::ProcessMgr::Requests::KillProcess, shared_from_this());
+    container->registerService(Er::ProcessMgr::Requests::ProcessProps, shared_from_this());
+    container->registerService(Er::ProcessMgr::Requests::ProcessPropsExt, shared_from_this());
 }
 
 void ProcessDetailsService::unregisterService(Er::Server::IServer* container)

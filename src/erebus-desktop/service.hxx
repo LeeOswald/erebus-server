@@ -14,11 +14,15 @@ class IconCache;
 
 class Service final
     : public Er::Server::IService
-    , public Er::NonCopyable
+    , public std::enable_shared_from_this<Service>
 {
 public:
     ~Service();
-    explicit Service(Er::Log::ILog* log, std::shared_ptr<Erp::Desktop::IconResolver> iconResolver, std::shared_ptr<IconCache> iconCache);
+    
+    static auto create(Er::Log::ILog* log, std::shared_ptr<Erp::Desktop::IconResolver> iconResolver, std::shared_ptr<IconCache> iconCache)
+    {
+        return std::shared_ptr<Service>(new Service(log, iconResolver, iconCache));
+    }
 
     void registerService(Er::Server::IServer* container);
     void unregisterService(Er::Server::IServer* container);
@@ -29,6 +33,8 @@ public:
     Er::PropertyBag next(StreamId id) override;
 
 private:
+    Service(Er::Log::ILog* log, std::shared_ptr<Erp::Desktop::IconResolver> iconResolver, std::shared_ptr<IconCache> iconCache);
+
     Er::PropertyBag queryIcon(const Er::PropertyBag& args);
     Er::PropertyBag packIcon(std::shared_ptr<IconCache::IconData> icon);
 

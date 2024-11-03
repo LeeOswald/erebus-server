@@ -51,8 +51,8 @@ public:
             ErThrow("Only one instance of erebus-processmgr plugin can be created");
 
         // create and register services
-        m_processList.reset(new Erp::ProcessMgr::ProcessListService(m_params.log));
-        m_processDetails.reset(new Erp::ProcessMgr::ProcessDetailsService(m_params.log));
+        m_processList = Erp::ProcessMgr::ProcessListService::create(m_params.log);
+        m_processDetails = Erp::ProcessMgr::ProcessDetailsService::create(m_params.log);
         
         m_processList->registerService(m_params.container);
         m_processDetails->registerService(m_params.container);
@@ -64,8 +64,8 @@ private:
     static std::atomic<long> g_instances;
 
     Er::Server::PluginParams m_params;
-    std::unique_ptr<Erp::ProcessMgr::ProcessListService> m_processList;
-    std::unique_ptr<Erp::ProcessMgr::ProcessDetailsService> m_processDetails;
+    Er::Server::IService::Ptr m_processList;
+    Er::Server::IService::Ptr m_processDetails;
 };
 
 std::atomic<long> ProcessMgrPlugin::g_instances = 0;

@@ -24,7 +24,7 @@ Service::Service(Er::Log::ILog* log, std::shared_ptr<Erp::Desktop::IconResolver>
 
 void Service::registerService(Er::Server::IServer* container)
 {
-    container->registerService(Er::Desktop::Requests::QueryIcon, this);
+    container->registerService(Er::Desktop::Requests::QueryIcon, shared_from_this());
 }
 
 void Service::unregisterService(Er::Server::IServer* container)

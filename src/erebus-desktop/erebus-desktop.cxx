@@ -81,7 +81,7 @@ public:
             m_iconCache = std::make_shared<Erp::Desktop::IconCache>(params.log, m_iconCacheIpc, args.iconCacheDir, args.iconCacheSize);
         }
 
-        m_service.reset(new Erp::Desktop::Service(m_params.log, m_iconResolver, m_iconCache));
+        m_service = Erp::Desktop::Service::create(m_params.log, m_iconResolver, m_iconCache);
         m_service->registerService(m_params.container);
     }
 
@@ -130,7 +130,7 @@ private:
     std::shared_ptr<Erp::Desktop::DesktopFileCache> m_desktopFileCache;
     std::shared_ptr<Erp::Desktop::IconResolver> m_iconResolver;
     std::shared_ptr<Erp::Desktop::IconCache> m_iconCache;
-    std::unique_ptr<Erp::Desktop::Service> m_service;
+    Er::Server::IService::Ptr m_service;
 };
 
 std::atomic<long> DesktopPlugin::g_instances = 0;

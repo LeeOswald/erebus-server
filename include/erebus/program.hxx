@@ -2,8 +2,12 @@
 
 #include <erebus/condition.hxx>
 #include <erebus/log.hxx>
+#include <erebus/util/signalhandler.hxx>
 
 #include <boost/program_options.hpp>
+
+#include <future>
+
 
 namespace Er
 {
@@ -12,7 +16,12 @@ class EREBUS_EXPORT Program
     : public NonCopyable
 {
 public:
-    static void globalStartup(int argc, char** argv) noexcept;
+    enum 
+    {
+        NoSignalWaiter = 0x0001
+    };
+
+    static void globalStartup(int argc, char** argv, unsigned options = 0) noexcept;
     static void globalShutdown() noexcept;
 
     virtual ~Program();
@@ -32,13 +41,13 @@ public:
         return false;
     }
 
-    static constexpr Program& instance() noexcept
+    static Program& instance() noexcept
     {
         ErAssert(s_instance);
         return *s_instance;
     }
 
-    static constexpr bool isDaemon() noexcept
+    static bool isDaemon() noexcept
     {
         return s_isDaemon;
     }
@@ -106,7 +115,7 @@ private:
                     staticSignalHandler(signo);
                     return true;
                 }))
-        {)
+        {}
     };
 
     static std::unique_ptr<SignalWaiter> s_signalWaiter;

@@ -12,11 +12,15 @@ namespace Erp::ProcessMgr
 
 class ProcessDetailsService final
     : public Er::Server::IService
-    , public Er::NonCopyable
+    , public std::enable_shared_from_this<ProcessDetailsService>
 {
 public:
     ~ProcessDetailsService();
-    explicit ProcessDetailsService(Er::Log::ILog* log);
+    
+    static auto create(Er::Log::ILog* log)
+    {
+        return std::shared_ptr<ProcessDetailsService>(new ProcessDetailsService(log));
+    }
 
     void registerService(Er::Server::IServer* container);
     void unregisterService(Er::Server::IServer* container);
@@ -27,6 +31,8 @@ public:
     Er::PropertyBag next(StreamId id) override;
 
 private:
+    ProcessDetailsService(Er::Log::ILog* log);
+
     Er::PropertyBag killProcess(const Er::PropertyBag& args); 
     Er::PropertyBag processProps(const Er::PropertyBag& args); 
     Er::PropertyBag processPropsExt(const Er::PropertyBag& args); 

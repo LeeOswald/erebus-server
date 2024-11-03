@@ -66,6 +66,18 @@ private:
 
     int doRun(int argc, char** argv) override
     {
+#if ER_POSIX
+        // unblock signals in the test thread
+        {
+            sigset_t mask;
+            ::sigemptyset(&mask);
+            ::sigaddset(&mask, SIGTERM);
+            ::sigaddset(&mask, SIGINT);
+            ::sigaddset(&mask, SIGUSR1);
+            ::sigaddset(&mask, SIGUSR2);
+            ::sigprocmask(SIG_UNBLOCK, &mask, nullptr);
+        }
+#endif
         ::testing::InitGoogleTest(&argc, argv);
 
         return RUN_ALL_TESTS();
@@ -82,7 +94,22 @@ private:
 
 int main(int argc, char** argv)
 {
-    TestApplication::globalStartup(argc, argv);
+#if ER_POSIX
+    {
+        // globally block signals so that child threads 
+        // inherit signal mask with signals blocked 
+        sigset_t mask;
+        ::sigemptyset(&mask);
+        ::sigaddset(&mask, SIGTERM);
+        ::sigaddset(&mask, SIGHUP);
+        ::sigaddset(&mask, SIGINT);
+        ::sigaddset(&mask, SIGUSR1);
+        ::sigaddset(&mask, SIGUSR2);
+        ::sigprocmask(SIG_BLOCK, &mask, nullptr);
+    }
+#endif
+
+    TestApplication::globalStartup(argc, argv, Er::Program::NoSignalWaiter);
     TestApplication app;
 
     auto resut = app.run(argc, argv);

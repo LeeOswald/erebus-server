@@ -43,4 +43,4 @@ add_executable(
 
 target_link_libraries(${ER_TESTS} gtest_main ${EREBUS_RTLLIB} ${LUA_LIBRARIES})
 
-gtest_discover_tests(${ER_TESTS})
+gtest_discover_tests(${ER_TESTS} DISCOVERY_TIMEOUT 20)

@@ -21,10 +21,10 @@ Event Program::s_exitCondition(false);
 int Program::s_signalReceived = 0;
 
 #if ER_POSIX
-std::unique_ptr<SignalWaiter> s_signalWaiter;
+std::unique_ptr<Program::SignalWaiter> Program::s_signalWaiter;
 #endif
 
-void Program::globalStartup(int argc, char** argv) noexcept
+void Program::globalStartup(int argc, char** argv, unsigned options) noexcept
 {
 #if ER_POSIX
     bool daemonize = optionPresent(argc, argv, "--daemon", "-d");
@@ -45,13 +45,16 @@ void Program::globalStartup(int argc, char** argv) noexcept
     _CrtSetDbgFlag(tmpFlag);
 #endif
 
+    if ((options & NoSignalWaiter) == 0)
+    {
 #if ER_POSIX
-    s_signalWaiter.reset(new SignalWaiter{ SIGINT, SIGTERM, SIGPIPE, SIGHUP });
+        s_signalWaiter.reset(new SignalWaiter{ SIGINT, SIGTERM, SIGPIPE, SIGHUP });
 #else
-    ::signal(SIGINT, staticSignalHandler);
-    ::signal(SIGTERM, staticSignalHandler);
+        ::signal(SIGINT, staticSignalHandler);
+        ::signal(SIGTERM, staticSignalHandler);
 #endif
-
+    }
+    
     std::set_terminate(staticTerminateHandler);
 
     setPrintFailedAssertionFn(staticPrintAssertFn);
