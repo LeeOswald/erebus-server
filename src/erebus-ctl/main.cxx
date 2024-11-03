@@ -192,7 +192,7 @@ private:
             requestRunner.reset(new RequestRunner(log(), channel, m_request, m_domain, m_parsedArgs, m_interval, m_parallel));
 
         if (options().count("stream") > 0)
-            streamRunner.reset(new StreamRunner(log(), channel, m_request, m_domain, m_parsedArgs, m_interval, m_parallel));
+            streamRunner.reset(new StreamRunner(log(), channel, m_stream, m_domain, m_parsedArgs, m_interval, m_parallel));
 
         exitCondition().waitValue(true);
 
