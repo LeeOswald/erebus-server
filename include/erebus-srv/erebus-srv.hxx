@@ -19,18 +19,22 @@
 namespace Er::Server
 {
 
+struct IServer;
 
 struct IService
 {
     using StreamId = uintptr_t;
-    
+    using Ptr = std::shared_ptr<IService>;
+
+    virtual ~IService() = default;
+
+    virtual void registerService(IServer* container) = 0;
+    virtual void unregisterService(IServer* container) = 0;
+
     virtual Er::PropertyBag request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) = 0; 
     [[nodiscard]] virtual StreamId beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) = 0;
     virtual void endStream(StreamId id) = 0;
     virtual Er::PropertyBag next(StreamId id) = 0;
-
-protected:
-    virtual ~IService() = default;
 };
 
 
@@ -79,7 +83,7 @@ struct IServer
     using Ptr = std::unique_ptr<IServer>;
 
     virtual ~IServer() = default;
-    virtual void registerService(std::string_view request, IService* service) = 0;
+    virtual void registerService(std::string_view request, IService::Ptr service) = 0;
     virtual void unregisterService(IService* service) = 0;
 };
 

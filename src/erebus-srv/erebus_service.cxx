@@ -55,7 +55,7 @@ ErebusCbService::ErebusCbService(const Er::Server::Params& params)
     m_server.swap(server);
 }
 
-Er::Server::IService* ErebusCbService::findService(const std::string& id) const
+Er::Server::IService::Ptr ErebusCbService::findService(const std::string& id) const
 {
     std::shared_lock l(m_servicesLock);
 
@@ -65,7 +65,7 @@ Er::Server::IService* ErebusCbService::findService(const std::string& id) const
         return it->second;
     }
 
-    return nullptr;
+    return {};
 }
 
 Er::PropertyBag ErebusCbService::unmarshalArgs(const erebus::ServiceRequest* request)
@@ -228,7 +228,7 @@ grpc::ServerWriteReactor<erebus::ServiceReply>* ErebusCbService::GenericStream(g
     return reactor.release();
 }
 
-void ErebusCbService::registerService(std::string_view request, Er::Server::IService* service)
+void ErebusCbService::registerService(std::string_view request, Er::Server::IService::Ptr service)
 {
     std::lock_guard l(m_servicesLock);
 
@@ -237,7 +237,7 @@ void ErebusCbService::registerService(std::string_view request, Er::Server::ISer
     if (it != m_services.end())
         ErThrow(Er::format("Service for [{}] is already registered", id));
 
-    Er::Log::info(m_params.log, "Registered service {} for [{}]", Er::Format::ptr(service), id);
+    Er::Log::info(m_params.log, "Registered service {} for [{}]", Er::Format::ptr(service.get()), id);
 
     m_services.insert({ std::move(id), service });
 }
@@ -249,7 +249,7 @@ void ErebusCbService::unregisterService(Er::Server::IService* service)
     bool success = false;
     for (auto it = m_services.begin(); it != m_services.end();)
     {
-        if (it->second == service)
+        if (it->second.get() == service)
         {
             Er::Log::info(m_params.log, "Unregistered service {}", Er::Format::ptr(service));
 

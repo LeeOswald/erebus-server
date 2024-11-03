@@ -12,14 +12,18 @@ namespace Erp::Server
 
 class CoreService
     : public Er::Server::IService
-    , public Er::NonCopyable
+    , public std::enable_shared_from_this<CoreService>
 {
 public:
     ~CoreService();
-    explicit CoreService(Er::Log::ILog* log);
 
-    void registerService(Er::Server::IServer* container);
-    void unregisterService(Er::Server::IServer* container);
+    static auto create(Er::Log::ILog* log)
+    {
+        return std::shared_ptr<CoreService>(new CoreService(log));
+    }
+
+    void registerService(Er::Server::IServer* container) override;
+    void unregisterService(Er::Server::IServer* container) override;
 
     Er::PropertyBag request(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) override;
     StreamId beginStream(std::string_view request, std::string_view cookie, const Er::PropertyBag& args) override;
@@ -27,6 +31,8 @@ public:
     Er::PropertyBag next(StreamId id) override;
 
 private:
+    CoreService(Er::Log::ILog* log);
+
     enum class StreamType
     {
         Ping

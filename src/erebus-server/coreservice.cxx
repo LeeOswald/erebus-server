@@ -53,8 +53,8 @@ CoreService::CoreService(Er::Log::ILog* log)
 
 void CoreService::registerService(Er::Server::IServer* container)
 {
-    container->registerService(Er::Server::Requests::GetVersion, this);
-    container->registerService(Er::Server::Requests::Ping, this);
+    container->registerService(Er::Server::Requests::GetVersion, shared_from_this());
+    container->registerService(Er::Server::Requests::Ping, shared_from_this());
 }
 
 void CoreService::unregisterService(Er::Server::IServer* container)

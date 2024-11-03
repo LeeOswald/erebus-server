@@ -131,7 +131,7 @@ private:
         m_server = Er::Server::create(serverParams);
 
         Er::Log::info(log(), "Creating core service");
-        m_coreService.reset(new Erp::Server::CoreService(log()));
+        m_coreService = Erp::Server::CoreService::create(log());
         m_coreService->registerService(m_server.get());
 
         loadPlugins();
@@ -246,7 +246,7 @@ private:
     std::string m_cfgFile;
     Er::Private::ServerConfig m_config;
     Er::Server::IServer::Ptr m_server;
-    std::unique_ptr<Erp::Server::CoreService> m_coreService;
+    Erp::Server::CoreService::Ptr m_coreService;
     std::unique_ptr<Er::Private::PluginMgr> m_pluginMgr;
 };
 

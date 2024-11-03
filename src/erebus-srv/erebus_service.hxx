@@ -5,6 +5,7 @@
 #include <erebus/erebus.grpc.pb.h>
 #include <erebus/util/exceptionutil.hxx>
 
+#include <atomic>
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -22,7 +23,7 @@ public:
     grpc::ServerUnaryReactor* GenericRpc(grpc::CallbackServerContext* context, const erebus::ServiceRequest* request, erebus::ServiceReply* reply) override;
     grpc::ServerWriteReactor<erebus::ServiceReply>* GenericStream(grpc::CallbackServerContext* context, const erebus::ServiceRequest* request) override;
 
-    void registerService(std::string_view request, Er::Server::IService* service) override;
+    void registerService(std::string_view request, Er::Server::IService::Ptr service) override;
     void unregisterService(Er::Server::IService* service) override;
 
 private:
@@ -49,7 +50,7 @@ private:
             Er::Log::Indent idt(m_log);
         }
 
-        void Begin(Er::Server::IService* service, std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
+        void Begin(Er::Server::IService::Ptr service, std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
         {
             Er::Log::debug(m_log, "{}.ServiceReplyStream::Begin", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
@@ -152,13 +153,14 @@ private:
                 StartWrite(&m_response, grpc::WriteOptions().set_buffer_hint());
         }
 
+        
         Er::Log::ILog* m_log;
-        Er::Server::IService* m_service = nullptr;
+        Er::Server::IService::Ptr m_service;
         Er::Server::IService::StreamId m_streamId = {};
         erebus::ServiceReply m_response;
     };
 
-    Er::Server::IService* findService(const std::string& id) const;
+    Er::Server::IService::Ptr findService(const std::string& id) const;
     static Er::PropertyBag unmarshalArgs(const erebus::ServiceRequest* request);
     static void marshalReplyProps(const Er::PropertyBag& props, erebus::ServiceReply* reply);
     static void marshalException(erebus::ServiceReply* reply, const std::exception& e);
@@ -167,7 +169,7 @@ private:
     Er::Server::Params m_params;
     std::unique_ptr<grpc::Server> m_server;
     mutable std::shared_mutex m_servicesLock;
-    std::unordered_map<std::string, Er::Server::IService*> m_services;
+    std::unordered_map<std::string, Er::Server::IService::Ptr> m_services;
 };
 
 } // namespace Erp::Server {}
