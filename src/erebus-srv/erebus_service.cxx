@@ -24,7 +24,7 @@ ErebusCbService::ErebusCbService(const Er::Server::Params& params)
         {
             grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { ep.privateKey, ep.certificate };
             grpc::SslServerCredentialsOptions sslOps(GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY);
-            sslOps.pem_root_certs = ep.certificate;
+            sslOps.pem_root_certs = ep.rootCA;
             sslOps.pem_key_cert_pairs.push_back(keycert);
             auto creds = grpc::SslServerCredentials(sslOps);
             builder.AddListeningPort(ep.endpoint, creds);

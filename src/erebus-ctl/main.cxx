@@ -65,10 +65,10 @@ private:
     {
         options.add_options()
             ("endpoint,e", boost::program_options::value<std::string>(&m_endpoint), "server address")
-            ("ssl", boost::program_options::value<bool>(&m_ssl)->default_value(false), "use SSL/TLS")
-            ("rootCA", boost::program_options::value<std::string>(&m_rootCA), "root CA certificate file")
+            ("ssl", "use SSL/TLS")
+            ("root_ca", boost::program_options::value<std::string>(&m_rootCA), "root CA certificate file")
             ("certificate", boost::program_options::value<std::string>(&m_certificate), "certificate file")
-            ("key", boost::program_options::value<std::string>(&m_privateKey), "private key file")
+            ("private_key", boost::program_options::value<std::string>(&m_privateKey), "private key file")
             ("loop,l", boost::program_options::value<int>(&m_interval)->default_value(0), "request repeat interval")
             ("parallel,p", boost::program_options::value<int>(&m_parallel)->default_value(1), "thread count")
             ("request,r", boost::program_options::value<std::string>(&m_request), "unary request")
@@ -86,7 +86,7 @@ private:
             return false;
         }
 
-        if (m_ssl)
+        if (m_ssl = (options().count("ssl") > 0))
         {
             {
                 if (m_rootCA.empty())

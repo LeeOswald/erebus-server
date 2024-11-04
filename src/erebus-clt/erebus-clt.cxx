@@ -241,8 +241,6 @@ EREBUSCLT_EXPORT void finalize()
 
 EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params)
 {
-    bool local = params.endpoint.starts_with("unix:");
-
     grpc::ChannelArguments args;
 
     if (params.keepAlive)
@@ -252,7 +250,7 @@ EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params)
         args.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
     }
 
-    if (!local && params.ssl)
+    if (params.ssl)
     {
         grpc::SslCredentialsOptions opts;
         opts.pem_root_certs = params.rootCertificate;
