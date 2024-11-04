@@ -150,7 +150,7 @@ private:
             if (error)
                 StartWriteAndFinish(&m_response, grpc::WriteOptions(), grpc::Status::OK); // just send the exception
             else
-                StartWrite(&m_response, grpc::WriteOptions().set_buffer_hint());
+                StartWrite(&m_response);
         }
 
         
