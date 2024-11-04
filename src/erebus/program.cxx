@@ -71,7 +71,12 @@ void Program::globalStartup(int argc, char** argv, unsigned options) noexcept
 void Program::globalShutdown() noexcept
 {
 #if ER_POSIX
-    s_signalWaiter.reset();
+    if(s_signalWaiter)
+    {
+        // s_signalWaiter is locked in sigwait() so wake it 
+        ::kill(::getpid(), SIGHUP);
+        s_signalWaiter.reset();
+    }
 #endif
 
     Er::setPrintFailedAssertionFn(nullptr);
