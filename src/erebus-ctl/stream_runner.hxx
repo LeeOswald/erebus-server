@@ -80,6 +80,8 @@ private:
 
         while (!stop.stop_requested())
         {
+            Er::Log::write(m_log, Er::Log::Level::Info, "Time delta: {} ms", sw.value().count());
+
             if (!m_interval)
                 break;
 
@@ -110,12 +112,10 @@ private:
         {
             std::lock_guard l(bulkLogWrite());
             dumpPropertyBag(m_domain, item, m_log);
-            Er::Log::write(m_log, Er::Log::Level::Info, "Time delta: {} ms", sw.value().count());
+            
             Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
         }
-
-        sw.reset();
-        sw.start();
+    
         return true;
     }
 
