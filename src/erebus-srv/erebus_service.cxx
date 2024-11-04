@@ -151,6 +151,8 @@ grpc::ServerUnaryReactor* ErebusCbService::GenericRpc(grpc::CallbackServerContex
     }
 
     auto& requestStr = request->request();
+    Er::Log::info(m_params.log, "Req [{}] from {}", requestStr, context->peer());
+
     auto service = findService(requestStr);
     if (!service) [[unlikely]]
     {
@@ -193,6 +195,8 @@ grpc::ServerWriteReactor<erebus::ServiceReply>* ErebusCbService::GenericStream(g
     auto reactor = std::make_unique<ServiceReplyStream>(m_params.log);
 
     auto& requestStr = request->request();
+    Er::Log::info(m_params.log, "Strm [{}] to {}", requestStr, context->peer());
+
     auto service = findService(requestStr);
     if (!service)
     {
