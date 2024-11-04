@@ -2,6 +2,7 @@
 
 #include "common.hxx"
 
+#include <erebus/condition.hxx>
 #include <erebus/stopwatch.hxx>
 
 #include <thread>
@@ -15,6 +16,7 @@ public:
 
     RequestRunner(
         Er::Log::ILog* log,
+        Er::Event* exitEvent,
         Er::Client::ChannelPtr channel,
         const std::string& request,
         const std::string& domain,
@@ -23,6 +25,7 @@ public:
         int threads
     )
         : m_log(log)
+        , m_exitEvent(exitEvent)
         , m_channel(channel)
         , m_request(request)
         , m_domain(domain)
@@ -53,7 +56,11 @@ private:
                 Er::Log::error(m_log, "Worker exited unexpectedly");
 
             if (--m_threadCount == 0)
+            {
                 Er::Log::warning(m_log, "No active workers left");
+                if (m_exitEvent)
+                    m_exitEvent->setAndNotifyAll(true);
+            }
         }
     }
 
@@ -97,6 +104,7 @@ private:
     }
 
     Er::Log::ILog* const m_log;
+    Er::Event* m_exitEvent;
     Er::Client::ChannelPtr const m_channel;
     std::string const m_request;
     std::string const m_domain;
