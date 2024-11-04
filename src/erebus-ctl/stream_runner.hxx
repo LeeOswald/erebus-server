@@ -75,23 +75,47 @@ private:
             m_args,
             [this, &sw, &stop](Er::PropertyBag&& item) -> bool
             {
-                if (stop.stop_requested())
-                    return false;
-
-                sw.stop();
-
-                {
-                    std::lock_guard l(bulkLogWrite());
-                    dumpPropertyBag(m_domain, item, m_log);
-                    Er::Log::write(m_log, Er::Log::Level::Info, "Time delta: {} ms", sw.value().count());
-                    Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
-                }
-
-                sw.reset();
-                sw.start();
-                return true;
+                return reader(stop, sw, std::move(item));
             });
 
+        while (!stop.stop_requested())
+        {
+            if (!m_interval)
+                break;
+
+            std::this_thread::sleep_for(std::chrono::seconds(m_interval));
+
+            sw.reset();
+            sw.start();
+
+            client->requestStream(
+                m_request,
+                m_args,
+                [this, &sw, &stop](Er::PropertyBag&& item) -> bool
+                {
+                    return reader(stop, sw, std::move(item));
+                });
+        }
+
+        return true;
+    }
+
+    bool reader(std::stop_token stop, Er::Stopwatch<>& sw, Er::PropertyBag&& item)
+    {
+        if (stop.stop_requested())
+            return false;
+
+        sw.stop();
+
+        {
+            std::lock_guard l(bulkLogWrite());
+            dumpPropertyBag(m_domain, item, m_log);
+            Er::Log::write(m_log, Er::Log::Level::Info, "Time delta: {} ms", sw.value().count());
+            Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
+        }
+
+        sw.reset();
+        sw.start();
         return true;
     }
 
