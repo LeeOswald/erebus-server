@@ -202,7 +202,7 @@ EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const std::exc
 
 EREBUS_EXPORT void logException(Log::ILog* log, Log::Level level, const Er::Exception& e) noexcept
 {
-    Log::write(log, level, formatException(e));
+    Log::writeln(log, level, formatException(e));
 }
 
 } // namespace Util {}

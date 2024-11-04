@@ -148,7 +148,7 @@ private:
         {
             if (ep.ssl)
             {
-                if (!Er::protectedCall<bool>(log(), [&ep, &serverParams]()
+                if (!Er::protectedCall<bool>(log(), [this, &ep, &serverParams]()
                 {
                     std::string rootCA;
                     if (!ep.rootCA.empty())
@@ -164,6 +164,7 @@ private:
 
                     serverParams.endpoints.push_back(Er::Server::Params::Endpoint(ep.endpoint, rootCA, certificate, privateKey));
 
+                    Er::Log::info(log(), "Added server address (SSL) [{}]", ep.endpoint);
                     return true;
                 }))
                 {
@@ -173,6 +174,7 @@ private:
             else
             {
                 serverParams.endpoints.push_back(Er::Server::Params::Endpoint(ep.endpoint));
+                Er::Log::info(log(), "Added server address [{}]", ep.endpoint);
             }
         }
 
