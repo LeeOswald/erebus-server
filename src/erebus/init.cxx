@@ -1,13 +1,14 @@
 #include <erebus/exception.hxx>
 #include <erebus/knownprops.hxx>
 #include <erebus/log.hxx>
-#include <erebus/luaxx.hxx>
+#include <erebus/type_id.hxx>
 
 #if ER_WINDOWS
 #include <erebus/util/utf16.hxx>
 #endif
 
 #include <atomic>
+#include <iostream>
 #include <syncstream>
 
 namespace Er
@@ -91,7 +92,7 @@ EREBUS_EXPORT void initialize(Er::Log::ILog* log)
 
         Er::ExceptionProps::Private::registerAll(log);
 
-        Er::initializeLua(log);
+        Er::initializeTypeRegistry(log);
     }
 }
 
@@ -99,7 +100,7 @@ EREBUS_EXPORT void finalize(Er::Log::ILog* log) noexcept
 {
     if (g_initialized.fetch_sub(1, std::memory_order_acq_rel) == 1)
     {
-        Er::finalizeLua();
+        Er::finalizeTypeRegistry();
 
         Er::ExceptionProps::Private::unregisterAll(log);
         

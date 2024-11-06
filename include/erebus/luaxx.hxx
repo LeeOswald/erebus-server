@@ -18,7 +18,4 @@ private:
 };
 
 
-EREBUS_EXPORT void initializeLua(Er::Log::ILog* log);
-EREBUS_EXPORT void finalizeLua();
-
 } // namespace Er {}

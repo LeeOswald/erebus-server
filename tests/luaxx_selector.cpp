@@ -483,7 +483,7 @@ TEST(Lua, selector_get_wrong_ref_to_unregistered)
 
     try
     {
-        SelectorBar & bar = state["foo"];
+        SelectorBar& bar = state["foo"];
     } 
     catch(Er::Lua::TypeError & e) 
     {

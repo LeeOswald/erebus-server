@@ -83,6 +83,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     ../../include/erebus/system/user.hxx
     ../../include/erebus/trackable.hxx
     ../../include/erebus/tree.hxx
+    ../../include/erebus/type_id.hxx
     ../../include/erebus/util/autoptr.hxx
     ../../include/erebus/util/cformat.hxx
     ../../include/erebus/util/crc32.hxx
@@ -123,6 +124,7 @@ add_library(${EREBUS_RTLLIB} SHARED
     system/process.cxx
     system/thread.cxx
     system/timestamp.cxx
+    type_id.cxx
     util/cformat.cxx
     util/exceptionutil.cxx
     util/file.cxx

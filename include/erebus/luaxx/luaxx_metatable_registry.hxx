@@ -5,6 +5,9 @@
 #include <typeinfo>
 #include <unordered_map>
 
+#include <erebus/log.hxx>
+#include <erebus/type_id.hxx>
+
 extern "C" 
 {
 #include <lua.h>
@@ -14,12 +17,11 @@ extern "C"
 namespace Er
 {
 
-EREBUS_EXPORT const void* registerUserType(const char* name);
-
 template <typename T>
-const void* userType()
+TypeIndex userType()
 {
-    return registerUserType(typeid(T).name());
+    auto id = typeId<T>().index();
+    return id;
 }
 
 } // namespace Er {}
@@ -41,7 +43,7 @@ struct GetUserdataParameterFromLuaTypeError
 namespace MetatableRegistry 
 {
 
-using TypeID = const void*;
+using TypeID = TypeIndex;
 
 
 EREBUS_EXPORT void Create(lua_State* state);
