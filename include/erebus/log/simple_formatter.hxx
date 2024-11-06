@@ -18,8 +18,9 @@ public:
         static constexpr Flag Time = 1;
         static constexpr Flag Level = 2;
         static constexpr Flag Tid = 3;
-        static constexpr Flag TzUtc = 4;   // default is local time 
-        static constexpr Flag TzCrLf = 5;  // default is LF
+        static constexpr Flag TzUtc = 4;      // default is local time 
+        static constexpr Flag TzCrLf = 5;     // default is LF
+        static constexpr Flag NoNewLine = 6;  // no CR or LF
     };
 
     using Options = FlagsPack<32, Option>;

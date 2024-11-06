@@ -12,3 +12,4 @@ Your system’s memory allocator may not be well-optimized for allocating lots o
 - review Er::ExceptionProps::FileName
 - don't protect worker threads with try/catch because it's almost useless
 
+- switch to Conan

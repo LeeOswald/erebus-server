@@ -92,10 +92,13 @@ public:
             ss << r->message();
         }
 
-        if (m_options[Option::TzCrLf])
-            ss << "\r\n";
-        else
-            ss << "\n";
+        if (!m_options[Option::NoNewLine])
+        {
+            if (m_options[Option::TzCrLf])
+                ss << "\r\n";
+            else
+                ss << "\n";
+        }
 
         return ss.str();
     }
