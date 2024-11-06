@@ -44,7 +44,7 @@ template <typename Type>
 } // namespace detail {}
 
 
-template <typename Type, typename = void>
+template <typename Type>
 struct TypeName final 
 {
     [[nodiscard]] static constexpr std::string_view value() noexcept 
