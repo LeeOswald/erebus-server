@@ -78,7 +78,7 @@ private:
     }
 
 
-    Er::Client::IClient::CallbackResult receive(Er::Client::IClient::CallId callId, Er::PropertyBag&& result) override
+    auto receive(Er::Client::IClient::CallId callId, Er::PropertyBag&& result) -> Er::Client::IClient::IStreamReceiver::Result override
     {
         auto r = pick(callId);
 
@@ -99,10 +99,10 @@ private:
             r->sw.start();
         }
 
-        return Er::Client::IClient::CallbackResult::Continue;
+        return Er::Client::IClient::IStreamReceiver::Result::Continue;
     }
 
-    Er::Client::IClient::CallbackResult receive(Er::Client::IClient::CallId callId, Er::Exception&& exception) override
+    auto receive(Er::Client::IClient::CallId callId, Er::Exception&& exception) -> Er::Client::IClient::IStreamReceiver::Result override
     {
         auto r = pick(callId);
 
@@ -123,7 +123,7 @@ private:
             r->sw.start();
         }
 
-        return Er::Client::IClient::CallbackResult::Continue;
+        return Er::Client::IClient::IStreamReceiver::Result::Continue;
     }
 
     void finish(Er::Client::IClient::CallId callId, Er::Result result, std::string&& message) override
@@ -192,10 +192,10 @@ private:
         return true;
     }
 
-    auto reader(std::stop_token stop, Er::Stopwatch<>& sw, Er::PropertyBag&& item) -> Er::Client::IClient::CallbackResult
+    auto reader(std::stop_token stop, Er::Stopwatch<>& sw, Er::PropertyBag&& item) -> Er::Client::IClient::IStreamReceiver::Result
     {
         if (stop.stop_requested())
-            return Er::Client::IClient::CallbackResult::Break;
+            return Er::Client::IClient::IStreamReceiver::Result::Cancel;
 
         sw.stop();
 
@@ -206,7 +206,7 @@ private:
             Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
         }
     
-        return Er::Client::IClient::CallbackResult::Continue;
+        return Er::Client::IClient::IStreamReceiver::Result::Continue;
     }
 
     Er::Log::ILog* const m_log;

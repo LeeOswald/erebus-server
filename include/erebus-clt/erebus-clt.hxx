@@ -24,12 +24,6 @@ namespace Er::Client
 
 struct IClient
 {
-    enum class CallbackResult
-    {
-        Continue,
-        Break
-    };
-
     using CallId = uintptr_t;
 
     struct IReceiver
@@ -44,8 +38,14 @@ struct IClient
 
     struct IStreamReceiver
     {
-        virtual CallbackResult receive(CallId callId, Er::PropertyBag&& result) = 0;
-        virtual CallbackResult receive(CallId callId, Er::Exception&& exception) = 0;
+        enum class Result
+        {
+            Continue,
+            Cancel
+        };
+
+        virtual Result receive(CallId callId, Er::PropertyBag&& result) = 0;
+        virtual Result receive(CallId callId, Er::Exception&& exception) = 0;
         virtual void finish(CallId callId, Er::Result result, std::string&& message) = 0;
         virtual void finish(CallId callId) = 0;
 

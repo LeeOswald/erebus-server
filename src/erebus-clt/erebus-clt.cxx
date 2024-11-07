@@ -169,19 +169,18 @@ private:
             {
                 if (m_reply.has_exception())
                 {
-                    if (m_receiver->receive(m_callId, unmarshalException(m_reply)) == IClient::CallbackResult::Continue)
+                    if (m_receiver->receive(m_callId, unmarshalException(m_reply)) == IClient::IStreamReceiver::Result::Cancel)
                     {
-                        StartRead(&m_reply);
+                        m_context.context.TryCancel();
                     }
                 }
-                else if (m_receiver->receive(m_callId, unmarshal(m_reply)) == IClient::CallbackResult::Continue)
-                {
-                    StartRead(&m_reply);
-                }
-                else
+                else if (m_receiver->receive(m_callId, unmarshal(m_reply)) == IClient::IStreamReceiver::Result::Cancel)
                 {
                     m_context.context.TryCancel();
                 }
+                
+                // we have to drain the completion queue even if we cancel
+                StartRead(&m_reply);
             }
         }
 
