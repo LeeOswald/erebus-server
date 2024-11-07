@@ -41,9 +41,9 @@ struct ChannelParams
 {
     std::string endpoint;
     bool ssl;
-    std::string rootCertificate;
+    std::string rootCa;
     std::string certificate;
-    std::string key;
+    std::string privateKey;
     bool keepAlive = true;
 
     ChannelParams() noexcept = default;
@@ -57,9 +57,9 @@ struct ChannelParams
     )
         : endpoint(endpoint)
         , ssl(ssl)
-        , rootCertificate(rootCertificate)
+        , rootCa(rootCa)
         , certificate(certificate)
-        , key(key)
+        , privateKey(privateKey)
     {
     }
 };

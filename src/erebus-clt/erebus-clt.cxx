@@ -253,9 +253,9 @@ EREBUSCLT_EXPORT ChannelPtr createChannel(const ChannelParams& params)
     if (params.ssl)
     {
         grpc::SslCredentialsOptions opts;
-        opts.pem_root_certs = params.rootCertificate;
+        opts.pem_root_certs = params.rootCa;
         opts.pem_cert_chain = params.certificate;
-        opts.pem_private_key = params.key;
+        opts.pem_private_key = params.privateKey;
 
         auto channelCreds = grpc::SslCredentials(opts);
         return grpc::CreateCustomChannel(params.endpoint, channelCreds, args);

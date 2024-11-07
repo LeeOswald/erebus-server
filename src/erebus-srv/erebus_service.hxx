@@ -27,13 +27,13 @@ public:
     void unregisterService(Er::Server::IService* service) override;
 
 private:
-    class ServiceReplyStream
-        : public grpc::ServerWriteReactor<erebus::ServiceReply> 
+    class ReplyStreamWriteReactor
+        : public grpc::ServerWriteReactor<erebus::ServiceReply>
     {
     public:
-        ~ServiceReplyStream()
+        ~ReplyStreamWriteReactor()
         {
-            Er::Log::debug(m_log, "{}.ServiceReplyStream::~ServiceReplyStream", Er::Format::ptr(this));
+            Er::Log::debug(m_log, "{}.ReplyStreamWriteReactor::~ReplyStreamWriteReactor", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
 
             if (m_streamId)
@@ -43,16 +43,16 @@ private:
             }
         }
 
-        ServiceReplyStream(Er::Log::ILog* log) noexcept
+        ReplyStreamWriteReactor(Er::Log::ILog* log) noexcept
             : m_log(log)
         {
-            Er::Log::debug(m_log, "{}.ServiceReplyStream::ServiceReplyStream", Er::Format::ptr(this));
+            Er::Log::debug(m_log, "{}.ReplyStreamWriteReactor::ReplyStreamWriteReactor", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
         }
 
         void Begin(Er::Server::IService::Ptr service, std::string_view request, std::string_view cookie, const Er::PropertyBag& args)
         {
-            Er::Log::debug(m_log, "{}.ServiceReplyStream::Begin", Er::Format::ptr(this));
+            Er::Log::debug(m_log, "{}.ReplyStreamWriteReactor::Begin", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
 
             ErAssert(!m_service);
@@ -86,7 +86,7 @@ private:
 
         void OnWriteDone(bool ok) override 
         {
-            Er::Log::debug(m_log, "{}.ServiceReplyStream::OnWriteDone", Er::Format::ptr(this));
+            Er::Log::debug(m_log, "{}.ReplyStreamWriteReactor::OnWriteDone", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
 
             if (!ok) 
@@ -97,7 +97,7 @@ private:
 
         void OnDone() override 
         {
-            Er::Log::debug(m_log, "{}.ServiceReplyStream::OnDone", Er::Format::ptr(this));
+            Er::Log::debug(m_log, "{}.ReplyStreamWriteReactor::OnDone", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
 
             delete this;
@@ -105,14 +105,14 @@ private:
 
         void OnCancel() override 
         {
-            Er::Log::debug(m_log, "{}.ServiceReplyStream::OnCancel", Er::Format::ptr(this));
+            Er::Log::debug(m_log, "{}.ReplyStreamWriteReactor::OnCancel", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
         }
 
     private:
         void Continue()
         {
-            Er::Log::debug(m_log, "{}.ServiceReplyStream::Continue", Er::Format::ptr(this));
+            Er::Log::debug(m_log, "{}.ReplyStreamWriteReactor::Continue", Er::Format::ptr(this));
             Er::Log::Indent idt(m_log);
 
             m_response.Clear();

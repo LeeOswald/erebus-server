@@ -192,7 +192,7 @@ grpc::ServerWriteReactor<erebus::ServiceReply>* ErebusCbService::GenericStream(g
     Er::Log::debug(m_params.log, "ErebusCbService::GenericStream");
     Er::Log::Indent idt(m_params.log);
 
-    auto reactor = std::make_unique<ServiceReplyStream>(m_params.log);
+    auto reactor = std::make_unique<ReplyStreamWriteReactor>(m_params.log);
 
     auto& requestStr = request->request();
     Er::Log::info(m_params.log, "Strm [{}] to {}", requestStr, context->peer());
