@@ -27,6 +27,41 @@ public:
     void unregisterService(Er::Server::IService* service) override;
 
 private:
+    class ReplyUnaryReactor
+        : public grpc::ServerUnaryReactor
+    {
+    public:
+        ~ReplyUnaryReactor()
+        {
+            Er::Log::debug(m_log, "{}.ReplyUnaryReactor::~ReplyUnaryReactor", Er::Format::ptr(this));
+            Er::Log::Indent idt(m_log);
+        }
+
+        ReplyUnaryReactor(Er::Log::ILog* log) noexcept
+            : m_log(log)
+        {
+            Er::Log::debug(m_log, "{}.ReplyUnaryReactor::ReplyUnaryReactor", Er::Format::ptr(this));
+            Er::Log::Indent idt(m_log);
+        }
+
+    private:
+        void OnDone() override 
+        {
+            Er::Log::debug(m_log, "{}.ReplyUnaryReactor::OnDone", Er::Format::ptr(this));
+            Er::Log::Indent idt(m_log);
+
+            delete this;
+        }
+
+        void OnCancel() override 
+        { 
+            Er::Log::debug(m_log, "{}.ReplyUnaryReactor::OnCancel", Er::Format::ptr(this));
+            Er::Log::Indent idt(m_log);
+        }
+
+        Er::Log::ILog* m_log;
+    };
+
     class ReplyStreamWriteReactor
         : public grpc::ServerWriteReactor<erebus::ServiceReply>
     {
