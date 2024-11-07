@@ -4,6 +4,7 @@
 #include <erebus/log.hxx>
 #include <erebus/propertybag.hxx>
 
+#include <chrono>
 #include <functional>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -23,11 +24,39 @@ namespace Er::Client
 
 struct IClient
 {
-    using Ptr = std::unique_ptr<IClient>;
-    using StreamReader = std::function<bool(Er::PropertyBag&&)>;
+    enum class CallbackResult
+    {
+        Continue,
+        Break
+    };
 
-    virtual Er::PropertyBag request(std::string_view request, const Er::PropertyBag& args) = 0;
-    virtual void requestStream(std::string_view request, const Er::PropertyBag& args, StreamReader reader) = 0;
+    using CallId = uintptr_t;
+
+    struct IReceiver
+    {
+        virtual void receive(CallId callId, Er::PropertyBag&& result) = 0;
+        virtual void receive(CallId callId, Er::Exception&& exception) = 0;
+        virtual void receive(CallId callId, Er::Result result, std::string&& message) = 0;
+
+    protected:
+        virtual ~IReceiver() = default;
+    };
+
+    struct IStreamReceiver
+    {
+        virtual CallbackResult receive(CallId callId, Er::PropertyBag&& result) = 0;
+        virtual CallbackResult receive(CallId callId, Er::Exception&& exception) = 0;
+        virtual void finish(CallId callId, Er::Result result, std::string&& message) = 0;
+        virtual void finish(CallId callId) = 0;
+
+    protected:
+        virtual ~IStreamReceiver() = default;
+    };
+
+    using Ptr = std::unique_ptr<IClient>;
+
+    virtual void request(CallId callId, std::string_view request, const Er::PropertyBag& args, IReceiver* receiver, std::optional<std::chrono::milliseconds> timeout = std::nullopt) = 0;
+    virtual void requestStream(CallId callId, std::string_view request, const Er::PropertyBag& args, IStreamReceiver* receiver) = 0;
 
     virtual ~IClient() = default;
 };

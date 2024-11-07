@@ -1,4 +1,4 @@
-- async client
+
 - make use of Er::ResultCode where possible
 - prlimit() to read processes' rlimits
 - remove noexcept unless absolutely necessary

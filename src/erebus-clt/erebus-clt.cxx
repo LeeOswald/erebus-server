@@ -17,6 +17,31 @@ namespace Er::Client
 namespace
 {
 
+static Result mapGrpcStatus(grpc::StatusCode status) noexcept
+{
+    switch (status)
+    {
+    case grpc::OK: return Result::Success;
+    case grpc::CANCELLED: return Result::Cancelled;
+    case grpc::UNKNOWN: return Result::Failure;
+    case grpc::INVALID_ARGUMENT: return Result::InvalidArgument;
+    case grpc::DEADLINE_EXCEEDED: return Result::DeadlineExceeded;
+    case grpc::NOT_FOUND: return Result::NotFound;
+    case grpc::ALREADY_EXISTS: return Result::AlreadyExists;
+    case grpc::PERMISSION_DENIED: return Result::PermissionDenied;
+    case grpc::UNAUTHENTICATED: return Result::Unauthenticated;
+    case grpc::RESOURCE_EXHAUSTED: return Result::ResourceExhausted;
+    case grpc::FAILED_PRECONDITION: return Result::FailedPrecondition;
+    case grpc::ABORTED: return Result::Aborted;
+    case grpc::OUT_OF_RANGE: return Result::OutOfRange;
+    case grpc::UNIMPLEMENTED: return Result::Unimplemented;
+    case grpc::INTERNAL: return Result::Internal;
+    case grpc::UNAVAILABLE: return Result::Unavailable;
+    case grpc::DATA_LOSS: return Result::DataLoss;
+    default: return Result::Failure;
+    }
+}
+
 
 class ClientImpl final
     : public Er::Client::IClient
@@ -34,26 +59,183 @@ public:
     {
     }
 
-    Er::PropertyBag request(std::string_view req, const Er::PropertyBag& args) override
+    void request(CallId callId, std::string_view request, const Er::PropertyBag& args, IReceiver* receiver, std::optional<std::chrono::milliseconds> timeout) override
     {
-        erebus::ServiceRequest request;
-        request.set_request(std::string(req));
-        request.set_cookie(m_cookie);
+        Er::Log::debug(m_log, "{}.ClientReadReactor::request({}.{})", Er::Format::ptr(this), callId, request);
+        Er::Log::Indent idt(m_log);
 
-        // marshal properties
-        Er::enumerateProperties(args, [&request](const Property& arg)
+        auto ctx = std::make_shared<UnaryCallbackContext>(callId, request, args, m_cookie, receiver);
+        if (timeout)
         {
-            auto a = request.add_args();
-            Er::Protocol::assignProperty(*a, arg);
-        });
+            ctx->context.set_deadline(std::chrono::system_clock::now() + *timeout);
+        }
 
-        erebus::ServiceReply reply;
+        m_stub->async()->GenericRpc(
+            &ctx->context,
+            &ctx->request,
+            &ctx->reply,
+            [ctx](grpc::Status status)
+            {
+                if (!status.ok())
+                {
+                    ctx->receiver->receive(ctx->callId, mapGrpcStatus(status.error_code()), status.error_message());
+                }
+                else if (ctx->reply.has_exception())
+                {
+                    ctx->receiver->receive(ctx->callId, unmarshalException(ctx->reply));
+                }
+                else
+                {
+                    ctx->receiver->receive(ctx->callId, unmarshal(ctx->reply));
+                }
+            });
+    }
+
+    void requestStream(CallId callId, std::string_view request, const Er::PropertyBag& args, IStreamReceiver* receiver) override
+    {
+        Er::Log::debug(m_log, "{}.ClientReadReactor::requestStream({}.{})", Er::Format::ptr(this), callId, request);
+        Er::Log::Indent idt(m_log);
+
+        new ClientReadReactor(m_stub.get(), m_log, callId, request, args, m_cookie, receiver);
+    }
+
+private:
+    struct CallContext
+        : public Er::NonCopyable
+    {
+        virtual ~CallContext() = default;
+
+        erebus::ServiceRequest request;
         grpc::ClientContext context;
-        grpc::Status status = m_stub->GenericRpc(&context, request, &reply);
-        throwIfFailed(status);
-        throwIfFailed(reply);
 
-        // unmarshal properties
+        CallContext(std::string_view req, const Er::PropertyBag& args, const std::string& cookie)
+        {
+            request.set_request(std::string(req));
+            request.set_cookie(cookie);
+
+            Er::enumerateProperties(args, [this](const Property& arg)
+            {
+                auto a = request.add_args();
+                Er::Protocol::assignProperty(*a, arg);
+            });
+        }
+    };
+
+    struct UnaryCallbackContext final
+        : public CallContext
+    {
+        CallId callId;
+        erebus::ServiceReply reply;
+        IReceiver* receiver;
+
+        UnaryCallbackContext(CallId callId, std::string_view req, const Er::PropertyBag& args, const std::string& cookie, IReceiver* receiver)
+            : CallContext(req, args, cookie)
+            , callId(callId)
+            , receiver(receiver)
+        {
+        }
+    };
+
+    class ClientReadReactor final
+        : public grpc::ClientReadReactor<erebus::ServiceReply>
+    {
+    public:
+        ~ClientReadReactor()
+        {
+            Er::Log::debug(m_log, "{}.ClientReadReactor::~ClientReadReactor({})", Er::Format::ptr(this), m_callId);
+            Er::Log::Indent idt(m_log);
+        }
+
+        ClientReadReactor(erebus::Erebus::Stub* stub, Er::Log::ILog* log, CallId callId, std::string_view req, const Er::PropertyBag& args, const std::string& cookie, IStreamReceiver* receiver)
+            : m_log(log)
+            , m_context(req, args, cookie)
+            , m_callId(callId)
+            , m_receiver(receiver)
+        {
+            Er::Log::debug(m_log, "{}.ClientReadReactor::ClientReadReactor({})", Er::Format::ptr(this), m_callId);
+            Er::Log::Indent idt(m_log);
+
+            stub->async()->GenericStream(&m_context.context, &m_context.request, this);
+            StartRead(&m_reply);
+            StartCall();
+        }
+
+        void OnReadDone(bool ok) override 
+        {
+            Er::Log::debug(m_log, "{}.ClientReadReactor::OnReadDone({}, {})", Er::Format::ptr(this), m_callId, ok);
+            Er::Log::Indent idt(m_log);
+
+            if (ok) 
+            {
+                if (m_reply.has_exception())
+                {
+                    if (m_receiver->receive(m_callId, unmarshalException(m_reply)) == IClient::CallbackResult::Continue)
+                    {
+                        StartRead(&m_reply);
+                    }
+                }
+                else if (m_receiver->receive(m_callId, unmarshal(m_reply)) == IClient::CallbackResult::Continue)
+                {
+                    StartRead(&m_reply);
+                }
+                else
+                {
+                    m_context.context.TryCancel();
+                }
+            }
+        }
+
+        void OnDone(const grpc::Status& status) override
+        {
+            Er::Log::debug(m_log, "{}.ClientReadReactor::OnDone({}, {})", Er::Format::ptr(this), m_callId, int(status.error_code()));
+            Er::Log::Indent idt(m_log);
+
+            if (!status.ok())
+            {
+                m_receiver->finish(m_callId, mapGrpcStatus(status.error_code()), status.error_message());
+            }
+            else
+            {
+                m_receiver->finish(m_callId);
+            }
+
+            delete this;
+        }
+  
+    private:
+        Er::Log::ILog* m_log;
+        CallContext m_context;
+        CallId m_callId;
+        erebus::ServiceReply m_reply;
+        IStreamReceiver* m_receiver;
+    };
+
+    static Er::Exception unmarshalException(const erebus::ServiceReply& reply)
+    {
+        ErAssert(reply.has_exception());
+        
+        auto& exception = reply.exception();
+        std::string_view message;
+        if (exception.has_message())
+            message = exception.message();
+        else
+            message = "Unknown exception";
+
+        Er::Exception unmarshaledException(ER_HERE(), std::move(message));
+
+        auto propCount = exception.props_size();
+
+        for (int i = 0; i < propCount; ++i)
+        {
+            auto& prop = exception.props(i);
+            unmarshaledException.add(Er::Protocol::getProperty(prop));
+        }
+
+        return unmarshaledException;
+    }
+
+    static Er::PropertyBag unmarshal(const erebus::ServiceReply& reply)
+    {
         Er::PropertyBag bag;
         int count = reply.props_size();
         for (int i = 0; i < count; ++i)
@@ -63,105 +245,6 @@ public:
         }
 
         return bag;
-    }
-
-    void requestStream(std::string_view req, const Er::PropertyBag& args, StreamReader reader) override
-    {
-        erebus::ServiceRequest request;
-        request.set_request(std::string(req));
-        request.set_cookie(m_cookie);
-
-        // marshal properties
-        Er::enumerateProperties(args, [&request](const Property& arg)
-        {
-            auto a = request.add_args();
-            Er::Protocol::assignProperty(*a, arg);
-        });
-
-        grpc::ClientContext context;
-        std::shared_ptr<grpc::ClientReader<erebus::ServiceReply>> stream(m_stub->GenericStream(&context, request));
-        
-        erebus::ServiceReply reply;
-        while (stream->Read(&reply))
-        {
-            throwIfFailed(reply);
-
-            // unmarshal properties
-            Er::PropertyBag bag;
-            int count = reply.props_size();
-            for (int i = 0; i < count; ++i)
-            {
-                auto& prop = reply.props(i);
-                Er::addProperty(bag, Er::Protocol::getProperty(prop));
-            }
-
-            if (!reader(std::move(bag)))
-            {
-                context.TryCancel();
-                break;
-            }
-        }
-    }
-
-private:
-    static Result mapGrpcStatus(grpc::StatusCode status) noexcept
-    {
-        switch (status)
-        {
-        case grpc::OK: return Result::Success;
-        case grpc::CANCELLED: return Result::Cancelled;
-        case grpc::UNKNOWN: return Result::Failure;
-        case grpc::INVALID_ARGUMENT: return Result::InvalidArgument;
-        case grpc::DEADLINE_EXCEEDED: return Result::DeadlineExceeded;
-        case grpc::NOT_FOUND: return Result::NotFound;
-        case grpc::ALREADY_EXISTS: return Result::AlreadyExists;
-        case grpc::PERMISSION_DENIED: return Result::PermissionDenied;
-        case grpc::UNAUTHENTICATED: return Result::Unauthenticated;
-        case grpc::RESOURCE_EXHAUSTED: return Result::ResourceExhausted;
-        case grpc::FAILED_PRECONDITION: return Result::FailedPrecondition;
-        case grpc::ABORTED: return Result::Aborted;
-        case grpc::OUT_OF_RANGE: return Result::OutOfRange;
-        case grpc::UNIMPLEMENTED: return Result::Unimplemented;
-        case grpc::INTERNAL: return Result::Internal;
-        case grpc::UNAVAILABLE: return Result::Unavailable;
-        case grpc::DATA_LOSS: return Result::DataLoss;
-        default: return Result::Failure;
-        }
-    }
-
-    static void throwIfFailed(grpc::Status status)
-    {
-        if (!status.ok())
-        {
-            auto mappedStatus = mapGrpcStatus(status.error_code());
-            ErThrow("RPC call failed", ::Er::ExceptionProps::ResultCode(static_cast<int32_t>(mappedStatus)), ::Er::ExceptionProps::DecodedError(status.error_message()));
-        }
-    }
-
-    static void throwIfFailed(const erebus::ServiceReply& reply)
-    {
-        if (reply.has_exception())
-        {
-            // unmarshal and throw the exception
-            auto& exception = reply.exception();
-            std::string_view message;
-            if (exception.has_message())
-                message = exception.message();
-            else
-                message = "Unknown exception";
-
-            Er::Exception unmarshaledException(ER_HERE(), std::move(message));
-
-            auto propCount = exception.props_size();
-            
-            for (int i = 0; i < propCount; ++i)
-            {
-                auto& prop = exception.props(i);
-                unmarshaledException.add(Er::Protocol::getProperty(prop));
-            }
-            
-            throw unmarshaledException;
-        }
     }
 
     static std::string makeCookie()

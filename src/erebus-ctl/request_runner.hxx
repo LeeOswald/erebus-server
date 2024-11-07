@@ -3,13 +3,17 @@
 #include "common.hxx"
 
 #include <erebus/condition.hxx>
+#include <erebus/util/exceptionutil.hxx>
 #include <erebus/stopwatch.hxx>
 
+#include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 
 class RequestRunner final
+    : public Er::Client::IClient::IReceiver
 {
 public:
     ~RequestRunner() = default;
@@ -41,6 +45,77 @@ public:
     }
 
 private:
+    long pick(Er::Client::IClient::CallId callId)
+    {
+        long milliseconds = -1;
+        {
+            std::lock_guard l(m_mutex);
+
+            auto it = m_pending.find(callId);
+            if (it != m_pending.end())
+            {
+                it->second.sw.stop();
+                milliseconds = it->second.sw.value().count();
+                m_pending.erase(it);
+            }
+        }
+
+        return milliseconds;
+    }
+
+    void receive(Er::Client::IClient::CallId callId, Er::PropertyBag&& result) override
+    {
+        auto milliseconds = pick(callId);
+
+        if (milliseconds == -1)
+        {
+            Er::Log::error(m_log, "Unexpected CallID {}", callId);
+        }
+        else
+        {
+            std::lock_guard l(bulkLogWrite());
+
+            Er::Log::write(m_log, Er::Log::Level::Info, "ID: {}; RTT: {} ms", callId, milliseconds);
+
+            dumpPropertyBag(m_domain, result, m_log);
+            
+            Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
+        }
+    }
+
+    void receive(Er::Client::IClient::CallId callId, Er::Exception&& exception) override
+    {
+        auto milliseconds = pick(callId);
+
+        if (milliseconds == -1)
+        {
+            Er::Log::error(m_log, "Unexpected CallID {}", callId);
+        }
+        else
+        {
+            std::lock_guard l(bulkLogWrite());
+
+            Er::Log::write(m_log, Er::Log::Level::Info, "ID: {}; RTT: {} ms", callId, milliseconds);
+
+            Er::Util::logException(m_log, Er::Log::Level::Error, exception);
+
+            Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
+        }
+    }
+
+    void receive(Er::Client::IClient::CallId callId, Er::Result result, std::string&& message) override
+    {
+        auto milliseconds = pick(callId);
+
+        if (milliseconds == -1)
+        {
+            Er::Log::error(m_log, "Unexpected CallID {}", callId);
+        }
+
+        Er::Log::error(m_log, "gRPC error {} ({})", int(result), message);
+        m_error.store(true, std::memory_order_release);
+    }
+
     void run(std::stop_token stop)
     {
         auto finished = Er::protectedCall<bool>(
@@ -67,41 +142,40 @@ private:
     bool runImpl(std::stop_token stop)
     {
         auto client = Er::Client::createClient(m_channel, m_log);
-
-        Er::PropertyBag result;
-
-        Er::Stopwatch<> sw;
-        {
-            Er::Stopwatch<>::Scope sws(sw);
-            result = client->request(m_request, m_args);
-        }
-
+                
         while (!stop.stop_requested())
         {
+            auto callId = m_nextCallId++;
             {
-                std::lock_guard l(bulkLogWrite());
-
-                dumpPropertyBag(m_domain, result, m_log);
-                Er::Log::write(m_log, Er::Log::Level::Info, "RTT: {} ms", sw.value().count());
-
-                if (m_interval <= 0)
-                    break;
-
-                Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
+                std::lock_guard l(m_mutex);
+                m_pending.insert({ callId, {} });
             }
 
-            sw.reset();
+            client->request(callId, m_request, m_args, this);
+
+            if (m_interval <= 0)
+                break;
 
             std::this_thread::sleep_for(std::chrono::seconds(m_interval));
 
+            if (m_error.load(std::memory_order_acquire) == true)
             {
-                Er::Stopwatch<>::Scope sws(sw);
-                result = client->request(m_request, m_args);
+                return false;
             }
         }
 
         return true;
     }
+
+    struct Request
+    {
+        Er::Stopwatch<> sw;
+
+        Request()
+        {
+            sw.start();
+        }
+    };
 
     Er::Log::ILog* const m_log;
     Er::Event* m_exitEvent;
@@ -112,4 +186,9 @@ private:
     int const m_interval;
     int m_threadCount;
     std::vector<std::jthread> m_workers;
+    
+    std::atomic_bool m_error = false;
+    std::atomic<Er::Client::IClient::CallId> m_nextCallId = 0;
+    std::mutex m_mutex;
+    std::unordered_map<Er::Client::IClient::CallId, Request> m_pending;
 };

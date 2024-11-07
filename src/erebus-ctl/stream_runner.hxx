@@ -4,11 +4,14 @@
 
 #include <erebus/stopwatch.hxx>
 
+#include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 
 class StreamRunner final
+    : public Er::Client::IClient::IStreamReceiver
 {
 public:
     ~StreamRunner() = default;
@@ -40,6 +43,105 @@ public:
     }
 
 private:
+    struct Request
+    {
+        Er::Stopwatch<> sw;
+
+        Request()
+        {
+            sw.start();
+        }
+    };
+
+    Request* pick(Er::Client::IClient::CallId callId)
+    {
+        std::lock_guard l(m_mutex);
+
+        auto it = m_pending.find(callId);
+        if (it != m_pending.end())
+        {
+            return &it->second;
+        }
+    
+        return nullptr;
+    }
+
+    void remove(Er::Client::IClient::CallId callId)
+    {
+        std::lock_guard l(m_mutex);
+
+        auto it = m_pending.find(callId);
+        if (it != m_pending.end())
+        {
+            m_pending.erase(it);
+        }
+    }
+
+
+    Er::Client::IClient::CallbackResult receive(Er::Client::IClient::CallId callId, Er::PropertyBag&& result) override
+    {
+        auto r = pick(callId);
+
+        if (!r)
+        {
+            Er::Log::error(m_log, "Unexpected CallID {}", callId);
+        }
+        else
+        {
+            r->sw.stop();
+            std::lock_guard l(bulkLogWrite());
+
+            Er::Log::write(m_log, Er::Log::Level::Info, "ID: {}; RTT: {} ms", callId, r->sw.value().count());
+
+            dumpPropertyBag(m_domain, result, m_log);
+
+            Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
+            r->sw.start();
+        }
+
+        return Er::Client::IClient::CallbackResult::Continue;
+    }
+
+    Er::Client::IClient::CallbackResult receive(Er::Client::IClient::CallId callId, Er::Exception&& exception) override
+    {
+        auto r = pick(callId);
+
+        if (!r)
+        {
+            Er::Log::error(m_log, "Unexpected CallID {}", callId);
+        }
+        else
+        {
+            r->sw.stop();
+            std::lock_guard l(bulkLogWrite());
+
+            Er::Log::write(m_log, Er::Log::Level::Info, "ID: {}; RTT: {} ms", callId, r->sw.value().count());
+
+            Er::Util::logException(m_log, Er::Log::Level::Error, exception);
+
+            Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
+            r->sw.start();
+        }
+
+        return Er::Client::IClient::CallbackResult::Continue;
+    }
+
+    void finish(Er::Client::IClient::CallId callId, Er::Result result, std::string&& message) override
+    {
+        remove(callId);
+
+        Er::Log::error(m_log, "gRPC error {} ({})", int(result), message);
+        m_finished.store(true, std::memory_order_release);
+    }
+
+    void finish(Er::Client::IClient::CallId callId) override
+    {
+        remove(callId);
+
+        Er::Log::info(m_log, "ID: {}L End of stream", callId);
+        m_finished.store(true, std::memory_order_release);
+    }
+
     void run(std::stop_token stop)
     {
         auto finished = Er::protectedCall<bool>(
@@ -67,45 +169,34 @@ private:
     {
         auto client = Er::Client::createClient(m_channel, m_log);
 
-        Er::Stopwatch<> sw;
-        sw.start();
-
-        client->requestStream(
-            m_request,
-            m_args,
-            [this, &sw, &stop](Er::PropertyBag&& item) -> bool
-            {
-                return reader(stop, sw, std::move(item));
-            });
-
         while (!stop.stop_requested())
         {
-            Er::Log::write(m_log, Er::Log::Level::Info, "Time delta: {} ms", sw.value().count());
+            auto callId = m_nextCallId++;
+            {
+                std::lock_guard l(m_mutex);
+                m_pending.insert({ callId, {} });
+            }
 
-            if (!m_interval)
+            client->requestStream(callId, m_request, m_args, this);
+
+            if (m_interval <= 0)
                 break;
 
             std::this_thread::sleep_for(std::chrono::seconds(m_interval));
 
-            sw.reset();
-            sw.start();
-
-            client->requestStream(
-                m_request,
-                m_args,
-                [this, &sw, &stop](Er::PropertyBag&& item) -> bool
-                {
-                    return reader(stop, sw, std::move(item));
-                });
+            if (m_finished.load(std::memory_order_acquire) == true)
+            {
+                return false;
+            }
         }
 
         return true;
     }
 
-    bool reader(std::stop_token stop, Er::Stopwatch<>& sw, Er::PropertyBag&& item)
+    auto reader(std::stop_token stop, Er::Stopwatch<>& sw, Er::PropertyBag&& item) -> Er::Client::IClient::CallbackResult
     {
         if (stop.stop_requested())
-            return false;
+            return Er::Client::IClient::CallbackResult::Break;
 
         sw.stop();
 
@@ -116,7 +207,7 @@ private:
             Er::Log::writeln(m_log, Er::Log::Level::Info, "------------------------------------------------------");
         }
     
-        return true;
+        return Er::Client::IClient::CallbackResult::Continue;
     }
 
     Er::Log::ILog* const m_log;
@@ -128,4 +219,9 @@ private:
     int const m_interval;
     int m_threadCount;
     std::vector<std::jthread> m_workers;
+
+    std::atomic_bool m_finished = false;
+    std::atomic<Er::Client::IClient::CallId> m_nextCallId = 0;
+    std::mutex m_mutex;
+    std::unordered_map<Er::Client::IClient::CallId, Request> m_pending;
 };
