@@ -131,15 +131,14 @@ private:
         remove(callId);
 
         Er::Log::error(m_log, "gRPC error {} ({})", int(result), message);
-        m_finished.store(true, std::memory_order_release);
+        m_error.store(true, std::memory_order_release);
     }
 
     void finish(Er::Client::IClient::CallId callId) override
     {
         remove(callId);
 
-        Er::Log::info(m_log, "ID: {}L End of stream", callId);
-        m_finished.store(true, std::memory_order_release);
+        Er::Log::info(m_log, "ID: {} End of stream", callId);
     }
 
     void run(std::stop_token stop)
@@ -184,7 +183,7 @@ private:
 
             std::this_thread::sleep_for(std::chrono::seconds(m_interval));
 
-            if (m_finished.load(std::memory_order_acquire) == true)
+            if (m_error.load(std::memory_order_acquire) == true)
             {
                 return false;
             }
@@ -220,7 +219,7 @@ private:
     int m_threadCount;
     std::vector<std::jthread> m_workers;
 
-    std::atomic_bool m_finished = false;
+    std::atomic_bool m_error = false;
     std::atomic<Er::Client::IClient::CallId> m_nextCallId = 0;
     std::mutex m_mutex;
     std::unordered_map<Er::Client::IClient::CallId, Request> m_pending;
