@@ -2,9 +2,11 @@
 
 #include <erebus/rtl/binary.hxx>
 #include <erebus/rtl/empty.hxx>
+#include <erebus/rtl/property_format.hxx>
 
 #include <map>
 #include <variant>
+#include <vector>
 
 #include <boost/static_string/static_string.hpp>
 
@@ -37,99 +39,115 @@ public:
     
     constexpr Property2() noexcept = default;
 
-    constexpr Property2(auto&& name, Bool v) noexcept
+    constexpr Property2(auto&& name, Bool v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, bool v) noexcept
+    constexpr Property2(auto&& name, bool v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v ? Er::True : Er::False)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, std::int32_t v) noexcept
+    constexpr Property2(auto&& name, std::int32_t v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, std::uint32_t v) noexcept
+    constexpr Property2(auto&& name, std::uint32_t v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, std::int64_t v) noexcept
+    constexpr Property2(auto&& name, std::int64_t v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, std::uint64_t v) noexcept
+    constexpr Property2(auto&& name, std::uint64_t v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, double v) noexcept
+    constexpr Property2(auto&& name, double v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, const char* v) noexcept
+    constexpr Property2(auto&& name, const char* v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(std::string(v))
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, std::string_view v) noexcept
+    constexpr Property2(auto&& name, std::string_view v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(std::string(v))
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, const std::string& v) noexcept
+    constexpr Property2(auto&& name, const std::string& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, std::string&& v) noexcept
+    constexpr Property2(auto&& name, std::string&& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(std::move(v))
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, const Binary& v) noexcept
+    constexpr Property2(auto&& name, const Binary& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, Binary&& v) noexcept
+    constexpr Property2(auto&& name, Binary&& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(std::move(v))
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, const Map& v) noexcept
+    constexpr Property2(auto&& name, const Map& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
+        , m_semantics(semantics)
     {
     }
 
-    constexpr Property2(auto&& name, Map&& v) noexcept
+    constexpr Property2(auto&& name, Map&& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(std::move(v))
+        , m_semantics(semantics)
     {
     }
 
     constexpr Property2(const Property2& o)
         : m_name(o.m_name)
         , m_storage(o.m_storage)
+        , m_semantics(o.m_semantics)
     {
     }
 
@@ -137,6 +155,7 @@ public:
     {
         o1.m_name.swap(o2.m_name);
         o1.m_storage.swap(o2.m_storage);
+        std::swap(o1.m_semantics, o2.m_semantics);
     }
 
     constexpr Property2& operator=(const Property2& o)
@@ -162,6 +181,11 @@ public:
     [[nodiscard]] constexpr Type type() const noexcept
     {
         return static_cast<Type>(m_storage.index());
+    }
+
+    [[nodiscard]] constexpr SemanticCode semantics() const noexcept
+    {
+        return m_semantics;
     }
 
     [[nodiscard]] constexpr bool empty() const noexcept
@@ -314,6 +338,7 @@ private:
 
     Name m_name;
     Storage m_storage;
+    SemanticCode m_semantics;
 };
 
 
@@ -383,5 +408,16 @@ template <>
     return *v.getMap();
 }
 
+[[nodiscard]] inline std::string formatProperty(const Property2& prop)
+{
+    if (prop.empty()) [[unlikely]]
+        return prop.str();
+
+    auto& f = findPropertyFormatter(prop.semantics());
+    return f(prop);
+}
+
+
+using PropertyBag2 = std::vector<Property2>;
 
 } // namespace Er {}
