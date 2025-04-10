@@ -24,6 +24,7 @@ target_sources(erebus-rtl
         luaxx/luaxx_util.cxx
         program.cxx
         property.cxx
+        property2.cxx
         property_info.cxx
         result.cxx
         system/packed_time.cxx
@@ -80,6 +81,7 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_util.hxx
                 ${ER_INCLUDE_DIR}/rtl/program.hxx
                 ${ER_INCLUDE_DIR}/rtl/property.hxx
+                ${ER_INCLUDE_DIR}/rtl/property2.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_bag.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_info.hxx
                 ${ER_INCLUDE_DIR}/rtl/result.hxx

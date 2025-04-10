@@ -16,6 +16,7 @@ target_sources(erebus-rtl-tests
         luaxx_selector.cpp
         main.cpp
         property.cpp
+        property2.cpp
         property_bag.cpp
     PRIVATE
         FILE_SET private_headers TYPE HEADERS

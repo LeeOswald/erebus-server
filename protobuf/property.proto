@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package erebus;
+
+option optimize_for = LITE_RUNTIME;
+
+
+message Property {
+    message scalar {
+        oneof value {
+            bool v_bool = 1;
+            int32 v_int32 = 2;
+            uint32 v_uint32 = 3;
+            int64 v_int64 = 4;
+            uint64 v_uint64 = 5;
+            double v_double = 6;
+            string v_string = 7;
+            bytes v_binary = 8;
+        }
+    }
+    
+    message dir {
+        map<string, Property> v_map = 1;
+    }
+
+    string name = 1;
+    oneof value {
+        scalar v_scalar = 2;
+        dir v_dir = 3;
+    }
+}
