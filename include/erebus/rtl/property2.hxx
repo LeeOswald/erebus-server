@@ -511,5 +511,15 @@ inline bool visit(const PropertyMap& m, auto&& visitor)
     return true;
 }
 
+inline const Property2* findProperty(const PropertyMap& bag, std::string_view name) noexcept
+{
+    for (auto& prop : bag)
+    {
+        if (prop.first == name)
+            return &prop.second;
+    }
+
+    return nullptr;
+}
 
 } // namespace Er {}

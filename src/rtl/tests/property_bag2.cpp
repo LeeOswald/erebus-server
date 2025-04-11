@@ -18,10 +18,10 @@ TEST(PropertyBag2, visit)
     addProperty(bag, { "test/string", std::string("xa xa xa") });
     addProperty(bag, { "test/binary", Binary(std::string("xo xo xo")) });
 
-    PropertyMap m;
-    addProperty(m, { "test/int32", std::int32_t(-99) });
-    addProperty(m, { "test/string", std::string("uxa uxa uxa") });
-    addProperty(bag, { "test/map", m });
+    PropertyMap m1;
+    addProperty(m1, { "test/int32", std::int32_t(-99) });
+    addProperty(m1, { "test/string", std::string("uxa uxa uxa") });
+    addProperty(bag, { "test/map", m1 });
 
     struct Visitor
     {
@@ -37,7 +37,7 @@ TEST(PropertyBag2, visit)
         bool map_visited = false;
 
         PropertyBag2 bag;
-        PropertyMap m;
+        PropertyMap m1;
 
         bool operator()(const Property2::Name& name, const Empty& v)
         {
@@ -108,7 +108,7 @@ TEST(PropertyBag2, visit)
 
             for (auto& p : v)
             {
-                addProperty(m, p.second);
+                addProperty(m1, p.second);
             }
 
             addProperty(bag, { name, v });
@@ -131,5 +131,74 @@ TEST(PropertyBag2, visit)
     EXPECT_TRUE(vis.map_visited);
 
     EXPECT_TRUE(vis.bag == bag);
-    EXPECT_TRUE(vis.m == m);
+    EXPECT_TRUE(vis.m1 == m1);
+}
+
+
+TEST(PropertyBag2, find)
+{
+    PropertyBag2 bag;
+    addProperty(bag, {});
+    addProperty(bag, { "test/bool", True });
+    addProperty(bag, { "test/int32", std::int32_t(-12) });
+    addProperty(bag, { "test/uint32", std::uint32_t(13) });
+    addProperty(bag, { "test/int64", std::int64_t(-125) });
+    addProperty(bag, { "test/uint64", std::uint64_t(555) });
+    addProperty(bag, { "test/double", -0.1 });
+    addProperty(bag, { "test/string", std::string("xa xa xa") });
+    addProperty(bag, { "test/binary", Binary(std::string("xo xo xo")) });
+
+    PropertyMap m1;
+    addProperty(m1, { "test/int32", std::int32_t(-99) });
+    addProperty(m1, { "test/string", std::string("uxa uxa uxa") });
+    addProperty(bag, { "test/map", m1 });
+
+    auto p = findProperty(bag, "");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Empty);
+
+    p = findProperty(bag, "test/bool");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Bool);
+    EXPECT_EQ(*p->getBool(), True);
+
+    p = findProperty(bag, "test/int32");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Int32);
+    EXPECT_EQ(*p->getInt32(), -12);
+
+    p = findProperty(bag, "test/uint32");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::UInt32);
+    EXPECT_EQ(*p->getUInt32(), 13);
+
+    p = findProperty(bag, "test/int64");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Int64);
+    EXPECT_EQ(*p->getInt64(), -125);
+
+    p = findProperty(bag, "test/uint64");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::UInt64);
+    EXPECT_EQ(*p->getUInt64(), 555);
+
+    p = findProperty(bag, "test/double");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Double);
+    EXPECT_DOUBLE_EQ(*p->getDouble(), -0.1);
+
+    p = findProperty(bag, "test/string");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::String);
+    EXPECT_EQ(*p->getString(), std::string("xa xa xa"));
+
+    p = findProperty(bag, "test/binary");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Binary);
+    EXPECT_EQ(*p->getBinary(), Binary(std::string("xo xo xo")));
+
+    p = findProperty(bag, "test/map");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Map);
+    EXPECT_TRUE(*p->getMap() == m1);
 }

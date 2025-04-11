@@ -840,3 +840,71 @@ TEST(Property2, visit)
     EXPECT_TRUE(vis.m == m);
     EXPECT_TRUE(vis.m1 == m1);
 }
+
+TEST(Property2, find)
+{
+    PropertyMap m;
+    addProperty(m, {});
+    addProperty(m, { "test/bool", True });
+    addProperty(m, { "test/int32", std::int32_t(-12) });
+    addProperty(m, { "test/uint32", std::uint32_t(13) });
+    addProperty(m, { "test/int64", std::int64_t(-125) });
+    addProperty(m, { "test/uint64", std::uint64_t(555) });
+    addProperty(m, { "test/double", -0.1 });
+    addProperty(m, { "test/string", std::string("xa xa xa") });
+    addProperty(m, { "test/binary", Binary(std::string("xo xo xo")) });
+
+    PropertyMap m1;
+    addProperty(m1, { "test/int32", std::int32_t(-99) });
+    addProperty(m1, { "test/string", std::string("uxa uxa uxa") });
+    addProperty(m, { "test/map", m1 });
+
+    auto p = findProperty(m, "");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Empty);
+
+    p = findProperty(m, "test/bool");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Bool);
+    EXPECT_EQ(*p->getBool(), True);
+
+    p = findProperty(m, "test/int32");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Int32);
+    EXPECT_EQ(*p->getInt32(), -12);
+
+    p = findProperty(m, "test/uint32");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::UInt32);
+    EXPECT_EQ(*p->getUInt32(), 13);
+
+    p = findProperty(m, "test/int64");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Int64);
+    EXPECT_EQ(*p->getInt64(), -125);
+
+    p = findProperty(m, "test/uint64");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::UInt64);
+    EXPECT_EQ(*p->getUInt64(), 555);
+
+    p = findProperty(m, "test/double");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Double);
+    EXPECT_DOUBLE_EQ(*p->getDouble(), -0.1);
+
+    p = findProperty(m, "test/string");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::String);
+    EXPECT_EQ(*p->getString(), std::string("xa xa xa"));
+
+    p = findProperty(m, "test/binary");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Binary);
+    EXPECT_EQ(*p->getBinary(), Binary(std::string("xo xo xo")));
+
+    p = findProperty(m, "test/map");
+    ASSERT_TRUE(!!p);
+    EXPECT_TRUE(p->type() == Property2::Type::Map);
+    EXPECT_TRUE(*p->getMap() == m1);
+}

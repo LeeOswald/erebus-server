@@ -52,4 +52,15 @@ inline bool visit(const PropertyBag2& bag, auto&& visitor)
     return true;
 }
 
+inline const Property2* findProperty(const PropertyBag2& bag, std::string_view name) noexcept
+{
+    for (auto& prop : bag)
+    {
+        if (prop.name() == name)
+            return &prop;
+    }
+
+    return nullptr;
+}
+
 } // namespace Er {}
