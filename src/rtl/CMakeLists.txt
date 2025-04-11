@@ -85,6 +85,7 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/property_format.hxx
                 ${ER_INCLUDE_DIR}/rtl/property2.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_bag.hxx
+                ${ER_INCLUDE_DIR}/rtl/property_bag2.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_info.hxx
                 ${ER_INCLUDE_DIR}/rtl/result.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/packed_time.hxx

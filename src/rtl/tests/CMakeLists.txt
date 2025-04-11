@@ -18,6 +18,7 @@ target_sources(erebus-rtl-tests
         property.cpp
         property2.cpp
         property_bag.cpp
+        property_bag2.cpp
     PRIVATE
         FILE_SET private_headers TYPE HEADERS
             FILES
