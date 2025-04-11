@@ -1,11 +1,11 @@
 #pragma once
 
-#include <erebus/system/logger2.hxx>
+#include <erebus/rtl/log.hxx>
 
-namespace Er::Log2
+namespace Er::Log
 {
 
-ER_SYSTEM_EXPORT ISink::Ptr makeSyslogSink(const char* tag, IFormatter::Ptr formatter, Filter&& filter = Filter{});
+ER_RTL_EXPORT ISink::Ptr makeSyslogSink(const char* tag, IFormatter::Ptr formatter, Filter&& filter = Filter{});
 
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}

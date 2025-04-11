@@ -236,3 +236,4 @@ ER_RTL_EXPORT [[nodiscard]] Exception makeExceptionFromResult(std::source_locati
 
 #define ErThrowResult(message, code) \
     throw ::Er::makeExceptionFromResult(std::source_location::current(), std::move(message), code)
+

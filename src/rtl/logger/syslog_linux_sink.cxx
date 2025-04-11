@@ -1,10 +1,10 @@
-#include <erebus/system/logger/syslog_linux_sink2.hxx>
+#include <erebus/rtl/logger/syslog_linux_sink.hxx>
 
 #include <syslog.h>
 
 
 
-namespace Er::Log2
+namespace Er::Log
 {
 
 namespace
@@ -38,10 +38,10 @@ public:
         int priority;
         switch (r->level())
         {
-        case Er::Log2::Level::Debug: priority = LOG_DEBUG; break;
-        case Er::Log2::Level::Info: priority = LOG_INFO; break;
-        case Er::Log2::Level::Warning: priority = LOG_WARNING; break;
-        case Er::Log2::Level::Error: priority = LOG_ERR; break;
+        case Er::Log::Level::Debug: priority = LOG_DEBUG; break;
+        case Er::Log::Level::Info: priority = LOG_INFO; break;
+        case Er::Log::Level::Warning: priority = LOG_WARNING; break;
+        case Er::Log::Level::Error: priority = LOG_ERR; break;
         default: priority = LOG_ERR; break;
         }
 
@@ -57,10 +57,10 @@ public:
 } // namespace {}
 
 
-ER_SYSTEM_EXPORT ISink::Ptr makeSyslogSink(const char* tag, IFormatter::Ptr formatter, Filter&& filter)
+ER_RTL_EXPORT ISink::Ptr makeSyslogSink(const char* tag, IFormatter::Ptr formatter, Filter&& filter)
 {
     return std::make_shared<SyslogSink>(tag, std::move(formatter), std::move(filter));
 }
 
 
-} // namespace Er::Log2 {}
+} // namespace Er::Log {}
