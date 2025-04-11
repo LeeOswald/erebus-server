@@ -17,13 +17,13 @@ namespace Er
 //
 
 template <typename ValueT>
-class Event final
+class Condition final
     : public boost::noncopyable
 {
 public:
     using ValueType = ValueT;
 
-    explicit Event(ValueType initial = ValueType{})
+    explicit Condition(ValueType initial = ValueType{})
         : m_value(initial)
         , m_mutex()
         , m_cv()
@@ -143,7 +143,7 @@ private:
 
 
 template <typename ValueType>
-Event(ValueType) -> Event<ValueType>;
+Condition(ValueType) -> Condition<ValueType>;
 
 
 

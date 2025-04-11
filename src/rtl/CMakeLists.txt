@@ -41,9 +41,8 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/bool.hxx
                 ${ER_INCLUDE_DIR}/rtl/debug.hxx
                 ${ER_INCLUDE_DIR}/rtl/empty.hxx
-                ${ER_INCLUDE_DIR}/rtl/platform.hxx
+                ${ER_INCLUDE_DIR}/rtl/condition.hxx
                 ${ER_INCLUDE_DIR}/rtl/exception.hxx
-                ${ER_INCLUDE_DIR}/rtl/event.hxx
                 ${ER_INCLUDE_DIR}/rtl/flags.hxx
                 ${ER_INCLUDE_DIR}/rtl/format.hxx
                 ${ER_INCLUDE_DIR}/rtl/log.hxx
@@ -76,6 +75,7 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_traits.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_tuple.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_util.hxx
+                ${ER_INCLUDE_DIR}/rtl/platform.hxx
                 ${ER_INCLUDE_DIR}/rtl/program.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_format.hxx
                 ${ER_INCLUDE_DIR}/rtl/property.hxx

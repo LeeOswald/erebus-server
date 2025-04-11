@@ -172,11 +172,20 @@ bool Program::loadConfiguration()
 
 void Program::addLoggers(Log::ITee* main)
 {
+    auto formatOptions = Er::Log::SimpleFormatter::Options{
+        Er::Log::SimpleFormatter::Option::Option::Time,
+        Er::Log::SimpleFormatter::Option::Option::Level,
+        Er::Log::SimpleFormatter::Option::Option::Tid,
+        Er::Log::SimpleFormatter::Option::Option::TzLocal,
+        Er::Log::SimpleFormatter::Option::Option::Lf,
+        Er::Log::SimpleFormatter::Option::Option::Component
+    };
+
 #if ER_WINDOWS
     if (isDebuggerPresent())
     {
         auto sink = Log::makeDebuggerSink(
-            Log::SimpleFormatter::make(),
+            Log::SimpleFormatter::make(formatOptions),
             Log::Filter{}
         );
 
@@ -187,14 +196,11 @@ void Program::addLoggers(Log::ITee* main)
 #if ER_LINUX
     if (m_isDaemon)
     {
-        auto sink = Log::makeSyslogSink("erebus", Log::SimpleFormatter::make(
-                Log::SimpleFormatter::Options{ 
-                Log::SimpleFormatter::Option::Time, 
-                Log::SimpleFormatter::Option::Level, 
-                Log::SimpleFormatter::Option::Tid, 
-                Log::SimpleFormatter::Option::TzLocal, 
-                Log::SimpleFormatter::Option::Lf}),
-                [](const Log::Record* r) { return r->level() >= Log::Level::Error; });
+        auto sink = Log::makeSyslogSink(
+            "erebus", 
+            Log::SimpleFormatter::make(formatOptions),
+            [](const Log::Record* r) { return r->level() >= Log::Level::Error; }
+        );
 
         main->addSink("syslog", sink);
     }
@@ -204,7 +210,7 @@ void Program::addLoggers(Log::ITee* main)
     {
         auto sink = makeOStreamSink(
             std::cout,
-            Log::SimpleFormatter::make(),
+            Log::SimpleFormatter::make(formatOptions),
             [](const Log::Record* r)
             {
                 return r->level() < Er::Log::Level::Error;
@@ -218,7 +224,7 @@ void Program::addLoggers(Log::ITee* main)
     {
         auto sink = makeOStreamSink(
             std::cerr,
-            Log::SimpleFormatter::make(),
+            Log::SimpleFormatter::make(formatOptions),
             [](const Log::Record* r)
             {
                 return r->level() >= Er::Log::Level::Error;

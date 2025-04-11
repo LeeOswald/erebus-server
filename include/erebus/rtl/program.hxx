@@ -4,8 +4,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/program_options.hpp>
 
+#include <erebus/rtl/condition.hxx>
 #include <erebus/rtl/log.hxx>
-#include <erebus/rtl/event.hxx>
 
 #include <atomic>
 #include <thread>
@@ -45,7 +45,7 @@ public:
         return m_isDaemon;
     }
 
-    constexpr Event<bool>& exitCondition() noexcept
+    constexpr Condition<bool>& exitCondition() noexcept
     {
         return m_exitCondition;
     }
@@ -86,7 +86,7 @@ private:
     
     int m_options;
     bool m_isDaemon = false;
-    Event<bool> m_exitCondition;
+    Condition<bool> m_exitCondition;
     std::atomic<int> m_signalReceived;
 
     class SignalWaiter
@@ -127,6 +127,8 @@ private:
             else
             {
                 Log::fatal(Log::get(), "Signal handler failed: {}", ec.to_string());
+                Log::get()->flush();
+
                 std::abort();
             }
         }
