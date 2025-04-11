@@ -78,13 +78,13 @@ ER_RTL_EXPORT Exception makeWin32Exception(std::source_location location, std::s
     
     auto result = resultFromWin32Error(code);
     if (result)
-        x.add(Property(std::int32_t(*result), ExceptionProps::Result));
+        x.add(Property(ExceptionProps::ResultCode, std::int32_t(*result)));
 
-    x.add(Property(std::uint32_t(code), ExceptionProps::Win32Error));
+    x.add(Property(ExceptionProps::Win32Error, std::uint32_t(code)));
 
     auto decoded = win32ErrorToString(code);
     if (!decoded.empty())
-        x.add(Property(std::move(decoded), ExceptionProps::DecodedError));
+        x.add(Property(ExceptionProps::DecodedError, std::move(decoded)));
 
     return x;
 }
@@ -93,9 +93,3 @@ ER_RTL_EXPORT Exception makeWin32Exception(std::source_location location, std::s
 
 } // namespace Er::System {}
 
-namespace Er::ExceptionProps
-{
-
-const PropertyInfo Win32Error{ PropertyType::UInt32, "Er.Exception.win32_error", "Win32 error" };
-
-} // namespace Er::ExceptionProps {}

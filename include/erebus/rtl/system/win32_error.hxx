@@ -45,7 +45,7 @@ ER_RTL_EXPORT [[nodiscard]] Exception makeWin32Exception(std::source_location lo
 namespace Er::ExceptionProps
 {
 
-extern ER_RTL_EXPORT const PropertyInfo Win32Error;
+constexpr std::string_view Win32Error{ "win32_error" };
 
 } // namespace Er::ExceptionProps {}
 

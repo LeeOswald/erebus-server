@@ -1,221 +1,296 @@
- #pragma once
+#pragma once
 
-#include <erebus/rtl/property_info.hxx>
+#include <erebus/rtl/binary.hxx>
+#include <erebus/rtl/empty.hxx>
+#include <erebus/rtl/property_format.hxx>
 
-#include <atomic>
+#include <map>
 #include <variant>
+
+
+#include <boost/static_string/static_string.hpp>
 
 
 namespace Er
 {
-    
-/**
- * @brief An (almost) universal property
- *
- * Property that can be handled in a uniform way, accessed by scripts and marshaled through RPC
- */
 
-struct ER_RTL_EXPORT Property final
+class ER_RTL_EXPORT Property final
 {
 public:
-    ~Property()
-    {
-        if (_allocatesStorage(type()))
-            _free();
-    }
+    static constexpr std::size_t MaxNameLength = 32;
+    using Name = boost::static_string<MaxNameLength>;
+    using Map = std::map<Name, Property>;
 
-    Property() noexcept
-        : m_u()
-        , m_type()
+    enum class Type: std::uint32_t
     {
-    }
+        Empty = 0,
+        Bool = 1,
+        Int32 = 2,
+        UInt32 = 3,
+        Int64 = 4,
+        UInt64 = 5,
+        Double = 6,
+        String = 7,
+        Binary = 8,
+        Map = 9
+    };
+
+    static std::string_view typeToString(Type type) noexcept;
     
-    Property(bool v, const PropertyInfo& info) noexcept
-        : m_u()
-        , m_type(PropertyType::Bool, &info)
+    constexpr Property() noexcept
+        : m_name()
+        , m_storage(Empty{})
+        , m_semantics(Semantics::Default)
     {
-        ErAssert(info.type() == PropertyType::Bool);
-        m_u.v_bool = v ? Er::True : Er::False;
     }
 
-    Property(Bool v, const PropertyInfo& info) noexcept
-        : m_u()
-        , m_type(PropertyType::Bool, &info)
+    constexpr Property(auto&& name, Bool v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::Bool);
-        m_u.v_bool = v;
     }
 
-    Property(std::int32_t v, const PropertyInfo& info) noexcept
-        : m_u()
-        , m_type(PropertyType::Int32, &info)
+    constexpr Property(auto&& name, bool v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v ? Er::True : Er::False)
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::Int32);
-        m_u.v_int32 = v;
     }
 
-    Property(std::uint32_t v, const PropertyInfo& info) noexcept
-        : m_u()
-        , m_type(PropertyType::UInt32, &info)
+    constexpr Property(auto&& name, std::int32_t v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::UInt32);
-        m_u.v_uint32 = v;
     }
 
-    Property(std::int64_t v, const PropertyInfo& info) noexcept
-        : m_u(v)
-        , m_type(PropertyType::Int64, &info)
+    constexpr Property(auto&& name, std::uint32_t v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::Int64);
     }
 
-    Property(std::uint64_t v, const PropertyInfo& info) noexcept
-        : m_u(v)
-        , m_type(PropertyType::UInt64, &info)
+    constexpr Property(auto&& name, std::int64_t v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::UInt64);
     }
 
-    Property(double v, const PropertyInfo& info) noexcept
-        : m_u(v)
-        , m_type(PropertyType::Double, &info)
+    constexpr Property(auto&& name, std::uint64_t v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::Double);
     }
 
-    Property(const char* v, const PropertyInfo& info)
-        : m_u(std::make_unique<SharedData>(std::string(v)).release())
-        , m_type(PropertyType::String, &info)
+    constexpr Property(auto&& name, double v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::String);
     }
 
-    Property(const std::string& v, const PropertyInfo& info)
-        : m_u(std::make_unique<SharedData>(v).release())
-        , m_type(PropertyType::String, &info)
+    constexpr Property(auto&& name, const char* v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(std::string(v))
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::String);
     }
 
-    Property(std::string&& v, const PropertyInfo& info)
-        : m_u(std::make_unique<SharedData>(std::move(v)).release())
-        , m_type(PropertyType::String, &info)
+    constexpr Property(auto&& name, std::string_view v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(std::string(v))
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::String);
     }
 
-    Property(const Binary& v, const PropertyInfo& info)
-        : m_u(std::make_unique<SharedData>(v).release())
-        , m_type(PropertyType::Binary, &info)
+    constexpr Property(auto&& name, const std::string& v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::Binary);
     }
 
-    Property(Binary&& v, const PropertyInfo& info)
-        : m_u(std::make_unique<SharedData>(std::move(v)).release())
-        , m_type(PropertyType::Binary, &info)
+    constexpr Property(auto&& name, std::string&& v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(std::move(v))
+        , m_semantics(semantics)
     {
-        ErAssert(info.type() == PropertyType::Binary);
     }
 
-    friend constexpr void swap(Property& a, Property& b) noexcept
+    constexpr Property(auto&& name, const Binary& v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        std::swap(a.m_type, b.m_type);
-        std::swap(a.m_u._largest, b.m_u._largest);
     }
 
-    Property(const Property& other)
-        : m_u(DontInit{})
-        , m_type(DontInit{})
+    constexpr Property(auto&& name, Binary&& v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(std::move(v))
+        , m_semantics(semantics)
     {
-        _clone(other);
     }
 
-    Property& operator=(const Property& other)
+    constexpr Property(auto&& name, const Map& v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
     {
-        Property tmp(other);
-        swap(tmp, *this);
+    }
+
+    constexpr Property(auto&& name, Map&& v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(std::move(v))
+        , m_semantics(semantics)
+    {
+    }
+
+    constexpr Property(const Property& o)
+        : m_name(o.m_name)
+        , m_storage(o.m_storage)
+        , m_semantics(o.m_semantics)
+    {
+    }
+
+    friend constexpr void swap(Property& o1, Property& o2) noexcept
+    {
+        o1.m_name.swap(o2.m_name);
+        o1.m_storage.swap(o2.m_storage);
+        std::swap(o1.m_semantics, o2.m_semantics);
+    }
+
+    constexpr Property& operator=(const Property& o)
+    {
+        Property tmp(o);
+        swap(*this, tmp);
         return *this;
     }
-    
-    Property(Property&& other) noexcept
+
+    constexpr Property(Property&& o) noexcept
         : Property()
     {
-        swap(other, *this);
+        swap(*this, o);
     }
 
-    Property& operator=(Property&& other) noexcept
+    constexpr Property& operator=(Property&& o) noexcept
     {
-        Property tmp(std::move(other));
-        swap(tmp, *this);
+        Property tmp(std::move(o));
+        swap(*this, tmp);
         return *this;
     }
 
-    [[nodiscard]] constexpr PropertyType type() const noexcept
+    [[nodiscard]] constexpr Type type() const noexcept
     {
-        return m_type.type();
+        return static_cast<Type>(m_storage.index());
     }
 
-    [[nodiscard]] const PropertyInfo* info() const noexcept
+    [[nodiscard]] constexpr SemanticCode semantics() const noexcept
     {
-        return m_type.info();
+        return m_semantics;
     }
 
     [[nodiscard]] constexpr bool empty() const noexcept
     {
-        return m_type.empty();
+        return type() == Type::Empty;
     }
 
-    [[nodiscard]] constexpr const Bool& getBool() const noexcept
+    [[nodiscard]] constexpr const Name& name() const noexcept
     {
-        ErAssert(type() == PropertyType::Bool);
-        return m_u.v_bool;
+        return m_name;
     }
 
-    [[nodiscard]] constexpr const int32_t& getInt32() const noexcept
+    [[nodiscard]] constexpr Bool const* getBool() const noexcept
     {
-        ErAssert(type() == PropertyType::Int32);
-        return m_u.v_int32;
+        return std::get_if<Bool>(&m_storage);
     }
 
-    [[nodiscard]] constexpr const uint32_t& getUInt32() const noexcept
+    [[nodiscard]] constexpr Bool* getBool() noexcept
     {
-        ErAssert(type() == PropertyType::UInt32);
-        return m_u.v_uint32;
+        return std::get_if<Bool>(&m_storage);
     }
 
-    [[nodiscard]] constexpr const int64_t& getInt64() const noexcept
+    [[nodiscard]] constexpr std::int32_t const* getInt32() const noexcept
     {
-        ErAssert(type() == PropertyType::Int64);
-        return m_u.v_int64;
+        return std::get_if<std::int32_t>(&m_storage);
     }
 
-    [[nodiscard]] constexpr const uint64_t& getUInt64() const noexcept
+    [[nodiscard]] constexpr std::int32_t* getInt32() noexcept
     {
-        ErAssert(type() == PropertyType::UInt64);
-        return m_u.v_uint64;
+        return std::get_if<std::int32_t>(&m_storage);
     }
 
-    [[nodiscard]] constexpr const double& getDouble() const noexcept
+    [[nodiscard]] constexpr std::uint32_t const* getUInt32() const noexcept
     {
-        ErAssert(type() == PropertyType::Double);
-        return m_u.v_double;
+        return std::get_if<std::uint32_t>(&m_storage);
     }
 
-    [[nodiscard]] constexpr const std::string& getString() const noexcept
+    [[nodiscard]] constexpr std::uint32_t* getUInt32() noexcept
     {
-        ErAssert(type() == PropertyType::String);
-        ErAssert(m_u._shared);
-        
-        return std::get<std::string>(m_u._shared->data);
+        return std::get_if<std::uint32_t>(&m_storage);
     }
 
-    [[nodiscard]] constexpr const Binary& getBinary() const noexcept
+    [[nodiscard]] constexpr std::int64_t const* getInt64() const noexcept
     {
-        ErAssert(type() == PropertyType::Binary);
-        ErAssert(m_u._shared);
-        
-        return std::get<Binary>(m_u._shared->data);
+        return std::get_if<std::int64_t>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr std::int64_t* getInt64() noexcept
+    {
+        return std::get_if<std::int64_t>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr std::uint64_t const* getUInt64() const noexcept
+    {
+        return std::get_if<std::uint64_t>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr std::uint64_t* getUInt64() noexcept
+    {
+        return std::get_if<std::uint64_t>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr double const* getDouble() const noexcept
+    {
+        return std::get_if<double>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr double* getDouble() noexcept
+    {
+        return std::get_if<double>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr std::string const* getString() const noexcept
+    {
+        return std::get_if<std::string>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr std::string* getString() noexcept
+    {
+        return std::get_if<std::string>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr Binary const* getBinary() const noexcept
+    {
+        return std::get_if<Binary>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr Binary* getBinary() noexcept
+    {
+        return std::get_if<Binary>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr Map const* getMap() const noexcept
+    {
+        return std::get_if<Map>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr Map* getMap() noexcept
+    {
+        return std::get_if<Map>(&m_storage);
     }
 
     [[nodiscard]] bool operator==(const Property& other) const noexcept
@@ -228,37 +303,32 @@ public:
         return _str();
     }
 
-    [[nodiscard]] const std::string& name() const
-    {
-        static const std::string unknown = "/?/?/?";
-        auto inf = info();
-        return inf ? inf->name() : unknown;
-    }
-
-    [[nodiscard]] const std::string& readableName() const
-    {
-        static const std::string unknown = "/?/?/?";
-        auto inf = info();
-        return inf ? inf->readableName() : unknown;
-    }
-
-    [[nodiscard]] std::uint32_t unique() const noexcept
-    {
-        auto inf = info();
-        return inf ? inf->unique() : 0;
-    }
-
 private:
-    inline static bool _allocatesStorage(PropertyType type) noexcept
-    {
-        return (type >= PropertyType::String);
-    }
-    
-    void _free() noexcept;
-    void _clone(const Property& other);
+    using Storage = std::variant<
+        Empty,
+        Bool,
+        std::int32_t,
+        std::uint32_t,
+        std::int64_t,
+        std::uint64_t,
+        double,
+        std::string,
+        Binary,
+        Map
+    >;
+
     bool _eq(const Property& other) const noexcept;
+    bool _eqEmpty(const Property& other) const noexcept;
+    bool _eqBool(const Property& other) const noexcept;
+    bool _eqInt32(const Property& other) const noexcept;
+    bool _eqUInt32(const Property& other) const noexcept;
+    bool _eqInt64(const Property& other) const noexcept;
+    bool _eqUInt64(const Property& other) const noexcept;
+    bool _eqDouble(const Property& other) const noexcept;
     bool _eqString(const Property& other) const noexcept;
     bool _eqBinary(const Property& other) const noexcept;
+    bool _eqMap(const Property& other) const noexcept;
+
     std::string _str() const;
     std::string _strEmpty() const;
     std::string _strBool() const;
@@ -269,150 +339,11 @@ private:
     std::string _strDouble() const;
     std::string _strString() const;
     std::string _strBinary() const;
+    std::string _strMap() const;
 
-    struct DontInit
-    {
-    };
-
-    // binary-large types like strings or maps are shared
-    struct SharedData
-    {
-        enum class Type
-        {
-            String,
-            Binary,
-            Map
-        };
-
-        Type type;
-        std::atomic<std::size_t> refs;
-        std::variant<std::string, Binary> data;
-        
-        ~SharedData() = default;
-
-        SharedData(const std::string& v)
-            : type(Type::String)
-            , refs(1)
-            , data(v)
-        {}
-
-        SharedData(std::string&& v)
-            : type(Type::String)
-            , refs(1)
-            , data(std::move(v))
-        {}
-
-        SharedData(const Binary& v)
-            : type(Type::Binary)
-            , refs(1)
-            , data(v)
-        {}
-
-        SharedData(Binary&& v)
-            : type(Type::Binary)
-            , refs(1)
-            , data(std::move(v))
-        {}
-
-        std::size_t addRef() noexcept
-        {
-            auto prev = refs.fetch_add(1, std::memory_order_acq_rel);
-            return prev + 1;
-        }
-
-        std::size_t release() noexcept
-        {
-            auto prev = refs.fetch_sub(1, std::memory_order_acq_rel);
-            if (prev == 1)
-                delete this;
-
-            return prev - 1;
-        }
-    };
-
-    union Storage
-    {
-        Bool v_bool;
-        int32_t v_int32;
-        uint32_t v_uint32;
-        int64_t v_int64;
-        uint64_t v_uint64;
-        double v_double;
-        SharedData* _shared;
-        uint64_t _largest; // must be the largest type
-
-        constexpr Storage(DontInit) noexcept
-        {
-        }
-
-        constexpr Storage() noexcept
-            : _largest(0)
-        {
-        }
-
-        constexpr Storage(double v) noexcept
-            : v_double(v)
-        {
-        }
-
-        constexpr Storage(int64_t v) noexcept
-            : v_int64(v)
-        {
-        }
-
-        constexpr Storage(uint64_t v) noexcept
-            : v_uint64(v)
-        {
-        }
-
-        constexpr Storage(SharedData* v) noexcept
-            : _shared(v)
-        {
-        }
-
-        // we don't have constructors for smaller types like int32 here
-        // because we have to zero-initialize higher bits of _largest in the default constructor anyway
-    } ;
-
-    static_assert(sizeof(Storage) == sizeof(Storage::_largest));
-
-    struct InfoAndType
-    {
-        std::uintptr_t ty;
-        static constexpr std::uintptr_t TypeMask = 0x0FULL; // 4 lower pointer bits
-
-        constexpr InfoAndType(DontInit) noexcept
-        {
-        }
-
-        InfoAndType(PropertyType type, const PropertyInfo* info) noexcept
-            : ty(reinterpret_cast<std::uintptr_t>(info) | static_cast<std::uintptr_t>(type))
-        {
-            ErAssert((reinterpret_cast<std::uintptr_t>(info) & TypeMask) == 0); // misaligned PropertyInfo
-        }
-
-        InfoAndType() noexcept
-            : InfoAndType(PropertyType::Empty, &Unspecified::Empty)
-        {}
-
-        constexpr PropertyType type() const noexcept
-        {
-            return static_cast<PropertyType>(ty & TypeMask);
-        }
-
-        const PropertyInfo* info() const noexcept
-        {
-            return reinterpret_cast<const PropertyInfo*>(ty & ~TypeMask);
-        }
-
-        constexpr bool empty() const noexcept
-        {
-            return type() == PropertyType::Empty;
-        }
-    };
-    
-    Storage m_u;
-    InfoAndType m_type;
+    Name m_name;
+    Storage m_storage;
+    SemanticCode m_semantics;
 };
 
 
@@ -422,53 +353,173 @@ const T& get(const Property& v) noexcept;
 template <>
 [[nodiscard]] inline const Bool& get<>(const Property& v) noexcept
 {
-    return v.getBool();
+    ErAssert(v.type() == Property::Type::Bool);
+    return *v.getBool();
 }
 
 template <>
 [[nodiscard]] inline const int32_t& get<>(const Property& v) noexcept
 {
-    return v.getInt32();
+    ErAssert(v.type() == Property::Type::Int32);
+    return *v.getInt32();
 }
 
 template <>
 [[nodiscard]] inline const uint32_t& get<>(const Property& v) noexcept
 {
-    return v.getUInt32();
+    ErAssert(v.type() == Property::Type::UInt32);
+    return *v.getUInt32();
 }
 
 template <>
 [[nodiscard]] inline const int64_t& get<>(const Property& v) noexcept
 {
-    return v.getInt64();
+    ErAssert(v.type() == Property::Type::Int64);
+    return *v.getInt64();
 }
 
 template <>
 [[nodiscard]] inline const uint64_t& get<>(const Property& v) noexcept
 {
-    return v.getUInt64();
+    ErAssert(v.type() == Property::Type::UInt64);
+    return *v.getUInt64();
 }
 
 template <>
 [[nodiscard]] inline const double& get<>(const Property& v) noexcept
 {
-    return v.getDouble();
+    ErAssert(v.type() == Property::Type::Double);
+    return *v.getDouble();
 }
 
 template <>
 [[nodiscard]] inline const std::string& get<>(const Property& v) noexcept
 {
-    return v.getString();
+    ErAssert(v.type() == Property::Type::String);
+    return *v.getString();
 }
 
 template <>
 [[nodiscard]] inline const Binary& get<>(const Property& v) noexcept
 {
-    return v.getBinary();
+    ErAssert(v.type() == Property::Type::Binary);
+    return *v.getBinary();
+}
+
+template <>
+[[nodiscard]] inline const Property::Map& get<>(const Property& v) noexcept
+{
+    ErAssert(v.type() == Property::Type::Map);
+    return *v.getMap();
+}
+
+[[nodiscard]] inline std::string formatProperty(const Property& prop)
+{
+    if (prop.empty()) [[unlikely]]
+        return prop.str();
+
+    auto& f = findPropertyFormatter(prop.semantics());
+    return f(prop);
 }
 
 
+using PropertyMap = Property::Map;
 
-[[nodiscard]] std::string_view propertyTypeToString(PropertyType type);
+
+inline bool operator==(const PropertyMap& a, const PropertyMap& b) noexcept
+{
+    if (a.size() != b.size())
+        return false;
+
+    auto ita = a.begin();
+    auto itb = b.begin();
+    while (ita != a.end())
+    {
+        if (ita->first != itb->first)
+            return false;
+
+        if (ita->second != itb->second)
+            return false;
+
+        ++ita;
+        ++itb;
+    }
+
+    return true;
+}
+
+inline void addProperty(PropertyMap& map, const Property& prop)
+{
+    map.insert({ prop.name(), prop });
+}
+
+inline void addProperty(PropertyMap& map, Property&& prop)
+{
+    auto name = prop.name();
+    map.insert({ std::move(name), std::move(prop) });
+}
+
+
+inline bool visit(const Property& prop, auto&& visitor)
+{
+    auto ty = prop.type();
+    switch (ty)
+    {
+    case Er::Property::Type::Empty: 
+        return visitor(prop, Empty{});
+    case Er::Property::Type::Bool:
+        ErAssert(prop.getBool());
+        return visitor(prop, *prop.getBool());
+    case Er::Property::Type::Int32:
+        ErAssert(prop.getInt32());
+        return visitor(prop, *prop.getInt32());
+    case Er::Property::Type::UInt32:
+        ErAssert(prop.getUInt32());
+        return visitor(prop, *prop.getUInt32());
+    case Er::Property::Type::Int64:
+        ErAssert(prop.getInt64());
+        return visitor(prop, *prop.getInt64());
+    case Er::Property::Type::UInt64:
+        ErAssert(prop.getUInt64());
+        return visitor(prop, *prop.getUInt64());
+    case Er::Property::Type::Double:
+        ErAssert(prop.getDouble());
+        return visitor(prop, *prop.getDouble());
+    case Er::Property::Type::String:
+        ErAssert(prop.getString());
+        return visitor(prop, *prop.getString());
+    case Er::Property::Type::Binary:
+        ErAssert(prop.getBinary());
+        return visitor(prop, *prop.getBinary());
+    case Er::Property::Type::Map:
+        ErAssert(prop.getMap());
+        return visitor(prop, *prop.getMap());
+    }
+
+    ErAssert(!"Unkwnown property type");
+    return false;
+}
+
+inline bool visit(const PropertyMap& m, auto&& visitor)
+{
+    for (auto& entry : m)
+    {
+        if (!visit(entry.second, std::forward<decltype(visitor)>(visitor)))
+            return false;
+    }
+
+    return true;
+}
+
+inline const Property* findProperty(const PropertyMap& bag, std::string_view name) noexcept
+{
+    for (auto& prop : bag)
+    {
+        if (prop.first == name)
+            return &prop.second;
+    }
+
+    return nullptr;
+}
 
 } // namespace Er {}

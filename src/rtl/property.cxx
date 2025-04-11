@@ -1,34 +1,28 @@
 #include <erebus/rtl/property.hxx>
 
-#include <sstream>
-
 namespace Er
 {
 
-void Property::_free() noexcept
+std::string_view Property::typeToString(Type type) noexcept
 {
-    auto ty = type();
-
-    if (!_allocatesStorage(ty))
+    static constexpr std::string_view names[] =
     {
-        m_type = InfoAndType();
-        return;
-    }
+        "Empty",
+        "Bool",
+        "Int32",
+        "UInt32",
+        "Int64",
+        "UInt64",
+        "Double",
+        "String",
+        "Binary",
+        "Map"
+    };
 
-    if (m_u._shared)
-        m_u._shared->release();
-}
+    if (static_cast<std::size_t>(type) >= _countof(names))
+        return "<invalid type>";
 
-void Property::_clone(const Property& other)
-{
-    auto ty = other.type();
-    m_type = other.m_type;
-    m_u._largest = other.m_u._largest;
-
-    if (_allocatesStorage(ty))
-    {
-        m_u._shared->addRef();
-    }
+    return names[static_cast<std::size_t>(type)];
 }
 
 bool Property::_eq(const Property& other) const noexcept
@@ -37,41 +31,126 @@ bool Property::_eq(const Property& other) const noexcept
 
     static EqFn s_eqFns[] =
     {
+        &Property::_eqEmpty,
+        &Property::_eqBool,
+        &Property::_eqInt32,
+        &Property::_eqUInt32,
+        &Property::_eqInt64,
+        &Property::_eqUInt64,
+        &Property::_eqDouble,
         &Property::_eqString,
-        &Property::_eqBinary
+        &Property::_eqBinary,
+        &Property::_eqMap
     };
 
     auto ty = type();
     if (ty != other.type())
         return false;
 
-    if (!_allocatesStorage(ty))
-    {
-        return m_u._largest == other.m_u._largest;
-    }
-
-    auto idx = static_cast<std::size_t>(ty) - static_cast<std::size_t>(PropertyType::String);
+    auto idx = static_cast<std::size_t>(ty);
     ErAssert(idx < _countof(s_eqFns));
     return std::invoke(s_eqFns[idx], *this, other);
 }
 
+bool Property::_eqEmpty(const Property& other) const noexcept
+{
+    return true;
+}
+
+bool Property::_eqBool(const Property& other) const noexcept
+{
+    auto v1 = getBool();
+    auto v2 = other.getBool();
+    ErAssert(!!v1 && !!v2);
+    return *v1 == *v2;
+}
+
+bool Property::_eqInt32(const Property& other) const noexcept
+{
+    auto v1 = getInt32();
+    auto v2 = other.getInt32();
+    ErAssert(!!v1 && !!v2);
+    return *v1 == *v2;
+}
+
+bool Property::_eqUInt32(const Property& other) const noexcept
+{
+    auto v1 = getUInt32();
+    auto v2 = other.getUInt32();
+    ErAssert(!!v1 && !!v2);
+    return *v1 == *v2;
+}
+
+bool Property::_eqInt64(const Property& other) const noexcept
+{
+    auto v1 = getInt64();
+    auto v2 = other.getInt64();
+    ErAssert(!!v1 && !!v2);
+    return *v1 == *v2;
+}
+
+bool Property::_eqUInt64(const Property& other) const noexcept
+{
+    auto v1 = getUInt64();
+    auto v2 = other.getUInt64();
+    ErAssert(!!v1 && !!v2);
+    return *v1 == *v2;
+}
+
+bool Property::_eqDouble(const Property& other) const noexcept
+{
+    auto v1 = getDouble();
+    auto v2 = other.getDouble();
+    ErAssert(!!v1 && !!v2);
+    return *v1 == *v2;
+}
+
 bool Property::_eqString(const Property& other) const noexcept
 {
-    auto& v1 = getString();
-    auto& v2 = other.getString();
-    return v1 == v2;
+    auto v1 = getString();
+    auto v2 = other.getString();
+    ErAssert(!!v1 && !!v2);
+    return *v1 == *v2;
 }
 
 bool Property::_eqBinary(const Property& other) const noexcept
 {
-    auto& v1 = getBinary();
-    auto& v2 = other.getBinary();
-    return v1 == v2;
+    auto v1 = getBinary();
+    auto v2 = other.getBinary();
+    ErAssert(!!v1 && !!v2);
+    return *v1 == *v2;
+}
+
+bool Property::_eqMap(const Property& other) const noexcept
+{
+    auto v1 = getMap();
+    auto v2 = other.getMap();
+    ErAssert(!!v1 && !!v2);
+
+    if (v1->size() != v2->size())
+        return false;
+
+    auto it1 = v1->begin();
+    auto it2 = v2->begin();
+
+    while ((it1 != v1->end()) && (it2 != v2->end()))
+    {
+        if (it1->first != it2->first)
+            return false;
+
+        if (it1->second != it2->second)
+            return false;
+
+        ++it1;
+        ++it2;
+    }
+
+    return true;
 }
 
 std::string Property::_str() const
 {
-    using StrFn = std::string (Property::*)() const;
+    using StrFn = std::string(Property::*)() const;
 
     static StrFn s_strFns[] =
     {
@@ -83,7 +162,8 @@ std::string Property::_str() const
         &Property::_strUInt64,
         &Property::_strDouble,
         &Property::_strString,
-        &Property::_strBinary
+        &Property::_strBinary,
+        &Property::_strMap
     };
 
     auto ty = type();
@@ -100,68 +180,89 @@ std::string Property::_strEmpty() const
 std::string Property::_strBool() const
 {
     auto v = getBool();
-    return v ? "True" : "False";
+    ErAssert(v);
+    return *v ? "True" : "False";
 }
 
 std::string Property::_strInt32() const
 {
     auto v = getInt32();
-    return std::to_string(v);
+    ErAssert(v);
+    return std::to_string(*v);
 }
 
 std::string Property::_strUInt32() const
 {
     auto v = getUInt32();
-    return std::to_string(v);
+    ErAssert(v);
+    return std::to_string(*v);
 }
 
 std::string Property::_strInt64() const
 {
     auto v = getInt64();
-    return std::to_string(v);
+    ErAssert(v);
+    return std::to_string(*v);
 }
 
 std::string Property::_strUInt64() const
 {
     auto v = getUInt64();
-    return std::to_string(v);
+    ErAssert(v);
+    return std::to_string(*v);
 }
 
 std::string Property::_strDouble() const
 {
     auto v = getDouble();
-    return std::to_string(v);
+    ErAssert(v);
+    return std::to_string(*v);
 }
 
 std::string Property::_strString() const
 {
-    return getString();
+    auto v = getString();
+    ErAssert(v);
+    return *v;
 }
 
 std::string Property::_strBinary() const
 {
-    auto& v = getBinary();
+    auto v = getBinary();
+    ErAssert(v);
     std::ostringstream ss;
-    ss << v;
+    ss << *v;
     return ss.str();
 }
 
-std::string_view propertyTypeToString(PropertyType type)
+std::string Property::_strMap() const
 {
-    switch (type)
+    auto v = getMap();
+    ErAssert(v);
+    if (v->empty())
+        return "[]";
+
+    std::ostringstream ss;
+
+    bool empty = true;
+    ss << "[ ";
+    for (auto& prop : *v)
     {
-    case PropertyType::Empty: return "Empty";
-    case PropertyType::Bool: return "Bool";
-    case PropertyType::Int32: return "Int32";
-    case PropertyType::UInt32: return "UInt32";
-    case PropertyType::Int64: return "Int64";
-    case PropertyType::UInt64: return "UInt64";
-    case PropertyType::Double: return "Double";
-    case PropertyType::String: return "String";
-    case PropertyType::Binary: return "Binary";
+        if (empty)
+        {
+            empty = false;
+        }
+        else
+        {
+            ss << ", ";
+        }
+
+        ss << "{ \"" << prop.first << "\" = \"" << prop.second.str() << "\" }";
     }
 
-    return "\?\?\?";
+    ss << " ]";
+
+    return ss.str();
 }
 
 } // namespace Er {}

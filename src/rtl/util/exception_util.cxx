@@ -4,43 +4,104 @@
 namespace Er::Util
 {
 
-ResultCode ExceptionLogger::operator()(const Exception& e)
+class PropertyPrinter
 {
-    auto result = e.find(ExceptionProps::Result);
-    if (result)
+public:
+    ~PropertyPrinter()
     {
-        m_result = static_cast<ResultCode>(result->getInt32());
-    }
-    else
-    {
-        m_result = Result::Failure;
+        m_log->unindent();
     }
 
-    if (!e.message().empty())
+    PropertyPrinter(Log::ILogger* log, Log::Level level)
+        : m_log(log)
+        , m_level(level)
     {
-        Log::error(m_log, "{}", e.message());
-        m_lastError = e.message();
+        m_log->indent();
     }
-    else if (result)
+
+    bool operator()(const Property& prop, const Empty& v)
     {
-        auto code = static_cast<ResultCode>(result->getInt32());
-        auto decoded = resultToString(code);
-        if (!decoded.empty())
-        {
-            m_lastError = Er::format("{}: {}", int(code), decoded);
-            Log::error(m_log, "{}", m_lastError);
-        }
-        else
-        {
-            m_lastError = Er::format("Unexpected error {}", int(code));
-            Log::error(m_log, "{}", m_lastError);
-        }
+        Log::write(m_log, m_level, "{}: {}", prop.name(), prop.str());
+        return true;
     }
-    else
+
+    bool operator()(const Property& prop, const Bool& v)
     {
-        Log::error(m_log, "Unexpected exception");
-        m_lastError = "Unexpected exception";
+        auto& formatter = findPropertyFormatter(prop.semantics());
+        Log::write(m_log, m_level, "{}: {}", prop.name(), formatter(prop));
+        return true;
     }
+
+    bool operator()(const Property& prop, const std::int32_t& v)
+    {
+        auto& formatter = findPropertyFormatter(prop.semantics());
+        Log::write(m_log, m_level, "{}: {}", prop.name(), formatter(prop));
+        return true;
+    }
+
+    bool operator()(const Property& prop, const std::uint32_t& v)
+    {
+        auto& formatter = findPropertyFormatter(prop.semantics());
+        Log::write(m_log, m_level, "{}: {}", prop.name(), formatter(prop));
+        return true;
+    }
+
+    bool operator()(const Property& prop, const std::int64_t& v)
+    {
+        auto& formatter = findPropertyFormatter(prop.semantics());
+        Log::write(m_log, m_level, "{}: {}", prop.name(), formatter(prop));
+        return true;
+    }
+
+    bool operator()(const Property& prop, const std::uint64_t& v)
+    {
+        auto& formatter = findPropertyFormatter(prop.semantics());
+        Log::write(m_log, m_level, "{}: {}", prop.name(), formatter(prop));
+        return true;
+    }
+
+    bool operator()(const Property& prop, const double& v)
+    {
+        auto& formatter = findPropertyFormatter(prop.semantics());
+        Log::write(m_log, m_level, "{}: {}", prop.name(), formatter(prop));
+        return true;
+    }
+
+    bool operator()(const Property& prop, const std::string& v)
+    {
+        auto& formatter = findPropertyFormatter(prop.semantics());
+        Log::write(m_log, m_level, "{}: {}", prop.name(), formatter(prop));
+        return true;
+    }
+
+    bool operator()(const Property& prop, const Binary& v)
+    {
+        auto& formatter = findPropertyFormatter(prop.semantics());
+        Log::write(m_log, m_level, "{}: {}", prop.name(), formatter(prop));
+        return true;
+    }
+
+    bool operator()(const Property& prop, const PropertyMap& v)
+    {
+        Log::write(m_log, m_level, "{}: {", prop.name());
+
+        PropertyPrinter nested(m_log, m_level);
+        visit(v, nested);
+
+        Log::write(m_log, m_level, "}", prop.name());
+        return true;
+    }
+
+private:
+    Log::ILogger* m_log;
+    Log::Level m_level;
+};
+
+
+ResultCode ExceptionLogger::operator()(const Exception& e)
+{
+    Log::writeln(m_log, Log::Level::Error, "--------------------------------------------------------------");
+    Log::writeln(m_log, Log::Level::Error, e.message());
 
     if (e.location().function_name())
         Log::error(m_log, "in [{}]", e.location().function_name());
@@ -48,12 +109,18 @@ ResultCode ExceptionLogger::operator()(const Exception& e)
     if (e.location().file_name())
         Log::error(m_log, "at [{}]:{}", e.location().file_name(), e.location().line());
 
-    for (auto& prop : e.properties())
-    {
-        Log::error(m_log, "{}: {}", prop.info()->readableName(), prop.info()->format(prop));
-    }
+    
+    PropertyPrinter pp(m_log, Log::Level::Error);
+    visit(e.properties(), pp);
 
-    return result ? static_cast<ResultCode>(result->getInt32()) : Result::Internal;
+    Log::writeln(m_log, Log::Level::Error, "--------------------------------------------------------------");
+
+    m_lastError = e.message();
+    auto r = findProperty(e.properties(), ExceptionProps::ResultCode);
+    if (r)
+        m_result = *r->getInt32();
+
+    return m_result ? *m_result : Result::Internal;
 }
 
 ResultCode ExceptionLogger::operator()(const std::bad_alloc& e)

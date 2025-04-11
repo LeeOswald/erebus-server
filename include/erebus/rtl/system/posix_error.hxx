@@ -19,7 +19,7 @@ ER_RTL_EXPORT [[nodiscard]] Er::Exception makePosixException(std::source_locatio
 namespace Er::ExceptionProps
 {
 
-extern ER_RTL_EXPORT const Er::PropertyInfo PosixError;
+constexpr std::string_view PosixError{ "posix_error" };
 
 } // namespace Er::ExceptionProps {}
 

@@ -46,23 +46,16 @@ ER_RTL_EXPORT Exception makePosixException(std::source_location location, std::s
 
     auto result = resultFromPosixError(code);
     if (result)
-        x.add(Property(std::int32_t(*result), ExceptionProps::Result));
+        x.add(Property(ExceptionProps::ResultCode, std::int32_t(*result)));
         
-    x.add(Property(std::int32_t(code), ExceptionProps::PosixError));
+    x.add(Property(ExceptionProps::PosixError, std::int32_t(code)));
 
     auto decoded = posixErrorToString(code);
     if (!decoded.empty())
-        x.add(Property(std::move(decoded), ExceptionProps::DecodedError));
+        x.add(Property(ExceptionProps::DecodedError, std::move(decoded)));
 
     return x;
 }
 
 } // namespace Er::System {}
 
-
-namespace Er::ExceptionProps
-{
-
-const PropertyInfo PosixError{ PropertyType::UInt32, "Er.Exception.posix_error", "POSIX error" };
-
-} // namespace Er::ExceptionProps {}

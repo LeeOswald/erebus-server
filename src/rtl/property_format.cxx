@@ -1,5 +1,5 @@
 #include <erebus/rtl/format.hxx>
-#include <erebus/rtl/property2.hxx>
+#include <erebus/rtl/property.hxx>
 #include <erebus/rtl/system/packed_time.hxx>
 
 #include <mutex>
@@ -15,34 +15,34 @@ namespace Er
 namespace
 {
 
-std::string formatDefault(const Property2& prop)
+std::string formatDefault(const Property& prop)
 {
     return prop.str();
 }
 
-std::string formatHex(const Property2& prop)
+std::string formatHex(const Property& prop)
 {
     auto ty = prop.type();
     
-    if (ty == Property2::Type::Int32)
+    if (ty == Property::Type::Int32)
     {
         auto v = prop.getInt32();
         ErAssert(v);
         return Er::format("{:x}", *v);
     }
-    else if (ty == Property2::Type::UInt32)
+    else if (ty == Property::Type::UInt32)
     {
         auto v = prop.getUInt32();
         ErAssert(v);
         return Er::format("{:x}", *v);
     }
-    else if (ty == Property2::Type::Int64)
+    else if (ty == Property::Type::Int64)
     {
         auto v = prop.getInt64();
         ErAssert(v);
         return Er::format("{:x}", *v);
     }
-    else if (ty == Property2::Type::UInt64)
+    else if (ty == Property::Type::UInt64)
     {
         auto v = prop.getUInt64();
         ErAssert(v);
@@ -53,17 +53,17 @@ std::string formatHex(const Property2& prop)
     return prop.str();
 }
 
-std::string formatAddress(const Property2& prop)
+std::string formatAddress(const Property& prop)
 {
     auto ty = prop.type();
 
-    if (ty == Property2::Type::UInt32)
+    if (ty == Property::Type::UInt32)
     {
         auto v = prop.getUInt32();
         ErAssert(v);
         return Er::format("{:08X}", *v);
     }
-    else if (ty == Property2::Type::UInt64)
+    else if (ty == Property::Type::UInt64)
     {
         auto v = prop.getUInt64();
         ErAssert(v);
@@ -74,9 +74,9 @@ std::string formatAddress(const Property2& prop)
     return prop.str();
 }
 
-std::string formatDouble(const Property2& prop)
+std::string formatDouble(const Property& prop)
 {
-    if (prop.type() == Property2::Type::Double)
+    if (prop.type() == Property::Type::Double)
     {
         auto v = prop.getDouble();
         ErAssert(*v);
@@ -92,9 +92,9 @@ std::string formatDouble(const Property2& prop)
     return prop.str();
 }
 
-std::string formatDateTime(const Property2& prop)
+std::string formatDateTime(const Property& prop)
 {
-    if (prop.type() == Property2::Type::UInt64)
+    if (prop.type() == Property::Type::UInt64)
     {
         auto v = prop.getUInt64();
         ErAssert(*v);
@@ -135,9 +135,9 @@ std::string formatDateTime(const Property2& prop)
     return prop.str();
 }
 
-std::string formatDuration(const Property2& prop)
+std::string formatDuration(const Property& prop)
 {
-    if (prop.type() == Property2::Type::UInt64)
+    if (prop.type() == Property::Type::UInt64)
     {
         auto v = prop.getUInt64();
         ErAssert(*v);
@@ -153,33 +153,33 @@ std::string formatDuration(const Property2& prop)
     return prop.str();
 }
 
-std::string formatPercent(const Property2& prop)
+std::string formatPercent(const Property& prop)
 {
-    if (prop.type() == Property2::Type::Double)
+    if (prop.type() == Property::Type::Double)
     {
         auto v = prop.getDouble();
         ErAssert(*v);
         return Er::format("{:.2f}%", *v);
     }
-    else if (prop.type() == Property2::Type::Int32)
+    else if (prop.type() == Property::Type::Int32)
     {
         auto v = prop.getInt32();
         ErAssert(*v);
         return Er::format("{}%", *v);
     }
-    else if (prop.type() == Property2::Type::UInt32)
+    else if (prop.type() == Property::Type::UInt32)
     {
         auto v = prop.getUInt32();
         ErAssert(*v);
         return Er::format("{}%", *v);
     }
-    else if (prop.type() == Property2::Type::Int64)
+    else if (prop.type() == Property::Type::Int64)
     {
         auto v = prop.getInt64();
         ErAssert(*v);
         return Er::format("{}%", *v);
     }
-    else if (prop.type() == Property2::Type::UInt64)
+    else if (prop.type() == Property::Type::UInt64)
     {
         auto v = prop.getUInt64();
         ErAssert(*v);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/rtl/property.hxx>
+#include <erebus/rtl/property_bag.hxx>
 #include <erebus/rtl/result.hxx>
 
 #include <stdexcept>
@@ -20,8 +20,6 @@ class ER_RTL_EXPORT Exception
     : public std::exception
 {
 public:
-    Exception() noexcept = default;
-
     explicit Exception(std::source_location location, auto&& message) noexcept
         : m_context(std::make_shared<Context>(location, std::forward<decltype(message)>(message)))
     {
@@ -52,28 +50,10 @@ public:
         return m_context->properties;
     }
 
-    template <typename Prop>
-        requires std::is_same_v<std::remove_cvref_t<Prop>, Property>
-    Exception& add(Prop&& prop)
+    Exception& add(auto&& prop)
     {
-        m_context->addProp(std::forward<Prop>(prop), true);
+        m_context->addProp(std::forward<decltype(prop)>(prop), true);
         return *this;
-    }
-
-    const Property* find(const PropertyInfo& type) const noexcept
-    {
-        for (auto& prop : m_context->properties)
-        {
-            if (type.name() == prop.info()->name())
-                return &prop;
-        }
-
-        return nullptr;
-    }
-
-    operator bool() const noexcept
-    {
-        return m_context.operator bool();
     }
 
 protected:
@@ -81,8 +61,8 @@ protected:
     {
         std::source_location location;
         std::string message;
-        std::vector<Property> properties;
-        
+        PropertyBag properties;
+       
         Context(std::source_location location, auto&& message)
             : location(location)
             , message(std::forward<decltype(message)>(message))
@@ -95,14 +75,12 @@ protected:
             addProp(std::forward<decltype(prop)>(prop), false);
         }
 
-        template <typename Prop>
-            requires std::is_same_v<std::remove_cvref_t<Prop>, Property>
-        void addProp(Prop&& prop, bool back)
+        void addProp(auto&& prop, bool back)
         {
             if (back)
-                properties.push_back(std::forward<Prop>(prop));
+                properties.push_back(std::forward<decltype(prop)>(prop));
             else
-                properties.insert(properties.begin(), std::forward<Prop>(prop));
+                properties.insert(properties.begin(), std::forward<decltype(prop)>(prop));
         }
     };
 
@@ -242,8 +220,8 @@ inline exceptionStackRange currentExceptionStack() noexcept
 namespace ExceptionProps
 {
 
-extern ER_RTL_EXPORT const PropertyInfo Result;
-extern ER_RTL_EXPORT const PropertyInfo DecodedError;
+constexpr std::string_view ResultCode{ "result_code" };
+constexpr std::string_view DecodedError{ "decoded_error" };
 
 } // namespace ExceptionProps {}
 

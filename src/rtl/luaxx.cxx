@@ -1,7 +1,7 @@
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/luaxx.hxx>
 #include <erebus/rtl/luaxx/luaxx_int64.hxx>
-#include <erebus/rtl/luaxx/luaxx_property.hxx>
+
 
 #include <sstream>
 
@@ -35,7 +35,6 @@ LuaState::LuaState(Er::Log::ILogger* log)
 
     Er::Lua::registerInt64(*this);
     Er::Lua::registerUInt64(*this);
-    Er::Lua::registerPropertyTypes(*this);
 }
 
 int LuaState::_print(lua_State* L)

@@ -18,15 +18,12 @@ target_sources(erebus-rtl
         luaxx/luaxx_exception_handler.cxx
         luaxx/luaxx_int64.cxx
         luaxx/luaxx_metatable_registry.cxx
-        luaxx/luaxx_property.cxx
         luaxx/luaxx_selector.cxx
         luaxx/luaxx_state.cxx
         luaxx/luaxx_util.cxx
         program.cxx
         property.cxx
-        property2.cxx
         property_format.cxx
-        property_info.cxx
         result.cxx
         system/packed_time.cxx
         system/posix_error.cxx
@@ -71,7 +68,6 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_obj.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_obj_fun.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_primitives.hxx
-                ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_property.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_references.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_registry.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_resource_handler.hxx
@@ -81,12 +77,9 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_tuple.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_util.hxx
                 ${ER_INCLUDE_DIR}/rtl/program.hxx
-                ${ER_INCLUDE_DIR}/rtl/property.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_format.hxx
-                ${ER_INCLUDE_DIR}/rtl/property2.hxx
+                ${ER_INCLUDE_DIR}/rtl/property.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_bag.hxx
-                ${ER_INCLUDE_DIR}/rtl/property_bag2.hxx
-                ${ER_INCLUDE_DIR}/rtl/property_info.hxx
                 ${ER_INCLUDE_DIR}/rtl/result.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/packed_time.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/posix_error.hxx

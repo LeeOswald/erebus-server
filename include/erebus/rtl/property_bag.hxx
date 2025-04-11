@@ -11,41 +11,56 @@ namespace Er
 using PropertyBag = std::vector<Property>;
 
 
-template <typename T>
-const T* get(const PropertyBag& bag, const PropertyInfo& info)
+inline bool operator==(const PropertyBag& a, const PropertyBag& b) noexcept
+{
+    if (a.size() != b.size())
+        return false;
+
+    auto ita = a.begin();
+    auto itb = b.begin();
+    while (ita != a.end())
+    {
+        if (*ita != *itb)
+            return false;
+
+        ++ita;
+        ++itb;
+    }
+
+    return true;
+}
+
+inline void addProperty(PropertyBag& bag, const Property& prop)
+{
+    bag.push_back(prop);
+}
+
+inline void addProperty(PropertyBag& bag, Property&& prop)
+{
+    auto name = prop.name();
+    bag.push_back(std::move(prop));
+}
+
+inline bool visit(const PropertyBag& bag, auto&& visitor)
 {
     for (auto& prop : bag)
     {
-        if (prop.info() == &info)
-            return &get<T>(prop);
+        if (!visit(prop, std::forward<decltype(visitor)>(visitor)))
+            return false;
+    }
+
+    return true;
+}
+
+inline const Property* findProperty(const PropertyBag& bag, std::string_view name) noexcept
+{
+    for (auto& prop : bag)
+    {
+        if (prop.name() == name)
+            return &prop;
     }
 
     return nullptr;
-}
-
-template <typename T>
-bool update(PropertyBag& src, std::size_t index, Er::Property&& prop)
-{
-    if (index + 1 > src.size())
-    {
-        src.resize(index + 1);
-        src[index] = std::move(prop);
-        return true;
-    }
-
-    if (src[index].info() != prop.info())
-    {
-        src[index] = std::move(prop);
-        return true;
-    }
-
-    if (prop != src[index])
-    {
-        src[index] = std::move(prop);
-        return true;
-    }
-
-    return false;
 }
 
 } // namespace Er {}

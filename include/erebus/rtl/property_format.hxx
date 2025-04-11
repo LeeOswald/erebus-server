@@ -7,7 +7,7 @@
 namespace Er
 {
 
-class Property2;
+class Property;
 
 using SemanticCode = std::uint32_t;
 
@@ -35,7 +35,7 @@ constexpr SemanticCode Percent = 15;
 } // namespace Semantics {}
 
 
-using PropertyFormatter = std::function<std::string(const Property2&)>;
+using PropertyFormatter = std::function<std::string(const Property&)>;
 
 
 [[nodiscard]] ER_RTL_EXPORT PropertyFormatter& findPropertyFormatter(SemanticCode code);
