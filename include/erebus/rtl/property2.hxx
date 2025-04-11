@@ -6,7 +6,7 @@
 
 #include <map>
 #include <variant>
-#include <vector>
+
 
 #include <boost/static_string/static_string.hpp>
 
@@ -37,7 +37,12 @@ public:
 
     static std::string_view typeToString(Type type) noexcept;
     
-    constexpr Property2() noexcept = default;
+    constexpr Property2() noexcept
+        : m_name()
+        , m_storage(Empty{})
+        , m_semantics(Semantics::Default)
+    {
+    }
 
     constexpr Property2(auto&& name, Bool v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
@@ -193,9 +198,9 @@ public:
         return type() == Type::Empty;
     }
 
-    [[nodiscard]] constexpr std::string_view name() const noexcept
+    [[nodiscard]] constexpr const Name& name() const noexcept
     {
-        return std::string_view{ m_name.data(), m_name.length() };
+        return m_name;
     }
 
     [[nodiscard]] constexpr Bool const* getBool() const noexcept
@@ -418,6 +423,93 @@ template <>
 }
 
 
-using PropertyBag2 = std::vector<Property2>;
+using PropertyMap = Property2::Map;
+
+
+inline bool operator==(const PropertyMap& a, const PropertyMap& b) noexcept
+{
+    if (a.size() != b.size())
+        return false;
+
+    auto ita = a.begin();
+    auto itb = b.begin();
+    while (ita != a.end())
+    {
+        if (ita->first != itb->first)
+            return false;
+
+        if (ita->second != itb->second)
+            return false;
+
+        ++ita;
+        ++itb;
+    }
+
+    return true;
+}
+
+inline void addProperty(PropertyMap& map, const Property2& prop)
+{
+    map.insert({ prop.name(), prop });
+}
+
+inline void addProperty(PropertyMap& map, Property2&& prop)
+{
+    auto name = prop.name();
+    map.insert({ std::move(name), std::move(prop) });
+}
+
+
+inline bool visit(const Property2& prop, auto&& visitor)
+{
+    auto ty = prop.type();
+    switch (ty)
+    {
+    case Er::Property2::Type::Empty: 
+        return visitor(prop.name(), Empty{});
+    case Er::Property2::Type::Bool:
+        ErAssert(prop.getBool());
+        return visitor(prop.name(), *prop.getBool());
+    case Er::Property2::Type::Int32:
+        ErAssert(prop.getInt32());
+        return visitor(prop.name(), *prop.getInt32());
+    case Er::Property2::Type::UInt32:
+        ErAssert(prop.getUInt32());
+        return visitor(prop.name(), *prop.getUInt32());
+    case Er::Property2::Type::Int64:
+        ErAssert(prop.getInt64());
+        return visitor(prop.name(), *prop.getInt64());
+    case Er::Property2::Type::UInt64:
+        ErAssert(prop.getUInt64());
+        return visitor(prop.name(), *prop.getUInt64());
+    case Er::Property2::Type::Double:
+        ErAssert(prop.getDouble());
+        return visitor(prop.name(), *prop.getDouble());
+    case Er::Property2::Type::String:
+        ErAssert(prop.getString());
+        return visitor(prop.name(), *prop.getString());
+    case Er::Property2::Type::Binary:
+        ErAssert(prop.getBinary());
+        return visitor(prop.name(), *prop.getBinary());
+    case Er::Property2::Type::Map:
+        ErAssert(prop.getMap());
+        return visitor(prop.name(), *prop.getMap());
+    }
+
+    ErAssert(!"Unkwnown property type");
+    return false;
+}
+
+inline bool visit(const PropertyMap& m, auto&& visitor)
+{
+    for (auto& entry : m)
+    {
+        if (!visit(entry.second, std::forward<decltype(visitor)>(visitor)))
+            return false;
+    }
+
+    return true;
+}
+
 
 } // namespace Er {}
