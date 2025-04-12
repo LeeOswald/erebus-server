@@ -32,6 +32,7 @@ target_sources(erebus-rtl
         system/thread.cxx
         type_id.cxx
         util/exception_util.cxx
+        util/file.cxx
         util/lock_file.cxx
         
     PUBLIC
@@ -96,6 +97,7 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/util/auto_ptr.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/errno.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/exception_util.hxx
+                ${ER_INCLUDE_DIR}/rtl/util/file.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/generic_handle.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/lock_file.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/null_mutex.hxx

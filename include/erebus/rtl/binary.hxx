@@ -66,6 +66,11 @@ struct Binary final
         return a.m_bytes <=> b.m_bytes;
     }
 
+    std::string release()
+    {
+        return std::string(std::move(m_bytes));
+    }
+
     const std::string& bytes() const noexcept
     {
         return m_bytes;
