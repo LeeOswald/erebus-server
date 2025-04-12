@@ -48,6 +48,12 @@ public:
         ::syslog(priority, "%s", formatted.c_str());
     }
 
+    void write(AtomicRecord a) override
+    {
+        for (auto r: a)
+            write(r);
+    }
+
     void flush() override
     {
     }
