@@ -100,6 +100,7 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/util/file.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/generic_handle.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/lock_file.hxx
+                ${ER_INCLUDE_DIR}/rtl/util/pid_file.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/null_mutex.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/thread_data.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/utf16.hxx
