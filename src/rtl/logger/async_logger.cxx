@@ -1,6 +1,4 @@
-#include <erebus/rtl/log.hxx>
-#include <erebus/rtl/system/thread.hxx>
-#include <erebus/rtl/util/thread_data.hxx>
+#include "logger_base.hxx"
 
 #include <condition_variable>
 #include <mutex>
@@ -16,33 +14,17 @@ namespace
 
 
 class AsyncLogger
-    : public ILogger
-    , public boost::noncopyable
+    : public Private::LoggerBase
 {
+    using Base = Private::LoggerBase;
+
 public:
-    ~AsyncLogger()
-    {
-    }
+    ~AsyncLogger() = default;
 
     AsyncLogger(std::string_view component, std::chrono::milliseconds threshold)
-        : m_component(component)
-        , m_threshold(threshold)
-        , m_tee(makeTee(ThreadSafe::Yes))
+        : Base(component, makeTee(ThreadSafe::Yes))
         , m_worker([this](std::stop_token stop) { run(stop); })
     {
-    }
-    
-    void indent() noexcept override
-    {
-        auto& td = m_threadData.data();
-        ++td.indent;
-    }
-    
-    void unindent() noexcept override
-    {
-        auto& td = m_threadData.data();
-        ErAssert(td.indent > 0);
-        --td.indent;
     }
     
     void write(Record::Ptr r) override
@@ -105,29 +87,7 @@ public:
         }
     }
     
-    void addSink(std::string_view name, ISink::Ptr sink) override
-    {
-        m_tee->addSink(name, sink);
-    }
-    
-    void removeSink(std::string_view name) override
-    {
-        m_tee->removeSink(name);
-    }
-    
-    ISink::Ptr findSink(std::string_view name) override
-    {
-        return m_tee->findSink(name);
-    }
-
 private:
-    struct PerThread
-    {
-        unsigned indent = 0;
-    };
-
-    using ThreadDataHolder = ThreadData<PerThread>;
-
     void run(std::stop_token stop)
     {
         System::CurrentThread::setName("Logger");
@@ -176,10 +136,7 @@ private:
         }
     }
 
-    std::string_view m_component;
     std::chrono::milliseconds m_threshold;
-    ITee::Ptr m_tee;
-    ThreadDataHolder m_threadData;
     std::mutex m_mutexQueue;
     std::condition_variable_any m_queueNotEmpty;
     std::condition_variable_any m_queueEmpty;

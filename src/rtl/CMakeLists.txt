@@ -7,6 +7,7 @@ target_sources(erebus-rtl
         debug.cxx
         exception.cxx
         logger/logger.cxx
+        logger/logger_base.hxx
         logger/async_logger.cxx
         logger/file_sink.cxx
         logger/ostream_sink.cxx

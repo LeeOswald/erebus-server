@@ -1,11 +1,4 @@
-#include <erebus/rtl/log.hxx>
-#include <erebus/rtl/system/thread.hxx>
-#include <erebus/rtl/util/thread_data.hxx>
-
-#include <condition_variable>
-#include <mutex>
-#include <queue>
-#include <thread>
+#include "logger_base.hxx"
 
 
 namespace Er::Log
@@ -16,31 +9,16 @@ namespace
 
 
 class SyncLogger
-    : public ILogger
-    , public boost::noncopyable
+    : public Private::LoggerBase
 {
+    using Base = Private::LoggerBase;
+
 public:
-    ~SyncLogger()
-    {
-    }
+    ~SyncLogger() = default;
 
     SyncLogger(std::string_view component)
-        : m_component(component)
-        , m_tee(makeTee(ThreadSafe::Yes))
+        : Base(component, makeTee(ThreadSafe::Yes))
     {
-    }
-
-    void indent() noexcept override
-    {
-        auto& td = m_threadData.data();
-        ++td.indent;
-    }
-
-    void unindent() noexcept override
-    {
-        auto& td = m_threadData.data();
-        ErAssert(td.indent > 0);
-        --td.indent;
     }
 
     void write(Record::Ptr r) override
@@ -64,32 +42,6 @@ public:
     void flush() override
     {
     }
-
-    void addSink(std::string_view name, ISink::Ptr sink) override
-    {
-        m_tee->addSink(name, sink);
-    }
-
-    void removeSink(std::string_view name) override
-    {
-        m_tee->removeSink(name);
-    }
-
-    ISink::Ptr findSink(std::string_view name) override
-    {
-        return m_tee->findSink(name);
-    }
-
-private:
-    struct PerThread
-    {
-        unsigned indent = 0;
-    };
-
-    using ThreadDataHolder = ThreadData<PerThread>;
-    std::string_view m_component;
-    ITee::Ptr m_tee;
-    ThreadDataHolder m_threadData;
 };
 
 
