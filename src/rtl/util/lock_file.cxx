@@ -4,7 +4,7 @@
     #include <fcntl.h>
     #include <sys/file.h>
 
-    #include <erebus/util/posixerror.hxx>
+    #include <erebus/rtl/system/posix_error.hxx>
 #elif ER_WINDOWS
     #include <erebus/rtl/system/win32_error.hxx>    
     #include <erebus/rtl/util/utf16.hxx>
