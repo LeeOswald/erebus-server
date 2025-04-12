@@ -14,7 +14,7 @@ ServerApplication::ServerApplication() noexcept
 void ServerApplication::addCmdLineOptions(boost::program_options::options_description& options)
 {
     options.add_options()
-        ("config", boost::program_options::value<std::string>(&m_cfgFile)->default_value("erebus-server.cfg"), "configuration file path")
+        ("config", boost::program_options::value<std::string>(&m_cfgFile), "configuration file path")
 #if ER_LINUX
         ("noroot", "don't require root privileges")
 #endif
@@ -36,7 +36,7 @@ bool ServerApplication::loadConfiguration()
     }
     catch (std::exception& e)
     {
-        std::cerr << "Failed to load the configuration: " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 
     return false;

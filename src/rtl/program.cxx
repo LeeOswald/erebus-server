@@ -309,11 +309,11 @@ int Program::exec(int argc, char** argv)
     int resut = EXIT_FAILURE;
     globalStartup(argc, argv);
     
-    if (globalLoadConfiguration(argc, argv))
-    {
-        globalMakeLogger();
-    }
+    if (!globalLoadConfiguration(argc, argv))
+        return EXIT_FAILURE;
 
+    globalMakeLogger();
+    
     Util::ExceptionLogger xcptLogger(m_logger.get());
 
     try
