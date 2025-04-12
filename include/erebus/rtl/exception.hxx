@@ -26,7 +26,7 @@ public:
     }
 
     explicit Exception(std::source_location location, auto&& message, auto&& prop, auto&&... props) noexcept
-        : m_context(std::make_shared<Context>(location, std::forward<decltype(message)>(message)), std::forward<decltype(prop)>(prop), std::forward<decltype(props)>(props)...)
+        : m_context(std::make_shared<Context>(location, std::forward<decltype(message)>(message), std::forward<decltype(prop)>(prop), std::forward<decltype(props)>(props)...))
     {
     }
 

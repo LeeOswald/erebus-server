@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef ER_RTL_HXX_INCLUDED
+    #include <erebus/rtl/rtl.hxx>
+#endif
+
 #if ER_LINUX
     #if defined(__GNUC__) && (defined(__i386) || defined(__x86_64))
         #define _ER_TRAP() asm volatile ("int $3") /* NOLINT */

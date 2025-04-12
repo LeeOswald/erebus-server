@@ -5,6 +5,14 @@
 #include <erebus/result.hxx>
 
 
+namespace Er
+{
+
+ER_RTL_EXPORT [[nodiscard]] const std::string& resultToString(ResultCode code);
+
+} // namespace Er {}
+
+
 namespace Er::Util
 {
 

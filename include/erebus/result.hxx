@@ -1,6 +1,8 @@
 #pragma once
 
-#include <erebus/rtl/rtl.hxx>
+#ifndef ER_PLATFORM_HXX_INCLUDED
+    #include <erebus/platform.hxx>
+#endif
 
 namespace Er
 {
@@ -38,8 +40,5 @@ enum : std::int32_t
 
 
 } // namespace Result {}
-
-
-ER_RTL_EXPORT [[nodiscard]] const std::string& resultToString(ResultCode code);
 
 } // namespace Er {}

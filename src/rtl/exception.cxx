@@ -1,4 +1,4 @@
-#include <erebus/rtl/exception.hxx>
+#include <erebus/rtl/util/exception_util.hxx>
 
 namespace Er
 {

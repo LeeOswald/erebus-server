@@ -51,9 +51,8 @@
 
 #endif // _countof
 
-// all mush-have local stuff goes here
-#include <erebus/rtl/assert.hxx>
-#include <erebus/rtl/bool.hxx>
+#include <erebus/result.hxx>
+
 
 namespace Er
 {

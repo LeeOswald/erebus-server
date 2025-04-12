@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <syncstream>
+#include <thread>
 
 
 namespace Er
@@ -52,19 +53,16 @@ ER_RTL_EXPORT void setPrintFailedAssertionFn(PrintFailedAssertionFn f) noexcept
 
 ER_RTL_EXPORT void printFailedAssertion(std::source_location location, const char* expression) noexcept
 {
-    if (++g_activeAssertions == 1)
-    {
-        auto msg = formatFailedAssertion(std::move(location), expression);
+    // we cannot afford two parallel active assertions
+    long expected = 0;
+    while (!g_activeAssertions.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        doPrintFailedAssertion(msg);
-    }
-    else
-    {
-        // we cannot afford nested assertions
-        std::abort();
-    }
+    auto msg = formatFailedAssertion(std::move(location), expression);
 
-    --g_activeAssertions;
+    doPrintFailedAssertion(msg);
+
+    g_activeAssertions.store(0, std::memory_order_release);
 }
 
 
