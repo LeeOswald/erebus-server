@@ -18,8 +18,8 @@ struct KvArray final
         constexpr Entry() noexcept = default;
 
         constexpr Entry(auto&& k, auto&& v)
-            : k(std::forward_as_tuple<decltype(k)>(k))
-            , v(std::forward_as_tuple<decltype(v)>(v))
+            : key(std::forward<decltype(k)>(k))
+            , value(std::forward<decltype(v)>(v))
         {
         }
     };

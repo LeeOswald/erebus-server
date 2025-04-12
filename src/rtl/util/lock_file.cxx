@@ -1,5 +1,4 @@
 #include <erebus/rtl/exception.hxx>
-#include <erebus/rtl/format.hxx>
 #include <erebus/rtl/util/lock_file.hxx>
 #if ER_POSIX
     #include <fcntl.h>

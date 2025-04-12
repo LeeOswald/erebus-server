@@ -18,6 +18,11 @@ find_package(GTest REQUIRED)
 # lua
 find_package(Lua REQUIRED)
 
+# rapidjson
+find_package(RapidJSON REQUIRED)
+
+# valijson
+find_package(valijson REQUIRED)
 
 # protobuf
 find_package(protobuf REQUIRED)

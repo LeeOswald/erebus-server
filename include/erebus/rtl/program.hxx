@@ -62,8 +62,9 @@ public:
 
     int exec(int argc, char** argv);
 
-protected:
     static bool argPresent(int argc, char** argv, const char* longName, const char* shortName) noexcept;
+
+protected:
     virtual void terminateHandler();
     virtual void signalHandler(int signo);
     virtual void printAssertFn(std::string_view message);

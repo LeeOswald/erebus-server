@@ -1,5 +1,4 @@
 #include <erebus/rtl/exception.hxx>
-#include <erebus/rtl/format.hxx>
 #include <erebus/rtl/system/posix_error.hxx>
 #include <erebus/rtl/util/auto_ptr.hxx>
 #include <erebus/rtl/util/file.hxx>

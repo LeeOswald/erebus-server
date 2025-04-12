@@ -93,6 +93,7 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/system/posix_error.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/process.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/thread.hxx
+                ${ER_INCLUDE_DIR}/rtl/system/user.hxx
                 ${ER_INCLUDE_DIR}/rtl/type_id.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/auto_ptr.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/errno.hxx
@@ -110,6 +111,7 @@ if(ER_WINDOWS)
     target_sources(erebus-rtl
         PRIVATE
             logger/win32_debugger_sink.cxx
+            system/user_win32.cxx
             system/win32_error.cxx
             util/win32_utf16.cxx
         PUBLIC
@@ -125,6 +127,7 @@ elseif(ER_POSIX)
     target_sources(erebus-rtl
         PRIVATE
             logger/syslog_linux_sink.cxx
+            system/user_linux.cxx
         PUBLIC
 		FILE_SET headers TYPE HEADERS
             BASE_DIRS 
@@ -135,12 +138,20 @@ elseif(ER_POSIX)
     
 endif()
 
+
+if(ER_LINUX)
+    set(PLATFORM_LIBS pthread dl backtrace)
+elseif(ER_WINDOWS)
+    set(PLATFORM_LIBS secur32)
+endif()
+
 target_link_libraries(
     erebus-rtl
     PUBLIC
     fmt::fmt
     ${Boost_LIBRARIES}
     ${lua_LIBRARIES}
+    ${PLATFORM_LIBS}
 )
 
 target_compile_definitions(erebus-rtl PRIVATE ER_RTL_EXPORTS)

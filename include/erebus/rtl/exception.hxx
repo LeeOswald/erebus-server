@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/rtl/format.hxx>
 #include <erebus/rtl/property_bag.hxx>
 #include <erebus/result.hxx>
 
