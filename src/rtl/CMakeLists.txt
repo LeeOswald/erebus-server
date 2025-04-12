@@ -34,8 +34,14 @@ target_sources(erebus-rtl
         
     PUBLIC
 		FILE_SET headers TYPE HEADERS
-            BASE_DIRS ${ER_INCLUDE_DIR}/rtl
+            BASE_DIRS 
+                ${ER_INCLUDE_DIR} 
             FILES
+                ${ER_INCLUDE_DIR}/iunknown.hxx
+                ${ER_INCLUDE_DIR}/kv.hxx
+                ${ER_INCLUDE_DIR}/platform.hxx
+                ${ER_INCLUDE_DIR}/plugin.hxx
+                ${ER_INCLUDE_DIR}/result.hxx
                 ${ER_INCLUDE_DIR}/rtl/assert.hxx
                 ${ER_INCLUDE_DIR}/rtl/binary.hxx
                 ${ER_INCLUDE_DIR}/rtl/bool.hxx
@@ -75,12 +81,11 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_traits.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_tuple.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_util.hxx
-                ${ER_INCLUDE_DIR}/rtl/platform.hxx
+                ${ER_INCLUDE_DIR}/rtl/rtl.hxx
                 ${ER_INCLUDE_DIR}/rtl/program.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_format.hxx
                 ${ER_INCLUDE_DIR}/rtl/property.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_bag.hxx
-                ${ER_INCLUDE_DIR}/rtl/result.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/packed_time.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/posix_error.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/process.hxx
@@ -103,7 +108,8 @@ if(ER_WINDOWS)
             util/win32_utf16.cxx
         PUBLIC
 		FILE_SET headers TYPE HEADERS
-            BASE_DIRS ${ER_INCLUDE_DIR}/rtl
+            BASE_DIRS 
+                ${ER_INCLUDE_DIR}
             FILES
                 ${ER_INCLUDE_DIR}/rtl/logger/win32_debugger_sink.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/win32_error.hxx
@@ -115,7 +121,8 @@ elseif(ER_POSIX)
             logger/syslog_linux_sink.cxx
         PUBLIC
 		FILE_SET headers TYPE HEADERS
-            BASE_DIRS ${ER_INCLUDE_DIR}/rtl
+            BASE_DIRS 
+                ${ER_INCLUDE_DIR}
             FILES
                 ${ER_INCLUDE_DIR}/rtl/logger/syslog_linux_sink.hxx
     )

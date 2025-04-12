@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/rtl/result.hxx>
+#include <erebus/result.hxx>
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/system/unwindows.h>
 

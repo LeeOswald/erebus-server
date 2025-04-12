@@ -2,7 +2,7 @@
 
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/log.hxx>
-#include <erebus/rtl/result.hxx>
+#include <erebus/result.hxx>
 
 
 namespace Er::Util

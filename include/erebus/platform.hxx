@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../erebus-config.h"
+#include "../../erebus-config.h"
 
 #if !defined(ER_WINDOWS) && !defined(ER_LINUX)
     #error Unknown OS. Check your build configuration.
@@ -30,6 +30,7 @@
 #define ER_PLATFORM_HXX_INCLUDED 1
 
 // absolutely necessary system headers go here
+#include <concepts>
 #include <cstdint>
 #include <limits>
 #include <memory>

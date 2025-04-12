@@ -15,7 +15,7 @@
 #endif
 
 #ifndef ER_PLATFORM_HXX_INCLUDED
-    #include <erebus/rtl/platform.hxx>
+    #include <erebus/rtl/rtl.hxx>
 #endif
 
 namespace Er

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/rtl/platform.hxx>
+#include <erebus/rtl/rtl.hxx>
 #include <erebus/rtl/luaxx/luaxx_function.hxx>
 #include <erebus/rtl/luaxx/luaxx_exception_handler.hxx>
 #include <erebus/rtl/luaxx/luaxx_primitives.hxx>

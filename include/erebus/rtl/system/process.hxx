@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/rtl/platform.hxx>
+#include <erebus/rtl/rtl.hxx>
 
 #if ER_WINDOWS
 #include <erebus/rtl/system/unwindows.h>

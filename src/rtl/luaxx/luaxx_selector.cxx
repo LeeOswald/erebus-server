@@ -1,4 +1,4 @@
-#include <erebus/rtl/platform.hxx>
+#include <erebus/rtl/rtl.hxx>
 #include <erebus/rtl/luaxx/luaxx_selector.hxx>
 
 

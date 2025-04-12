@@ -1,4 +1,4 @@
-#include <erebus/rtl/platform.hxx>
+#include <erebus/rtl/rtl.hxx>
 
 #include <atomic>
 #include <iostream>
@@ -32,12 +32,13 @@ void doPrintFailedAssertion(std::string_view message)
 std::string formatFailedAssertion(std::source_location location, const char* expression)
 {
     std::ostringstream ss;
+    ss << "\n----------------------------------------------------------\n";
     ss << "ASSERTION FAILED\n";
     ss << "Expression: " << expression << "\n";
     ss << "File: " << location.file_name() << "\n";
     ss << "Line: " << location.line() << "\n";
     ss << "Function: " << location.function_name() << "\n";
-
+    ss << "----------------------------------------------------------\n";
     return ss.str();
 }
 

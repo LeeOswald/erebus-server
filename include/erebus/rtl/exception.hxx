@@ -1,7 +1,7 @@
 #pragma once
 
 #include <erebus/rtl/property_bag.hxx>
-#include <erebus/rtl/result.hxx>
+#include <erebus/result.hxx>
 
 #include <stdexcept>
 #include <vector>

@@ -1,4 +1,4 @@
-#include <erebus/rtl/result.hxx>
+#include <erebus/result.hxx>
 
 namespace Er
 {
