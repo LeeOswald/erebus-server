@@ -32,6 +32,7 @@ target_sources(erebus-rtl
         system/thread.cxx
         type_id.cxx
         util/exception_util.cxx
+        util/lock_file.cxx
         
     PUBLIC
 		FILE_SET headers TYPE HEADERS
@@ -92,10 +93,11 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/system/process.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/thread.hxx
                 ${ER_INCLUDE_DIR}/rtl/type_id.hxx
-                ${ER_INCLUDE_DIR}/rtl/util/autoptr.hxx
+                ${ER_INCLUDE_DIR}/rtl/util/auto_ptr.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/errno.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/exception_util.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/generic_handle.hxx
+                ${ER_INCLUDE_DIR}/rtl/util/lock_file.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/null_mutex.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/thread_data.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/utf16.hxx

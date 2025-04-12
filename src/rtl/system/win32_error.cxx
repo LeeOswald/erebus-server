@@ -1,4 +1,4 @@
-#include <erebus/rtl/util/autoptr.hxx>
+#include <erebus/rtl/util/auto_ptr.hxx>
 #include <erebus/rtl/system/win32_error.hxx>
 #include <erebus/rtl/util/utf16.hxx>
 
