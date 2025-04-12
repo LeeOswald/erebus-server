@@ -21,12 +21,30 @@ struct NullLogger
     {
     }
 
+    void beginBlock() noexcept override
+    {
+    }
+
+    void endBlock() noexcept override
+    {
+    }
+
     void write(Record::Ptr r) override
     {
         auto& s = state();
 
         std::lock_guard l(s.mutex);
         s.pending.push(r);
+    }
+
+    void write(AtomicRecord a) override
+    {
+        auto& s = state();
+
+        std::lock_guard l(s.mutex);
+
+        for (auto r : a)
+            s.pending.push(r);
     }
 
     Record::Ptr pop()

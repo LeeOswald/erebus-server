@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <functional>
+#include <vector>
 
 
 namespace Er::Log
@@ -114,6 +115,9 @@ private:
 };
 
 
+using AtomicRecord = std::vector<Record::Ptr>;
+
+
 struct IFormatter
 {
     using Ptr = std::unique_ptr<IFormatter>;
@@ -157,6 +161,7 @@ struct ISink
     virtual ~ISink() = default;
 
     virtual void write(Record::Ptr r) = 0;
+    virtual void write(AtomicRecord a) = 0;
     virtual void flush() = 0;
 };
 
@@ -226,6 +231,8 @@ struct ILogger
 
     virtual void indent() noexcept = 0;
     virtual void unindent() noexcept = 0;
+    virtual void beginBlock() noexcept = 0;
+    virtual void endBlock() noexcept = 0;
 
 protected:
     Level m_level = Level::Debug;
@@ -233,6 +240,26 @@ protected:
 
 ER_RTL_EXPORT ILogger::Ptr makeLogger(std::string_view component = {}, std::chrono::milliseconds threshold = {});
 ER_RTL_EXPORT ILogger::Ptr makeSyncLogger(std::string_view component = {});
+
+
+struct AtomicBlock
+    : public boost::noncopyable
+{
+    ~AtomicBlock()
+    {
+        m_log->endBlock();
+    }
+
+    AtomicBlock(ILogger* log)
+        : m_log(log)
+    {
+        ErAssert(log);
+        log->beginBlock();
+    }
+
+private:
+    ILogger* m_log;
+};
 
 
 struct IndentScope

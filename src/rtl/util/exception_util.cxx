@@ -4,6 +4,9 @@
 namespace Er::Util
 {
 
+namespace
+{
+
 class PropertyPrinter
 {
 public:
@@ -97,9 +100,13 @@ private:
     Log::Level m_level;
 };
 
+} // namespace {}
+
 
 ResultCode ExceptionLogger::operator()(const Exception& e)
 {
+    Log::AtomicBlock lb(m_log);
+
     Log::writeln(m_log, Log::Level::Error, "--------------------------------------------------------------");
     Log::writeln(m_log, Log::Level::Error, e.message());
 
@@ -109,9 +116,10 @@ ResultCode ExceptionLogger::operator()(const Exception& e)
     if (e.location().file_name())
         Log::error(m_log, "at [{}]:{}", e.location().file_name(), e.location().line());
 
-    
-    PropertyPrinter pp(m_log, Log::Level::Error);
-    visit(e.properties(), pp);
+    {
+        PropertyPrinter pp(m_log, Log::Level::Error);
+        visit(e.properties(), pp);
+    }
 
     Log::writeln(m_log, Log::Level::Error, "--------------------------------------------------------------");
 

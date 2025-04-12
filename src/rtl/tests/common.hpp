@@ -48,8 +48,19 @@ public:
         m_out << r->message() << "\n";
     }
 
+    void write(Er::Log::AtomicRecord a) override
+    {
+        std::lock_guard l(m_mutex);
+
+        for (auto r : a)
+        {
+            m_out << r->message() << "\n";
+        }
+    }
+
     void flush() override
     {
+        m_out.flush();
     }
 
     std::string grab()

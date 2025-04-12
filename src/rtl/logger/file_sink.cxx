@@ -123,6 +123,12 @@ public:
         }
     }
 
+    void write(AtomicRecord a) override
+    {
+        for (auto r : a)
+            write(r);
+    }
+
     void flush() override
     {
         std::unique_lock l(m_mutex);

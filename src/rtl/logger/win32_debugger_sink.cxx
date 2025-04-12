@@ -33,6 +33,12 @@ public:
         ::OutputDebugStringW(u16.c_str());
     }
 
+    void write(AtomicRecord a) override
+    {
+        for (auto r : a)
+            write(r);
+    }
+
     void flush() override
     {
     }

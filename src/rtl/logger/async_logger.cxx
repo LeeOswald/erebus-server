@@ -1,9 +1,12 @@
 #include "logger_base.hxx"
 
+#include <erebus/rtl/empty.hxx>
+
 #include <condition_variable>
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <variant>
 
 
 namespace Er::Log
@@ -14,9 +17,9 @@ namespace
 
 
 class AsyncLogger
-    : public Private::LoggerBase
+    : public Private::LoggerBase<Empty>
 {
-    using Base = Private::LoggerBase;
+    using Base = Private::LoggerBase<Empty>;
 
 public:
     ~AsyncLogger() = default;
@@ -27,25 +30,12 @@ public:
     {
     }
     
-    void write(Record::Ptr r) override
+    void doWrite(Record::Ptr r) override
     {
-        if (!r) [[unlikely]]
-            return;
-
-        if (r->level() < m_level)
-            return;
-
-        if (!m_component.empty() && r->component().empty())
-            r->setComponent(m_component);
-
-        auto indent = m_threadData.data().indent;
-        if (indent > 0)
-            r->setIndent(indent);
-
         bool thresholdReached = false;
         {
             std::unique_lock l(m_mutexQueue);
-            m_queue.push(r);
+            m_queue.emplace(r);
 
             if (m_queue.size() == 1)
             {
@@ -66,6 +56,20 @@ public:
         if (thresholdReached)
             m_queueNotEmpty.notify_one();
     }
+
+    void doWrite(AtomicRecord a) override
+    {
+        if (a.empty())
+            return;
+
+        {
+            std::unique_lock l(m_mutexQueue);
+
+            m_queue.emplace(a);
+        }
+
+        m_queueNotEmpty.notify_one();
+    }
     
     void flush() override
     {
@@ -73,7 +77,7 @@ public:
             std::unique_lock l(m_mutexQueue);
 
             // issue an empty record to force flushing all sinks
-            m_queue.push(Record::Ptr{});
+            m_queue.emplace(Record::Ptr{});
         }
 
         m_queueNotEmpty.notify_one();
@@ -88,13 +92,16 @@ public:
     }
     
 private:
+    using AnyRecord = std::variant<Record::Ptr, AtomicRecord>;
+    using RecordQueue = std::queue<AnyRecord>;
+
     void run(std::stop_token stop)
     {
         System::CurrentThread::setName("Logger");
 
         do
         {
-            std::queue<Record::Ptr> q;
+            RecordQueue q;
 
             {
                 std::unique_lock lw(m_mutexQueue);
@@ -119,28 +126,40 @@ private:
         } while (!stop.stop_requested());
     }
 
-    void sendToSinks(std::queue<Record::Ptr>& records, std::stop_token stop)
+    void sendToSinks(RecordQueue& records, std::stop_token stop)
     {
         while (!records.empty())
         {
-            auto record = records.front();
+            auto any = records.front();
             records.pop();
 
-            if (!record)
-                m_tee->flush(); // empty record means forced flush
+            auto r = std::get_if<Record::Ptr>(&any);
+
+            if (r)
+            {
+                auto record = *r;
+                if (!record)
+                    m_tee->flush(); // empty record means forced flush
+                else
+                    m_tee->write(record);
+            }
             else
-                m_tee->write(record);
+            {
+                auto a = std::get_if<AtomicRecord>(&any);
+                if (a)
+                    m_tee->write(*a);
+            }
 
             if (stop.stop_requested())
                 break;
         }
     }
-
+    
     std::chrono::milliseconds m_threshold;
     std::mutex m_mutexQueue;
     std::condition_variable_any m_queueNotEmpty;
     std::condition_variable_any m_queueEmpty;
-    std::queue<Record::Ptr> m_queue;
+    RecordQueue m_queue;
     std::chrono::time_point<std::chrono::steady_clock> m_last = std::chrono::time_point<std::chrono::steady_clock>::min();
     std::jthread m_worker;
 };

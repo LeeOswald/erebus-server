@@ -27,6 +27,15 @@ public:
         }
     }
 
+    void write(AtomicRecord a) override
+    {
+        std::shared_lock l(m_mutex);
+        for (auto& sink : m_sinks)
+        {
+            sink.second->write(a);
+        }
+    }
+
     void flush() override
     {
         std::shared_lock l(m_mutex);

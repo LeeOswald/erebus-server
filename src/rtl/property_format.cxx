@@ -102,32 +102,32 @@ std::string formatDateTime(const Property& prop)
         if (prop.semantics() == Semantics::UtcDate)
         {
             auto tm = time.toUtc();
-            return Er::format("{:02d}/{:02d}/{:04d}", tm.tm_mday, tm.tm_mon, tm.tm_year);
+            return Er::format("{:02d}/{:02d}/{:04d}", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
         }
         else if (prop.semantics() == Semantics::LocalDate)
         {
             auto tm = time.toLocalTime();
-            return Er::format("{:02d}/{:02d}/{:04d}", tm.tm_mday, tm.tm_mon, tm.tm_year);
+            return Er::format("{:02d}/{:02d}/{:04d}", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
         }
         else if (prop.semantics() == Semantics::UtcTime)
         {
             auto tm = time.toUtc();
-            return Er::format("{:02d}:{:02d}:{:02d}.{:03d}", tm.tm_hour, tm.tm_min, tm.tm_sec, time.milliseconds());
+            return Er::format("{:02d}:{:02d}:{:02d}.{:03d}", tm.tm_hour, tm.tm_min, tm.tm_sec, time.subSecond() / 1000);
         }
         else if (prop.semantics() == Semantics::LocalTime)
         {
             auto tm = time.toLocalTime();
-            return Er::format("{:02d}:{:02d}:{:02d}.{:03d}", tm.tm_hour, tm.tm_min, tm.tm_sec, time.milliseconds());
+            return Er::format("{:02d}:{:02d}:{:02d}.{:03d}", tm.tm_hour, tm.tm_min, tm.tm_sec, time.subSecond() / 1000);
         }
         else if (prop.semantics() == Semantics::UtcDateTime)
         {
             auto tm = time.toUtc();
-            return Er::format("{:02d}/{:02d}/{:04d} {:02d}:{:02d}:{:02d}", tm.tm_mday, tm.tm_mon, tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
+            return Er::format("{:02d}/{:02d}/{:04d} {:02d}:{:02d}:{:02d}", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
         }
         else if (prop.semantics() == Semantics::LocalDateTime)
         {
             auto tm = time.toLocalTime();
-            return Er::format("{:02d}/{:02d}/{:04d} {:02d}:{:02d}:{:02d}", tm.tm_mday, tm.tm_mon, tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
+            return Er::format("{:02d}/{:02d}/{:04d} {:02d}:{:02d}:{:02d}", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
         }
     }
 
@@ -146,7 +146,7 @@ std::string formatDuration(const Property& prop)
         else if (prop.semantics() == Semantics::Microseconds)
             return Er::format("{} ms", *v / 1000ULL);
         else if (prop.semantics() == Semantics::Seconds)
-            return Er::format("{} ms", *v / 1000000ULL);
+            return Er::format("{} s", *v / 1000000ULL);
     }
 
     ErAssert(!"Unsupported formatter");

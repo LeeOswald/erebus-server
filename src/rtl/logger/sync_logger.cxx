@@ -1,5 +1,6 @@
 #include "logger_base.hxx"
 
+#include <erebus/rtl/empty.hxx>
 
 namespace Er::Log
 {
@@ -9,9 +10,9 @@ namespace
 
 
 class SyncLogger
-    : public Private::LoggerBase
+    : public Private::LoggerBase<Empty>
 {
-    using Base = Private::LoggerBase;
+    using Base = Private::LoggerBase<Empty>;
 
 public:
     ~SyncLogger() = default;
@@ -21,26 +22,19 @@ public:
     {
     }
 
-    void write(Record::Ptr r) override
+    void doWrite(Record::Ptr r) override
     {
-        if (!r) [[unlikely]]
-            return;
-
-        if (r->level() < m_level)
-            return;
-
-        auto indent = m_threadData.data().indent;
-        if (indent > 0)
-            r->setIndent(indent);
-
-        if (!m_component.empty() && r->component().empty())
-            r->setComponent(m_component);
-
         m_tee->write(r);
+    }
+
+    void doWrite(AtomicRecord a) override
+    {
+        m_tee->write(a);
     }
 
     void flush() override
     {
+        m_tee->flush();
     }
 };
 

@@ -32,6 +32,12 @@ public:
         m_stream.write(data, available);
     }
 
+    void write(AtomicRecord a) override
+    {
+        for (auto r : a)
+            write(r);
+    }
+
     void flush() override
     {
         m_stream.flush();
