@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "common.proto";
+
+package erebus;
+
+option optimize_for = LITE_RUNTIME;
+
+
+service SystemInfo {
+    rpc GetSystemInfo(SystemInfoRequest) returns(stream SystemInfoReply) {}
+    rpc Ping(PingMessage) returns(PingMessage) {}
+}
+
+message SystemInfoRequest {
+    repeated string propertyNames = 1;
+}
+
+message SystemInfoReply {
+    repeated Property properties = 1;
+}
+
+message PingMessage {
+    uint64 timestamp = 1;
+    uint64 sequence = 2;
+    bytes payload = 3;
+}

@@ -5,6 +5,9 @@ package erebus;
 option optimize_for = LITE_RUNTIME;
 
 
+message Void {
+}
+
 message Property {
     message scalar {
         oneof value {
@@ -28,4 +31,9 @@ message Property {
         scalar v_scalar = 2;
         dir v_dir = 3;
     }
+}
+
+message Exception {
+    string message = 1;
+    repeated Property properties = 2;
 }

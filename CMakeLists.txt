@@ -40,9 +40,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 set(ER_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/erebus")
+set(ER_PROTO_GENERATED_DIR "${PROJECT_BINARY_DIR}/protobuf")
+file(MAKE_DIRECTORY ${ER_PROTO_GENERATED_DIR})
+set(ER_PROTO_DIR "${ER_INCLUDE_DIR}/ipc/grpc")
 
 include(debug)
 include(dependencies)
+include(protoc)
 
 # detect OS
 if(WIN32)
