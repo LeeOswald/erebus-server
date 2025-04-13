@@ -26,3 +26,6 @@ find_package(valijson REQUIRED)
 
 # protobuf
 find_package(protobuf REQUIRED)
+
+# gRPC
+find_package(gRPC CONFIG REQUIRED)

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "property.proto";
+
+package erebus;
+
+option optimize_for = LITE_RUNTIME;
+
+
+message Exception {
+    string message = 1;
+    repeated Property properties = 2;
+}
