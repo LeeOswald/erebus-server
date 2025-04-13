@@ -9,3 +9,12 @@
 #ifdef max
 #undef max
 #endif
+
+#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
+
+extern "C"
+{
+
+NTSYSAPI NTSTATUS NTAPI RtlGetVersion(PRTL_OSVERSIONINFOEXW VersionInformation);
+
+} // extern "C" {}
