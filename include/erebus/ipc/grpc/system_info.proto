@@ -13,7 +13,7 @@ service SystemInfo {
 }
 
 message SystemInfoRequest {
-    repeated string propertyNames = 1;
+    string propertyNamePattern = 1;
 }
 
 message SystemInfoReply {
