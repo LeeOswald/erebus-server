@@ -1,12 +1,8 @@
-#include <erebus/rtl/format.hxx>
-#include <erebus/server/system_info.hxx>
-
-#include <functional>
-#include <map>
+#include "erebus-version.h"
+#include "system_info_common.hxx"
 
 #include <sys/utsname.h>
 
-#include "erebus-version.h"
 
 namespace Er
 {
@@ -14,10 +10,9 @@ namespace Er
 namespace SystemInfo
 {
 
-namespace
+namespace Private
 {
 
-using SystemInfoSource = std::function<Property(std::string_view)>;
 
 Property serverVersion(std::string_view)
 {
@@ -46,7 +41,7 @@ Property osVersion(std::string_view)
     return {};
 }
 
-auto registerSources()
+SystemInfoSources registerSources()
 {
     std::map<std::string_view, SystemInfoSource> m;
 
@@ -56,26 +51,7 @@ auto registerSources()
     return m;
 }
 
-std::map<std::string_view, SystemInfoSource> const& sources()
-{
-    static std::map<std::string_view, SystemInfoSource> m = registerSources();
-    return m;
-}
-
-} // namespace {}
-
-
-ER_SERVER_EXPORT Property get(std::string_view name)
-{
-    auto& m = sources();
-    auto it = m.find(name);
-
-    if (it == m.end())
-        return Property{};
-
-    return (it->second)(name);
-}
-
+} // namespace Private {}
 
 } // namespace SystemInfo {}
 

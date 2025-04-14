@@ -18,6 +18,8 @@ add_library(erebus-server-lib SHARED)
 
 target_sources(erebus-server-lib
 	PRIVATE
+        system_info_common.hxx
+        system_info_common.cxx
         ${PLATFORM_SOURCES}
 
     PUBLIC
