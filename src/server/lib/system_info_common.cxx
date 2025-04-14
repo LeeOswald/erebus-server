@@ -44,7 +44,7 @@ ER_SERVER_EXPORT PropertyBag get(std::string_view name)
         {
             if (Er::Util::matchString(std::string_view{ item.first }, name))
             {
-                bag.push_back((item.second)(name));
+                bag.push_back((item.second)(item.first));
             }
         }
     }
