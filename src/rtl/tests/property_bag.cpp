@@ -35,6 +35,7 @@ TEST(PropertyBag, visit)
         bool string_visited = false;
         bool binary_visited = false;
         bool map_visited = false;
+        bool vector_visited = false;
 
         PropertyBag bag;
         PropertyMap m1;
@@ -110,6 +111,14 @@ TEST(PropertyBag, visit)
             {
                 addProperty(m1, p.second);
             }
+
+            addProperty(bag, { prop.name(), v });
+            return true;
+        }
+
+        bool operator()(const Property& prop, const PropertyVector& v)
+        {
+            vector_visited = (prop.name() == Property::Name("test/vector"));
 
             addProperty(bag, { prop.name(), v });
             return true;
@@ -201,4 +210,184 @@ TEST(PropertyBag, find)
     ASSERT_TRUE(!!p);
     EXPECT_TRUE(p->type() == Property::Type::Map);
     EXPECT_TRUE(*p->getMap() == m1);
+}
+
+TEST(PropertyBag, loadJson)
+{
+const std::string_view kSource =
+R"(
+{
+    "bool0":true,
+    "int0":-123456,
+    "uint0":98765,
+    "double0":-0.9,
+    "string0":"top level string",
+    "array0":[
+        { 
+            "string1_0":"level 1 string 0",  
+            "bool1_0":false 
+        },
+        { 
+            "string1_1":"level 1 string 1",  
+            "bool1_1":true 
+        }
+    ],
+    "object0":{
+        "array1_0":[
+            10, 20, 30, 40, 50
+        ],
+        "int1_0":555,
+        "string1_0":"level 1 string 2"
+    }
+}
+)";
+
+    auto prop = loadJson(kSource);
+
+    ASSERT_EQ(prop.type(), Er::Property::Type::Map);
+
+    auto m = prop.getMap();
+    EXPECT_EQ(m->size(), 7);
+    
+    {
+        auto it = m->find("bool0");
+        ASSERT_NE(it, m->end());
+        EXPECT_STREQ(it->first.c_str(), "bool0");
+        EXPECT_STREQ(it->second.name().c_str(), "bool0");
+        ASSERT_EQ(it->second.type(), Er::Property::Type::Bool);
+        EXPECT_EQ(*it->second.getBool(), true);
+
+        it = m->find("int0");
+        ASSERT_NE(it, m->end());
+        EXPECT_STREQ(it->first.c_str(), "int0");
+        EXPECT_STREQ(it->second.name().c_str(), "int0");
+        ASSERT_EQ(it->second.type(), Er::Property::Type::Int64);
+        EXPECT_EQ(*it->second.getInt64(), -123456);
+
+        it = m->find("uint0");
+        ASSERT_NE(it, m->end());
+        EXPECT_STREQ(it->first.c_str(), "uint0");
+        EXPECT_STREQ(it->second.name().c_str(), "uint0");
+        ASSERT_EQ(it->second.type(), Er::Property::Type::Int64); // loaded as Int64
+        EXPECT_EQ(*it->second.getInt64(), 98765);
+
+        it = m->find("double0");
+        ASSERT_NE(it, m->end());
+        EXPECT_STREQ(it->first.c_str(), "double0");
+        EXPECT_STREQ(it->second.name().c_str(), "double0");
+        ASSERT_EQ(it->second.type(), Er::Property::Type::Double);
+        EXPECT_DOUBLE_EQ(*it->second.getDouble(), -0.9);
+
+        it = m->find("string0");
+        ASSERT_NE(it, m->end());
+        EXPECT_STREQ(it->first.c_str(), "string0");
+        EXPECT_STREQ(it->second.name().c_str(), "string0");
+        ASSERT_EQ(it->second.type(), Er::Property::Type::String);
+        EXPECT_STREQ(it->second.getString()->c_str(), "top level string");
+
+        it = m->find("array0");
+        ASSERT_NE(it, m->end());
+        EXPECT_STREQ(it->first.c_str(), "array0");
+        EXPECT_STREQ(it->second.name().c_str(), "array0");
+        ASSERT_EQ(it->second.type(), Er::Property::Type::Vector);
+        auto v = it->second.getVector();
+        ASSERT_EQ(v->size(), 2);
+        {
+            auto p = &(*v)[0];
+
+            EXPECT_STREQ(p->name().c_str(), "");
+            ASSERT_EQ(p->type(), Er::Property::Type::Map);
+            auto m = p->getMap();
+            ASSERT_EQ(m->size(), 2);
+            {
+                auto it = m->find("string1_0");
+                ASSERT_NE(it, m->end());
+                EXPECT_STREQ(it->first.c_str(), "string1_0");
+                EXPECT_STREQ(it->second.name().c_str(), "string1_0");
+                ASSERT_EQ(it->second.type(), Er::Property::Type::String);
+                EXPECT_STREQ(it->second.getString()->c_str(), "level 1 string 0");
+
+                it = m->find("bool1_0");
+                ASSERT_NE(it, m->end());
+                EXPECT_STREQ(it->first.c_str(), "bool1_0");
+                EXPECT_STREQ(it->second.name().c_str(), "bool1_0");
+                ASSERT_EQ(it->second.type(), Er::Property::Type::Bool);
+                EXPECT_EQ(*it->second.getBool(), false);
+            }
+
+            p = &(*v)[1];
+
+            EXPECT_STREQ(p->name().c_str(), "");
+            ASSERT_EQ(p->type(), Er::Property::Type::Map);
+            m = p->getMap();
+            ASSERT_EQ(m->size(), 2);
+            {
+                auto it = m->find("string1_1");
+                ASSERT_NE(it, m->end());
+                EXPECT_STREQ(it->first.c_str(), "string1_1");
+                EXPECT_STREQ(it->second.name().c_str(), "string1_1");
+                ASSERT_EQ(it->second.type(), Er::Property::Type::String);
+                EXPECT_STREQ(it->second.getString()->c_str(), "level 1 string 1");
+
+                it = m->find("bool1_1");
+                ASSERT_NE(it, m->end());
+                EXPECT_STREQ(it->first.c_str(), "bool1_1");
+                EXPECT_STREQ(it->second.name().c_str(), "bool1_1");
+                ASSERT_EQ(it->second.type(), Er::Property::Type::Bool);
+                EXPECT_EQ(*it->second.getBool(), true);
+            }
+        }
+
+        it = m->find("object0");
+        ASSERT_NE(it, m->end());
+        EXPECT_STREQ(it->first.c_str(), "object0");
+        EXPECT_STREQ(it->second.name().c_str(), "object0");
+        ASSERT_EQ(it->second.type(), Er::Property::Type::Map);
+        auto o = it->second.getMap();
+        ASSERT_EQ(o->size(), 3);
+        {
+            auto it = o->find("array1_0");
+            ASSERT_NE(it, o->end());
+            EXPECT_STREQ(it->first.c_str(), "array1_0");
+            EXPECT_STREQ(it->second.name().c_str(), "array1_0");
+            ASSERT_EQ(it->second.type(), Er::Property::Type::Vector);
+            auto v = it->second.getVector();
+            ASSERT_EQ(v->size(), 5);
+            {
+                auto p = &(*v)[0];
+                ASSERT_EQ(p->type(), Er::Property::Type::Int64);
+                EXPECT_EQ(*p->getInt64(), 10);
+
+                p = &(*v)[1];
+                ASSERT_EQ(p->type(), Er::Property::Type::Int64);
+                EXPECT_EQ(*p->getInt64(), 20);
+
+                p = &(*v)[2];
+                ASSERT_EQ(p->type(), Er::Property::Type::Int64);
+                EXPECT_EQ(*p->getInt64(), 30);
+
+                p = &(*v)[3];
+                ASSERT_EQ(p->type(), Er::Property::Type::Int64);
+                EXPECT_EQ(*p->getInt64(), 40);
+
+                p = &(*v)[4];
+                ASSERT_EQ(p->type(), Er::Property::Type::Int64);
+                EXPECT_EQ(*p->getInt64(), 50);
+            }
+
+            it = o->find("int1_0");
+            ASSERT_NE(it, o->end());
+            EXPECT_STREQ(it->first.c_str(), "int1_0");
+            EXPECT_STREQ(it->second.name().c_str(), "int1_0");
+            ASSERT_EQ(it->second.type(), Er::Property::Type::Int64);
+            EXPECT_EQ(*it->second.getInt64(), 555);
+
+            it = o->find("string1_0");
+            ASSERT_NE(it, o->end());
+            EXPECT_STREQ(it->first.c_str(), "string1_0");
+            EXPECT_STREQ(it->second.name().c_str(), "string1_0");
+            ASSERT_EQ(it->second.type(), Er::Property::Type::String);
+            EXPECT_STREQ(it->second.getString()->c_str(), "level 1 string 2");
+        }
+    }
 }

@@ -2,7 +2,7 @@
 
 #include <erebus/result.hxx>
 #include <erebus/rtl/exception.hxx>
-#include <erebus/rtl/property_info.hxx>
+
 
 namespace Er::System
 {

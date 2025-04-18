@@ -95,6 +95,17 @@ public:
         return true;
     }
 
+    bool operator()(const Property& prop, const PropertyVector& v)
+    {
+        Log::write(m_log, m_level, "{}: {", prop.name());
+
+        PropertyPrinter nested(m_log, m_level);
+        visit(v, nested);
+
+        Log::write(m_log, m_level, "}", prop.name());
+        return true;
+    }
+
 private:
     Log::ILogger* m_log;
     Log::Level m_level;

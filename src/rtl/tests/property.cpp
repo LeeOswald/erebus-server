@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-#include <erebus/rtl/property.hxx>
+#include <erebus/rtl/property_bag.hxx>
 
 using namespace Er;
 
@@ -742,6 +742,7 @@ TEST(Property, visit)
         bool string_visited = false;
         bool binary_visited = false;
         bool map_visited = false;
+        bool vector_visited = false;
 
         PropertyMap m;
         PropertyMap m1;
@@ -817,6 +818,14 @@ TEST(Property, visit)
             {
                 addProperty(m1, p.second);
             }
+
+            addProperty(m, { prop.name(), v });
+            return true;
+        }
+
+        bool operator()(const Property& prop, const PropertyVector& v)
+        {
+            vector_visited = (prop.name() == Property::Name("test/vector"));
 
             addProperty(m, { prop.name(), v });
             return true;

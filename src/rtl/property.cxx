@@ -16,7 +16,8 @@ std::string_view Property::typeToString(Type type) noexcept
         "Double",
         "String",
         "Binary",
-        "Map"
+        "Map",
+        "Vector"
     };
 
     if (static_cast<std::size_t>(type) >= _countof(names))
@@ -40,7 +41,8 @@ bool Property::_eq(const Property& other) const noexcept
         &Property::_eqDouble,
         &Property::_eqString,
         &Property::_eqBinary,
-        &Property::_eqMap
+        &Property::_eqMap,
+        &Property::_eqVector
     };
 
     auto ty = type();
@@ -148,6 +150,30 @@ bool Property::_eqMap(const Property& other) const noexcept
     return true;
 }
 
+bool Property::_eqVector(const Property& other) const noexcept
+{
+    auto v1 = getVector();
+    auto v2 = other.getVector();
+    ErAssert(!!v1 && !!v2);
+
+    if (v1->size() != v2->size())
+        return false;
+
+    auto it1 = v1->begin();
+    auto it2 = v2->begin();
+
+    while ((it1 != v1->end()) && (it2 != v2->end()))
+    {
+        if (*it1 != *it2)
+            return false;
+
+        ++it1;
+        ++it2;
+    }
+
+    return true;
+}
+
 std::string Property::_str() const
 {
     using StrFn = std::string(Property::*)() const;
@@ -163,7 +189,8 @@ std::string Property::_str() const
         &Property::_strDouble,
         &Property::_strString,
         &Property::_strBinary,
-        &Property::_strMap
+        &Property::_strMap,
+        &Property::_strVector
     };
 
     auto ty = type();
@@ -258,6 +285,36 @@ std::string Property::_strMap() const
         }
 
         ss << "{ \"" << prop.first << "\" = \"" << prop.second.str() << "\" }";
+    }
+
+    ss << " ]";
+
+    return ss.str();
+}
+
+std::string Property::_strVector() const
+{
+    auto v = getVector();
+    ErAssert(v);
+    if (v->empty())
+        return "[]";
+
+    std::ostringstream ss;
+
+    bool empty = true;
+    ss << "[ ";
+    for (auto& prop : *v)
+    {
+        if (empty)
+        {
+            empty = false;
+        }
+        else
+        {
+            ss << ", ";
+        }
+
+        ss << prop.str();
     }
 
     ss << " ]";

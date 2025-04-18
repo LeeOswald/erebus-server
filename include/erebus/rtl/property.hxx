@@ -6,6 +6,7 @@
 
 #include <map>
 #include <variant>
+#include <vector>
 
 
 #include <boost/static_string/static_string.hpp>
@@ -20,6 +21,7 @@ public:
     static constexpr std::size_t MaxNameLength = 32;
     using Name = boost::static_string<MaxNameLength>;
     using Map = std::map<Name, Property>;
+    using Vector = std::vector<Property>;
 
     enum class Type: std::uint32_t
     {
@@ -32,7 +34,8 @@ public:
         Double = 6,
         String = 7,
         Binary = 8,
-        Map = 9
+        Map = 9,
+        Vector = 10
     };
 
     static std::string_view typeToString(Type type) noexcept;
@@ -143,6 +146,20 @@ public:
     }
 
     constexpr Property(auto&& name, Map&& v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(std::move(v))
+        , m_semantics(semantics)
+    {
+    }
+
+    constexpr Property(auto&& name, const Vector& v, SemanticCode semantics = Semantics::Default) noexcept
+        : m_name(std::forward<decltype(name)>(name))
+        , m_storage(v)
+        , m_semantics(semantics)
+    {
+    }
+
+    constexpr Property(auto&& name, Vector&& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(std::move(v))
         , m_semantics(semantics)
@@ -293,6 +310,16 @@ public:
         return std::get_if<Map>(&m_storage);
     }
 
+    [[nodiscard]] constexpr Vector const* getVector() const noexcept
+    {
+        return std::get_if<Vector>(&m_storage);
+    }
+
+    [[nodiscard]] constexpr Vector* getVector() noexcept
+    {
+        return std::get_if<Vector>(&m_storage);
+    }
+
     [[nodiscard]] bool operator==(const Property& other) const noexcept
     {
         return _eq(other);
@@ -314,7 +341,8 @@ private:
         double,
         std::string,
         Binary,
-        Map
+        Map,
+        Vector
     >;
 
     bool _eq(const Property& other) const noexcept;
@@ -328,6 +356,7 @@ private:
     bool _eqString(const Property& other) const noexcept;
     bool _eqBinary(const Property& other) const noexcept;
     bool _eqMap(const Property& other) const noexcept;
+    bool _eqVector(const Property& other) const noexcept;
 
     std::string _str() const;
     std::string _strEmpty() const;
@@ -340,6 +369,7 @@ private:
     std::string _strString() const;
     std::string _strBinary() const;
     std::string _strMap() const;
+    std::string _strVector() const;
 
     Name m_name;
     Storage m_storage;
@@ -413,6 +443,13 @@ template <>
     return *v.getMap();
 }
 
+template <>
+[[nodiscard]] inline const Property::Vector& get<>(const Property& v) noexcept
+{
+    ErAssert(v.type() == Property::Type::Vector);
+    return *v.getVector();
+}
+
 [[nodiscard]] inline std::string formatProperty(const Property& prop)
 {
     if (prop.empty()) [[unlikely]]
@@ -422,104 +459,5 @@ template <>
     return f(prop);
 }
 
-
-using PropertyMap = Property::Map;
-
-
-inline bool operator==(const PropertyMap& a, const PropertyMap& b) noexcept
-{
-    if (a.size() != b.size())
-        return false;
-
-    auto ita = a.begin();
-    auto itb = b.begin();
-    while (ita != a.end())
-    {
-        if (ita->first != itb->first)
-            return false;
-
-        if (ita->second != itb->second)
-            return false;
-
-        ++ita;
-        ++itb;
-    }
-
-    return true;
-}
-
-inline void addProperty(PropertyMap& map, const Property& prop)
-{
-    map.insert({ prop.name(), prop });
-}
-
-inline void addProperty(PropertyMap& map, Property&& prop)
-{
-    auto name = prop.name();
-    map.insert({ std::move(name), std::move(prop) });
-}
-
-
-inline bool visit(const Property& prop, auto&& visitor)
-{
-    auto ty = prop.type();
-    switch (ty)
-    {
-    case Er::Property::Type::Empty: 
-        return visitor(prop, Empty{});
-    case Er::Property::Type::Bool:
-        ErAssert(prop.getBool());
-        return visitor(prop, *prop.getBool());
-    case Er::Property::Type::Int32:
-        ErAssert(prop.getInt32());
-        return visitor(prop, *prop.getInt32());
-    case Er::Property::Type::UInt32:
-        ErAssert(prop.getUInt32());
-        return visitor(prop, *prop.getUInt32());
-    case Er::Property::Type::Int64:
-        ErAssert(prop.getInt64());
-        return visitor(prop, *prop.getInt64());
-    case Er::Property::Type::UInt64:
-        ErAssert(prop.getUInt64());
-        return visitor(prop, *prop.getUInt64());
-    case Er::Property::Type::Double:
-        ErAssert(prop.getDouble());
-        return visitor(prop, *prop.getDouble());
-    case Er::Property::Type::String:
-        ErAssert(prop.getString());
-        return visitor(prop, *prop.getString());
-    case Er::Property::Type::Binary:
-        ErAssert(prop.getBinary());
-        return visitor(prop, *prop.getBinary());
-    case Er::Property::Type::Map:
-        ErAssert(prop.getMap());
-        return visitor(prop, *prop.getMap());
-    }
-
-    ErAssert(!"Unkwnown property type");
-    return false;
-}
-
-inline bool visit(const PropertyMap& m, auto&& visitor)
-{
-    for (auto& entry : m)
-    {
-        if (!visit(entry.second, std::forward<decltype(visitor)>(visitor)))
-            return false;
-    }
-
-    return true;
-}
-
-inline const Property* findProperty(const PropertyMap& bag, std::string_view name) noexcept
-{
-    for (auto& prop : bag)
-    {
-        if (prop.first == name)
-            return &prop.second;
-    }
-
-    return nullptr;
-}
 
 } // namespace Er {}

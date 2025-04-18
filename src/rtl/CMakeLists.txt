@@ -24,6 +24,7 @@ target_sources(erebus-rtl
         luaxx/luaxx_util.cxx
         program.cxx
         property.cxx
+        property_bag.cxx
         property_format.cxx
         result.cxx
         system/packed_time.cxx
@@ -150,6 +151,7 @@ target_link_libraries(
     erebus-rtl
     PUBLIC
     fmt::fmt
+    rapidjson
     ${Boost_LIBRARIES}
     ${lua_LIBRARIES}
     ${PLATFORM_LIBS}
