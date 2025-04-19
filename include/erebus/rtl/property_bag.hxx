@@ -145,11 +145,21 @@ inline bool visit(const PropertyVector& bag, auto&& visitor)
 
 [[nodiscard]] inline const Property* findProperty(const PropertyMap& bag, std::string_view name) noexcept
 {
-    for (auto& prop : bag)
+    auto it = bag.find(name);
+    if (it != bag.end())
     {
-        if (prop.first == name)
-            return &prop.second;
+        ErAssert(it->second.name() == name);
+        return &it->second;
     }
+    
+    return nullptr;
+}
+
+[[nodiscard]] inline const Property* findProperty(const PropertyMap& bag, std::string_view name, Property::Type type) noexcept
+{
+    auto prop = findProperty(bag, name);
+    if (prop && prop->type() == type)
+        return prop;
 
     return nullptr;
 }
@@ -161,6 +171,15 @@ inline bool visit(const PropertyVector& bag, auto&& visitor)
         if (prop.name() == name)
             return &prop;
     }
+
+    return nullptr;
+}
+
+[[nodiscard]] inline const Property* findProperty(const PropertyVector& bag, std::string_view name, Property::Type type) noexcept
+{
+    auto prop = findProperty(bag, name);
+    if (prop && prop->type() == type)
+        return prop;
 
     return nullptr;
 }

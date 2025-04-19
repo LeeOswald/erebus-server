@@ -20,7 +20,7 @@ class ER_RTL_EXPORT Property final
 public:
     static constexpr std::size_t MaxNameLength = 32;
     using Name = boost::static_string<MaxNameLength>;
-    using Map = std::map<Name, Property>;
+    using Map = std::map<Name, Property, std::less<>>;
     using Vector = std::vector<Property>;
 
     enum class Type: std::uint32_t
