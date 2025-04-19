@@ -8,16 +8,12 @@ option optimize_for = LITE_RUNTIME;
 
 
 service SystemInfo {
-    rpc GetSystemInfo(SystemInfoRequest) returns(stream SystemInfoReply) {}
+    rpc GetSystemInfo(SystemInfoRequest) returns(stream Property) {}
     rpc Ping(PingMessage) returns(PingMessage) {}
 }
 
 message SystemInfoRequest {
     string propertyNamePattern = 1;
-}
-
-message SystemInfoReply {
-    repeated Property properties = 1;
 }
 
 message PingMessage {

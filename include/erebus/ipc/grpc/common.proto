@@ -22,14 +22,19 @@ message Property {
         }
     }
     
-    message dir {
+    message object {
         map<string, Property> v_map = 1;
+    }
+    
+    message array {
+        repeated Property v_vector = 1;
     }
 
     string name = 1;
     oneof value {
         scalar v_scalar = 2;
-        dir v_dir = 3;
+        object v_object = 3;
+        array v_array = 4;
     }
 }
 

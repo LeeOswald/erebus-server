@@ -1,6 +1,7 @@
 add_library(erebus-grpc-server STATIC
     grpc_server.cxx
     system_info_service.cxx
+    trace.hxx
     ${ER_INCLUDE_DIR}/ipc/grpc/private/grpc_server.hxx 
 )
 

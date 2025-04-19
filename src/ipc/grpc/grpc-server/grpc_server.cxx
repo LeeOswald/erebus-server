@@ -86,6 +86,8 @@ public:
         {
             if (ep.tls)
             {
+                ErLogInfo2(m_log.get(), "Adding server endpoint {} (TLS enabled)", ep.address);
+
                 grpc::SslServerCredentialsOptions::PemKeyCertPair keycert = { ep.key, ep.certificate };
                 grpc::SslServerCredentialsOptions sslOps(GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY);
                 sslOps.pem_root_certs = ep.rootCertificates;
@@ -95,6 +97,8 @@ public:
             }
             else
             {
+                ErLogInfo2(m_log.get(), "Adding server endpoint {} (TLS disabled)", ep.address);
+
                 // no authentication
                 builder.AddListeningPort(ep.address, grpc::InsecureServerCredentials());
             }
