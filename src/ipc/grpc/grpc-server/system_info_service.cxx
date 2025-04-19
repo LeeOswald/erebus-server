@@ -17,17 +17,41 @@ namespace
 class SystemInfoImpl
     : public IService
     , public erebus::SystemInfo::CallbackService
+    , public std::enable_shared_from_this<SystemInfoImpl>
 {
+    struct PrivateTag {};
+
 public:
     ~SystemInfoImpl()
     {
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::~SystemInfoImpl", Er::Format::ptr(this));
     }
 
-    SystemInfoImpl(Log::ILogger::Ptr log)
+    SystemInfoImpl(PrivateTag, Log::ILogger::Ptr log)
         : m_log(log)
     {
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::SystemInfoImpl", Er::Format::ptr(this));
+    }
+
+    static IService::Ptr create(Log::ILogger::Ptr log)
+    {
+        return std::make_shared<SystemInfoImpl>(PrivateTag{}, log);
+    }
+
+    IUnknown::Ptr queryInterface(std::string_view iid) noexcept override
+    {
+        if ((iid == IService::IID) ||
+            (iid == IUnknown::IID))
+        {
+            return shared_from_this();
+        }
+
+        return {};
+    }
+
+    ::grpc::Service* grpc() noexcept override
+    {
+        return this;
     }
 
     grpc::ServerWriteReactor<erebus::Property>* GetSystemInfo(grpc::CallbackServerContext* context, const erebus::SystemInfoRequest* request) override
@@ -198,5 +222,11 @@ private:
 
 
 } // namespace {}
+
+
+IService::Ptr createSystemInfoService(Log::ILogger::Ptr log)
+{
+    return SystemInfoImpl::create(log);
+}
 
 } // namespace Er::Ipc::Grpc {}
