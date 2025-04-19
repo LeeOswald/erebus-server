@@ -1,11 +1,16 @@
 
 generate_protobuf_stuff("common" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
+generate_grpc_stuff("system_info" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
 
 add_library(erebus-grpc-common STATIC
     ${ER_INCLUDE_DIR}/ipc/grpc/igrpc_server.hxx
     ${ER_INCLUDE_DIR}/ipc/grpc/igrpc_service.hxx
     ${ER_PROTO_GENERATED_DIR}/common.pb.h
     ${ER_PROTO_GENERATED_DIR}/common.pb.cc
+    ${ER_PROTO_GENERATED_DIR}/system_info.pb.h
+    ${ER_PROTO_GENERATED_DIR}/system_info.pb.cc
+    ${ER_PROTO_GENERATED_DIR}/system_info.grpc.pb.h
+    ${ER_PROTO_GENERATED_DIR}/system_info.grpc.pb.cc
 )
 
 set_property(TARGET erebus-grpc-common PROPERTY PREFIX "")

@@ -10,6 +10,9 @@
 #undef max
 #endif
 
+using NTSTATUS = long;
+
+
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 
 extern "C"
