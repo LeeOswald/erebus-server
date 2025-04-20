@@ -32,8 +32,22 @@ struct ISystemInfoClient
         virtual void onReply(PingMessage&& ping, PingMessage&& reply) = 0;
     };
 
+    struct ISystemInfoCompletion
+        : public IClient::ICompletion
+    {
+        using Ptr = std::shared_ptr<ISystemInfoCompletion>;
+
+        virtual ~ISystemInfoCompletion() = default;
+
+        virtual CallbackResult onProperty(Property&& prop) = 0;
+    };
+
     virtual ~ISystemInfoClient() = default;
     virtual void ping(PingMessage&& ping, IPingCompletion::Ptr handler) = 0;
+    virtual void getSystemInfo(const std::string& pattern, ISystemInfoCompletion::Ptr handler) = 0;
 };
+
+
+ISystemInfoClient::Ptr createSystemInfoClient(ChannelPtr channel, Log::ILogger::Ptr log);
 
 } // namespace Er::Ipc::Grpc {}
