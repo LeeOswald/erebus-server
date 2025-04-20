@@ -1,9 +1,9 @@
 #pragma once
 
 
+#include <erebus/ipc/grpc/igrpc_server.hxx>
 #include <erebus/rtl/program.hxx>
-
-#include "config.hxx"
+#include <erebus/rtl/property_bag.hxx>
 
 
 class ServerApplication
@@ -16,12 +16,16 @@ public:
 
 protected:
     std::string m_cfgFile;
-    ServerConfig m_config;
+    Er::Property m_configRoot;
+    Er::PropertyMap const* m_config = nullptr;
+    Er::Ipc::Grpc::IServer::Ptr m_grpcServer;
 
     void addCmdLineOptions(boost::program_options::options_description& options) override;
     bool loadConfiguration() override;
+    void addLoggers(Er::Log::ITee* main) override;
 
     bool createPidfile();
+    bool createServer();
 
     int run(int argc, char** argv) override;
 };
