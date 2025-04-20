@@ -1,5 +1,7 @@
 #include "server_app.hxx"
 
+#include <erebus/rtl/system/thread.hxx>
+
 #include <iostream>
 
 
@@ -13,6 +15,8 @@ int main(int argc, char* argv[], char* env[])
         std::exit(EXIT_FAILURE);
     }
 #endif
+
+    Er::System::CurrentThread::setName("main");
 
     try
     {

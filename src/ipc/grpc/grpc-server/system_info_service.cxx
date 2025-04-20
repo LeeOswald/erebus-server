@@ -54,6 +54,11 @@ public:
         return this;
     }
 
+    std::string_view name() const noexcept override
+    {
+        return "SystemInfo";
+    }
+
     grpc::ServerWriteReactor<erebus::Property>* GetSystemInfo(grpc::CallbackServerContext* context, const erebus::SystemInfoRequest* request) override
     {
         ServerTraceIndent2(m_log.get(), "{}.SystemInfoImpl::GetSystemInfo", Er::Format::ptr(this));

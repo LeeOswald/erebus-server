@@ -5,6 +5,7 @@
 #include <erebus/rtl/logger/simple_formatter.hxx>
 #include <erebus/rtl/system/user.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
+#include <erebus/rtl/util/file.hxx>
 #include <erebus/rtl/util/pid_file.hxx>
 
 #include <iostream>
@@ -35,7 +36,9 @@ bool ServerApplication::loadConfiguration()
             return false;
         }
 
-        m_configRoot = Er::loadJson(m_cfgFile);
+        auto configJson = Er::Util::loadTextFile(m_cfgFile);
+
+        m_configRoot = Er::loadJson(configJson);
         if (m_configRoot.type() != Er::Property::Type::Map)
         {
             std::cerr << "Invalid configuration file format\n";
@@ -79,7 +82,8 @@ void ServerApplication::addLoggers(Er::Log::ITee* main)
     prop = Er::findProperty(*m_config, "max_log_size", Er::Property::Type::Int64);
     if (prop)
     {
-        maxLogSize = static_cast<std::uint64_t>(*prop->getInt64());
+        maxLogSize = 1024 * 1024 * static_cast<std::uint64_t>(*prop->getInt64());
+        maxLogSize = std::max(maxLogSize, std::uint64_t(1024));
     }
 
     auto formatOptions = Er::Log::SimpleFormatter::Options{
@@ -146,10 +150,32 @@ bool ServerApplication::createServer()
     Er::Util::ExceptionLogger xcptHandler(Er::Log::get());
     try
     {
+        auto sysInfoLogger = Er::Log::makeSyncLogger("system_info");
+        sysInfoLogger->addSink("main", Er::Log::global());
+        auto sysInfoService = Er::Ipc::Grpc::createSystemInfoService(sysInfoLogger);
+
         auto serverLogger = Er::Log::makeSyncLogger("grpc_server");
         serverLogger->addSink("main", Er::Log::global());
 
         m_grpcServer = Er::Ipc::Grpc::createServer(settings, serverLogger);
+        m_grpcServer->addService(sysInfoService);
+    }
+    catch (...)
+    {
+        Er::dispatchException(std::current_exception(), xcptHandler);
+
+        return false;
+    }
+
+    return true;
+}
+
+bool ServerApplication::startServer()
+{
+    Er::Util::ExceptionLogger xcptHandler(Er::Log::get());
+    try
+    {
+        m_grpcServer->start();
     }
     catch (...)
     {
@@ -170,6 +196,9 @@ int ServerApplication::run(int argc, char** argv)
         return EXIT_FAILURE;
 
     if (!createServer())
+        return EXIT_FAILURE;
+
+    if (!startServer())
         return EXIT_FAILURE;
 
     ErLogInfo("Server started");

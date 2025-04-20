@@ -73,6 +73,8 @@ public:
             ErThrow("Cannot add new services to a running server instance");
 
         m_services.push_back(service);
+
+        ErLogInfo2(m_log.get(), "Service {} added", service->name());
     }
 
     void start() override
@@ -159,7 +161,7 @@ private:
                 ep.address = *address->getString();
 
                 auto tls = findProperty(*m, "tls", Property::Type::Bool);
-                if (tls)
+                if (tls && *tls->getBool())
                 {
                     ep.tls = true;
 

@@ -26,6 +26,7 @@ protected:
 
     bool createPidfile();
     bool createServer();
+    bool startServer();
 
     int run(int argc, char** argv) override;
 };

@@ -6,6 +6,7 @@
 
 #include <erebus/rtl/condition.hxx>
 #include <erebus/rtl/log.hxx>
+#include <erebus/rtl/system/thread.hxx>
 
 #include <atomic>
 #include <thread>
@@ -115,6 +116,8 @@ private:
     private:
         void run()
         {
+            System::CurrentThread::setName("SignalWaiter");
+
             m_signals.async_wait([this](const boost::system::error_code& ec, int signo) { handler(ec, signo); });
             m_io.run();
         }

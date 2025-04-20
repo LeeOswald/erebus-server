@@ -22,6 +22,7 @@ struct IService
 
     virtual ~IService() = default;
     virtual ::grpc::Service* grpc() noexcept = 0;
+    virtual std::string_view name() const noexcept = 0;
 };
 
 } // namespace Er::Ipc::Grpc {}
