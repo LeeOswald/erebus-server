@@ -39,6 +39,29 @@ void marshalScalar(const Property& source, erebus::Property_scalar* dest)
     }
 }
 
+Property unmarshalScalar(const erebus::Property& source)
+{
+    auto& scalar = source.v_scalar();
+    if (scalar.has_v_bool())
+        return Property(source.name(), scalar.v_bool());
+    else if (scalar.has_v_int32())
+        return Property(source.name(), scalar.v_int32());
+    else if (scalar.has_v_uint32())
+        return Property(source.name(), scalar.v_uint32());
+    else if (scalar.has_v_int64())
+        return Property(source.name(), scalar.v_int64());
+    else if (scalar.has_v_uint64())
+        return Property(source.name(), scalar.v_uint64());
+    else if (scalar.has_v_double())
+        return Property(source.name(), scalar.v_double());
+    else if (scalar.has_v_string())
+        return Property(source.name(), scalar.v_string());
+    else if (scalar.has_v_binary())
+        return Property(source.name(), Binary(scalar.v_binary()));
+
+    return {};
+}
+
 void marshalMap(const Property& source, erebus::Property_object* dest)
 {
     auto& sourceMap = *source.getMap();
@@ -53,6 +76,20 @@ void marshalMap(const Property& source, erebus::Property_object* dest)
     }
 }
 
+Property unmarshalMap(const std::string& name, const erebus::Property_object& source)
+{
+    PropertyMap destMap;
+    
+    auto& sourceMap = source.v_map();
+    for (auto it = sourceMap.begin(); it != sourceMap.end(); ++it)
+    {
+        auto prop = unmarshalProperty(it->second);
+        addProperty(destMap, std::move(prop));
+    }
+
+    return Property(name, std::move(destMap));
+}
+
 void marshalVector(const Property& source, erebus::Property_array* dest)
 {
     auto& sourceVector = *source.getVector();
@@ -65,6 +102,20 @@ void marshalVector(const Property& source, erebus::Property_array* dest)
 
         destVector->Add(std::move(destProp));
     }
+}
+
+Property unmarshalVector(const std::string& name, const erebus::Property_array& source)
+{
+    PropertyVector destVector;
+
+    auto& sourceVector = source.v_vector();
+    for (auto it = sourceVector.begin(); it != sourceVector.end(); ++it)
+    {
+        auto prop = unmarshalProperty(*it);
+        addProperty(destVector, std::move(prop));
+    }
+
+    return Property(name, std::move(destVector));
 }
 
 } // namespace {}
@@ -101,6 +152,45 @@ void marshalProperty(const Property& source, erebus::Property& dest)
         marshalVector(source, dest.mutable_v_array());
         break;
     }
+}
+
+Property unmarshalProperty(const erebus::Property& source)
+{
+    if (source.has_v_scalar())
+        return unmarshalScalar(source);
+    else if (source.has_v_object())
+        return unmarshalMap(source.name(), source.v_object());
+    else if (source.has_v_array())
+        return unmarshalVector(source.name(), source.v_array());
+
+    return {};
+}
+
+void marshalException(const Exception& source, erebus::Exception& dest)
+{
+    dest.Clear();
+
+    dest.set_message(source.message());
+
+    for (auto& prop : source.properties())
+    {
+        auto out = dest.add_properties();
+        marshalProperty(prop, *out);
+    }
+}
+
+Exception unmarshalException(const erebus::Exception& source)
+{
+    Exception dest(std::source_location::current(), source.message());
+
+    int propCount = source.properties_size();
+    for (int i = 0; i < propCount; ++i)
+    {
+        auto prop = unmarshalProperty(source.properties(i));
+        dest.add(std::move(prop));
+    }
+
+    return dest;
 }
 
 } // namespace Er::Ipc::Grpc {}
