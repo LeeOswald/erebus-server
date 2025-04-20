@@ -193,4 +193,48 @@ Exception unmarshalException(const erebus::Exception& source)
     return dest;
 }
 
+static constexpr std::pair<grpc::StatusCode, Er::ResultCode> s_grpcStatusMapping[] =
+{
+    { grpc::OK, Er::Result::Ok },
+    { grpc::CANCELLED, Er::Result::Canceled },
+    { grpc::UNKNOWN, Er::Result::Failure },
+    { grpc::INVALID_ARGUMENT, Er::Result::InvalidArgument },
+    { grpc::DEADLINE_EXCEEDED, Er::Result::Timeout },
+    { grpc::NOT_FOUND, Er::Result::NotFound },
+    { grpc::ALREADY_EXISTS, Er::Result::AlreadyExists },
+    { grpc::PERMISSION_DENIED, Er::Result::AccessDenied },
+    { grpc::UNAUTHENTICATED, Er::Result::Unauthenticated },
+    { grpc::RESOURCE_EXHAUSTED, Er::Result::ResourceExhausted },
+    { grpc::FAILED_PRECONDITION, Er::Result::FailedPrecondition },
+    { grpc::ABORTED, Er::Result::Aborted },
+    { grpc::OUT_OF_RANGE, Er::Result::OutOfRange },
+    { grpc::UNIMPLEMENTED, Er::Result::Unimplemented },
+    { grpc::INTERNAL, Er::Result::Internal },
+    { grpc::UNAVAILABLE, Er::Result::Unavailable },
+    { grpc::DATA_LOSS, Er::Result::DataLoss }
+};
+
+
+Er::ResultCode mapGrpcStatus(grpc::StatusCode status) noexcept
+{
+    for (auto& m : s_grpcStatusMapping)
+    {
+        if (m.first == status)
+            return m.second;
+    }
+
+    return Er::Result::Failure;
+}
+
+grpc::StatusCode resultToGrpcStatus(Er::ResultCode code) noexcept
+{
+    for (auto& m : s_grpcStatusMapping)
+    {
+        if (m.second == code)
+            return m.first;
+    }
+
+    return grpc::UNKNOWN;
+}
+
 } // namespace Er::Ipc::Grpc {}
