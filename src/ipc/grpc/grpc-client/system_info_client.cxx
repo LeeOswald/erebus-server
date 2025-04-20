@@ -242,8 +242,6 @@ private:
             }
             else
             {
-                ClientTrace2(m_log.get(), "Pinged {} with {} bytes of data in {} msec", ctx->grpcContext.peer(), ctx->ping.payload.size(), (ctx->reply.timestamp() - ctx->ping.timestamp.value) / 1000);
-
                 PingMessage reply;
                 reply.timestamp = ctx->reply.timestamp();
                 reply.sequence = ctx->reply.sequence();

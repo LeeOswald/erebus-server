@@ -7,3 +7,5 @@ add_library(erebus::testing ALIAS erebus-testing)
 add_subdirectory(ipc)
 
 add_subdirectory(server)
+
+add_subdirectory(client)

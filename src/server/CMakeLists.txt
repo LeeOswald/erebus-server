@@ -1,7 +1,6 @@
 add_subdirectory(lib)
 add_library(erebus::server_lib ALIAS erebus-server-lib)
 
-generate_grpc_stuff("system_info" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
 
 add_executable(erebus-server
     main.cxx

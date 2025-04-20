@@ -28,7 +28,6 @@ struct ISystemInfoClient
         using Ptr = std::shared_ptr<IPingCompletion>;
 
         virtual ~IPingCompletion() = default;
-
         virtual void onReply(PingMessage&& ping, PingMessage&& reply) = 0;
     };
 
@@ -38,7 +37,6 @@ struct ISystemInfoClient
         using Ptr = std::shared_ptr<ISystemInfoCompletion>;
 
         virtual ~ISystemInfoCompletion() = default;
-
         virtual CallbackResult onProperty(Property&& prop) = 0;
     };
 
