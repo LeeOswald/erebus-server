@@ -3,6 +3,7 @@ add_executable(erebus-client
     client_app.hxx
     main.cxx
     runner_base.hxx
+    ping.hxx
     system_info.hxx
 )
 

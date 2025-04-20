@@ -16,7 +16,10 @@ void ClientApplication::addCmdLineOptions(boost::program_options::options_descri
     options.add_options()
         ("connection", boost::program_options::value<std::string>(&m_cfgFile), "connection config file path")
         ("parallel,t", boost::program_options::value<unsigned>(&m_parallel)->default_value(1), "parallel thread count")
+        ("count,n", boost::program_options::value<unsigned>(&m_iterations)->default_value(unsigned(-1)), "request repeat count")
+        ("wait,w", boost::program_options::value<bool>(&m_wait)->default_value(true), "wait for current request completion before issuing another request")
         ("ping", boost::program_options::value<unsigned>(), "ping with specified number of bytes")
+        ("sysinfo", boost::program_options::value<std::string>(), "query system properties with specified name pattern")
         ;
 }
 
@@ -81,7 +84,13 @@ bool ClientApplication::startTasks()
     if (args().contains("ping"))
     {
         auto payloadSize = args()["ping"].as<unsigned>();
-        m_pingRunner.reset(new PingRunner(m_channel, m_parallel, payloadSize));
+        m_pingRunner.reset(new PingRunner(m_channel, m_parallel, m_wait, m_iterations, payloadSize));
+        return true;
+    }
+    else if (args().contains("sysinfo"))
+    {
+        auto pattern = args()["sysinfo"].as<std::string>();
+        m_systemInfoRunner.reset(new SystemInfoRunner(m_channel, m_parallel, m_iterations, m_wait, pattern));
         return true;
     }
 
@@ -105,6 +114,7 @@ int ClientApplication::run(int argc, char** argv)
     }
 
     m_pingRunner.reset();
+    m_systemInfoRunner.reset();
 
     m_channel.reset();
 

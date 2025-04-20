@@ -26,12 +26,12 @@ Property osType(std::string_view)
 Property osVersion(std::string_view)
 {
     RTL_OSVERSIONINFOEXW versionInfo = {};
-    if (!NT_SUCCESS(RtlGetVersion(&versionInfo)))
+    if (NT_SUCCESS(RtlGetVersion(&versionInfo)))
     {
         return Property{ OsVersion, Er::format("{}.{}.{}", versionInfo.dwMajorVersion, versionInfo.dwMinorVersion, versionInfo.dwBuildNumber) };
     }
 
-    return {};
+    return Property{ OsVersion , std::string("n/a")};
 }
 
 SystemInfoSources registerSources()
