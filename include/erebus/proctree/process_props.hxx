@@ -2,7 +2,8 @@
 
 #include <erebus/proctree/proctree.hxx>
 #include <erebus/rtl/flags.hxx>
-#include <erebus/rtl/murmur.hxx>
+
+#include <array>
 
 #include <boost/functional/hash.hpp>
 
@@ -96,11 +97,63 @@ struct Reflectable
         }
     };
 
-    static const FieldInfo Fields[FieldCount];
+    using Fields = std::array<FieldInfo, FieldCount>;
+
+    static const Fields& GetFields() noexcept;
 };
+
+#define ER_REFLECTABLE_FIELD(Class, FieldId, Field) \
+FieldInfo{ \
+    Class::FieldIndices::FieldId, \
+    #FieldId, \
+    [](const Class& l, const Class& r) noexcept { return l.Field == r.Field; }, \
+    [](HashValueType& seed, const Class& o) noexcept { boost::hash_combine(seed, o.Field); } \
+} 
+
+#define ER_REFLECTABLE_FIELD_CMP(Class, FieldId, Field, Cmp) \
+FieldInfo{ \
+    Class::FieldIndices::FieldId, \
+    #FieldId, \
+    Cmp, \
+    [](HashValueType& seed, const Class& o) noexcept { boost::hash_combine(seed, o.Field); } \
+} 
+
+#define ER_REFLECTABLE_FIELDS_BEGIN(Class) \
+inline const Class::Fields& Class::GetFields() noexcept \
+{ \
+    static const Fields fields = { \
+
+
+#define ER_REFLECTABLE_FIELDS_END() \
+    }; \
+    return fields; \
+}
+
 
 
 using ReflectableProcessProperties = Reflectable<ProcessProperties>;
 
+
+ER_REFLECTABLE_FIELDS_BEGIN(ReflectableProcessProperties)
+
+    ER_REFLECTABLE_FIELD(ProcessProperties, Pid, pid),
+    ER_REFLECTABLE_FIELD(ProcessProperties, PPid, ppid),
+    ER_REFLECTABLE_FIELD(ProcessProperties, PGrp, pgrp),
+    ER_REFLECTABLE_FIELD(ProcessProperties, Tpgid, tpgid),
+    ER_REFLECTABLE_FIELD(ProcessProperties, Session, session),
+    ER_REFLECTABLE_FIELD(ProcessProperties, Ruid, ruid),
+    ER_REFLECTABLE_FIELD(ProcessProperties, Comm, comm),
+    ER_REFLECTABLE_FIELD(ProcessProperties, CmdLine, cmdLine),
+    ER_REFLECTABLE_FIELD(ProcessProperties, Exe, exe),
+    ER_REFLECTABLE_FIELD(ProcessProperties, StartTime, startTime),
+    ER_REFLECTABLE_FIELD(ProcessProperties, State, state),
+    ER_REFLECTABLE_FIELD(ProcessProperties, User, userName),
+    ER_REFLECTABLE_FIELD(ProcessProperties, ThreadCount, threadCount),
+    ER_REFLECTABLE_FIELD_CMP(ProcessProperties, Pid, sTime, [](const ProcessProperties& l, const ProcessProperties& r) noexcept { return std::abs(l.sTime - r.sTime) < 0.01; }),
+    ER_REFLECTABLE_FIELD_CMP(ProcessProperties, Pid, uTime, [](const ProcessProperties& l, const ProcessProperties& r) noexcept { return std::abs(l.uTime - r.uTime) < 0.01; }),
+    ER_REFLECTABLE_FIELD_CMP(ProcessProperties, CpuUsage, cpuUsage, [](const ProcessProperties& l, const ProcessProperties& r) noexcept { return std::abs(l.cpuUsage - r.cpuUsage) < 0.01; }),
+    ER_REFLECTABLE_FIELD(ProcessProperties, Tty, tty)
+
+ER_REFLECTABLE_FIELDS_END()
 
 } // Er::ProcessTree {}
