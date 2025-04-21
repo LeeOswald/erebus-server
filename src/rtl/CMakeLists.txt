@@ -42,9 +42,7 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR} 
             FILES
                 ${ER_INCLUDE_DIR}/iunknown.hxx
-                ${ER_INCLUDE_DIR}/kv.hxx
                 ${ER_INCLUDE_DIR}/platform.hxx
-                ${ER_INCLUDE_DIR}/plugin.hxx
                 ${ER_INCLUDE_DIR}/result.hxx
                 ${ER_INCLUDE_DIR}/rtl/assert.hxx
                 ${ER_INCLUDE_DIR}/rtl/binary.hxx
