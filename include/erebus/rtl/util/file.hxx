@@ -10,6 +10,8 @@
 namespace Er::Util
 {
 
+ER_RTL_EXPORT ResultCode loadBinaryFile(const std::string& path, Binary& out) noexcept;
+
 ER_RTL_EXPORT std::string loadTextFile(const std::string& path);
 ER_RTL_EXPORT Binary loadBinaryFile(const std::string& path);
 

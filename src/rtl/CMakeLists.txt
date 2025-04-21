@@ -115,6 +115,7 @@ if(ER_WINDOWS)
             logger/win32_debugger_sink.cxx
             system/user_win32.cxx
             system/win32_error.cxx
+            util/win32_file.cxx
             util/win32_utf16.cxx
         PUBLIC
 		FILE_SET headers TYPE HEADERS
@@ -130,6 +131,7 @@ elseif(ER_POSIX)
         PRIVATE
             logger/syslog_linux_sink.cxx
             system/user_linux.cxx
+            util/posix_file.cxx
         PUBLIC
 		FILE_SET headers TYPE HEADERS
             BASE_DIRS 

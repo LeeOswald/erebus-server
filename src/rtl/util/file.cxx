@@ -1,6 +1,4 @@
 #include <erebus/rtl/exception.hxx>
-#include <erebus/rtl/system/posix_error.hxx>
-#include <erebus/rtl/util/auto_ptr.hxx>
 #include <erebus/rtl/util/file.hxx>
 
 #if ER_WINDOWS
@@ -15,41 +13,15 @@
 namespace Er::Util
 {
 
-namespace
-{
-
-using File = AutoPtr<FILE, decltype([](FILE* f) { std::fclose(f); })>;
-
-} // namespace {}
-
 
 ER_RTL_EXPORT Binary loadBinaryFile(const std::string& path)
 {
-    File f(std::fopen(path.c_str(), "rb"));
-    if (!f)
-        ErThrowPosixError(Er::format("Failed top open file {}", path), errno);
+    Binary out;
+    auto result = loadBinaryFile(path, out);
+    if (result != Result::Ok)
+        ErThrowResult(Er::format("Failed to open file {}", path), result);
 
-    std::setvbuf(f, nullptr, _IONBF, 0);
-
-    std::fseek(f, 0, SEEK_END);
-    auto size = std::ftell(f);
-    std::fseek(f, 0, SEEK_SET);
-
-    if (size <= 0)
-    {
-        return Binary();
-    }
-
-    std::string buffer;
-    buffer.resize(size);
-
-    auto rd = std::fread(buffer.data(), 1, size, f);
-    if (rd < size_t(size))
-    {
-        buffer.resize(rd);
-    }
-
-    return Binary(std::move(buffer));
+    return out;
 }
 
 ER_RTL_EXPORT std::string loadTextFile(const std::string& path)

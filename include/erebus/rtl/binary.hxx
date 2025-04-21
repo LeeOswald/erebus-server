@@ -76,6 +76,11 @@ struct Binary final
         return m_bytes;
     }
 
+    std::string& bytes() noexcept
+    {
+        return m_bytes;
+    }
+
     const char* data() const noexcept
     {
         return m_bytes.data();
