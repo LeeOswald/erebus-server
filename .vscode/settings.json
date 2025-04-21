@@ -86,6 +86,7 @@
         "variant": "cpp",
         "*.inc": "cpp",
         "ranges": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "coroutine": "cpp"
     }
 }

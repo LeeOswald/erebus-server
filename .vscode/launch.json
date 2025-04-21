@@ -33,7 +33,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/erebus-server",
-            "args": [ "-v", "--noroot" ],
+            "args": [ "-v", "--noroot", "--config", "/home/ursus/Temp/erebus.cfg" ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
