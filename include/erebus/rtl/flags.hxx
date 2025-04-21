@@ -23,7 +23,7 @@ class FlagsPack
 {
 public:
     struct FromBitsT {};
-    static constexpr FromBitsT FromBits = FromBitsT();
+    static constexpr FromBitsT FromBits = FromBitsT{};
     
     static constexpr std::size_t Size = N;
     static_assert(Size > 0);
@@ -157,6 +157,10 @@ public:
 private:
     std::bitset<N> m_bits;
 };
+
+
+template <std::size_t N, typename ValuesSetT>
+using BitSet = FlagsPack<N, ValuesSetT>;
 
 
 } // namespace Er{}
