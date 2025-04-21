@@ -26,6 +26,7 @@ public:
 
     AsyncLogger(std::string_view component, std::chrono::milliseconds threshold)
         : Base(component, makeTee(ThreadSafe::Yes))
+        , m_threshold(threshold)
         , m_worker([this](std::stop_token stop) { run(stop); })
     {
     }
@@ -109,7 +110,16 @@ private:
                 if (m_queue.empty())
                     m_queueEmpty.notify_all();
 
-                m_queueNotEmpty.wait(lw, stop, [this]() { return !m_queue.empty(); });
+                if (!m_queueNotEmpty.wait_for(lw, stop, m_threshold, [this]() { return !m_queue.empty(); }))
+                {
+                    if (stop.stop_requested())
+                        break;
+
+                    continue;
+                }
+                
+                if (m_queue.empty())
+                    m_queueEmpty.notify_all();
 
                 q.swap(m_queue);
 
