@@ -84,13 +84,13 @@ bool ClientApplication::startTasks()
     if (args().contains("ping"))
     {
         auto payloadSize = args()["ping"].as<unsigned>();
-        m_pingRunner.reset(new PingRunner(m_channel, m_parallel, m_wait, m_iterations, payloadSize));
+        m_pingRunner.reset(new PingRunner([this]() { exitCondition().setAndNotifyOne(true); }, m_channel, m_parallel, m_wait, m_iterations, payloadSize));
         return true;
     }
     else if (args().contains("sysinfo"))
     {
         auto pattern = args()["sysinfo"].as<std::string>();
-        m_systemInfoRunner.reset(new SystemInfoRunner(m_channel, m_parallel, m_iterations, m_wait, pattern));
+        m_systemInfoRunner.reset(new SystemInfoRunner([this]() { exitCondition().setAndNotifyOne(true); }, m_channel, m_parallel, m_iterations, m_wait, pattern));
         return true;
     }
 

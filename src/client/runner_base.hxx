@@ -5,8 +5,10 @@
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <functional>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -15,10 +17,13 @@
 class RunnerBase
 {
 public:
+    using IdleCallback = std::function<void()>;
+
     ~RunnerBase() = default;
 
-    RunnerBase(Er::Ipc::Grpc::ChannelPtr channel, unsigned parallel, unsigned iterations, bool wait)
-        : m_channel(channel)
+    RunnerBase(IdleCallback&& idle, Er::Ipc::Grpc::ChannelPtr channel, unsigned parallel, unsigned iterations, bool wait)
+        : m_idle(std::move(idle))
+        , m_channel(channel)
         , m_iterations(iterations)
         , m_wait(wait)
     {
@@ -36,6 +41,13 @@ protected:
     {
         ~Completion()
         {
+            m_owner->idle();
+        }
+
+        Completion(RunnerBase* owner)
+            : m_owner(owner)
+        {
+            owner->busy();
         }
 
         void onError(Er::ResultCode result, std::string&& message) noexcept override
@@ -62,6 +74,7 @@ protected:
             m_cv.notify_one();
         }
 
+        RunnerBase* m_owner;
         std::mutex m_mutex;
         std::condition_variable m_cv;
         bool m_done = false;
@@ -71,6 +84,8 @@ protected:
 
     void _run(unsigned index, std::stop_token stop) noexcept
     {
+        busy();
+
         ErLogDebug("Worker {} started", index);
 
         Er::Util::ExceptionLogger xcptHandler(Er::Log::get());
@@ -84,8 +99,23 @@ protected:
         }
 
         ErLogDebug("Worker {} stopped", index);
+        idle();
     }
 
+    void busy() noexcept
+    {
+        ++m_busy;
+    }
+
+    void idle() noexcept
+    {
+        auto prev = m_busy.fetch_sub(1, std::memory_order_acq_rel);
+        if (prev == 1) // this was the last reference
+            m_idle();
+    }
+
+    IdleCallback m_idle;
+    std::atomic<long> m_busy = 0;
     Er::Ipc::Grpc::ChannelPtr m_channel;
     bool m_wait;
     unsigned m_iterations;

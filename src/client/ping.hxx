@@ -14,8 +14,8 @@ class PingRunner
 public:
     ~PingRunner() = default;
 
-    PingRunner(Er::Ipc::Grpc::ChannelPtr channel, unsigned parallel, unsigned iterations, bool wait, unsigned payloadSize)
-        : RunnerBase(channel, parallel, iterations, wait)
+    PingRunner(IdleCallback&& idle, Er::Ipc::Grpc::ChannelPtr channel, unsigned parallel, unsigned iterations, bool wait, unsigned payloadSize)
+        : RunnerBase(std::move(idle), channel, parallel, iterations, wait)
         , m_payloadSize(payloadSize)
     {
     }
@@ -24,6 +24,13 @@ private:
     struct PingCompletion
         : public Completion<Er::Ipc::Grpc::ISystemInfoClient::IPingCompletion>
     {
+        using Base = Completion<Er::Ipc::Grpc::ISystemInfoClient::IPingCompletion>;
+
+        PingCompletion(RunnerBase* owner)
+            : Base(owner)
+        {
+        }
+
         void onReply(Er::Ipc::Grpc::ISystemInfoClient::PingMessage&& ping, Er::Ipc::Grpc::ISystemInfoClient::PingMessage&& reply) override
         {
             auto now = Er::System::PackedTime::now();
@@ -74,7 +81,7 @@ private:
             pm.timestamp = Er::System::PackedTime::now();
             pm.sequence = m_sequence.fetch_add(1, std::memory_order_relaxed);
 
-            auto completion = std::make_shared<PingCompletion>();
+            auto completion = std::make_shared<PingCompletion>(this);
 
             client->ping(std::move(pm), completion);
             if (m_wait)

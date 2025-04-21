@@ -11,8 +11,8 @@ class SystemInfoRunner
 public:
     ~SystemInfoRunner() = default;
 
-    SystemInfoRunner(Er::Ipc::Grpc::ChannelPtr channel, unsigned parallel, unsigned iterations, bool wait, const std::string& pattern)
-        : RunnerBase(channel, parallel, iterations, wait)
+    SystemInfoRunner(IdleCallback&& idle, Er::Ipc::Grpc::ChannelPtr channel, unsigned parallel, unsigned iterations, bool wait, const std::string& pattern)
+        : RunnerBase(std::move(idle), channel, parallel, iterations, wait)
         , m_pattern(pattern)
     {
     }
@@ -21,6 +21,13 @@ private:
     struct SystemInfoCompletion
         : public Completion<Er::Ipc::Grpc::ISystemInfoClient::ISystemInfoCompletion>
     {
+        using Base = Completion<Er::Ipc::Grpc::ISystemInfoClient::ISystemInfoCompletion>;
+
+        SystemInfoCompletion(RunnerBase* owner)
+            : Base(owner)
+        {
+        }
+
         Er::CallbackResult onProperty(Er::Property&& prop) override
         {
             ErLogInfo("{} = {}", prop.name(), prop.str());
@@ -45,7 +52,7 @@ private:
                 --n;
             }
 
-            auto completion = std::make_shared<SystemInfoCompletion>();
+            auto completion = std::make_shared<SystemInfoCompletion>(this);
             client->getSystemInfo(m_pattern, completion);
 
             if (m_wait)
