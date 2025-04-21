@@ -6,7 +6,6 @@ gtest/1.15.0
 lua/5.4.7
 protobuf/5.27.0
 rapidjson/cci.20230929
-valijson/1.0.3
 
 [generators]
 CMakeDeps
@@ -23,4 +22,4 @@ pkg/gtest:shared=True
 pkg/lua:shared=True
 pkg/protobuf:shared=False
 pkg/rapidjson:shared=False
-pkg/valijson:shared=False
+
