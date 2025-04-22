@@ -88,6 +88,8 @@ target_sources(erebus-rtl
                 ${ER_INCLUDE_DIR}/rtl/property_format.hxx
                 ${ER_INCLUDE_DIR}/rtl/property.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_bag.hxx
+                ${ER_INCLUDE_DIR}/rtl/reflectable.hxx
+                ${ER_INCLUDE_DIR}/rtl/string_literal.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/packed_time.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/posix_error.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/process.hxx

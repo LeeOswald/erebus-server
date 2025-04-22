@@ -2,8 +2,10 @@
 
 #include <erebus/proctree/proctree.hxx>
 #include <erebus/rtl/flags.hxx>
+#include <erebus/rtl/property_format.hxx>
 
 #include <array>
+#include <functional>
 
 #include <boost/functional/hash.hpp>
 
@@ -78,13 +80,14 @@ struct Reflectable
 
     using FieldSet = BitSet<FieldCount, FieldIndices>;
 
-    using FieldComparator = bool(*)(const SelfType& l, const SelfType& r) noexcept;
-    using FieldHasher = void(*)(HashValueType& seed, const SelfType& o) noexcept;
+    using FieldComparator = std::function<bool(const SelfType& l, const SelfType& r)>;
+    using FieldHasher = std::function<void(HashValueType& seed, const SelfType& o)>;
 
     struct FieldInfo
     {
         FieldIndex index;
         std::string_view name;
+        SemanticCode semantic = Semantics::Default;
         FieldComparator comparator;
         FieldHasher hasher;
 
@@ -99,7 +102,43 @@ struct Reflectable
 
     using Fields = std::array<FieldInfo, FieldCount>;
 
-    static const Fields& GetFields() noexcept;
+    static Fields const& fields() noexcept;
+
+    FieldSet _valid = {};
+    
+    constexpr HashValueType hash() const noexcept
+    {
+        return _hash;
+    }
+
+    HashValueType updateHash() noexcept
+    {
+        HashValueType h = {};
+        auto& fields = fields();
+        for (auto& f : fields)
+        {
+            if (_valid[f.index])
+                f.hasher(h, *this);
+        }
+
+        _hash = h;
+        return h;
+    }
+
+    bool equals(const SelfType& o) const noexcept
+    {
+        auto& fields = fields();
+        for (auto& f : fields)
+        {
+            if (!f.comparator(*this, o))
+                return false;
+        }
+
+        return true;
+    }
+
+private:
+    HashValueType _hash = {};
 };
 
 #define ER_REFLECTABLE_FIELD(Class, FieldId, Field) \
@@ -119,7 +158,7 @@ FieldInfo{ \
 } 
 
 #define ER_REFLECTABLE_FIELDS_BEGIN(Class) \
-inline const Class::Fields& Class::GetFields() noexcept \
+inline Class::Fields const& Class::fields() noexcept \
 { \
     static const Fields fields = { \
 
