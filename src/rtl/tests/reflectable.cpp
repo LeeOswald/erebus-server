@@ -55,7 +55,7 @@ TEST(Reflectable, FieldInfo)
     EXPECT_EQ(flds[My::Traits::FieldIds::Third].name, std::string("third"));
 }
 
-TEST(Reflectable, base)
+TEST(Reflectable, GetSet)
 {
     My m1;
     EXPECT_FALSE(m1.valid(My::Traits::FieldIds::Zeroth));
@@ -74,26 +74,162 @@ TEST(Reflectable, base)
     EXPECT_EQ(ErGetp(My, Third, m1, third), nullptr);
     EXPECT_EQ(m1.type(My::Traits::FieldIds::Third), typeId<double>().index());
 
+    auto h0 = m1.hash();
+
     ErSet(My, Zeroth, m1, zeroth, -12);
+    EXPECT_NE(m1.hash(), h0);
+    h0 = m1.hash();
+
     ErSet(My, First, m1, first, "Hello!");
+    EXPECT_NE(m1.hash(), h0);
+    h0 = m1.hash();
+
     ErSet(My, Second, m1, second, 12345);
+    EXPECT_NE(m1.hash(), h0);
+    h0 = m1.hash();
+
     ErSet(My, Third, m1, third, -0.9);
+    EXPECT_NE(m1.hash(), h0);
 
     EXPECT_TRUE(m1.valid(My::Traits::FieldIds::Zeroth));
     ASSERT_NE(ErGetp(My, Zeroth, m1, zeroth), nullptr);
-    EXPECT_EQ(ErGet(My, Zeroth, m1, zeroth), -12);
+    EXPECT_EQ(ErGet(My, Zeroth, m1, zeroth), m1.zeroth);
 
     EXPECT_TRUE(m1.valid(My::Traits::FieldIds::First));
     ASSERT_NE(ErGetp(My, First, m1, first), nullptr);
-    EXPECT_STREQ(ErGetp(My, First, m1, first)->c_str(), "Hello!");
+    EXPECT_EQ(ErGet(My, First, m1, first), m1.first);
 
     EXPECT_TRUE(m1.valid(My::Traits::FieldIds::Second));
     ASSERT_NE(ErGetp(My, Second, m1, second), nullptr);
-    EXPECT_EQ(ErGet(My, Second, m1, second), 12345);
+    EXPECT_EQ(ErGet(My, Second, m1, second), m1.second);
 
     EXPECT_TRUE(m1.valid(My::Traits::FieldIds::Third));
     ASSERT_NE(ErGetp(My, Third, m1, third), nullptr);
-    EXPECT_DOUBLE_EQ(ErGet(My, Third, m1, third), -0.9);
-    
+    EXPECT_DOUBLE_EQ(ErGet(My, Third, m1, third), m1.third);
+}
 
+TEST(Reflectable, Copy)
+{
+    My m1;
+    ErSet(My, Zeroth, m1, zeroth, 34);
+    ErSet(My, First, m1, first, "Bye?");
+    ErSet(My, Second, m1, second, -54321);
+    ErSet(My, Third, m1, third, 9.99);
+
+    My m2(m1);
+    EXPECT_EQ(m2.hash(), m1.hash());
+
+    EXPECT_TRUE(m2.valid(My::Traits::FieldIds::Zeroth));
+    ASSERT_NE(ErGetp(My, Zeroth, m2, zeroth), nullptr);
+    EXPECT_EQ(ErGet(My, Zeroth, m2, zeroth), m1.zeroth);
+
+    EXPECT_TRUE(m2.valid(My::Traits::FieldIds::First));
+    ASSERT_NE(ErGetp(My, First, m2, first), nullptr);
+    EXPECT_EQ(ErGet(My, First, m2, first), m1.first);
+
+    EXPECT_TRUE(m2.valid(My::Traits::FieldIds::Second));
+    ASSERT_NE(ErGetp(My, Second, m2, second), nullptr);
+    EXPECT_EQ(ErGet(My, Second, m2, second), m1.second);
+
+    EXPECT_TRUE(m2.valid(My::Traits::FieldIds::Third));
+    ASSERT_NE(ErGetp(My, Third, m2, third), nullptr);
+    EXPECT_DOUBLE_EQ(ErGet(My, Third, m2, third), m1.third);
+
+    My m3{};
+    EXPECT_EQ(m3.validMask(), My::FieldSet{});
+
+    m3 = m1;
+    EXPECT_EQ(m3.hash(), m1.hash());
+
+    EXPECT_TRUE(m3.valid(My::Traits::FieldIds::Zeroth));
+    ASSERT_NE(ErGetp(My, Zeroth, m3, zeroth), nullptr);
+    EXPECT_EQ(ErGet(My, Zeroth, m3, zeroth), m1.zeroth);
+
+    EXPECT_TRUE(m3.valid(My::Traits::FieldIds::First));
+    ASSERT_NE(ErGetp(My, First, m3, first), nullptr);
+    EXPECT_EQ(ErGet(My, First, m3, first), m1.first);
+
+    EXPECT_TRUE(m3.valid(My::Traits::FieldIds::Second));
+    ASSERT_NE(ErGetp(My, Second, m3, second), nullptr);
+    EXPECT_EQ(ErGet(My, Second, m3, second), m1.second);
+
+    EXPECT_TRUE(m3.valid(My::Traits::FieldIds::Third));
+    ASSERT_NE(ErGetp(My, Third, m3, third), nullptr);
+    EXPECT_DOUBLE_EQ(ErGet(My, Third, m3, third), m1.third);
+}
+
+TEST(Reflectable, Move)
+{
+    My m1;
+    ErSet(My, Zeroth, m1, zeroth, 34);
+    ErSet(My, First, m1, first, "Bye?");
+    ErSet(My, Second, m1, second, -54321);
+    ErSet(My, Third, m1, third, 9.99);
+    
+    My m2(m1);
+
+    My m3(std::move(m1));
+    EXPECT_EQ(m1.validMask(), My::FieldSet{});
+
+    EXPECT_EQ(m2.hash(), m2.hash());
+    EXPECT_EQ(m3.validMask(), m2.validMask());
+    EXPECT_EQ(m3.zeroth, m2.zeroth);
+    EXPECT_EQ(m3.first, m2.first);
+    EXPECT_EQ(m3.second, m2.second);
+    EXPECT_EQ(m3.third, m2.third);
+
+    My m4{};
+    m4 = std::move(m3);
+    EXPECT_EQ(m3.validMask(), My::FieldSet{});
+
+    EXPECT_EQ(m4.hash(), m2.hash());
+    EXPECT_EQ(m4.validMask(), m2.validMask());
+    EXPECT_EQ(m4.zeroth, m2.zeroth);
+    EXPECT_EQ(m4.first, m2.first);
+    EXPECT_EQ(m4.second, m2.second);
+    EXPECT_EQ(m4.third, m2.third);
+}
+
+TEST(Reflectable, Diff)
+{
+    My m1;
+    ErSet(My, Zeroth, m1, zeroth, 34);
+    ErSet(My, First, m1, first, "Bye?");
+    ErSet(My, Second, m1, second, -54321);
+    ErSet(My, Third, m1, third, 9.99);
+
+    // diff with self
+    auto d = m1.diff(m1);
+    EXPECT_EQ(d.differences, 0);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Zeroth], My::Diff::Type::Unchanged);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::First], My::Diff::Type::Unchanged);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Unchanged);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Unchanged);
+
+    // diff with empty
+    My m2;
+    d = m2.diff(m1);
+    EXPECT_EQ(d.differences, 4);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Zeroth], My::Diff::Type::Added);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::First], My::Diff::Type::Added);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Added);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Added);
+
+    d = m1.diff(m2);
+    EXPECT_EQ(d.differences, 4);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Zeroth], My::Diff::Type::Removed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::First], My::Diff::Type::Removed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Removed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Removed);
+
+    My m3(m1);
+    ErSet(My, First, m1, first, "Hello!");
+    ErSet(My, Second, m1, second, 12345);
+    EXPECT_NE(m3.hash(), m1.hash());
+    d = m1.diff(m3);
+    EXPECT_EQ(d.differences, 2);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Zeroth], My::Diff::Type::Unchanged);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::First], My::Diff::Type::Changed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Changed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Unchanged);
 }

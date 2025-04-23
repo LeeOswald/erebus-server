@@ -132,6 +132,27 @@ struct Reflectable
     Reflectable(const Reflectable&) = default;
     Reflectable& operator=(const Reflectable&) = default;
 
+    void swap(Reflectable& o) noexcept
+    {
+        using std::swap;
+        swap(_valid, o._valid);
+        swap(_hash, o._hash);
+        swap(_hashValid, o._hashValid);
+    }
+
+    Reflectable(Reflectable&& o) noexcept
+        : Reflectable()
+    {
+        swap(o);
+    }
+
+    Reflectable& operator=(Reflectable&& o) noexcept
+    {
+        Reflectable tmp(std::move(o));
+        swap(tmp);
+        return *this;
+    }
+
     using Fields = std::array<FieldInfo, FieldCount>;
 
     static Fields const& fields() noexcept
@@ -143,6 +164,11 @@ struct Reflectable
     {
         ErAssert(id < FieldCount);
         return _valid[id];
+    }
+
+    FieldSet const& validMask() const noexcept
+    {
+        return _valid;
     }
 
     void setValid(unsigned id, bool valid = true) noexcept
@@ -174,6 +200,59 @@ struct Reflectable
         _hash = h;
         _hashValid = true;
         return h;
+    }
+
+    struct Diff
+    {
+        enum class Type : std::uint8_t
+        {
+            Unchanged = 0,
+            Added,
+            Removed,
+            Changed
+        };
+
+        std::size_t differences = 0;
+        std::array<Type, FieldCount> map = {};
+
+        constexpr Diff() noexcept = default;
+    };
+
+    Diff diff(const Reflectable& o) const noexcept
+    {
+        Diff difference;
+
+        auto& flds = fields();
+        
+        auto this_ = static_cast<SelfType const*>(this);
+        auto that_ = static_cast<SelfType const*>(&o);
+
+        for (auto& f : flds)
+        {
+            if (_valid[f.id])
+            {
+                if (o._valid[f.id])
+                {
+                    if (!f.comparator(*this_, *that_)) // field value differs
+                    {
+                        difference.map[f.id] = Diff::Type::Changed;
+                        ++difference.differences;
+                    }
+                }
+                else
+                {
+                    difference.map[f.id] = Diff::Type::Removed; // our field is valid, but their's is not
+                    ++difference.differences;
+                }
+            }
+            else if (o._valid[f.id])
+            {
+                difference.map[f.id] = Diff::Type::Added; // our field is invalid, but their's is
+                ++difference.differences;
+            }
+        }
+
+        return difference;
     }
 
     TypeIndex type(unsigned id) const noexcept
