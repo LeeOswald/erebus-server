@@ -3,6 +3,7 @@
 #include <erebus/rtl/flags.hxx>
 #include <erebus/rtl/property_format.hxx>
 #include <erebus/rtl/string_literal.hxx>
+#include <erebus/rtl/type_id.hxx>
 
 #include <array>
 #include <functional>
@@ -68,6 +69,7 @@ struct Reflectable
     struct FieldInfo
     {
         unsigned id;
+        TypeIndex type;
         std::string_view name;
         SemanticCode semantic;
         FieldGetter getter;
@@ -75,8 +77,9 @@ struct Reflectable
         FieldComparator comparator;
         FieldHasher hasher;
 
-        constexpr FieldInfo(unsigned id, std::string_view name, SemanticCode semantic, auto&& getter, auto&& setter, auto&& comparator, auto&& hasher) noexcept
+        constexpr FieldInfo(unsigned id, TypeIndex type, std::string_view name, SemanticCode semantic, auto&& getter, auto&& setter, auto&& comparator, auto&& hasher) noexcept
             : id(id)
+            , type(type)
             , name(name)
             , semantic(semantic)
             , getter(std::forward<decltype(getter)>(getter))
@@ -98,6 +101,7 @@ struct Reflectable
         return FieldInfo
         {
             _Id,
+            typeId<_Type>().index(),
             std::string_view { _Name.data(), _Name.size() },
             _SemanticCode,
             [field](const SelfType& o) -> void const*
@@ -122,6 +126,11 @@ struct Reflectable
             }
         };
     }
+
+    Reflectable() = default;
+
+    Reflectable(const Reflectable&) = default;
+    Reflectable& operator=(const Reflectable&) = default;
 
     using Fields = std::array<FieldInfo, FieldCount>;
 
@@ -167,6 +176,13 @@ struct Reflectable
         return h;
     }
 
+    TypeIndex type(unsigned id) const noexcept
+    {
+        ErAssert(id < FieldCount);
+        auto& flds = fields();
+        return flds[id].type;
+    }
+
     template <typename _Type>
     _Type const* get(unsigned id) const noexcept
     {
@@ -175,6 +191,10 @@ struct Reflectable
             return nullptr;
 
         auto& flds = fields();
+#if ER_DEBUG
+        ErAssert(flds[id].type == typeId<_Type>().index());
+#endif
+
         auto this_ = static_cast<SelfType const*>(this);
         return static_cast<_Type const*>(flds[id].getter(*this_));
     }
@@ -184,6 +204,10 @@ struct Reflectable
     {
         ErAssert(id < FieldCount);
         auto& flds = fields();
+#if ER_DEBUG
+        ErAssert(flds[id].type == typeId<_Type>().index());
+#endif
+
         auto this_ = static_cast<SelfType*>(this);
         auto raw = flds[id].setter(*this_);
         auto p = static_cast<std::remove_cv_t<_Type>*>(raw);
@@ -240,3 +264,13 @@ static Fields const& fields() noexcept \
     }; \
     return fields; \
 }
+
+
+#define ErSet(Class, Id, obj, field, val) \
+    obj.set(Class::Traits::FieldIds::Id, decltype(Class::field){val})
+
+#define ErGetp(Class, Id, obj, field) \
+    obj.get<decltype(Class::field)>(Class::Traits::FieldIds::Id)
+
+#define ErGet(Class, Id, obj, field) \
+    *obj.get<decltype(Class::field)>(Class::Traits::FieldIds::Id)
