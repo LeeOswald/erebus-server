@@ -39,6 +39,7 @@ struct Reflectable
     using FieldComparator = std::function<bool(const SelfType& l, const SelfType& r)>;
     using FieldHasher = std::function<void(HashType& seed, const SelfType& o)>;
     using FieldCopier = std::function<void(SelfType& me, const SelfType& other)>;
+    using FieldMover = std::function<void(SelfType& me, SelfType&& other)>;
 
     template <typename _Type>
     using FieldPtr = _Type SelfType::*;
@@ -70,6 +71,11 @@ struct Reflectable
         {
             me.*field = other.*field;
         }
+
+        void move(FieldPtr<_Type> field, SelfType& me, SelfType&& other) noexcept
+        {
+            me.*field = std::move(other.*field);
+        }
     };
 
     struct FieldInfo
@@ -83,6 +89,7 @@ struct Reflectable
         FieldComparator comparator;
         FieldHasher hasher;
         FieldCopier copier;
+        FieldMover mover;
 
         constexpr FieldInfo(
             unsigned id, 
@@ -93,7 +100,8 @@ struct Reflectable
             auto&& setter, 
             auto&& comparator, 
             auto&& hasher,
-            auto&& copier
+            auto&& copier,
+            auto&& mover
         ) noexcept
             : id(id)
             , type(type)
@@ -104,6 +112,7 @@ struct Reflectable
             , comparator(std::forward<decltype(comparator)>(comparator))
             , hasher(std::forward<decltype(hasher)>(hasher))
             , copier(std::forward<decltype(copier)>(copier))
+            , mover(std::forward<decltype(mover)>(mover))
         {
         }
     };
@@ -146,6 +155,11 @@ struct Reflectable
             {
                 FieldOperators<_Type> ops;
                 ops.copy(field, me, other);
+            },
+            [field](SelfType& me, SelfType&& other) -> void
+            {
+                FieldOperators<_Type> ops;
+                ops.move(field, me, std::move(other));
             }
         };
     }
@@ -281,6 +295,8 @@ struct Reflectable
     Diff update(const Reflectable& o)
     {
         Diff difference;
+        if (&o == this)
+            return difference;
 
         auto& flds = fields();
 
@@ -321,6 +337,61 @@ struct Reflectable
                 _hashValid = false;
             }
         }
+
+        return difference;
+    }
+
+    Diff update(Reflectable&& o)
+    {
+        Diff difference;
+        if (&o == this)
+            return difference;
+
+        auto& flds = fields();
+
+        auto this_ = static_cast<SelfType*>(this);
+        auto that_ = static_cast<SelfType*>(&o);
+
+        for (auto& f : flds)
+        {
+            if (_valid[f.id])
+            {
+                if (o._valid[f.id])
+                {
+                    if (!f.comparator(*this_, *that_)) // field value differs
+                    {
+                        difference.map[f.id] = Diff::Type::Changed;
+                        ++difference.differences;
+
+                        f.mover(*this_, std::move(*that_));
+                        
+                        _hashValid = false;
+                    }
+                }
+                else
+                {
+                    difference.map[f.id] = Diff::Type::Removed; // our field is valid, but their's is not
+                    ++difference.differences;
+
+                    _valid.reset(f.id);
+                    _hashValid = false;
+                }
+            }
+            else if (o._valid[f.id])
+            {
+                difference.map[f.id] = Diff::Type::Added; // our field is invalid, but their's is
+                ++difference.differences;
+
+                f.mover(*this_, std::move(*that_));
+
+                _valid.set(f.id);
+                _hashValid = false;
+            }
+        }
+
+        // since we're 'moving' from 'that'...
+        that_->_valid = FieldSet{};
+        that_->_hashValid = false;
 
         return difference;
     }
