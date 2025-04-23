@@ -13,6 +13,13 @@ namespace Er
 {
 
 template <class _Traits>
+    requires
+        requires(_Traits t)
+        {
+            typename _Traits::SelfType;
+            typename _Traits::FieldIds;
+            { _Traits::FieldCount } -> std::convertible_to<std::size_t>;
+        }
 struct Reflectable
 {
     using Traits = _Traits;
@@ -21,7 +28,7 @@ struct Reflectable
 
     using FieldIds = typename Traits::FieldIds;
 
-    static constexpr std::size_t FieldCount = FieldIds::_FieldCount;
+    static constexpr std::size_t FieldCount = Traits::FieldCount;
     using FieldSet = BitSet<FieldCount, FieldIds>;
     
     using HashType = std::size_t;
@@ -133,41 +140,65 @@ struct Reflectable
     {
         ErAssert(id < FieldCount);
         _valid.set(id, valid);
+        _hashValid = false;
     }
 
     constexpr HashType hash() const noexcept
     {
+        if (!_hashValid)
+            return updateHash();
+
         return _hash;
     }
 
-    HashType updateHash() noexcept
+    HashType updateHash() const noexcept
     {
         HashType h = {};
         auto& flds = fields();
+        auto this_ = static_cast<SelfType const*>(this);
         for (auto& f : flds)
         {
             if (_valid[f.id])
-                f.hasher(h, *static_cast<SelfType*>(this));
+                f.hasher(h, *this_);
         }
 
         _hash = h;
+        _hashValid = true;
         return h;
     }
 
-    template <typename Ty>
-    Ty const* get(unsigned id) const noexcept
+    template <typename _Type>
+    _Type const* get(unsigned id) const noexcept
     {
         ErAssert(id < FieldCount);
         if (!_valid[id])
             return nullptr;
 
         auto& flds = fields();
-        return flds[id].getter(*static_cast<SelfType*>(this));
+        auto this_ = static_cast<SelfType const*>(this);
+        return static_cast<_Type const*>(flds[id].getter(*this_));
+    }
+
+    template <typename _Type>
+    void set(unsigned id, _Type&& value)
+    {
+        ErAssert(id < FieldCount);
+        auto& flds = fields();
+        auto this_ = static_cast<SelfType*>(this);
+        auto raw = flds[id].setter(*this_);
+        auto p = static_cast<std::remove_cv_t<_Type>*>(raw);
+        ErAssert(p);
+
+        *p = std::forward<_Type>(value);
+
+        _valid.set(id, true);
+        _hashValid = false;
     }
 
 protected:
     FieldSet _valid = {};
-    HashType _hash = {};
+    mutable HashType _hash = {};
+    mutable bool _hashValid = false;
 };
 
 
@@ -189,6 +220,7 @@ struct Traits \
             , _FieldCount \
         }; \
     }; \
+    static constexpr unsigned FieldCount = FieldIds::_FieldCount; \
 }; 
 
 
@@ -200,8 +232,8 @@ static Fields const& fields() noexcept \
     {
 
 
-#define ER_REFLECTABLE_FIELD(Class, Id, Type, SemanticCode, field) \
-        reflectableField<FieldIds::Id, Type, #field, SemanticCode>(&Class::field)
+#define ER_REFLECTABLE_FIELD(Class, Id, SemanticCode, field) \
+        reflectableField<FieldIds::Id, decltype(Class::field), #field, SemanticCode>(&Class::field)
 
 
 #define ER_REFLECTABLE_FILEDS_END() \
