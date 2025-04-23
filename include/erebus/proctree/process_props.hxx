@@ -7,40 +7,29 @@
 namespace Er::ProcessTree
 {
 
-struct ProcessProperties;
+ER_REFLECTABLE_TRAITS_BEGIN(ProcessProperties, ProcessPropertiesTraits)
+    Pid,
+    PPid,
+    PGrp,
+    Tpgid,
+    Session,
+    Ruid,
+    Comm,
+    CmdLine,
+    Exe,
+    StartTime,
+    State,
+    UserName,
+    ThreadCount,
+    STime,
+    UTime,
+    CpuUsage,
+    Tty
+ER_REFLECTABLE_TRAITS_END()
 
-struct ProcessPropertiesTraits
-{
-    using SelfType = ProcessProperties;
-
-    struct FieldIds
-    {
-        enum : unsigned
-        {
-            Pid,
-            PPid,
-            PGrp,
-            Tpgid,
-            Session,
-            Ruid,
-            Comm,
-            CmdLine,
-            Exe,
-            StartTime,
-            State,
-            User,
-            ThreadCount,
-            STime,
-            UTime,
-            CpuUsage,
-            Tty,
-
-            _FieldCount
-        };
-    };
-};
 
 struct ProcessProperties
+    : public Reflectable<ProcessPropertiesTraits>
 {
     std::uint64_t pid;
     std::uint64_t ppid;
@@ -59,6 +48,26 @@ struct ProcessProperties
     double uTime;
     double cpuUsage;
     std::int32_t tty;
+
+    ER_REFLECTABLE_FILEDS_BEGIN(ProcessProperties)
+        ER_REFLECTABLE_FIELD(ProcessProperties, Pid, Semantics::Default, pid),
+        ER_REFLECTABLE_FIELD(ProcessProperties, PPid, Semantics::Default, ppid),
+        ER_REFLECTABLE_FIELD(ProcessProperties, PGrp, Semantics::Default, pgrp),
+        ER_REFLECTABLE_FIELD(ProcessProperties, Tpgid, Semantics::Default, tpgid),
+        ER_REFLECTABLE_FIELD(ProcessProperties, Session, Semantics::Default, session),
+        ER_REFLECTABLE_FIELD(ProcessProperties, Ruid, Semantics::Default, ruid),
+        ER_REFLECTABLE_FIELD(ProcessProperties, Comm, Semantics::Default, comm),
+        ER_REFLECTABLE_FIELD(ProcessProperties, CmdLine, Semantics::Default, cmdLine),
+        ER_REFLECTABLE_FIELD(ProcessProperties, Exe, Semantics::Default, exe),
+        ER_REFLECTABLE_FIELD(ProcessProperties, StartTime, Semantics::Default, startTime),
+        ER_REFLECTABLE_FIELD(ProcessProperties, State, Semantics::Default, state),
+        ER_REFLECTABLE_FIELD(ProcessProperties, UserName, Semantics::Default, userName),
+        ER_REFLECTABLE_FIELD(ProcessProperties, ThreadCount, Semantics::Default, threadCount),
+        ER_REFLECTABLE_FIELD(ProcessProperties, STime, Semantics::Default, sTime),
+        ER_REFLECTABLE_FIELD(ProcessProperties, UTime, Semantics::Default, uTime),
+        ER_REFLECTABLE_FIELD(ProcessProperties, CpuUsage, Semantics::Default, cpuUsage),
+        ER_REFLECTABLE_FIELD(ProcessProperties, Tty, Semantics::Default, tty)
+    ER_REFLECTABLE_FILEDS_END()
 };
 
 

@@ -18,7 +18,7 @@ template <class _Traits>
         requires(_Traits t)
         {
             typename _Traits::SelfType;
-            typename _Traits::FieldIds;
+            typename _Traits::Field;
             { _Traits::FieldCount } -> std::convertible_to<std::size_t>;
         }
 struct Reflectable
@@ -27,10 +27,10 @@ struct Reflectable
     
     using SelfType = typename Traits::SelfType;
 
-    using FieldIds = typename Traits::FieldIds;
+    using Field = typename Traits::Field;
 
     static constexpr std::size_t FieldCount = Traits::FieldCount;
-    using FieldSet = BitSet<FieldCount, FieldIds>;
+    using FieldSet = BitSet<FieldCount, Field>;
     
     using HashType = std::size_t;
 
@@ -449,22 +449,22 @@ protected:
 } // namespace Er {}
 
 
-#define ER_REFLECTABLE_IDS_BEGIN(Class, Traits) \
+#define ER_REFLECTABLE_TRAITS_BEGIN(Class, Traits) \
 struct Class; \
 struct Traits \
 { \
     using SelfType = Class; \
-    struct FieldIds \
+    struct Field \
     { \
         enum : unsigned \
         { 
 
 
-#define ER_REFLECTABLE_IDS_END() \
+#define ER_REFLECTABLE_TRAITS_END() \
             , _FieldCount \
         }; \
     }; \
-    static constexpr unsigned FieldCount = FieldIds::_FieldCount; \
+    static constexpr unsigned FieldCount = Field::_FieldCount; \
 }; 
 
 
@@ -477,7 +477,7 @@ static Fields const& fields() noexcept \
 
 
 #define ER_REFLECTABLE_FIELD(Class, Id, SemanticCode, field) \
-        reflectableField<FieldIds::Id, decltype(Class::field), #field, SemanticCode>(&Class::field)
+        reflectableField<Field::Id, decltype(Class::field), #field, SemanticCode>(&Class::field)
 
 
 #define ER_REFLECTABLE_FILEDS_END() \
@@ -487,10 +487,10 @@ static Fields const& fields() noexcept \
 
 
 #define ErSet(Class, Id, obj, field, val) \
-    obj.set(Class::Traits::FieldIds::Id, decltype(Class::field){val})
+    obj.set(Class::Field::Id, decltype(Class::field){val})
 
 #define ErGetp(Class, Id, obj, field) \
-    obj.get<decltype(Class::field)>(Class::Traits::FieldIds::Id)
+    obj.get<decltype(Class::field)>(Class::Field::Id)
 
 #define ErGet(Class, Id, obj, field) \
-    *obj.get<decltype(Class::field)>(Class::Traits::FieldIds::Id)
+    *obj.get<decltype(Class::field)>(Class::Field::Id)
