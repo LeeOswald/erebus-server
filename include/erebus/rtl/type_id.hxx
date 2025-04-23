@@ -1,14 +1,12 @@
 #pragma once
 
-#include <erebus/rtl/log.hxx>
+#include <erebus/rtl/rtl.hxx>
 
 namespace Er
 {
 
 struct RegisteredType;
 
-ER_RTL_EXPORT void initializeTypeRegistry(Er::Log::ILogger* log);
-ER_RTL_EXPORT void finalizeTypeRegistry() noexcept;
 
 ER_RTL_EXPORT [[nodiscard]] RegisteredType* lookupType(std::string_view name);
 
@@ -73,7 +71,7 @@ struct TypeInfo final
 {
     template <typename Type>
     TypeInfo(std::in_place_type_t<Type>)
-        : m_name(TypeName<std::remove_cv_t<std::remove_reference_t<Type>>>::value()) 
+        : m_name(TypeName<std::remove_cvref_t<Type>>::value())
     {
         static auto index = lookupType(m_name)->index;
         m_index = index;
@@ -98,21 +96,21 @@ private:
 template <typename Type>
 [[nodiscard]] const TypeInfo& typeId() noexcept 
 {
-    if constexpr (std::is_same_v<Type, std::remove_cv_t<std::remove_reference_t<Type>>>) 
+    if constexpr (std::is_same_v<Type, std::remove_cvref_t<Type>>) 
     {
         static TypeInfo instance{ std::in_place_type<Type> };
         return instance;
     }
     else 
     {
-        return typeId<std::remove_cv_t<std::remove_reference_t<Type>>>();
+        return typeId<std::remove_cvref_t<Type>>();
     }
 }
 
 template <typename Type>
 [[nodiscard]] const TypeInfo& typeId(Type&&) noexcept 
 {
-    return typeId<std::remove_cv_t<std::remove_reference_t<Type>>>();
+    return typeId<std::remove_cvref_t<Type>>();
 }
 
 

@@ -12,7 +12,6 @@
 
 #include <erebus/rtl/logger/ostream_sink.hxx>
 #include <erebus/rtl/logger/simple_formatter.hxx>
-#include <erebus/rtl/type_id.hxx>
 
 #include <boost/stacktrace.hpp>
 
@@ -318,9 +317,7 @@ int Program::exec(int argc, char** argv)
 
     try
     {
-        initializeTypeRegistry(m_logger.get());
         run(argc, argv);
-        finalizeTypeRegistry();
     }
     catch(...)
     {
