@@ -159,7 +159,7 @@ struct Reflectable
             [field](SelfType& me, SelfType&& other) -> void
             {
                 FieldOperators<_Type> ops;
-                ops.move(field, me, std::move(other));
+                ops.move(field, me, static_cast<SelfType&&>(other));
             }
         };
     }
@@ -363,7 +363,7 @@ struct Reflectable
                         difference.map[f.id] = Diff::Type::Changed;
                         ++difference.differences;
 
-                        f.mover(*this_, std::move(*that_));
+                        f.mover(*this_, static_cast<SelfType&&>(*that_));
                         
                         _hashValid = false;
                     }
@@ -382,7 +382,7 @@ struct Reflectable
                 difference.map[f.id] = Diff::Type::Added; // our field is invalid, but their's is
                 ++difference.differences;
 
-                f.mover(*this_, std::move(*that_));
+                f.mover(*this_, static_cast<SelfType&&>(*that_));
 
                 _valid.set(f.id);
                 _hashValid = false;

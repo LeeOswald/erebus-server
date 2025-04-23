@@ -170,6 +170,7 @@ TEST(Reflectable, Move)
 
     My m3(std::move(m1));
     EXPECT_EQ(m1.validMask(), My::FieldSet{});
+    EXPECT_TRUE(m1.first.empty()); // moved away
 
     EXPECT_EQ(m2.hash(), m2.hash());
     EXPECT_EQ(m3.validMask(), m2.validMask());
@@ -181,6 +182,7 @@ TEST(Reflectable, Move)
     My m4{};
     m4 = std::move(m3);
     EXPECT_EQ(m3.validMask(), My::FieldSet{});
+    EXPECT_TRUE(m3.first.empty()); // moved away
 
     EXPECT_EQ(m4.hash(), m2.hash());
     EXPECT_EQ(m4.validMask(), m2.validMask());
@@ -351,6 +353,7 @@ TEST(Reflectable, update_move)
     EXPECT_EQ(hash, m2.hash());
 
     EXPECT_EQ(m1_copy.validMask(), My::FieldSet{});
+    EXPECT_TRUE(m1_copy.first.empty()); // moved away
     EXPECT_NE(m1_copy.hash(), hash);
 
     // update from empty
@@ -384,4 +387,5 @@ TEST(Reflectable, update_move)
     EXPECT_EQ(m1.hash(), h3);
 
     EXPECT_EQ(m3.validMask(), My::FieldSet{});
+    EXPECT_TRUE(m3.first.empty()); // moved away
 }
