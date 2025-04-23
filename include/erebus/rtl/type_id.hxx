@@ -7,8 +7,10 @@ namespace Er
 
 struct RegisteredType;
 
+using TypeIndex = std::uintptr_t;
 
-ER_RTL_EXPORT [[nodiscard]] RegisteredType* lookupType(std::string_view name);
+ER_RTL_EXPORT [[nodiscard]] RegisteredType const* lookupType(std::string_view name);
+ER_RTL_EXPORT [[nodiscard]] RegisteredType const* lookupType(TypeIndex index);
 
 
 namespace detail 
@@ -50,9 +52,6 @@ struct TypeName final
         return detail::typeName<Type>(0);
     }
 };
-
-
-using TypeIndex = std::uintptr_t;
 
 
 struct RegisteredType
