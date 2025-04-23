@@ -15,22 +15,25 @@ using SemanticCode = std::uint32_t;
 namespace Semantics
 {
 
-constexpr SemanticCode Default = 0;
-constexpr SemanticCode Hex = 1;
-constexpr SemanticCode Address = 2;
-constexpr SemanticCode Scientific = 3;
-constexpr SemanticCode Fixed = 4;
-constexpr SemanticCode Fixed3 = 5;              // precision = 3
-constexpr SemanticCode UtcTime = 6;             // PackedTime::ValueType formatted as UTC time 
-constexpr SemanticCode UtcDate = 7;             // PackedTime::ValueType formatted as UTC date
-constexpr SemanticCode UtcDateTime = 8;         // PackedTime::ValueType formatted as UTC date & time
-constexpr SemanticCode LocalTime = 9;
-constexpr SemanticCode LocalDate = 10;
-constexpr SemanticCode LocalDateTime = 11;
-constexpr SemanticCode Microseconds = 12;       // PackedTime::ValueType formatted as microseconds
-constexpr SemanticCode Milliseconds = 13;
-constexpr SemanticCode Seconds = 14;
-constexpr SemanticCode Percent = 15;
+enum : SemanticCode
+{
+    Default = 0,
+    Hex,
+    Address,
+    Scientific,
+    Fixed,
+    Fixed3,              // precision = 3
+    UtcTime,             // PackedTime::ValueType formatted as UTC time 
+    UtcDate,             // PackedTime::ValueType formatted as UTC date
+    UtcDateTime,         // PackedTime::ValueType formatted as UTC date & time
+    LocalTime,
+    LocalDate,
+    LocalDateTime,
+    Microseconds,        // PackedTime::ValueType formatted as microseconds
+    Milliseconds,
+    Seconds,
+    Percent,
+};
 
 } // namespace Semantics {}
 
