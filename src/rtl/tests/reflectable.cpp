@@ -233,3 +233,75 @@ TEST(Reflectable, Diff)
     EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Changed);
     EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Unchanged);
 }
+
+TEST(Reflectable, update)
+{
+    My m1;
+    ErSet(My, Zeroth, m1, zeroth, 34);
+    ErSet(My, First, m1, first, "Bye?");
+    ErSet(My, Second, m1, second, -54321);
+    ErSet(My, Third, m1, third, 9.99);
+    auto valid = m1.validMask();
+    auto hash = m1.hash();
+
+    // update from self
+    auto d = m1.update(m1);
+    EXPECT_EQ(d.differences, 0);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Zeroth], My::Diff::Type::Unchanged);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::First], My::Diff::Type::Unchanged);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Unchanged);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Unchanged);
+    
+    EXPECT_EQ(m1.zeroth, 34);
+    EXPECT_STREQ(m1.first.c_str(), "Bye?");
+    EXPECT_EQ(m1.second, -54321);
+    EXPECT_DOUBLE_EQ(m1.third, 9.99);
+
+    EXPECT_EQ(valid, m1.validMask());
+    EXPECT_EQ(hash, m1.hash());
+    
+    // update empty
+    My m2;
+    d = m2.update(m1);
+    EXPECT_EQ(d.differences, 4);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Zeroth], My::Diff::Type::Added);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::First], My::Diff::Type::Added);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Added);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Added);
+
+    EXPECT_EQ(m2.zeroth, 34);
+    EXPECT_STREQ(m2.first.c_str(), "Bye?");
+    EXPECT_EQ(m2.second, -54321);
+    EXPECT_DOUBLE_EQ(m2.third, 9.99);
+
+    EXPECT_EQ(valid, m2.validMask());
+    EXPECT_EQ(hash, m2.hash());
+
+    // update from empty
+    d = m2.update(My{});
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Zeroth], My::Diff::Type::Removed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::First], My::Diff::Type::Removed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Removed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Removed);
+    EXPECT_EQ(m2.validMask(), My::FieldSet{});
+
+    // update from changed
+    My m3(m1);
+    ErSet(My, First, m3, first, "Hello!");
+    ErSet(My, Second, m3, second, 12345);
+    
+    d = m1.update(m3);
+    EXPECT_EQ(d.differences, 2);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Zeroth], My::Diff::Type::Unchanged);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::First], My::Diff::Type::Changed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Second], My::Diff::Type::Changed);
+    EXPECT_EQ(d.map[My::Traits::FieldIds::Third], My::Diff::Type::Unchanged);
+
+    EXPECT_EQ(m1.zeroth, 34);
+    EXPECT_STREQ(m1.first.c_str(), "Hello!");
+    EXPECT_EQ(m1.second, 12345);
+    EXPECT_DOUBLE_EQ(m1.third, 9.99);
+
+    EXPECT_EQ(m3.validMask(), m1.validMask());
+    EXPECT_EQ(m3.hash(), m1.hash());
+}

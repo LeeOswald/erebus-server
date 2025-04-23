@@ -38,6 +38,7 @@ struct Reflectable
     using FieldSetter = std::function<void*(SelfType& o)>;
     using FieldComparator = std::function<bool(const SelfType& l, const SelfType& r)>;
     using FieldHasher = std::function<void(HashType& seed, const SelfType& o)>;
+    using FieldCopier = std::function<void(SelfType& me, const SelfType& other)>;
 
     template <typename _Type>
     using FieldPtr = _Type SelfType::*;
@@ -64,6 +65,11 @@ struct Reflectable
         {
             boost::hash_combine(seed, o.*field);
         }
+
+        void copy(FieldPtr<_Type> field, SelfType& me, const SelfType& other) noexcept
+        {
+            me.*field = other.*field;
+        }
     };
 
     struct FieldInfo
@@ -76,8 +82,19 @@ struct Reflectable
         FieldSetter setter;
         FieldComparator comparator;
         FieldHasher hasher;
+        FieldCopier copier;
 
-        constexpr FieldInfo(unsigned id, TypeIndex type, std::string_view name, SemanticCode semantic, auto&& getter, auto&& setter, auto&& comparator, auto&& hasher) noexcept
+        constexpr FieldInfo(
+            unsigned id, 
+            TypeIndex type, 
+            std::string_view name, 
+            SemanticCode semantic, 
+            auto&& getter, 
+            auto&& setter, 
+            auto&& comparator, 
+            auto&& hasher,
+            auto&& copier
+        ) noexcept
             : id(id)
             , type(type)
             , name(name)
@@ -86,6 +103,7 @@ struct Reflectable
             , setter(std::forward<decltype(setter)>(setter))
             , comparator(std::forward<decltype(comparator)>(comparator))
             , hasher(std::forward<decltype(hasher)>(hasher))
+            , copier(std::forward<decltype(copier)>(copier))
         {
         }
     };
@@ -123,6 +141,11 @@ struct Reflectable
             {
                 FieldOperators<_Type> ops;
                 ops.hash(seed, field, o);
+            },
+            [field](SelfType& me, const SelfType& other) -> void
+            {
+                FieldOperators<_Type> ops;
+                ops.copy(field, me, other);
             }
         };
     }
@@ -249,6 +272,53 @@ struct Reflectable
             {
                 difference.map[f.id] = Diff::Type::Added; // our field is invalid, but their's is
                 ++difference.differences;
+            }
+        }
+
+        return difference;
+    }
+
+    Diff update(const Reflectable& o)
+    {
+        Diff difference;
+
+        auto& flds = fields();
+
+        auto this_ = static_cast<SelfType*>(this);
+        auto that_ = static_cast<SelfType const*>(&o);
+
+        for (auto& f : flds)
+        {
+            if (_valid[f.id])
+            {
+                if (o._valid[f.id])
+                {
+                    if (!f.comparator(*this_, *that_)) // field value differs
+                    {
+                        difference.map[f.id] = Diff::Type::Changed;
+                        ++difference.differences;
+
+                        f.copier(*this_, *that_);
+                        _hashValid = false;
+                    }
+                }
+                else
+                {
+                    difference.map[f.id] = Diff::Type::Removed; // our field is valid, but their's is not
+                    ++difference.differences;
+
+                    _valid.reset(f.id);
+                    _hashValid = false;
+                }
+            }
+            else if (o._valid[f.id])
+            {
+                difference.map[f.id] = Diff::Type::Added; // our field is invalid, but their's is
+                ++difference.differences;
+
+                f.copier(*this_, *that_);
+                _valid.set(f.id);
+                _hashValid = false;
             }
         }
 
