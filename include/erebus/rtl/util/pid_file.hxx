@@ -23,7 +23,7 @@ public:
     {
         try
         {
-            auto str = loadTextFile(path);
+            auto str = loadFile(path).release();
             return std::strtoull(str.c_str(), nullptr, 10);
         }
         catch (...)

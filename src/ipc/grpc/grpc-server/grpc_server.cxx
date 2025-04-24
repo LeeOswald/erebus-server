@@ -177,9 +177,9 @@ private:
                     if (!rootCertPath)
                         ErThrow(Er::format("TLS root certificates file path is missing for {}", ep.address));
 
-                    ep.certificate = Util::loadTextFile(*certificatePath->getString());
-                    ep.key = Util::loadTextFile(*keyPath->getString());
-                    ep.rootCertificates = Util::loadTextFile(*rootCertPath->getString());
+                    ep.certificate = Util::loadFile(*certificatePath->getString()).release();
+                    ep.key = Util::loadFile(*keyPath->getString()).release();
+                    ep.rootCertificates = Util::loadFile(*rootCertPath->getString()).release();
                 }
 
                 result.push_back(std::move(ep));

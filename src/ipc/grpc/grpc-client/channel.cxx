@@ -36,19 +36,19 @@ ChannelPtr createChannel(const PropertyMap& parameters)
         if (!prop)
             ErThrow("TLS certificate file name expected");
         
-        certificate = Util::loadTextFile(*prop->getString());
+        certificate = Util::loadFile(*prop->getString()).release();
 
         prop = findProperty(parameters, "private_key", Property::Type::String);
         if (!prop)
             ErThrow("TLS private key file name expected");
 
-        key = Util::loadTextFile(*prop->getString());
+        key = Util::loadFile(*prop->getString()).release();
 
         prop = findProperty(parameters, "root_certificates", Property::Type::String);
         if (!prop)
             ErThrow("TLS root certificates file name expected");
 
-        rootCerts = Util::loadTextFile(*prop->getString());
+        rootCerts = Util::loadFile(*prop->getString()).release();
     }
 
     grpc::ChannelArguments args;

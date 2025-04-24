@@ -1,4 +1,3 @@
-#include <erebus/rtl/system/posix_error.hxx>
 #include <erebus/rtl/util/file.hxx>
 #include <erebus/rtl/util/generic_handle.hxx>
 
@@ -8,30 +7,23 @@
 namespace Er::Util
 {
 
-ER_RTL_EXPORT ResultCode loadBinaryFile(const std::string& path, Binary& out) noexcept
+ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) noexcept
 {
     FileHandle file(::open(path.c_str(), O_RDONLY));
     if (!file.valid())
     {
-        auto err = System::resultFromPosixError(errno);
-        return err ? *err : Result::Failure;
+        return std::unexpected(errno);
     }
 
     auto size64 = ::lseek64(file, 0, SEEK_END);
     if (size64 == static_cast<decltype(size64)>(-1))
     {
-        auto err = System::resultFromPosixError(errno);
-        return err ? *err : Result::Failure;
+        return std::unexpected(errno);
     }
 
-    if (size64 > std::numeric_limits<std::uint32_t>::max())
-    {
-        // file too large
-        return Result::InsufficientResources;
-    }
+    auto size = static_cast<std::size_t>(size64);
 
-    auto size = static_cast<std::uint32_t>(size64);
-
+    Binary out;
     std::string& bytes = out.bytes();
 
     try
@@ -40,7 +32,7 @@ ER_RTL_EXPORT ResultCode loadBinaryFile(const std::string& path, Binary& out) no
     }
     catch (std::bad_alloc&)
     {
-        return Result::OutOfMemory;
+        return std::unexpected(ENOMEM);
     }
 
     ::lseek64(file, 0, SEEK_SET);
@@ -48,8 +40,7 @@ ER_RTL_EXPORT ResultCode loadBinaryFile(const std::string& path, Binary& out) no
     auto rd = ::read(file, bytes.data(), size);
     if (rd < 0)
     {
-        auto err = System::resultFromPosixError(errno);
-        return err ? *err : Result::Failure;
+        return std::unexpected(errno);
     }
 
     if (static_cast<decltype(size)>(rd) < size)
@@ -57,7 +48,7 @@ ER_RTL_EXPORT ResultCode loadBinaryFile(const std::string& path, Binary& out) no
         bytes.resize(rd);
     }
 
-    return Result::Ok;
+    return out;
 }
 
 } // namespace Er::Util {}

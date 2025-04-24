@@ -87,6 +87,7 @@
         "*.inc": "cpp",
         "ranges": "cpp",
         "charconv": "cpp",
-        "coroutine": "cpp"
+        "coroutine": "cpp",
+        "expected": "cpp"
     }
 }

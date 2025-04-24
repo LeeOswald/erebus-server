@@ -33,7 +33,7 @@ bool ClientApplication::loadConfiguration()
             return false;
         }
 
-        auto configJson = Er::Util::loadTextFile(m_cfgFile);
+        auto configJson = Er::Util::loadFile(m_cfgFile).release();
 
         m_configRoot = Er::loadJson(configJson);
         if (m_configRoot.type() != Er::Property::Type::Map)

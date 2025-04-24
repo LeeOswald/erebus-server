@@ -2,6 +2,7 @@
 
 #include <erebus/rtl/binary.hxx>
 
+#include <expected>
 #include <filesystem>
 #include <vector>
 #include <unordered_set>
@@ -10,10 +11,13 @@
 namespace Er::Util
 {
 
-ER_RTL_EXPORT ResultCode loadBinaryFile(const std::string& path, Binary& out) noexcept;
+#if ER_POSIX
+ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) noexcept;
+#elif ER_WINDOWS
+ER_RTL_EXPORT std::expected<Binary, std::uint32_t> tryLoadFile(const std::string& path) noexcept;
+#endif
 
-ER_RTL_EXPORT std::string loadTextFile(const std::string& path);
-ER_RTL_EXPORT Binary loadBinaryFile(const std::string& path);
+ER_RTL_EXPORT Binary loadFile(const std::string& path);
 
 ER_RTL_EXPORT std::optional<std::string> resolveSymlink(const std::string& path, unsigned maxDepth = 8) noexcept;
 
