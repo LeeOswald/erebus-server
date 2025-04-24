@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/rtl/rtl.hxx>
+#include <erebus/rtl/empty.hxx>
 
 #include <bitset>
 
@@ -159,7 +159,7 @@ private:
 };
 
 
-template <std::size_t N, typename ValuesSetT>
+template <std::size_t N, typename ValuesSetT = Empty>
 using BitSet = FlagsPack<N, ValuesSetT>;
 
 

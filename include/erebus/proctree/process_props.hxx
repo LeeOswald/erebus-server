@@ -7,30 +7,30 @@
 namespace Er::ProcessTree
 {
 
-ER_REFLECTABLE_TRAITS_BEGIN(ProcessProperties, ProcessPropertiesTraits)
-    Pid,
-    PPid,
-    PGrp,
-    Tpgid,
-    Session,
-    Ruid,
-    Comm,
-    CmdLine,
-    Exe,
-    StartTime,
-    State,
-    UserName,
-    ThreadCount,
-    STime,
-    UTime,
-    CpuUsage,
-    Tty
-ER_REFLECTABLE_TRAITS_END()
-
-
 struct ProcessProperties
-    : public Reflectable<ProcessPropertiesTraits>
+    : public Reflectable<ProcessProperties, 17>
 {
+    enum Field : FieldId
+    {
+        Pid,
+        PPid,
+        PGrp,
+        Tpgid,
+        Session,
+        Ruid,
+        Comm,
+        CmdLine,
+        Exe,
+        StartTime,
+        State,
+        UserName,
+        ThreadCount,
+        STime,
+        UTime,
+        CpuUsage,
+        Tty
+    };
+
     std::uint64_t pid;
     std::uint64_t ppid;
     std::uint64_t pgrp;
