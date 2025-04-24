@@ -30,6 +30,7 @@
 #define ER_PLATFORM_HXX_INCLUDED 1
 
 // absolutely necessary system headers go here
+#include <algorithm>
 #include <concepts>
 #include <cstdint>
 #include <limits>

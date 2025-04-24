@@ -211,6 +211,7 @@ TEST(Property, Construction)
 
     ErLogInfo("sizeof(Property) = {}", sizeof(Property));
     ErLogInfo("sizeof(Property::Map) = {}", sizeof(Property::Map));
+    ErLogInfo("sizeof(Property::Vector) = {}", sizeof(Property::Vector));
     ErLogInfo("sizeof(std::string) = {}", sizeof(std::string));
 }
 
