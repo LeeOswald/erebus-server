@@ -10,4 +10,6 @@ add_subdirectory(server)
 
 add_subdirectory(client)
 
-add_subdirectory(proctree)
+if (NOT ER_WINDOWS)
+    add_subdirectory(proctree)
+endif()

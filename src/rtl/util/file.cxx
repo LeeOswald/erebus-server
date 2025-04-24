@@ -22,9 +22,9 @@ ER_RTL_EXPORT Binary loadFile(const std::string& path)
 #if ER_POSIX
     auto result = tryLoadFile(path);
     if (!result.has_value())
-        ErThrowPosixError(Er::format("Failed to open {}", path), -result.error());
+        ErThrowPosixError(Er::format("Failed to open {}", path), result.error());
 #elif ER_WINDOWS
-    auto result = tryLoadFile(path, out);
+    auto result = tryLoadFile(path);
     if (!result.has_value())
         ErThrowWin32Error(Er::format("Failed to open {}", path), result.error());
 #endif
