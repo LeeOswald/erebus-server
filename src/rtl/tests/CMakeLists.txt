@@ -14,6 +14,7 @@ target_sources(erebus-rtl-tests
         luaxx_reference.cpp
         luaxx_selector.cpp
         main.cpp
+        multi_string.cpp
         pattern.cpp
         property.cpp
         property_bag.cpp
