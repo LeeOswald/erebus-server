@@ -2,6 +2,7 @@
 #include <erebus/rtl/util/generic_handle.hxx>
 #include <erebus/rtl/util/utf16.hxx>
 
+#include <array>
 
 namespace Er::Util
 {
@@ -20,34 +21,40 @@ ER_RTL_EXPORT std::expected<Binary, std::uint32_t> tryLoadFile(const std::string
         return std::unexpected(::GetLastError());
     }
 
-    if (li.QuadPart > std::numeric_limits<std::uint32_t>::max())
-    {
-        // file too large
-        return std::unexpected(ERROR_NOT_ENOUGH_MEMORY);
-    }
+    auto sizeHint = static_cast<std::size_t>(li.QuadPart);
 
-    auto size = static_cast<std::uint32_t>(li.QuadPart);
+    const std::size_t blockSize = 8192;
+    std::array<char, blockSize> buffer;
 
     Binary out;
     std::string& bytes = out.bytes();
 
     try
     {
-        bytes.resize(size);
+        if (sizeHint > 0)
+        {
+            bytes.reserve(sizeHint);
+        }
+
+        DWORD rd = 0;
+        do
+        {
+            if (!::ReadFile(file, buffer.data(), buffer.size(), &rd, nullptr))
+            {
+                return std::unexpected(::GetLastError());
+            }
+
+            if (rd > 0)
+            {
+                bytes.append(buffer.data(), rd);
+            }
+
+        } while (rd > 0);
     }
     catch (std::bad_alloc&)
     {
         return std::unexpected(ERROR_NOT_ENOUGH_MEMORY);
     }
-
-    DWORD rd = 0;
-    if (!::ReadFile(file, bytes.data(), size, &rd, nullptr))
-    {
-        return std::unexpected(::GetLastError());
-    }
-
-    if (rd < size)
-        bytes.resize(rd);
 
     return {std::move(out)};
 }

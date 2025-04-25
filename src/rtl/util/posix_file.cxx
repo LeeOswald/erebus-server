@@ -1,6 +1,8 @@
 #include <erebus/rtl/util/file.hxx>
 #include <erebus/rtl/util/generic_handle.hxx>
 
+#include <array>
+
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -22,29 +24,40 @@ ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) no
         return std::unexpected(errno);
     }
 
-    auto size = static_cast<std::size_t>(fileStat.st_size);
+    const std::size_t blockSize = 8192;
+    std::array<char, blockSize> buffer;
 
     Binary out;
     std::string& bytes = out.bytes();
 
     try
     {
-        bytes.resize(size);
+        if (fileStat.st_size > 0)
+        {
+            // st_size is only a hint since the file could have been written to
+            // or truncated since we opened it
+            bytes.reserve(fileStat.st_size);
+        }
+
+        ssize_t rd = 0;
+        do
+        {
+            rd = ::read(file, buffer.data(), buffer.size());
+            if (rd < 0)
+            {
+                return std::unexpected(errno);
+            }
+
+            if (rd > 0)
+            {
+                bytes.append(buffer.data(), rd);
+            }
+
+        } while (rd > 0);
     }
     catch (std::bad_alloc&)
     {
         return std::unexpected(ENOMEM);
-    }
-
-    auto rd = ::read(file, bytes.data(), size);
-    if (rd < 0)
-    {
-        return std::unexpected(errno);
-    }
-
-    if (static_cast<decltype(size)>(rd) < size)
-    {
-        bytes.resize(rd);
     }
 
     return {std::move(out)};
