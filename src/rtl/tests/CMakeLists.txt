@@ -18,6 +18,7 @@ target_sources(erebus-rtl-tests
         pattern.cpp
         property.cpp
         property_bag.cpp
+        string_util.cpp
         reflectable.cpp
     PRIVATE
         FILE_SET private_headers TYPE HEADERS
