@@ -29,6 +29,31 @@
             ]
         },
         {
+            "name": "(gdb) Launch erebus-proctree tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/erebus-proctree-tests",
+            "args": [ "-v" ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            /*"miDebuggerPath": "/home/ursus/Projects/debug.sh"*/,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "(gdb) Launch server",
             "type": "cppdbg",
             "request": "launch",

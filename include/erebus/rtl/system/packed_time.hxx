@@ -28,6 +28,11 @@ struct ER_RTL_EXPORT PackedTime
     {
     }
 
+    [[nodiscard]] static constexpr PackedTime fromPosixTime(ValueType t) noexcept
+    {
+        return { t * 1000000UL };
+    }
+
     [[nodiscard]] constexpr std::time_t toPosixTime() const noexcept
     {
         return value / 1000000UL;

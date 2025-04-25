@@ -2,13 +2,16 @@
 
 #include <erebus/proctree/proctree.hxx>
 #include <erebus/rtl/log.hxx>
+#include <erebus/rtl/multi_string.hxx>
+#include <erebus/rtl/system/packed_time.hxx>
 
 #include <expected>
+#include <vector>
 
 #include <boost/noncopyable.hpp>
 
 
-namespace Er::ProcessTree::Util
+namespace Er::ProcessTree::Linux
 {
 
 class ER_PROCTREE_EXPORT ProcFs final
@@ -17,14 +20,14 @@ class ER_PROCTREE_EXPORT ProcFs final
 public:
     struct Stat
     {
-        /* 0*/ Pid pid = InvalidPid;
+        /* 0*/ std::int64_t pid = -1;
         /* 1*/ std::string comm;
         /* 2*/ char state = '?';
-        /* 3*/ Pid ppid = InvalidPid;
-        /* 4*/ std::uint64_t pgrp = InvalidPid;
-        /* 5*/ std::uint64_t session = InvalidPid;
+        /* 3*/ std::int64_t ppid = -1;
+        /* 4*/ std::int64_t pgrp = -1;
+        /* 5*/ std::int64_t session = -1;
         /* 6*/ std::int32_t tty_nr = -1;
-        /* 7*/ std::uint64_t tpgid = InvalidPid;
+        /* 7*/ std::int64_t tpgid = -1;
         /* 8*/ std::int32_t flags = 0;
         /* 9*/ std::uint64_t minflt = 0;                     // minor faults
         /*10*/ std::uint64_t cminflt = 0;                    // minor faults of waited children
@@ -38,7 +41,7 @@ public:
         /*18*/ std::int64_t nice = 0;
         /*19*/ std::int64_t num_threads = 0;
         /*20*/ std::int64_t itrealvalue = 0;                  // obsolete
-        /*21*/ std::uint64_t starttime = 0;                   // start time (since reboot)
+        /*21*/ std::uint64_t starttime = 0;                   // start time (seconds since reboot)
         /*22*/ std::uint64_t vsize = 0;                       // virtual memory size
         /*23*/ std::int64_t rss = 0;                          // resident size
         /*24*/ std::uint64_t rsslim = 0;
@@ -70,7 +73,7 @@ public:
         /*50*/ std::uint64_t env_end = 0;
         /*51*/ std::int32_t exit_code = 0;
 
-        std::uint64_t startTime = 0;                          // start time (absolute)
+        System::PackedTime startTime;                         // start time (absolute)
         std::uint64_t ruid = uint64_t(-1);                    // real user ID of process owner
         double uTime = 0.0;                                   // seconds
         double sTime = 0.0;                                   // seconds
@@ -82,17 +85,28 @@ public:
 
     explicit ProcFs(std::string_view procFsRoot = std::string_view("/proc"));
 
-    std::uint64_t bootTime() noexcept
+    constexpr System::PackedTime bootTime() noexcept
     {
-        return m_bootTime;
+        return System::PackedTime::fromPosixTime(m_bootTime);
     }
 
-    std::expected<Stat, int> readStat(Pid pid) noexcept;
-    std::expected<std::string, int> readComm(Pid pid) noexcept;
+    std::expected<std::vector<Pid>, int> enumeratePids();
+    std::expected<Stat, int> readStat(Pid pid);
+    std::expected<std::string, int> readComm(Pid pid);
+    std::expected<std::string, int> readExePath(Pid pid);
+    std::expected<MultiStringZ, int> readCmdLine(Pid pid);
+    std::expected<MultiStringZ, int> readEnv(Pid pid);
 
 private:
     std::uint64_t getBootTimeImpl();
-    std::uint64_t fromRelativeTime(uint64_t relative) noexcept;
+    
+    constexpr std::uint64_t fromRelativeTime(uint64_t relative) noexcept
+    {
+        auto boot = m_bootTime;
+        auto time = relative / m_clkTck;
+    
+        return boot + time;
+    }
 
     std::string m_procFsRoot;
     std::uint64_t m_bootTime;
@@ -101,4 +115,4 @@ private:
     std::size_t m_pidCountMax = 0;
 };
 
-} // namespace Er::ProcessTree::Util {}
+} // namespace Er::ProcessTree::Linux {}

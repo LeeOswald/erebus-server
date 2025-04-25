@@ -2,6 +2,7 @@
 #include <erebus/rtl/util/generic_handle.hxx>
 
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 namespace Er::Util
@@ -15,13 +16,13 @@ ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) no
         return std::unexpected(errno);
     }
 
-    auto size64 = ::lseek64(file, 0, SEEK_END);
-    if (size64 == static_cast<decltype(size64)>(-1))
+    struct ::stat64 fileStat;
+    if (::stat64(path.c_str(), &fileStat) == -1)
     {
         return std::unexpected(errno);
     }
 
-    auto size = static_cast<std::size_t>(size64);
+    auto size = static_cast<std::size_t>(fileStat.st_size);
 
     Binary out;
     std::string& bytes = out.bytes();
@@ -35,8 +36,6 @@ ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) no
         return std::unexpected(ENOMEM);
     }
 
-    ::lseek64(file, 0, SEEK_SET);
-
     auto rd = ::read(file, bytes.data(), size);
     if (rd < 0)
     {
@@ -48,7 +47,7 @@ ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) no
         bytes.resize(rd);
     }
 
-    return out;
+    return {std::move(out)};
 }
 
 } // namespace Er::Util {}

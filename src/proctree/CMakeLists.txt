@@ -26,3 +26,5 @@ target_link_libraries(
 target_compile_definitions(erebus-proctree PRIVATE ER_PROCTREE_EXPORTS)
 
 set_property(TARGET erebus-proctree PROPERTY PREFIX "")
+
+add_subdirectory(tests)

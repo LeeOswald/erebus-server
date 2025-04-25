@@ -49,7 +49,7 @@ ER_RTL_EXPORT std::expected<Binary, std::uint32_t> tryLoadFile(const std::string
     if (rd < size)
         bytes.resize(rd);
 
-    return out;
+    return {std::move(out)};
 }
 
 } // namespace Er::Util {}
