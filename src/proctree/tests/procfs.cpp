@@ -2,15 +2,25 @@
 
 #include <erebus/proctree/linux/procfs.hxx>
 #include <erebus/rtl/system/posix_error.hxx>
+#include <erebus/rtl/util/string_util.hxx>
 
 using namespace Er;
 using namespace Er::ProcessTree;
 using namespace Er::ProcessTree::Linux;
 
 
-static void dumpStat(Pid pid, ProcFs::Stat const& stat)
+static void dumpStat(Pid pid, ProcFs& proc)
 {
     ErLogIndent(Er::Log::Level::Info, "[{}] --------------", pid);
+    auto stat_ = proc.readStat(pid);
+    if (!stat_.has_value())
+    {
+        ErLogError("Failed to read /proc/{}/stat: {} ({})", pid, stat_.error(), System::posixErrorToString(stat_.error()));
+        return;
+    }
+
+    auto& stat = stat_.value();
+
     ErLogInfo("pid: {}", stat.pid);
     ErLogInfo("ppid: {}", stat.ppid);
     ErLogInfo("comm: {}", stat.comm);
@@ -24,6 +34,65 @@ static void dumpStat(Pid pid, ProcFs::Stat const& stat)
     ErLogInfo("stime: {:.2f}", stat.sTime);
     auto tm = stat.startTime.toLocalTime();
     ErLogInfo("start time: {:02d}/{:02d}/{:04d} {:02d}:{:02d}:{:02d}", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    auto comm_ = proc.readComm(pid);
+    if (!comm_.has_value())
+    {
+        ErLogError("Failed to read /proc/{}/comm: {} ({})", pid, comm_.error(), System::posixErrorToString(comm_.error()));
+    }
+    else
+    {
+        ErLogInfo("/comm: [{}]", comm_.value());
+    }
+
+    auto exe_ = proc.readExePath(pid);
+    if (!exe_.has_value())
+    {
+        if (exe_.error() == ENOENT)
+            ErLogInfo("/exe: [n/a]");
+        else
+            ErLogError("Failed to read /proc/{}/exe: {} ({})", pid, exe_.error(), System::posixErrorToString(exe_.error()));
+    }
+    else
+    {
+        ErLogInfo("/exe: [{}]", exe_.value());
+    }
+
+    auto cmd_ = proc.readCmdLine(pid);
+    if (!cmd_.has_value())
+    {
+        ErLogError("Failed to read /proc/{}/cmdline: {} ({})", pid, cmd_.error(), System::posixErrorToString(cmd_.error()));
+    }
+    else
+    {
+        auto cmd = cmd_.value().coalesce(' ');
+        cmd = Er::Util::rtrim(cmd);
+
+        ErLogInfo("/cmdline: [{}]", cmd);
+    }
+
+    auto env_ = proc.readEnv(pid);
+    if (!env_.has_value())
+    {
+        ErLogError("Failed to read /proc/{}/env: {} ({})", pid, env_.error(), System::posixErrorToString(env_.error()));
+    }
+    else
+    {
+        auto& env = env_.value();
+        if (env.raw.empty())
+        {
+            ErLogInfo("/env: []");
+        }
+        else
+        {
+            ErLogIndent(Er::Log::Level::Info, "Environment --------------", pid);
+            
+            env.split([](const char* str, std::size_t len)
+            {
+                ErLogInfo("{}", std::string_view(str, len));
+            });
+        }
+    }
 }
 
 TEST(ProcFs, enumeratePids)
@@ -42,14 +111,6 @@ TEST(ProcFs, enumeratePids)
 
     for (auto pid: pids)
     {
-        auto stat_ = proc.readStat(pid);
-        if (!stat_.has_value())
-        {
-            ErLogError("Failed to read /proc/{}/stat: {} ({})", pid, stat_.error(), System::posixErrorToString(stat_.error()));
-        }
-        else
-        {
-            dumpStat(pid, stat_.value());
-        }
+        dumpStat(pid, proc);
     }
 }

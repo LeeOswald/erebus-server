@@ -2,8 +2,9 @@
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/format.hxx>
 #include <erebus/rtl/system/posix_error.hxx>
-#include <erebus/rtl/util/file.hxx>
 #include <erebus/rtl/util/auto_ptr.hxx>
+#include <erebus/rtl/util/file.hxx>
+#include <erebus/rtl/util/string_util.hxx>
 
 #include <fstream>
 #include <sstream>
@@ -80,6 +81,7 @@ std::expected<ProcFs::Stat, int> ProcFs::readStat(Pid pid)
     path.append("/");
     path.append(std::to_string(pid));
     
+    // get process real UID
     struct ::stat64 fileStat;
     if (::stat64(path.c_str(), &fileStat) == -1)
     {
@@ -90,14 +92,13 @@ std::expected<ProcFs::Stat, int> ProcFs::readStat(Pid pid)
 
     path.append("/stat");
 
-    std::ifstream stat(path);
-    if (!stat.good())
+    auto rd = Util::tryLoadFile(path);
+    if (!rd.has_value())
     {
-        return std::unexpected(errno);
+        return std::unexpected(rd.error());
     }
 
-    std::string s;
-    std::getline(stat, s);
+    auto& s = rd.value().bytes();
 
     auto start = s.c_str();
     auto pEnd = start + s.length();
@@ -342,7 +343,8 @@ std::expected<std::string, int> ProcFs::readComm(Pid pid)
         return std::unexpected(loaded.error());
     }
 
-    return loaded.value().release();
+    auto& comm = loaded.value();
+    return Er::Util::rtrim(comm.bytes());
 }
 
 std::expected<std::string, int> ProcFs::readExePath(Pid pid)
