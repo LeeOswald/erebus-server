@@ -2,7 +2,7 @@
 add_library(erebus-rtl SHARED)
 
 target_sources(erebus-rtl
-	PRIVATE
+    PRIVATE
         assert.cxx
         debug.cxx
         exception.cxx
@@ -37,7 +37,7 @@ target_sources(erebus-rtl
         util/lock_file.cxx
         
     PUBLIC
-		FILE_SET headers TYPE HEADERS
+        FILE_SET headers TYPE HEADERS
             BASE_DIRS 
                 ${ER_INCLUDE_DIR} 
             FILES
@@ -118,7 +118,7 @@ if(ER_WINDOWS)
             util/win32_file.cxx
             util/win32_utf16.cxx
         PUBLIC
-		FILE_SET headers TYPE HEADERS
+        FILE_SET headers TYPE HEADERS
             BASE_DIRS 
                 ${ER_INCLUDE_DIR}
             FILES
@@ -133,7 +133,7 @@ elseif(ER_POSIX)
             system/user_linux.cxx
             util/posix_file.cxx
         PUBLIC
-		FILE_SET headers TYPE HEADERS
+        FILE_SET headers TYPE HEADERS
             BASE_DIRS 
                 ${ER_INCLUDE_DIR}
             FILES

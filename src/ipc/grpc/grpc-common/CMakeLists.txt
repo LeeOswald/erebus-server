@@ -42,6 +42,3 @@ target_include_directories(erebus-grpc-common PUBLIC "${absl_INCLUDE_DIR}")
 
 target_link_directories(erebus-grpc-common PUBLIC ${gRPC_INCLUDE_DIR}/../lib)
 
-
-
-

@@ -1,12 +1,12 @@
 add_library(erebus-proctree SHARED)
 
 target_sources(erebus-proctree
-	PRIVATE
+    PRIVATE
         linux/procfs.cxx
         process_props.cxx
         
     PUBLIC
-		FILE_SET headers TYPE HEADERS
+        FILE_SET headers TYPE HEADERS
             BASE_DIRS 
                 ${ER_INCLUDE_DIR} 
             FILES

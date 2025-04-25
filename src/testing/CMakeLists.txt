@@ -5,7 +5,7 @@ target_sources(erebus-testing
         test_application.cxx
         test_event_listener.cxx
     PUBLIC
-		FILE_SET headers TYPE HEADERS
+        FILE_SET headers TYPE HEADERS
             BASE_DIRS ${ER_INCLUDE_DIR}/testing
             FILES
                 ${ER_INCLUDE_DIR}/testing/test_application.hxx
