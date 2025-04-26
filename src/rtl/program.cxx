@@ -15,7 +15,9 @@
 
 #include <boost/stacktrace.hpp>
 
+#include <clocale>
 #include <csignal>
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 
@@ -91,6 +93,42 @@ void Program::printAssertFn(std::string_view message)
     Er::Log::get()->flush();
 }
 
+bool Program::setLocale(const char* locale)
+{
+    std::string oldLocale;
+    {
+        auto tmp = std::setlocale(LC_ALL, nullptr);
+        if (!tmp)
+            return false;
+
+        const auto length = ::strnlen(tmp, 1024);
+        if (length == 1024)
+            return false;
+
+        oldLocale.assign(tmp, length);
+    }
+
+    static const char* const CLocale = "C";
+    
+    const char* newLocale = (!locale || !*locale) ? CLocale : locale;
+
+    if (!std::setlocale(LC_ALL, newLocale))
+        return false;
+
+    std::locale::global(std::locale());
+
+#if ER_POSIX
+    // provide child processes with an actual locale via the "LC_ALL" environment.
+    if (::setenv("LC_ALL", newLocale, 1) == -1)
+    {
+        std::::setlocale(LC_ALL, oldLocale.c_str());
+        return false;
+    }
+#endif
+
+    return true;
+}
+
 void Program::globalStartup(int argc, char** argv) noexcept
 {
 #if ER_POSIX
@@ -107,8 +145,21 @@ void Program::globalStartup(int argc, char** argv) noexcept
 #endif
 
 #if ER_WINDOWS
+    ::SetConsoleCP(CP_UTF8);
     ::SetConsoleOutputCP(CP_UTF8);
 #endif
+
+    std::string locale("en_US.UTF-8");
+    if (auto lang = std::getenv("LANG"))
+    {
+        std::cout << "$LANG=" << lang << "\n";
+        locale = lang;
+    }
+
+    if (!setLocale(locale.c_str()))
+    {
+        std::cerr << "Failed to set locale " << locale << "\n";
+    }
 
 #if ER_DEBUG && defined(_MSC_VER)
     // use MSVC debug heap

@@ -78,6 +78,7 @@ protected:
 private:
     static void staticTerminateHandler();
     static void staticPrintAssertFn(std::string_view message);
+    static bool setLocale(const char* locale);
 
     void globalStartup(int argc, char** argv) noexcept;
     void globalShutdown() noexcept;
