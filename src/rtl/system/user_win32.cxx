@@ -1,5 +1,5 @@
-#include <erebus/rtl/exception.hxx>
-#include <erebus/rtl/system/win32_error.hxx>
+#include <erebus/rtl/rtl.hxx>
+#include <erebus/rtl/system/unwindows.h>
 #include <erebus/rtl/system/user.hxx>
 #include <erebus/rtl/util/utf16.hxx>
 
@@ -27,12 +27,11 @@ std::wstring getUserName()
             {
                 // trim trailing '\0'
                 user.resize(std::wcslen(user.data()));
-                return user;
             }
         }
     }
 
-    ErThrowWin32Error("Failed to get current user name", ::GetLastError());
+    return user;
 }
 
 } // namespace {}   
