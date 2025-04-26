@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include <any>
 #include <functional>
 
 
@@ -9,8 +9,8 @@ namespace Er
 
 class Property;
 
-using SemanticCode = std::uint32_t;
 
+using SemanticCode = std::uint32_t;
 
 namespace Semantics
 {
@@ -18,31 +18,26 @@ namespace Semantics
 enum : SemanticCode
 {
     Default = 0,
-    Hex,
-    Address,
-    Scientific,
-    Fixed,
-    Fixed3,              // precision = 3
-    UtcTime,             // PackedTime::ValueType formatted as UTC time 
-    UtcDate,             // PackedTime::ValueType formatted as UTC date
-    UtcDateTime,         // PackedTime::ValueType formatted as UTC date & time
-    LocalTime,
-    LocalDate,
-    LocalDateTime,
-    Microseconds,        // PackedTime::ValueType formatted as microseconds
-    Milliseconds,
-    Seconds,
+    Pointer,                    // memory address
+    Flags,                      // bit mask
+    AbsoluteTime,               // UTC time
+    Duration,
     Percent,
+    Size,                       // bytes
 };
 
 } // namespace Semantics {}
 
 
 using PropertyFormatter = std::function<std::string(const Property&)>;
+using AnyFormatter = std::function<std::string(const std::any&)>;
 
 
 [[nodiscard]] ER_RTL_EXPORT PropertyFormatter& findPropertyFormatter(SemanticCode code);
+[[nodiscard]] ER_RTL_EXPORT AnyFormatter& findAnyFormatter(SemanticCode code);
+
 ER_RTL_EXPORT void registerPropertyFormatter(SemanticCode code, PropertyFormatter&& f);
+ER_RTL_EXPORT void registerAnyFormatter(SemanticCode code, AnyFormatter&& f);
 
 
 

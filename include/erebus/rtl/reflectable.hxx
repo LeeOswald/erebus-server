@@ -5,6 +5,7 @@
 #include <erebus/rtl/string_literal.hxx>
 #include <erebus/rtl/type_id.hxx>
 
+#include <any>
 #include <array>
 #include <functional>
 
@@ -31,6 +32,7 @@ struct Reflectable
     using FieldHasher = std::function<void(HashType& seed, const SelfType& o)>;
     using FieldCopier = std::function<void(SelfType& me, const SelfType& other)>;
     using FieldMover = std::function<void(SelfType& me, SelfType&& other)>;
+    using FieldWrapper = std::function<std::any(const SelfType& o)>;
 
     template <typename _Type>
     using FieldPtr = _Type SelfType::*;
@@ -58,7 +60,7 @@ struct Reflectable
             boost::hash_combine(seed, o.*field);
         }
 
-        void copy(FieldPtr<_Type> field, SelfType& me, const SelfType& other) noexcept
+        void copy(FieldPtr<_Type> field, SelfType& me, const SelfType& other)
         {
             me.*field = other.*field;
         }
@@ -66,6 +68,11 @@ struct Reflectable
         void move(FieldPtr<_Type> field, SelfType& me, SelfType&& other) noexcept
         {
             me.*field = std::move(other.*field);
+        }
+
+        std::any wrap(FieldPtr<_Type> field, const SelfType& o)
+        {
+            return std::make_any<_Type>(o.*field);
         }
     };
 
@@ -81,6 +88,7 @@ struct Reflectable
         FieldHasher hasher;
         FieldCopier copier;
         FieldMover mover;
+        FieldWrapper wrapper;
 
         constexpr FieldInfo(
             unsigned id, 
@@ -92,7 +100,8 @@ struct Reflectable
             auto&& comparator, 
             auto&& hasher,
             auto&& copier,
-            auto&& mover
+            auto&& mover,
+            auto&& wrapper
         ) noexcept
             : id(id)
             , type(type)
@@ -104,6 +113,7 @@ struct Reflectable
             , hasher(std::forward<decltype(hasher)>(hasher))
             , copier(std::forward<decltype(copier)>(copier))
             , mover(std::forward<decltype(mover)>(mover))
+            , wrapper(std::forward<decltype(wrapper)>(wrapper))
         {
         }
     };
@@ -151,7 +161,12 @@ struct Reflectable
             {
                 FieldOperators<_Type> ops;
                 ops.move(field, me, static_cast<SelfType&&>(other));
-            }
+            },
+            [field](const SelfType& o) -> std::any
+            {
+                FieldOperators<_Type> ops;
+                return ops.wrap(field, o);
+            },
         };
     }
 
@@ -387,11 +402,49 @@ struct Reflectable
         return difference;
     }
 
+    std::string_view name(unsigned id) const noexcept
+    {
+        ErAssert(id < FieldCount);
+        auto& flds = fields();
+        return flds[id].name;
+    }
+
     TypeIndex type(unsigned id) const noexcept
     {
         ErAssert(id < FieldCount);
         auto& flds = fields();
         return flds[id].type;
+    }
+
+    SemanticCode semantics(unsigned id) const noexcept
+    {
+        ErAssert(id < FieldCount);
+        if (!_valid[id])
+            return Semantics::Default;
+
+        auto& flds = fields();
+        return flds[id].semantic;
+    }
+
+    std::any wrap(unsigned id) const
+    {
+        ErAssert(id < FieldCount);
+        if (!_valid[id])
+            return {};
+
+        auto& flds = fields();
+        auto this_ = static_cast<SelfType const*>(this);
+
+        return flds[id].wrapper(*this_);
+    }
+
+    std::string format(unsigned id) const
+    {
+        auto any = wrap(id);
+        auto sema = semantics(id);
+
+        auto formatter = findAnyFormatter(sema);
+        return formatter(any);
     }
 
     template <typename _Type>

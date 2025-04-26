@@ -2,6 +2,8 @@
 
 #include <erebus/rtl/reflectable.hxx>
 
+#include <bit>
+
 using namespace Er;
 
 
@@ -36,7 +38,7 @@ TEST(Reflectable, FieldInfo)
     for (auto& f : flds)
     {
         auto ty = lookupType(f.type);
-        ErLogDebug("[{}] #{}.{}", (ty ? ty->name : std::string_view("?")), f.id, f.name);
+        ErLogInfo("[{}] #{}.{}", (ty ? ty->name : std::string_view("?")), f.id, f.name);
     }
 
     EXPECT_EQ(flds[My::Zeroth].type, typeId<std::int32_t>().index());
@@ -389,4 +391,71 @@ TEST(Reflectable, update_move)
 
     EXPECT_EQ(m3.validMask(), My::FieldSet{});
     EXPECT_TRUE(m3.first.empty()); // moved away
+}
+
+struct Rich
+    : public Reflectable<Rich, 7>
+{
+    enum Field : FieldId
+    {
+        Default,
+        Pointer,
+        Flags,
+        Time,
+        Duration,
+        Percent,
+        Size
+    };
+
+    std::string def;
+    std::uint64_t pointer;
+    std::uint32_t flags;
+    Er::System::PackedTime::ValueType time;
+    Er::System::PackedTime::ValueType dura;
+    double percent;
+    std::size_t size;
+
+    ER_REFLECTABLE_FILEDS_BEGIN(Rich)
+        ER_REFLECTABLE_FIELD(Rich, Default, Semantics::Default, def),
+        ER_REFLECTABLE_FIELD(Rich, Pointer, Semantics::Pointer, pointer),
+        ER_REFLECTABLE_FIELD(Rich, Flags, Semantics::Flags, flags),
+        ER_REFLECTABLE_FIELD(Rich, Time, Semantics::AbsoluteTime, time),
+        ER_REFLECTABLE_FIELD(Rich, Duration, Semantics::Duration, dura),
+        ER_REFLECTABLE_FIELD(Rich, Percent, Semantics::Percent, percent),
+        ER_REFLECTABLE_FIELD(Rich, Size, Semantics::Size, size)
+    ER_REFLECTABLE_FILEDS_END()
+};
+
+TEST(Reflectable, format)
+{
+    Rich r;
+    r.def = "Some dumb text";
+    r.setValid(Rich::Default);
+
+    r.pointer = std::bit_cast<std::uint64_t>(&r);
+    r.setValid(Rich::Pointer);
+
+    r.flags = 0xc0030f31;
+    r.setValid(Rich::Flags);
+
+    r.time = Er::System::PackedTime::now();
+    r.setValid(Rich::Time);
+
+    r.dura = 1234567890ULL;
+    r.setValid(Rich::Duration);
+
+    r.percent = 19.957;
+    r.setValid(Rich::Percent);
+
+    r.size = 1024 * 1024 * 5 + 445;
+    r.setValid(Rich::Size);
+
+
+    for (FieldId id = 0; id < Rich::FieldCount; ++id)
+    {
+        auto name = r.name(id);
+        auto val = r.format(id);
+
+        ErLogInfo("{} = [{}]", name, val);
+    }
 }
