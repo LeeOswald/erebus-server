@@ -82,3 +82,4 @@ if(NOT ER_BUILD_CLIENT_LIBS_ONLY)
 endif()
 
 add_subdirectory(src)
+add_subdirectory(tools)

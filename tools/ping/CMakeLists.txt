@@ -1,4 +1,6 @@
-add_executable(erebus-client
+set(TARGET_NAME erebus-ping)
+
+add_executable(${TARGET_NAME}
     client_app.cxx
     client_app.hxx
     main.cxx
@@ -8,7 +10,7 @@ add_executable(erebus-client
 )
 
 
-target_link_libraries(erebus-client PRIVATE 
+target_link_libraries(${TARGET_NAME} PRIVATE 
     fmt::fmt 
     ${Boost_LIBRARIES} 
     erebus::rtl 
@@ -16,4 +18,4 @@ target_link_libraries(erebus-client PRIVATE
 )
 
 # help improve stacktraces
-set_property(TARGET erebus-client PROPERTY ENABLE_EXPORTS ON)
+set_property(TARGET ${TARGET_NAME} PROPERTY ENABLE_EXPORTS ON)

@@ -8,8 +8,6 @@ add_subdirectory(ipc)
 
 add_subdirectory(server)
 
-add_subdirectory(client)
-
 if (NOT ER_WINDOWS)
     add_subdirectory(proctree)
     add_library(erebus::proctree ALIAS erebus-proctree)
