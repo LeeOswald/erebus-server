@@ -48,7 +48,7 @@ private:
             }
             else
             {
-                auto then = reply.timestamp.value;
+                auto then = reply.timestamp.value();
 
                 auto delta = now - then;
                 if (delta > 1999)

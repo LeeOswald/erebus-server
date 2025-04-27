@@ -99,8 +99,8 @@ TEST(ProcFs, enumeratePids)
 {
     ProcFs proc;
 
-    EXPECT_GT(proc.bootTime().value, 0);
-    EXPECT_LT(proc.bootTime().value, Er::System::PackedTime::now());
+    EXPECT_GT(proc.bootTime().value(), 0);
+    EXPECT_LT(proc.bootTime().value(), Er::System::PackedTime::now());
     auto tm = proc.bootTime().toLocalTime();
     ErLogInfo("System boot time {:02d}/{:02d}/{:04d} {:02d}:{:02d}:{:02d}", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
 

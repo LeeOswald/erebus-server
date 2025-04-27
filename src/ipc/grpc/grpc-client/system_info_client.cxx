@@ -122,7 +122,7 @@ private:
         {
             ClientTrace2(m_log, "{}.PingContext::PingContext()", Er::Format::ptr(this));
 
-            request.set_timestamp(this->ping.timestamp.value);
+            request.set_timestamp(this->ping.timestamp.value());
             request.set_sequence(this->ping.sequence);
             request.set_payload(this->ping.payload.bytes());
         }

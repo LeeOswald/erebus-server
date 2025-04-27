@@ -215,11 +215,9 @@ std::string formatFlagsAny(const std::any& any)
     return formatDefaultAny(any);
 }
 
-std::string formatDateTimeImpl(const System::PackedTime::ValueType* v)
+std::string formatDateTimeImpl(const System::PackedTime::ValueType v)
 {
-    ErAssert(v);
-
-    Er::System::PackedTime time{ *v };
+    Er::System::PackedTime time{ v };
 
     auto tm = time.toUtc();
 
@@ -230,7 +228,7 @@ std::string formatDateTime(const Property& prop)
 {
     if (prop.type() == Property::Type::UInt64)
     {
-        return formatDateTimeImpl(prop.getUInt64());
+        return formatDateTimeImpl(*prop.getUInt64());
     }
 
     ErAssert(!"Unsupported formatter");
@@ -240,35 +238,33 @@ std::string formatDateTime(const Property& prop)
 std::string formatDateTimeAny(const std::any& any)
 {
     if (auto v = std::any_cast<System::PackedTime::ValueType>(&any))
-        return formatDateTimeImpl(v);
+        return formatDateTimeImpl(*v);
     else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime::ValueType>>(&any))
-        return formatDateTimeImpl(&v->get());
+        return formatDateTimeImpl(v->get());
     else if (auto v = std::any_cast<System::PackedTime>(&any))
-        return formatDateTimeImpl(&v->value);
+        return formatDateTimeImpl(v->value());
     else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime>>(&any))
-        return formatDateTimeImpl(&(v->get().value));
+        return formatDateTimeImpl(v->get().value());
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);
 }
 
-std::string formatDurationImpl(const System::PackedTime::ValueType* v)
+std::string formatDurationImpl(const System::PackedTime::ValueType v)
 {
-    ErAssert(v);
-
-    if (*v < 2000)
-        return Er::format("{} \u03bcs", *v);
-    else if (*v, 2000000ULL)
-        return Er::format("{} ms", *v / 1000ULL);
+    if (v < 2000)
+        return Er::format("{} \u03bcs", v);
+    else if (v, 2000000ULL)
+        return Er::format("{} ms", v / 1000ULL);
     else
-        return Er::format("{:.3f} s", *v / 1000000.0);
+        return Er::format("{:.3f} s", v / 1000000.0);
 }
 
 std::string formatDuration(const Property& prop)
 {
     if (prop.type() == Property::Type::UInt64)
     {
-        return formatDurationImpl(prop.getUInt64());
+        return formatDurationImpl(*prop.getUInt64());
     }
 
     ErAssert(!"Unsupported formatter");
@@ -278,13 +274,13 @@ std::string formatDuration(const Property& prop)
 std::string formatDurationAny(const std::any& any)
 {
     if (auto v = std::any_cast<System::PackedTime::ValueType>(&any))
-        return formatDurationImpl(v);
+        return formatDurationImpl(*v);
     else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime::ValueType>>(&any))
-        return formatDurationImpl(&v->get());
+        return formatDurationImpl(v->get());
     else if (auto v = std::any_cast<System::PackedTime>(&any))
-        return formatDurationImpl(&v->value);
+        return formatDurationImpl(v->value());
     else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime>>(&any))
-        return formatDurationImpl(&(v->get().value));
+        return formatDurationImpl(v->get().value());
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);

@@ -17,14 +17,18 @@ namespace Er::System
 // microseconds since 1970-Jan-01
 //
 
-struct ER_RTL_EXPORT PackedTime
+class ER_RTL_EXPORT PackedTime final
 {
+public:
     using ValueType = std::uint64_t;
     
-    ValueType value;
+    constexpr ValueType value() const noexcept
+    {
+        return m_value;
+    }
 
     constexpr PackedTime(ValueType value  = {}) noexcept
-        : value(value)
+        : m_value(value)
     {
     }
 
@@ -76,28 +80,31 @@ struct ER_RTL_EXPORT PackedTime
 
     [[nodiscard]] constexpr std::time_t toPosixTime() const noexcept
     {
-        return value / 1000000UL;
+        return m_value / 1000000UL;
     }
 
     [[nodiscard]] constexpr std::uint64_t toMicroseconds() const noexcept
     {
-        return value;
+        return m_value;
     }
 
     [[nodiscard]] constexpr std::uint64_t toMilliseconds() const noexcept
     {
-        return value / 1000UL;
+        return m_value / 1000UL;
     }
 
     [[nodiscard]] constexpr std::uint64_t toSeconds() const noexcept
     {
-        return value / 1000000UL;
+        return m_value / 1000000UL;
     }
 
     [[nodiscard]] constexpr std::uint32_t subSecond() const noexcept
     {
-        return static_cast<std::uint32_t>(value % 1000000UL);
+        return static_cast<std::uint32_t>(m_value % 1000000UL);
     }
+
+private:
+    ValueType m_value;
 };
 
 } // namespace Er::System {}
