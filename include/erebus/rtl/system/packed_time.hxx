@@ -30,25 +30,25 @@ struct ER_RTL_EXPORT PackedTime
 
     [[nodiscard]] static constexpr PackedTime fromPosixTime(std::time_t t) noexcept
     {
-        return { t * 1000000UL };
+        return { static_cast<ValueType>(t) * 1000000UL };
     }
 
     template <std::integral Seconds>
     [[nodiscard]] static constexpr PackedTime fromSeconds(Seconds t) noexcept
     {
-        return { t * 1000000UL };
+        return { static_cast<ValueType>(t) * 1000000UL };
     }
 
     template <std::integral Millieconds>
     [[nodiscard]] static constexpr PackedTime fromMilliseconds(Millieconds t) noexcept
     {
-        return { t * 1000UL };
+        return { static_cast<ValueType>(t) * 1000UL };
     }
 
     template <std::integral Microseconds>
     [[nodiscard]] static constexpr PackedTime fromMicroseconds(Microseconds t) noexcept
     {
-        return { t };
+        return { static_cast<ValueType>(t) };
     }
 
     [[nodiscard]] static ValueType now() noexcept
