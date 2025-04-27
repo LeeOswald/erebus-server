@@ -74,7 +74,7 @@ public:
         /*51*/ std::int32_t exit_code = 0;
 
         System::PackedTime startTime;                         // start time (absolute)
-        std::uint64_t ruid = uint64_t(-1);                    // real user ID of process owner
+        std::uint64_t ruid = std::uint64_t(-1);               // real user ID of process owner
 
         Stat() noexcept = default;
     };
