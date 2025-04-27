@@ -2,6 +2,8 @@
 
 #include <erebus/rtl/rtl.hxx>
 
+#include <boost/functional/hash.hpp>
+
 
 namespace Er
 {
@@ -23,6 +25,22 @@ struct BasicMultiString final
     BasicMultiString(auto&& source)
         : raw(std::forward<decltype(source)>(source))
     {}
+
+    constexpr bool operator==(const BasicMultiString& o) const noexcept
+    {
+        return raw == o.raw;
+    }
+
+    constexpr auto operator<=>(const BasicMultiString& o) const noexcept
+    {
+        return raw <=> o.raw;
+    }
+
+    auto hash() const noexcept
+    {
+        boost::hash<decltype(raw)> h;
+        return h(raw);
+    }
 
     String coalesce(Char newDelimiter) const
     {
@@ -125,6 +143,13 @@ template <char _Delimiter>
 using MultiString = BasicMultiString<char, _Delimiter>;
 
 using MultiStringZ = BasicMultiString<char, '\0'>;
+
+
+template <typename _Char, _Char _Delimiter, class _Traits = std::char_traits<_Char>, class _Allocator = std::allocator<_Char>>
+auto hash_value(const BasicMultiString<_Char, _Delimiter, _Traits, _Allocator>& s) noexcept
+{
+    return s.hash();
+}
 
 
 } // namespace Er {}

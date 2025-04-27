@@ -9,6 +9,8 @@
     #include <sys/time.h>
 #endif
 
+#include <boost/functional/hash.hpp>
+
 
 namespace Er::System
 {
@@ -30,6 +32,22 @@ public:
     constexpr PackedTime(ValueType value  = {}) noexcept
         : m_value(value)
     {
+    }
+
+    constexpr bool operator==(const PackedTime& o) const noexcept
+    {
+        return m_value == o.m_value;
+    }
+
+    constexpr auto operator<=>(const PackedTime& o) const noexcept
+    {
+        return m_value <=> o.m_value;
+    }
+
+    auto hash() const noexcept
+    {
+        boost::hash<decltype(m_value)> h;
+        return h(m_value);
     }
 
     [[nodiscard]] static constexpr PackedTime fromPosixTime(std::time_t t) noexcept
@@ -106,5 +124,11 @@ public:
 private:
     ValueType m_value;
 };
+
+
+inline auto hash_value(const PackedTime& t) noexcept
+{
+    return t.hash();
+}
 
 } // namespace Er::System {}
