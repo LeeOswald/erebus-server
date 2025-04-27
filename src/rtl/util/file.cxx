@@ -32,33 +32,16 @@ ER_RTL_EXPORT Binary loadFile(const std::string& path)
     return result.value();
 }
 
-ER_RTL_EXPORT std::optional<std::string> resolveSymlink(const std::string& path, unsigned maxDepth) noexcept
+ER_RTL_EXPORT std::expected<std::string, int> resolveSymlink(const std::string& path, unsigned maxDepth) noexcept
 {
     std::filesystem::path fspath(path);
-    std::error_code ec;
-    auto link = std::filesystem::is_symlink(fspath, ec);
-
-    if (ec)
-        return std::nullopt;
-
-    if (!link)
+    for (;;)
     {
-#if ER_WINDOWS
-        auto& native = fspath.native();
-        return Er::Util::utf16To8bit(CP_UTF8, native.data(), native.length());
-#else
-        return fspath.native();
-#endif
-    }
-    
-    while (maxDepth)
-    {
-        fspath = std::filesystem::read_symlink(fspath, ec);
-        
-        link = std::filesystem::is_symlink(fspath, ec);
+        std::error_code ec;
+        auto link = std::filesystem::is_symlink(fspath, ec);
 
         if (ec)
-            return std::nullopt;
+            return std::unexpected(ec.value());
 
         if (!link)
         {
@@ -69,12 +52,20 @@ ER_RTL_EXPORT std::optional<std::string> resolveSymlink(const std::string& path,
             return fspath.native();
 #endif
         }
+    
+        if (!maxDepth)
+            break;
+
+        fspath = std::filesystem::read_symlink(fspath, ec);
+        
+        if (ec)
+            return std::unexpected(ec.value());
 
         --maxDepth;
     }
 
     // too many nested links
-    return std::nullopt;
+    return std::unexpected(ELOOP);
 }
 
 

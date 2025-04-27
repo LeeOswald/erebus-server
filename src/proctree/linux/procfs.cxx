@@ -27,10 +27,8 @@ using DirHolder = Er::Util::AutoPtr<DIR, decltype([](DIR* d) { ::closedir(d); })
 ProcFs::ProcFs(std::string_view procFsRoot)
     : m_procFsRoot(procFsRoot)
     , m_bootTime(getBootTimeImpl())
-    , m_clkTck(::sysconf(_SC_CLK_TCK))
     , m_cpusMax(::get_nprocs_conf())
 {
-    ErAssert(m_clkTck > 0);
     ErAssert(m_cpusMax > 0);
 
     if (::access(m_procFsRoot.c_str(), R_OK) == -1)
@@ -38,6 +36,14 @@ ProcFs::ProcFs(std::string_view procFsRoot)
         auto err = errno;
         ErThrowPosixError(Er::format("Failed to access {}", m_procFsRoot), err);
     }
+}
+
+System::PackedTime ProcFs::timeFromTicks(std::uint64_t ticks) noexcept
+{
+    static const long TicksPerSecond = ::sysconf(_SC_CLK_TCK);
+    ErAssert(TicksPerSecond > 0);
+
+    return System::PackedTime::fromMilliseconds(ticks * 1000 / TicksPerSecond);
 }
 
 std::expected<std::vector<Pid>, int> ProcFs::enumeratePids()
@@ -290,9 +296,7 @@ std::expected<ProcFs::Stat, int> ProcFs::readStat(Pid pid)
         ++end;
     }
 
-    result.startTime = System::PackedTime::fromPosixTime(fromRelativeTime(result.starttime));
-    result.uTime = double(result.utime) / m_clkTck;
-    result.sTime = double(result.stime) / m_clkTck;
+    result.startTime = System::PackedTime::fromSeconds(m_bootTime + timeFromTicks(result.starttime).toSeconds());
 
     return {std::move(result)};
 }
@@ -357,27 +361,7 @@ std::expected<std::string, int> ProcFs::readExePath(Pid pid)
     path.append(std::to_string(pid));
     path.append("/exe");
 
-    struct stat sb = { 0 };
-    if (::lstat(path.c_str(), &sb) == -1)
-    {
-        return std::unexpected(errno);
-    }
-
-    size_t size = sb.st_size;
-    if (size == 0) // lstat can yield sb.st_size = 0
-        size = PATH_MAX;
-
-    std::string exe;
-    exe.resize(size + 1, '\0');
-    auto r = ::readlink(path.c_str(), exe.data(), size); // readlink does not append '\0'
-    if (r < 0)
-    {
-        return std::unexpected(errno);
-    }
-
-    exe.resize(std::strlen(exe.c_str())); // cut extra '\0'
-
-    return {std::move(exe)};
+    return Util::resolveSymlink(path);
 }
 
 std::expected<MultiStringZ, int> ProcFs::readCmdLine(Pid pid)

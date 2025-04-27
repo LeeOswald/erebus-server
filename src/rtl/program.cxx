@@ -115,16 +115,16 @@ bool Program::setLocale(const char* locale)
     if (!std::setlocale(LC_ALL, newLocale))
         return false;
 
-    std::locale::global(std::locale());
-
 #if ER_POSIX
     // provide child processes with an actual locale via the "LC_ALL" environment.
     if (::setenv("LC_ALL", newLocale, 1) == -1)
     {
-        std::::setlocale(LC_ALL, oldLocale.c_str());
+        std::setlocale(LC_ALL, oldLocale.c_str());
         return false;
     }
 #endif
+
+    std::locale::global(std::locale());
 
     return true;
 }
@@ -152,7 +152,6 @@ void Program::globalStartup(int argc, char** argv) noexcept
     std::string locale("en_US.UTF-8");
     if (auto lang = std::getenv("LANG"))
     {
-        std::cout << "$LANG=" << lang << "\n";
         locale = lang;
     }
 

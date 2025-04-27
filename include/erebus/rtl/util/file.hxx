@@ -19,7 +19,7 @@ ER_RTL_EXPORT std::expected<Binary, std::uint32_t> tryLoadFile(const std::string
 
 ER_RTL_EXPORT Binary loadFile(const std::string& path);
 
-ER_RTL_EXPORT std::optional<std::string> resolveSymlink(const std::string& path, unsigned maxDepth = 8) noexcept;
+ER_RTL_EXPORT std::expected<std::string, int> resolveSymlink(const std::string& path, unsigned maxDepth = 8) noexcept;
 
 
 } // namespace Er::Util {]

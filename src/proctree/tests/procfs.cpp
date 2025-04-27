@@ -30,8 +30,8 @@ static void dumpStat(Pid pid, ProcFs& proc)
     ErLogInfo("tpgid: {}", stat.tpgid);
     ErLogInfo("tty: {}", stat.tty_nr);
     ErLogInfo("ruid: {}", stat.ruid);
-    ErLogInfo("utime: {:.2f}", stat.uTime);
-    ErLogInfo("stime: {:.2f}", stat.sTime);
+    ErLogInfo("utime: {:.2f}", proc.timeFromTicks(stat.utime).toMilliseconds() / 1000.0);
+    ErLogInfo("stime: {:.2f}", proc.timeFromTicks(stat.stime).toMilliseconds() / 1000.0);
     auto tm = stat.startTime.toLocalTime();
     ErLogInfo("start time: {:02d}/{:02d}/{:04d} {:02d}:{:02d}:{:02d}", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
 

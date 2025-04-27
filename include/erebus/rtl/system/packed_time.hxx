@@ -28,14 +28,27 @@ struct ER_RTL_EXPORT PackedTime
     {
     }
 
-    [[nodiscard]] static constexpr PackedTime fromPosixTime(ValueType t) noexcept
+    [[nodiscard]] static constexpr PackedTime fromPosixTime(std::time_t t) noexcept
     {
         return { t * 1000000UL };
     }
 
-    [[nodiscard]] constexpr std::time_t toPosixTime() const noexcept
+    template <std::integral Seconds>
+    [[nodiscard]] static constexpr PackedTime fromSeconds(Seconds t) noexcept
     {
-        return value / 1000000UL;
+        return { t * 1000000UL };
+    }
+
+    template <std::integral Millieconds>
+    [[nodiscard]] static constexpr PackedTime fromMilliseconds(Millieconds t) noexcept
+    {
+        return { t * 1000UL };
+    }
+
+    template <std::integral Microseconds>
+    [[nodiscard]] static constexpr PackedTime fromMicroseconds(Microseconds t) noexcept
+    {
+        return { t };
     }
 
     [[nodiscard]] static ValueType now() noexcept
@@ -61,17 +74,22 @@ struct ER_RTL_EXPORT PackedTime
     [[nodiscard]] std::tm toLocalTime() const noexcept;
     [[nodiscard]] std::tm toUtc() const noexcept;
 
-    [[nodiscard]] constexpr std::uint64_t microseconds() const noexcept
+    [[nodiscard]] constexpr std::time_t toPosixTime() const noexcept
+    {
+        return value / 1000000UL;
+    }
+
+    [[nodiscard]] constexpr std::uint64_t toMicroseconds() const noexcept
     {
         return value;
     }
 
-    [[nodiscard]] constexpr std::uint64_t milliseconds() const noexcept
+    [[nodiscard]] constexpr std::uint64_t toMilliseconds() const noexcept
     {
         return value / 1000UL;
     }
 
-    [[nodiscard]] constexpr std::uint64_t seconds() const noexcept
+    [[nodiscard]] constexpr std::uint64_t toSeconds() const noexcept
     {
         return value / 1000000UL;
     }

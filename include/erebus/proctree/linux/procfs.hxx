@@ -33,8 +33,8 @@ public:
         /*10*/ std::uint64_t cminflt = 0;                    // minor faults of waited children
         /*11*/ std::uint64_t majflt = 0;                     // major faults
         /*12*/ std::uint64_t cmajflt = 0;                    // major faults of waited children
-        /*13*/ std::uint64_t utime = 0;
-        /*14*/ std::uint64_t stime = 0;
+        /*13*/ std::uint64_t utime = 0;                      // clock ticks
+        /*14*/ std::uint64_t stime = 0;                      // clock ticks
         /*15*/ std::int64_t cutime = 0;
         /*16*/ std::int64_t cstime = 0;
         /*17*/ std::int64_t priority = 0;
@@ -75,8 +75,6 @@ public:
 
         System::PackedTime startTime;                         // start time (absolute)
         std::uint64_t ruid = uint64_t(-1);                    // real user ID of process owner
-        double uTime = 0.0;                                   // seconds
-        double sTime = 0.0;                                   // seconds
 
         Stat() noexcept = default;
     };
@@ -87,8 +85,10 @@ public:
 
     constexpr System::PackedTime bootTime() noexcept
     {
-        return System::PackedTime::fromPosixTime(m_bootTime);
+        return System::PackedTime::fromSeconds(m_bootTime);
     }
+
+    static System::PackedTime timeFromTicks(std::uint64_t ticks) noexcept;
 
     std::expected<std::vector<Pid>, int> enumeratePids();
     std::expected<Stat, int> readStat(Pid pid);
@@ -100,18 +100,9 @@ public:
 private:
     std::uint64_t getBootTimeImpl();
     
-    constexpr std::uint64_t fromRelativeTime(uint64_t relative) noexcept
-    {
-        auto boot = m_bootTime;
-        auto time = relative / m_clkTck;
-    
-        return boot + time;
-    }
-
-    std::string m_procFsRoot;
-    std::uint64_t m_bootTime;
-    std::uint64_t const m_clkTck; // ticks per second
-    int const m_cpusMax;
+    const std::string m_procFsRoot;
+    const std::uint64_t m_bootTime; // seconds
+    const int m_cpusMax;
     std::size_t m_pidCountMax = 0;
 };
 
