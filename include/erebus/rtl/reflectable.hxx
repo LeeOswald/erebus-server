@@ -33,6 +33,7 @@ struct Reflectable
     using FieldCopier = std::function<void(SelfType& me, const SelfType& other)>;
     using FieldMover = std::function<void(SelfType& me, SelfType&& other)>;
     using FieldWrapper = std::function<std::any(const SelfType& o)>;
+    using FieldRefWrapper = std::function<std::any(const SelfType& o)>;
 
     template <typename _Type>
     using FieldPtr = _Type SelfType::*;
@@ -74,6 +75,11 @@ struct Reflectable
         {
             return std::make_any<_Type>(o.*field);
         }
+
+        std::any wrap_ref(FieldPtr<_Type> field, const SelfType& o)
+        {
+            return std::make_any<std::reference_wrapper<const _Type>>(o.*field);
+        }
     };
 
     struct FieldInfo
@@ -89,6 +95,7 @@ struct Reflectable
         FieldCopier copier;
         FieldMover mover;
         FieldWrapper wrapper;
+        FieldRefWrapper ref_wrapper;
 
         constexpr FieldInfo(
             unsigned id, 
@@ -101,7 +108,8 @@ struct Reflectable
             auto&& hasher,
             auto&& copier,
             auto&& mover,
-            auto&& wrapper
+            auto&& wrapper,
+            auto&& ref_wrapper
         ) noexcept
             : id(id)
             , type(type)
@@ -114,6 +122,7 @@ struct Reflectable
             , copier(std::forward<decltype(copier)>(copier))
             , mover(std::forward<decltype(mover)>(mover))
             , wrapper(std::forward<decltype(wrapper)>(wrapper))
+            , ref_wrapper(std::forward<decltype(ref_wrapper)>(ref_wrapper))
         {
         }
     };
@@ -167,6 +176,11 @@ struct Reflectable
                 FieldOperators<_Type> ops;
                 return ops.wrap(field, o);
             },
+            [field](const SelfType& o) -> std::any
+            {
+                FieldOperators<_Type> ops;
+                return ops.wrap_ref(field, o);
+            }
         };
     }
 
@@ -426,7 +440,7 @@ struct Reflectable
         return flds[id].semantic;
     }
 
-    std::any wrap(unsigned id) const
+    std::any wrapValue(unsigned id) const // NOTE: makes a copy
     {
         ErAssert(id < FieldCount);
         if (!_valid[id])
@@ -438,9 +452,21 @@ struct Reflectable
         return flds[id].wrapper(*this_);
     }
 
+    std::any wrapRef(unsigned id) const // yields a const reference
+    {
+        ErAssert(id < FieldCount);
+        if (!_valid[id])
+            return {};
+
+        auto& flds = fields();
+        auto this_ = static_cast<SelfType const*>(this);
+
+        return flds[id].ref_wrapper(*this_);
+    }
+
     std::string format(unsigned id) const
     {
-        auto any = wrap(id);
+        auto any = wrapRef(id);
         auto sema = semantics(id);
 
         auto formatter = findAnyFormatter(sema);

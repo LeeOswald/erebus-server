@@ -30,54 +30,104 @@ std::string formatDefaultAny(const std::any& any)
         ss << "<empty>";
     else if (auto v = std::any_cast<std::string>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::string>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<bool>(&any))
         ss << std::boolalpha << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const bool>>(&any))
+        ss << std::boolalpha << v->get();
     else if (auto v = std::any_cast<Bool>(&any))
         ss << (*v ? "True" : "False");
+    else if (auto v = std::any_cast<std::reference_wrapper<const Bool>>(&any))
+        ss << (v->get() ? "True" : "False");
     else if (auto v = std::any_cast<char>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const char>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<unsigned char>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const unsigned char>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<short>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const short>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<unsigned short>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const unsigned short>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<int>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const int>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<unsigned int>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const unsigned int>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<long>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const long>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<unsigned long>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const unsigned long>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<long long>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const long long>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<unsigned long long>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const unsigned long long>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<std::byte>(&any))
         ss << unsigned(*v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::byte>>(&any))
+        ss << unsigned(v->get());
     else if (auto v = std::any_cast<std::int8_t>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::int8_t>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<std::uint8_t>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint8_t>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<std::int16_t>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::int16_t>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<std::uint16_t>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint16_t>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<std::int32_t>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::int32_t>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<std::uint32_t>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint32_t>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<std::int64_t>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::int64_t>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<std::uint64_t>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint64_t>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<float>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const float>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<double>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const double>>(&any))
+        ss << v->get();
     else if (auto v = std::any_cast<long double>(&any))
         ss << *v;
+    else if (auto v = std::any_cast<std::reference_wrapper<const long double>>(&any))
+        ss << v->get();
     else
     {
         ss << "[" << any.type().name() << "]";
@@ -102,21 +152,25 @@ std::string formatPointer(const Property& prop)
 {
     auto ty = prop.type();
 
-    if (ty == Property::Type::UInt32)
-        return formatPointerImpl(prop.getUInt32());
-    else if (ty == Property::Type::UInt64)
+    if (ty == Property::Type::UInt64)
         return formatPointerImpl(prop.getUInt64());
-
+    else if (ty == Property::Type::UInt32)
+        return formatPointerImpl(prop.getUInt32());
+    
     ErAssert(!"Unsupported formatter");
     return prop.str();
 }
 
 std::string formatPointerAny(const std::any& any)
 {
-    if (auto v = std::any_cast<std::uint32_t>(&any))
+    if (auto v = std::any_cast<std::uint64_t>(&any))
         return formatPointerImpl(v);
-    else if (auto v = std::any_cast<std::uint64_t>(&any))
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint64_t>>(&any))
+        return formatPointerImpl(&v->get());
+    else if (auto v = std::any_cast<std::uint32_t>(&any))
         return formatPointerImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint32_t>>(&any))
+        return formatPointerImpl(&v->get());
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);
@@ -150,8 +204,12 @@ std::string formatFlagsAny(const std::any& any)
 {
     if (auto v = std::any_cast<std::uint32_t>(&any))
         return formatFlagsImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint32_t>>(&any))
+        return formatFlagsImpl(&v->get());
     else if (auto v = std::any_cast<std::uint64_t>(&any))
         return formatFlagsImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint64_t>>(&any))
+        return formatFlagsImpl(&v->get());
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);
@@ -183,6 +241,12 @@ std::string formatDateTimeAny(const std::any& any)
 {
     if (auto v = std::any_cast<System::PackedTime::ValueType>(&any))
         return formatDateTimeImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime::ValueType>>(&any))
+        return formatDateTimeImpl(&v->get());
+    else if (auto v = std::any_cast<System::PackedTime>(&any))
+        return formatDateTimeImpl(&v->value);
+    else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime>>(&any))
+        return formatDateTimeImpl(&(v->get().value));
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);
@@ -215,6 +279,12 @@ std::string formatDurationAny(const std::any& any)
 {
     if (auto v = std::any_cast<System::PackedTime::ValueType>(&any))
         return formatDurationImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime::ValueType>>(&any))
+        return formatDurationImpl(&v->get());
+    else if (auto v = std::any_cast<System::PackedTime>(&any))
+        return formatDurationImpl(&v->value);
+    else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime>>(&any))
+        return formatDurationImpl(&(v->get().value));
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);
@@ -267,14 +337,24 @@ std::string formatPercentAny(const std::any& any)
 {
     if (auto v = std::any_cast<double>(&any))
         return formatPercentImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const double>>(&any))
+        return formatPercentImpl(&v->get());
     else if (auto v = std::any_cast<std::int32_t>(&any))
         return formatPercentImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::int32_t>>(&any))
+        return formatPercentImpl(&v->get());
     else if (auto v = std::any_cast<std::uint32_t>(&any))
         return formatPercentImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint32_t>>(&any))
+        return formatPercentImpl(&v->get());
     else if (auto v = std::any_cast<std::int64_t>(&any))
         return formatPercentImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::int64_t>>(&any))
+        return formatPercentImpl(&v->get());
     else if (auto v = std::any_cast<std::uint64_t>(&any))
         return formatPercentImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint64_t>>(&any))
+        return formatPercentImpl(&v->get());
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);
@@ -323,12 +403,20 @@ std::string formatSizeAny(const std::any& any)
 {
     if (auto v = std::any_cast<std::int32_t>(&any))
         return formatSizeImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::int32_t>>(&any))
+        return formatSizeImpl(&v->get());
     else if (auto v = std::any_cast<std::uint32_t>(&any))
         return formatSizeImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint32_t>>(&any))
+        return formatSizeImpl(&v->get());
     else if (auto v = std::any_cast<std::int64_t>(&any))
         return formatSizeImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::int64_t>>(&any))
+        return formatSizeImpl(&v->get());
     else if (auto v = std::any_cast<std::uint64_t>(&any))
         return formatSizeImpl(v);
+    else if (auto v = std::any_cast<std::reference_wrapper<const std::uint64_t>>(&any))
+        return formatSizeImpl(&v->get());
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);
