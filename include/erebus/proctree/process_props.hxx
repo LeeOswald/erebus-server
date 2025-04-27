@@ -1,14 +1,15 @@
 #pragma once
 
 #include <erebus/proctree/proctree.hxx>
+#include <erebus/rtl/multi_string.hxx>
 #include <erebus/rtl/reflectable.hxx>
-
+#include <erebus/rtl/system/packed_time.hxx>
 
 namespace Er::ProcessTree
 {
 
 struct ProcessProperties
-    : public Reflectable<ProcessProperties, 17>
+    : public Reflectable<ProcessProperties, 18>
 {
     enum Field : FieldId
     {
@@ -28,7 +29,9 @@ struct ProcessProperties
         STime,
         UTime,
         CpuUsage,
-        Tty
+        Tty,
+        Env,
+        _FieldCount
     };
 
     std::uint64_t pid;
@@ -38,16 +41,17 @@ struct ProcessProperties
     std::uint64_t session;
     std::uint64_t ruid;
     std::string comm;
-    std::string cmdLine;
+    MultiStringZ cmdLine;
     std::string exe;
-    std::uint64_t startTime;
+    System::PackedTime startTime;
     std::uint32_t state;
     std::string userName;
-    std::int64_t threadCount;
-    double sTime;
-    double uTime;
+    std::uint32_t threadCount;
+    System::PackedTime sTime;
+    System::PackedTime uTime;
     double cpuUsage;
     std::int32_t tty;
+    MultiStringZ env;
 
     ER_REFLECTABLE_FILEDS_BEGIN(ProcessProperties)
         ER_REFLECTABLE_FIELD(ProcessProperties, Pid, Semantics::Default, pid),
@@ -59,14 +63,15 @@ struct ProcessProperties
         ER_REFLECTABLE_FIELD(ProcessProperties, Comm, Semantics::Default, comm),
         ER_REFLECTABLE_FIELD(ProcessProperties, CmdLine, Semantics::Default, cmdLine),
         ER_REFLECTABLE_FIELD(ProcessProperties, Exe, Semantics::Default, exe),
-        ER_REFLECTABLE_FIELD(ProcessProperties, StartTime, Semantics::Default, startTime),
+        ER_REFLECTABLE_FIELD(ProcessProperties, StartTime, Semantics::AbsoluteTime, startTime),
         ER_REFLECTABLE_FIELD(ProcessProperties, State, Semantics::Default, state),
         ER_REFLECTABLE_FIELD(ProcessProperties, UserName, Semantics::Default, userName),
         ER_REFLECTABLE_FIELD(ProcessProperties, ThreadCount, Semantics::Default, threadCount),
-        ER_REFLECTABLE_FIELD(ProcessProperties, STime, Semantics::Default, sTime),
-        ER_REFLECTABLE_FIELD(ProcessProperties, UTime, Semantics::Default, uTime),
-        ER_REFLECTABLE_FIELD(ProcessProperties, CpuUsage, Semantics::Default, cpuUsage),
-        ER_REFLECTABLE_FIELD(ProcessProperties, Tty, Semantics::Default, tty)
+        ER_REFLECTABLE_FIELD(ProcessProperties, STime, Semantics::Duration, sTime),
+        ER_REFLECTABLE_FIELD(ProcessProperties, UTime, Semantics::Duration, uTime),
+        ER_REFLECTABLE_FIELD(ProcessProperties, CpuUsage, Semantics::Percent, cpuUsage),
+        ER_REFLECTABLE_FIELD(ProcessProperties, Tty, Semantics::Default, tty),
+        ER_REFLECTABLE_FIELD(ProcessProperties, Env, Semantics::Default, env)
     ER_REFLECTABLE_FILEDS_END()
 };
 

@@ -1,6 +1,7 @@
 
 generate_protobuf_stuff("common" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
 generate_grpc_stuff("system_info" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
+generate_grpc_stuff("proctree" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
 
 add_library(erebus-grpc-common STATIC
     ${ER_INCLUDE_DIR}/ipc/grpc/igrpc_server.hxx
@@ -12,6 +13,10 @@ add_library(erebus-grpc-common STATIC
     ${ER_PROTO_GENERATED_DIR}/system_info.pb.cc
     ${ER_PROTO_GENERATED_DIR}/system_info.grpc.pb.h
     ${ER_PROTO_GENERATED_DIR}/system_info.grpc.pb.cc
+    ${ER_PROTO_GENERATED_DIR}/proctree.pb.h
+    ${ER_PROTO_GENERATED_DIR}/proctree.pb.cc
+    ${ER_PROTO_GENERATED_DIR}/proctree.grpc.pb.h
+    ${ER_PROTO_GENERATED_DIR}/proctree.grpc.pb.cc
     protocol.cxx
 )
 

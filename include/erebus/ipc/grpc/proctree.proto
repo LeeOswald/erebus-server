@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+import "common.proto";
+
+package erebus;
+
+option optimize_for = LITE_RUNTIME;
+
+
+service ProcessList {
+
+    rpc GetProcessProps(ProcessPropsRequest) returns(ProcessPropsReply) {}
+    rpc ListProcesses(ProcessPropsRequest) returns(stream ProcessPropsReply) {}
+}
+
+
+message ProcessProps {
+    uint64 pid = 1;
+    optional uint64 ppid = 2;
+    optional uint64 pgrp = 3;
+    optional uint64 tpgid = 4;
+    optional uint64 session = 5;
+    optional uint64 ruid = 6;
+    optional uint64 tty = 7;
+    optional uint64 startTime = 8;
+    optional uint32 state = 9;
+    optional uint32 threadCount = 10;
+    optional uint64 sTime = 11;
+    optional uint64 uTime = 12;
+    optional double cpuUsage = 13;
+    optional string comm = 14;
+    optional string cmdLine = 15;
+    optional string exe = 16;
+    optional string env = 17;
+    optional string userName = 18;
+}
+
+message ProcessPropsRequest {
+    optional uint64 pid = 1;
+    repeated uint32 fields = 2;
+}
+
+message ProcessPropsReply {
+    optional Exception exception = 1;
+    optional ProcessProps props = 2;
+}
+
+
+
