@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <erebus/ipc/grpc/grpc_client.hxx>
+#include <erebus/ipc/grpc/client/grpc_client.hxx>
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/ipc/grpc/grpc_client.hxx>
+#include <erebus/ipc/grpc/client/iclient.hxx>
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/system/packed_time.hxx>
 
@@ -45,7 +45,5 @@ struct ISystemInfoClient
     virtual void getSystemInfo(const std::string& pattern, ISystemInfoCompletion::Ptr handler) = 0;
 };
 
-
-ISystemInfoClient::Ptr createSystemInfoClient(ChannelPtr channel, Log::ILogger::Ptr log);
 
 } // namespace Er::Ipc::Grpc {}

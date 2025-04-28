@@ -1,6 +1,6 @@
 #include <grpcpp/grpcpp.h>
 
-#include <erebus/ipc/grpc/grpc_client.hxx>
+#include <erebus/ipc/grpc/client/grpc_client.hxx>
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/util/file.hxx>
 

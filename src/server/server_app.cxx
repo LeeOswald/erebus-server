@@ -1,6 +1,6 @@
 #include "server_app.hxx"
 
-#include <erebus/ipc/grpc/private/grpc_server.hxx>
+#include <erebus/ipc/grpc/server/grpc_server.hxx>
 #include <erebus/rtl/logger/file_sink.hxx>
 #include <erebus/rtl/logger/simple_formatter.hxx>
 #include <erebus/rtl/system/user.hxx>

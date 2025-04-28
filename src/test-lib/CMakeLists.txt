@@ -1,6 +1,8 @@
-add_library(erebus-testing STATIC)
+set(TARGET_NAME erebus-test-lib)
 
-target_sources(erebus-testing
+add_library(${TARGET_NAME} STATIC)
+
+target_sources(${TARGET_NAME}
     PRIVATE
         test_application.cxx
         test_event_listener.cxx
@@ -13,4 +15,4 @@ target_sources(erebus-testing
     
 )
 
-target_link_libraries(erebus-testing PUBLIC gtest::gtest erebus::rtl)
+target_link_libraries(${TARGET_NAME} PUBLIC gtest::gtest erebus::rtl_lib)

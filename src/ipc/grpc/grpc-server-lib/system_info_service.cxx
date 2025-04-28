@@ -1,7 +1,7 @@
 #include <protobuf/system_info.grpc.pb.h>
 
-#include <erebus/ipc/grpc/igrpc_service.hxx>
 #include <erebus/ipc/grpc/protocol.hxx>
+#include <erebus/ipc/grpc/server/iservice.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
 #include <erebus/server/system_info.hxx>
 

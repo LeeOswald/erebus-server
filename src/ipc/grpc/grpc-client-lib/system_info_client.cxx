@@ -1,8 +1,8 @@
 #include <grpcpp/grpcpp.h>
 
 #include <protobuf/system_info.grpc.pb.h>
+#include <erebus/ipc/grpc/client/isystem_info_client.hxx>
 #include <erebus/ipc/grpc/protocol.hxx>
-#include <erebus/ipc/grpc/system_info_client.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
 
 #include "trace.hxx"

@@ -2,7 +2,7 @@
 
 #include <erebus/rtl/program.hxx>
 #include <erebus/rtl/property_bag.hxx>
-#include <erebus/ipc/grpc/grpc_client.hxx>
+#include <erebus/ipc/grpc/client/grpc_client.hxx>
 
 #include "ping.hxx"
 #include "system_info.hxx"

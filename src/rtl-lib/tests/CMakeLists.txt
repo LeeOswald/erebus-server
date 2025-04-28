@@ -1,7 +1,8 @@
+set(TARGET_NAME erebus-rtl-tests)
 
-add_executable(erebus-rtl-tests)
+add_executable(${TARGET_NAME})
 
-target_sources(erebus-rtl-tests
+target_sources(${TARGET_NAME}
     PRIVATE
         flags.cpp
         luaxx_class.cpp
@@ -26,8 +27,8 @@ target_sources(erebus-rtl-tests
                 common.hpp
 )
 
-target_link_libraries(erebus-rtl-tests PRIVATE erebus::testing erebus::rtl)
+target_link_libraries(${TARGET_NAME} PRIVATE erebus::test_lib erebus::rtl_lib)
 
-add_test(NAME erebus-rtl COMMAND erebus-rtl-tests)
+add_test(NAME erebus-rtl-tests COMMAND ${TARGET_NAME})
 
 

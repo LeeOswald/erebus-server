@@ -1,11 +1,10 @@
+set(TARGET_NAME erebus-grpc-common-lib)
 
 generate_protobuf_stuff("common" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
 generate_grpc_stuff("system_info" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
 generate_grpc_stuff("proctree" ${ER_PROTO_DIR} ${ER_PROTO_GENERATED_DIR})
 
-add_library(erebus-grpc-common STATIC
-    ${ER_INCLUDE_DIR}/ipc/grpc/igrpc_server.hxx
-    ${ER_INCLUDE_DIR}/ipc/grpc/igrpc_service.hxx
+add_library(${TARGET_NAME} STATIC
     ${ER_INCLUDE_DIR}/ipc/grpc/protocol.hxx
     ${ER_PROTO_GENERATED_DIR}/common.pb.h
     ${ER_PROTO_GENERATED_DIR}/common.pb.cc
@@ -20,8 +19,8 @@ add_library(erebus-grpc-common STATIC
     protocol.cxx
 )
 
-set_property(TARGET erebus-grpc-common PROPERTY PREFIX "")
-set_property(TARGET erebus-grpc-common PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET ${TARGET_NAME} PROPERTY PREFIX "")
+set_property(TARGET ${TARGET_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 set(GRPC_AND_DEPS
     gRPC::grpc++ 
@@ -39,11 +38,11 @@ if(NOT ER_WINDOWS)
     list(APPEND GRPC_AND_DEPS utf8_range::utf8_validity)
 endif()
 
-target_link_libraries(erebus-grpc-common PUBLIC ${GRPC_AND_DEPS} fmt::fmt erebus::rtl)
+target_link_libraries(${TARGET_NAME} PUBLIC ${GRPC_AND_DEPS} fmt::fmt erebus::rtl_lib)
 
-target_include_directories(erebus-grpc-common PUBLIC "${gRPC_INCLUDE_DIR}")
-target_include_directories(erebus-grpc-common PUBLIC "${protobuf_INCLUDE_DIR}")
-target_include_directories(erebus-grpc-common PUBLIC "${absl_INCLUDE_DIR}")
+target_include_directories(${TARGET_NAME} PUBLIC "${gRPC_INCLUDE_DIR}")
+target_include_directories(${TARGET_NAME} PUBLIC "${protobuf_INCLUDE_DIR}")
+target_include_directories(${TARGET_NAME} PUBLIC "${absl_INCLUDE_DIR}")
 
-target_link_directories(erebus-grpc-common PUBLIC ${gRPC_INCLUDE_DIR}/../lib)
+target_link_directories(${TARGET_NAME} PUBLIC ${gRPC_INCLUDE_DIR}/../lib)
 

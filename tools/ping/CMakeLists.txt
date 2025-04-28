@@ -13,8 +13,8 @@ add_executable(${TARGET_NAME}
 target_link_libraries(${TARGET_NAME} PRIVATE 
     fmt::fmt 
     ${Boost_LIBRARIES} 
-    erebus::rtl 
-    erebus::grpc_client
+    erebus::rtl_lib 
+    erebus::grpc_client_lib
 )
 
 # help improve stacktraces

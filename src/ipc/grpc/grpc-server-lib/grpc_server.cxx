@@ -1,7 +1,7 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-#include <erebus/ipc/grpc/private/grpc_server.hxx>
+#include <erebus/ipc/grpc/server/grpc_server.hxx>
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/util/file.hxx>
 

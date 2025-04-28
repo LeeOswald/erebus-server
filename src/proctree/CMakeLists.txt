@@ -1,6 +1,8 @@
-add_library(erebus-proctree SHARED)
+set(TARGET_NAME erebus-proctree)
 
-target_sources(erebus-proctree
+add_library(${TARGET_NAME} SHARED)
+
+target_sources(${TARGET_NAME}
     PRIVATE
         linux/procfs.cxx
         process_props.cxx
@@ -17,14 +19,15 @@ target_sources(erebus-proctree
 
 
 target_link_libraries(
-    erebus-proctree
+    ${TARGET_NAME}
     PUBLIC
+    erebus::rtl_lib
     fmt::fmt
     ${Boost_LIBRARIES}
 )
 
-target_compile_definitions(erebus-proctree PRIVATE ER_PROCTREE_EXPORTS)
+target_compile_definitions(${TARGET_NAME} PRIVATE ER_PROCTREE_EXPORTS)
 
-set_property(TARGET erebus-proctree PROPERTY PREFIX "")
+set_property(TARGET ${TARGET_NAME} PROPERTY PREFIX "")
 
 add_subdirectory(tests)

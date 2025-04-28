@@ -2,7 +2,7 @@
 
 #include "runner_base.hxx"
 
-#include <erebus/ipc/grpc/system_info_client.hxx>
+#include <erebus/ipc/grpc/client/isystem_info_client.hxx>
 
 
 class SystemInfoRunner

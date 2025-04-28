@@ -1,7 +1,8 @@
+set(TARGET_NAME erebus-rtl-lib)
 
-add_library(erebus-rtl SHARED)
+add_library(${TARGET_NAME} SHARED)
 
-target_sources(erebus-rtl
+target_sources(${TARGET_NAME}
     PRIVATE
         assert.cxx
         debug.cxx
@@ -112,7 +113,7 @@ target_sources(erebus-rtl
 )
 
 if(ER_WINDOWS)
-    target_sources(erebus-rtl
+    target_sources(${TARGET_NAME}
         PRIVATE
             logger/win32_debugger_sink.cxx
             system/user_win32.cxx
@@ -129,7 +130,7 @@ if(ER_WINDOWS)
     )
         
 elseif(ER_POSIX)
-    target_sources(erebus-rtl
+    target_sources(${TARGET_NAME}
         PRIVATE
             logger/syslog_linux_sink.cxx
             system/user_linux.cxx
@@ -152,7 +153,7 @@ elseif(ER_WINDOWS)
 endif()
 
 target_link_libraries(
-    erebus-rtl
+    ${TARGET_NAME}
     PUBLIC
     fmt::fmt
     rapidjson
@@ -161,9 +162,9 @@ target_link_libraries(
     ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(erebus-rtl PRIVATE ER_RTL_EXPORTS)
+target_compile_definitions(${TARGET_NAME} PRIVATE ER_RTL_EXPORTS)
 
-set_property(TARGET erebus-rtl PROPERTY PREFIX "")
+set_property(TARGET ${TARGET_NAME} PROPERTY PREFIX "")
 
 if(NOT ER_BUILD_CLIENT_LIBS_ONLY)
     add_subdirectory(tests)

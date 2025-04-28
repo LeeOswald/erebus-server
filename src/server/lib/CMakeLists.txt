@@ -1,3 +1,5 @@
+set(TARGET_NAME erebus-server-lib)
+
 if(ER_WINDOWS)
 
     set(PLATFORM_SOURCES
@@ -14,9 +16,9 @@ elseif(ER_LINUX)
 
 endif()
 
-add_library(erebus-server-lib SHARED)
+add_library(${TARGET_NAME} SHARED)
 
-target_sources(erebus-server-lib
+target_sources(${TARGET_NAME}
 	PRIVATE
         system_info_common.hxx
         system_info_common.cxx
@@ -31,8 +33,8 @@ target_sources(erebus-server-lib
                 ${ER_INCLUDE_DIR}/server/system_info.hxx
 )
 
-target_link_libraries(erebus-server-lib PUBLIC erebus::rtl fmt::fmt ${Boost_LIBRARIES} ${PLATFORM_LIBS})
+target_link_libraries(${TARGET_NAME} PUBLIC erebus::rtl_lib fmt::fmt ${Boost_LIBRARIES} ${PLATFORM_LIBS})
 
-target_compile_definitions(erebus-server-lib PRIVATE ER_SERVER_EXPORTS)
+target_compile_definitions(${TARGET_NAME} PRIVATE ER_SERVER_EXPORTS)
 
-set_property(TARGET erebus-server-lib PROPERTY PREFIX "")
+set_property(TARGET ${TARGET_NAME} PROPERTY PREFIX "")

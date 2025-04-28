@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/ipc/grpc/igrpc_service.hxx>
+#include <erebus/ipc/grpc/server/iservice.hxx>
 
 namespace grpc
 {

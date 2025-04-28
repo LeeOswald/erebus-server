@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <erebus/ipc/grpc/igrpc_server.hxx>
+#include <erebus/ipc/grpc/server/iserver.hxx>
 #include <erebus/rtl/program.hxx>
 #include <erebus/rtl/property_bag.hxx>
 

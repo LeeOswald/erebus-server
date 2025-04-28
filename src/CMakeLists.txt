@@ -1,8 +1,8 @@
-add_subdirectory(rtl)
-add_library(erebus::rtl ALIAS erebus-rtl)
+add_subdirectory(rtl-lib)
+add_library(erebus::rtl_lib ALIAS erebus-rtl-lib)
 
-add_subdirectory(testing)
-add_library(erebus::testing ALIAS erebus-testing)
+add_subdirectory(test-lib)
+add_library(erebus::test_lib ALIAS erebus-test-lib)
 
 add_subdirectory(ipc)
 

@@ -1,7 +1,8 @@
+set(TARGET_NAME erebus-proctree-tests)
 
-add_executable(erebus-proctree-tests)
+add_executable(${TARGET_NAME})
 
-target_sources(erebus-proctree-tests
+target_sources(${TARGET_NAME}
     PRIVATE
         main.cpp
         procfs.cpp
@@ -11,8 +12,8 @@ target_sources(erebus-proctree-tests
                 common.hpp
 )
 
-target_link_libraries(erebus-proctree-tests PRIVATE erebus::testing erebus::proctree erebus::rtl)
+target_link_libraries(${TARGET_NAME} PRIVATE erebus::test_lib erebus::proctree erebus::rtl_lib)
 
-add_test(NAME erebus-proctree COMMAND erebus-proctree-tests)
+add_test(NAME erebus-proctree COMMAND ${TARGET_NAME})
 
 
