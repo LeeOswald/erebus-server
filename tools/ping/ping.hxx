@@ -3,7 +3,7 @@
 #include "runner_base.hxx"
 
 #include <erebus/ipc/grpc/client/isystem_info_client.hxx>
-#include <erebus/rtl/system/packed_time.hxx>
+#include <erebus/rtl/time.hxx>
 
 #include <atomic>
 #include <random>
@@ -33,7 +33,7 @@ private:
 
         void onReply(Er::Ipc::Grpc::ISystemInfoClient::PingMessage&& ping, Er::Ipc::Grpc::ISystemInfoClient::PingMessage&& reply) override
         {
-            auto now = Er::System::PackedTime::now();
+            auto now = Er::Time::now();
             if (ping.sequence != reply.sequence)
             {
                 ErLogError("Ping seq # was {} while reply seq is #{}", ping.sequence, reply.sequence);
@@ -78,7 +78,7 @@ private:
 
             Er::Ipc::Grpc::ISystemInfoClient::PingMessage pm;
             pm.payload = makePayload(m_payloadSize);
-            pm.timestamp = Er::System::PackedTime::now();
+            pm.timestamp = Er::Time::now();
             pm.sequence = m_sequence.fetch_add(1, std::memory_order_relaxed);
 
             auto completion = std::make_shared<PingCompletion>(this);

@@ -72,7 +72,7 @@ int LuaState::print()
     m_log->write(Er::Log::Record::make(
         "lua",
         Er::Log::Level::Info,
-        Er::System::PackedTime::now(),
+        Er::Time::now(),
         Er::System::CurrentThread::id(),
         ss.str()
     ));

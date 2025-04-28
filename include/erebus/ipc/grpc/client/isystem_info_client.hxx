@@ -2,7 +2,7 @@
 
 #include <erebus/ipc/grpc/client/iclient.hxx>
 #include <erebus/rtl/log.hxx>
-#include <erebus/rtl/system/packed_time.hxx>
+#include <erebus/rtl/time.hxx>
 
 
 namespace Er::Ipc::Grpc
@@ -17,7 +17,7 @@ struct ISystemInfoClient
 
     struct PingMessage
     {
-        Er::System::PackedTime timestamp;
+        Er::Time timestamp;
         std::uint64_t sequence;
         Er::Binary payload;
     };

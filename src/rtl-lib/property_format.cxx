@@ -1,7 +1,7 @@
 #include <erebus/rtl/bool.hxx>
 #include <erebus/rtl/format.hxx>
 #include <erebus/rtl/property.hxx>
-#include <erebus/rtl/system/packed_time.hxx>
+#include <erebus/rtl/time.hxx>
 
 #include <mutex>
 #include <shared_mutex>
@@ -215,9 +215,9 @@ std::string formatFlagsAny(const std::any& any)
     return formatDefaultAny(any);
 }
 
-std::string formatDateTimeImpl(const System::PackedTime::ValueType v)
+std::string formatDateTimeImpl(const Time::ValueType v)
 {
-    Er::System::PackedTime time{ v };
+    Er::Time time{ v };
 
     auto tm = time.toUtc();
 
@@ -237,20 +237,20 @@ std::string formatDateTime(const Property& prop)
 
 std::string formatDateTimeAny(const std::any& any)
 {
-    if (auto v = std::any_cast<System::PackedTime::ValueType>(&any))
+    if (auto v = std::any_cast<Time::ValueType>(&any))
         return formatDateTimeImpl(*v);
-    else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime::ValueType>>(&any))
+    else if (auto v = std::any_cast<std::reference_wrapper<const Time::ValueType>>(&any))
         return formatDateTimeImpl(v->get());
-    else if (auto v = std::any_cast<System::PackedTime>(&any))
+    else if (auto v = std::any_cast<Time>(&any))
         return formatDateTimeImpl(v->value());
-    else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime>>(&any))
+    else if (auto v = std::any_cast<std::reference_wrapper<const Time>>(&any))
         return formatDateTimeImpl(v->get().value());
 
     ErAssert(!"Unsupported formatter");
     return formatDefaultAny(any);
 }
 
-std::string formatDurationImpl(const System::PackedTime::ValueType v)
+std::string formatDurationImpl(const Time::ValueType v)
 {
     if (v < 2000)
         return Er::format("{} \u03bcs", v);
@@ -273,13 +273,13 @@ std::string formatDuration(const Property& prop)
 
 std::string formatDurationAny(const std::any& any)
 {
-    if (auto v = std::any_cast<System::PackedTime::ValueType>(&any))
+    if (auto v = std::any_cast<Time::ValueType>(&any))
         return formatDurationImpl(*v);
-    else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime::ValueType>>(&any))
+    else if (auto v = std::any_cast<std::reference_wrapper<const Time::ValueType>>(&any))
         return formatDurationImpl(v->get());
-    else if (auto v = std::any_cast<System::PackedTime>(&any))
+    else if (auto v = std::any_cast<Time>(&any))
         return formatDurationImpl(v->value());
-    else if (auto v = std::any_cast<std::reference_wrapper<const System::PackedTime>>(&any))
+    else if (auto v = std::any_cast<std::reference_wrapper<const Time>>(&any))
         return formatDurationImpl(v->get().value());
 
     ErAssert(!"Unsupported formatter");

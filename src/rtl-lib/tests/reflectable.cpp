@@ -410,8 +410,8 @@ struct Rich
     std::string def;
     std::uint64_t pointer;
     std::uint32_t flags;
-    Er::System::PackedTime::ValueType time;
-    Er::System::PackedTime::ValueType dura;
+    Er::Time::ValueType time;
+    Er::Time::ValueType dura;
     double percent;
     std::size_t size;
 
@@ -438,7 +438,7 @@ TEST(Reflectable, format)
     r.flags = 0xc0030f31;
     r.setValid(Rich::Flags);
 
-    r.time = Er::System::PackedTime::now();
+    r.time = Er::Time::now();
     r.setValid(Rich::Time);
 
     r.dura = 1234567890ULL;

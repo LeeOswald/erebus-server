@@ -1,11 +1,11 @@
-#include <erebus/rtl/system/packed_time.hxx>
+#include <erebus/rtl/time.hxx>
 
 
 
-namespace Er::System
+namespace Er
 {
 
-std::tm PackedTime::toLocalTime() const noexcept
+std::tm Time::toLocalTime() const noexcept
 {
     auto seconds = toPosixTime();
     std::tm now_tm = {};
@@ -17,7 +17,7 @@ std::tm PackedTime::toLocalTime() const noexcept
     return now_tm;
 }
 
-std::tm PackedTime::toUtc() const noexcept
+std::tm Time::toUtc() const noexcept
 {
     auto seconds = toPosixTime();
     std::tm now_tm = {};
@@ -29,4 +29,4 @@ std::tm PackedTime::toUtc() const noexcept
     return now_tm;
 }
 
-} // namespace Er::System {}
+} // namespace Er {}

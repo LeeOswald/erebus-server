@@ -22,7 +22,7 @@ public:
 
         if (m_options[Option::DateTime] || m_options[Option::Time])
         {
-            System::PackedTime pt(r->time());
+            Time pt(r->time());
             if (m_options[Option::TzUtc])
                 time = pt.toUtc();
             else

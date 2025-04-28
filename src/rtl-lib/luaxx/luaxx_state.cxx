@@ -120,7 +120,7 @@ void State::exceptionHandler(int luaStatusCode, std::string msg, std::exception_
     m_log->write(Er::Log::Record::make(
         "lua",
         Er::Log::Level::Error,
-        Er::System::PackedTime::now(),
+        Er::Time::now(),
         Er::System::CurrentThread::id(),
         std::move(msg)
     ));

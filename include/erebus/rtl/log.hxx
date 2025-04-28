@@ -1,7 +1,7 @@
 #pragma once
 
 #include <erebus/rtl/format.hxx>
-#include <erebus/rtl/system/packed_time.hxx>
+#include <erebus/rtl/time.hxx>
 #include <erebus/rtl/system/thread.hxx>
 
 #include <boost/noncopyable.hpp>
@@ -34,7 +34,7 @@ private:
 public:
     using Ptr = std::shared_ptr<Record>;
 
-    Record(PrivateOnly, Level level, System::PackedTime::ValueType time, uintptr_t tid, auto&& message)
+    Record(PrivateOnly, Level level, Time::ValueType time, uintptr_t tid, auto&& message)
         : m_level(level)
         , m_time(time)
         , m_tid(tid)
@@ -42,7 +42,7 @@ public:
     {
     }
 
-    Record(PrivateOnly, std::string_view component, Level level, System::PackedTime::ValueType time, uintptr_t tid, auto&& message)
+    Record(PrivateOnly, std::string_view component, Level level, Time::ValueType time, uintptr_t tid, auto&& message)
         : m_component(component)
         , m_level(level)
         , m_time(time)
@@ -95,12 +95,12 @@ public:
         m_indent = indent;
     }
 
-    [[nodiscard]] static auto make(Level level, System::PackedTime::ValueType time, uintptr_t tid, auto&& message)
+    [[nodiscard]] static auto make(Level level, Time::ValueType time, uintptr_t tid, auto&& message)
     {
         return std::make_shared<Record>(PrivateOnly{}, level, time, tid, std::forward<decltype(message)>(message));
     }
 
-    [[nodiscard]] static auto make(std::string_view component, Level level, System::PackedTime::ValueType time, uintptr_t tid, auto&& message)
+    [[nodiscard]] static auto make(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, auto&& message)
     {
         return std::make_shared<Record>(PrivateOnly{}, component, level, time, tid, std::forward<decltype(message)>(message));
     }
@@ -108,7 +108,7 @@ public:
 private:
     std::string_view m_component;
     const Level m_level = Level::Info;
-    const System::PackedTime::ValueType m_time;
+    const Time::ValueType m_time;
     const uintptr_t m_tid = 0;
     const std::string m_message;
     unsigned m_indent = 0;
@@ -292,7 +292,7 @@ struct IndentScope
         {
             log->write(Record::make(
                 level,
-                System::PackedTime::now(),
+                Time::now(),
                 System::CurrentThread::id(),
                 Format::vformat(format, Format::make_format_args(args...))
             ));
@@ -311,7 +311,7 @@ inline void writeln(ILogger* sink, Level level, const std::string& text)
 {
     sink->write(Record::make(
         level,
-        System::PackedTime::now(),
+        Time::now(),
         System::CurrentThread::id(),
         text
     ));
@@ -321,7 +321,7 @@ inline void writeln(ILogger* sink, Level level, std::string&& text)
 {
     sink->write(Record::make(
         level,
-        System::PackedTime::now(),
+        Time::now(),
         System::CurrentThread::id(),
         std::move(text)
     ));
@@ -332,7 +332,7 @@ void write(ILogger* sink, Level level, std::string_view format, Args&&... args)
 {
     sink->write(Record::make(
         level, 
-        System::PackedTime::now(), 
+        Time::now(), 
         System::CurrentThread::id(), 
         Format::vformat(format, Format::make_format_args(args...))
     ));

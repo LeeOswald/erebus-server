@@ -28,10 +28,10 @@ target_sources(${TARGET_NAME}
         property_bag.cxx
         property_format.cxx
         result.cxx
-        system/packed_time.cxx
         system/posix_error.cxx
         system/process.cxx
         system/thread.cxx
+        time.cxx
         type_id.cxx
         util/exception_util.cxx
         util/file.cxx
@@ -92,11 +92,11 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/rtl/property_bag.hxx
                 ${ER_INCLUDE_DIR}/rtl/reflectable.hxx
                 ${ER_INCLUDE_DIR}/rtl/string_literal.hxx
-                ${ER_INCLUDE_DIR}/rtl/system/packed_time.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/posix_error.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/process.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/thread.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/user.hxx
+                ${ER_INCLUDE_DIR}/rtl/time.hxx
                 ${ER_INCLUDE_DIR}/rtl/type_id.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/auto_ptr.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/errno.hxx

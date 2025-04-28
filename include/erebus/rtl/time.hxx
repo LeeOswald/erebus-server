@@ -12,14 +12,14 @@
 #include <boost/functional/hash.hpp>
 
 
-namespace Er::System
+namespace Er
 {
 
 //
 // microseconds since 1970-Jan-01
 //
 
-class ER_RTL_EXPORT PackedTime final
+class ER_RTL_EXPORT Time final
 {
 public:
     using ValueType = std::uint64_t;
@@ -29,17 +29,17 @@ public:
         return m_value;
     }
 
-    constexpr PackedTime(ValueType value  = {}) noexcept
+    constexpr Time(ValueType value  = {}) noexcept
         : m_value(value)
     {
     }
 
-    constexpr bool operator==(const PackedTime& o) const noexcept
+    constexpr bool operator==(const Time& o) const noexcept
     {
         return m_value == o.m_value;
     }
 
-    constexpr auto operator<=>(const PackedTime& o) const noexcept
+    constexpr auto operator<=>(const Time& o) const noexcept
     {
         return m_value <=> o.m_value;
     }
@@ -50,25 +50,25 @@ public:
         return h(m_value);
     }
 
-    [[nodiscard]] static constexpr PackedTime fromPosixTime(std::time_t t) noexcept
+    [[nodiscard]] static constexpr Time fromPosixTime(std::time_t t) noexcept
     {
         return { static_cast<ValueType>(t) * 1000000UL };
     }
 
     template <std::integral Seconds>
-    [[nodiscard]] static constexpr PackedTime fromSeconds(Seconds t) noexcept
+    [[nodiscard]] static constexpr Time fromSeconds(Seconds t) noexcept
     {
         return { static_cast<ValueType>(t) * 1000000UL };
     }
 
     template <std::integral Millieconds>
-    [[nodiscard]] static constexpr PackedTime fromMilliseconds(Millieconds t) noexcept
+    [[nodiscard]] static constexpr Time fromMilliseconds(Millieconds t) noexcept
     {
         return { static_cast<ValueType>(t) * 1000UL };
     }
 
     template <std::integral Microseconds>
-    [[nodiscard]] static constexpr PackedTime fromMicroseconds(Microseconds t) noexcept
+    [[nodiscard]] static constexpr Time fromMicroseconds(Microseconds t) noexcept
     {
         return { static_cast<ValueType>(t) };
     }
@@ -126,9 +126,9 @@ private:
 };
 
 
-inline auto hash_value(const PackedTime& t) noexcept
+inline auto hash_value(const Time& t) noexcept
 {
     return t.hash();
 }
 
-} // namespace Er::System {}
+} // namespace Er {}
