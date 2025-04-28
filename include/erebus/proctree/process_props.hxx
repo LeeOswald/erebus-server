@@ -3,7 +3,7 @@
 #include <erebus/proctree/proctree.hxx>
 #include <erebus/rtl/multi_string.hxx>
 #include <erebus/rtl/reflectable.hxx>
-#include <erebus/rtl/system/packed_time.hxx>
+#include <erebus/rtl/time.hxx>
 
 namespace Er::ProcessTree
 {
@@ -43,12 +43,12 @@ struct ProcessProperties
     std::string comm;
     MultiStringZ cmdLine;
     std::string exe;
-    System::PackedTime startTime;
+    Time startTime;
     std::uint32_t state;
     std::string userName;
     std::uint32_t threadCount;
-    System::PackedTime sTime;
-    System::PackedTime uTime;
+    Time sTime;
+    Time uTime;
     double cpuUsage;
     std::int32_t tty;
     MultiStringZ env;

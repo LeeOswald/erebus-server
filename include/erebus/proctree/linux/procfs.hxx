@@ -3,7 +3,7 @@
 #include <erebus/proctree/proctree.hxx>
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/multi_string.hxx>
-#include <erebus/rtl/system/packed_time.hxx>
+#include <erebus/rtl/time.hxx>
 
 #include <expected>
 #include <vector>
@@ -73,7 +73,7 @@ public:
         /*50*/ std::uint64_t env_end = 0;
         /*51*/ std::int32_t exit_code = 0;
 
-        System::PackedTime startTime;                         // start time (absolute)
+        Time startTime;                                       // start time (absolute)
         std::uint64_t ruid = std::uint64_t(-1);               // real user ID of process owner
 
         Stat() noexcept = default;
@@ -83,12 +83,12 @@ public:
 
     explicit ProcFs(std::string_view procFsRoot = std::string_view("/proc"));
 
-    constexpr System::PackedTime bootTime() noexcept
+    constexpr Time bootTime() noexcept
     {
-        return System::PackedTime::fromSeconds(m_bootTime);
+        return Time::fromSeconds(m_bootTime);
     }
 
-    static System::PackedTime timeFromTicks(std::uint64_t ticks) noexcept;
+    static Time timeFromTicks(std::uint64_t ticks) noexcept;
 
     std::expected<std::vector<Pid>, int> enumeratePids();
     std::expected<Stat, int> readStat(Pid pid);

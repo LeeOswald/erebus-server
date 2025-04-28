@@ -38,12 +38,12 @@ ProcFs::ProcFs(std::string_view procFsRoot)
     }
 }
 
-System::PackedTime ProcFs::timeFromTicks(std::uint64_t ticks) noexcept
+Time ProcFs::timeFromTicks(std::uint64_t ticks) noexcept
 {
     static const long TicksPerSecond = ::sysconf(_SC_CLK_TCK);
     ErAssert(TicksPerSecond > 0);
 
-    return System::PackedTime::fromMilliseconds(ticks * 1000 / TicksPerSecond);
+    return Time::fromMilliseconds(ticks * 1000 / TicksPerSecond);
 }
 
 std::expected<std::vector<Pid>, int> ProcFs::enumeratePids()
@@ -296,7 +296,7 @@ std::expected<ProcFs::Stat, int> ProcFs::readStat(Pid pid)
         ++end;
     }
 
-    result.startTime = System::PackedTime::fromSeconds(m_bootTime + timeFromTicks(result.starttime).toSeconds());
+    result.startTime = Time::fromSeconds(m_bootTime + timeFromTicks(result.starttime).toSeconds());
 
     return {std::move(result)};
 }
