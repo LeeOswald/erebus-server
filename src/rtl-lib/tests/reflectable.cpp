@@ -83,7 +83,16 @@ TEST(Reflectable, GetSet)
     EXPECT_NE(m1.hash(), h0);
     h0 = m1.hash();
 
-    ErSet(My, First, m1, first, "Hello!");
+    std::string s("Hello!");
+    ErSet(My, First, m1, first, std::move(s));
+    EXPECT_STREQ(m1.first.c_str(), "Hello!");
+    EXPECT_TRUE(s.empty()); // moved from
+
+    std::string s1("Bye?");
+    ErSet(My, First, m1, first, s1);
+    EXPECT_STREQ(m1.first.c_str(), "Bye?");
+    EXPECT_FALSE(s1.empty()); // copied from
+
     EXPECT_NE(m1.hash(), h0);
     h0 = m1.hash();
 

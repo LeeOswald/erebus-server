@@ -349,7 +349,7 @@ struct Reflectable
             }
             else if (o._valid[f.id])
             {
-                difference.map[f.id] = Diff::Type::Added; // our field is invalid, but their's is
+                difference.map[f.id] = Diff::Type::Added; // our field is invalid, but their's is not
                 ++difference.differences;
 
                 f.copier(*this_, *that_);
@@ -490,6 +490,26 @@ struct Reflectable
     }
 
     template <typename _Type>
+    void set(unsigned id, const _Type& value)
+    {
+        ErAssert(id < FieldCount);
+        auto& flds = fields();
+#if ER_DEBUG
+        ErAssert(flds[id].type == typeId<_Type>().index());
+#endif
+
+        auto this_ = static_cast<SelfType*>(this);
+        auto raw = flds[id].setter(*this_);
+        auto p = static_cast<std::remove_cv_t<_Type>*>(raw);
+        ErAssert(p);
+
+        *p = value;
+
+        _valid.set(id, true);
+        _hashValid = false;
+    }
+
+    template <typename _Type>
     void set(unsigned id, _Type&& value)
     {
         ErAssert(id < FieldCount);
@@ -538,7 +558,7 @@ static Fields const& fields() noexcept \
 
 
 #define ErSet(Class, Id, obj, field, val) \
-    obj.set(Class::Id, decltype(Class::field){val})
+    obj.set<decltype(Class::field)>(Class::Id, val)
 
 #define ErGetp(Class, Id, obj, field) \
     obj.get<decltype(Class::field)>(Class::Id)

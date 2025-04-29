@@ -33,6 +33,8 @@ struct ProcessProperties
         Env,
         _FieldCount
     };
+    
+    static_assert(_FieldCount == FieldCount);
 
     std::uint64_t pid;
     std::uint64_t ppid;
