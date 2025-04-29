@@ -7,10 +7,7 @@
 #include <sys/utsname.h>
 
 
-namespace Er
-{
-
-namespace SystemInfo
+namespace Er::SystemInfo::Private
 {
 
 namespace
@@ -56,6 +53,4 @@ void registerSources(Sources& s)
     s.map.insert({ OsVersion, { osVersion } });
 }
 
-} // namespace SystemInfo {}
-
-} // namespace Er {}
+} // namespace Er::SystemInfo::Private {}

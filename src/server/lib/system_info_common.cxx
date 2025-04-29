@@ -3,10 +3,7 @@
 #include <erebus/rtl/util/pattern.hxx>
 
 
-namespace Er
-{
-
-namespace SystemInfo
+namespace Er::SystemInfo
 {
 
 
@@ -14,7 +11,7 @@ ER_SERVER_EXPORT PropertyBag get(std::string_view name)
 {
     PropertyBag bag;
 
-    auto& sources = Sources::instance();
+    auto& sources = Private::Sources::instance();
     std::shared_lock l(sources.mutex);
     
     auto& m = sources.map;
@@ -46,7 +43,7 @@ ER_SERVER_EXPORT PropertyBag get(std::string_view name)
 
 ER_SERVER_EXPORT void registerSource(std::string_view name, Source&& src)
 {
-    auto& sources = Sources::instance();
+    auto& sources = Private::Sources::instance();
     std::unique_lock l(sources.mutex);
     
     auto& m = sources.map;
@@ -54,6 +51,4 @@ ER_SERVER_EXPORT void registerSource(std::string_view name, Source&& src)
 }
 
 
-} // namespace SystemInfo {}
-
-} // namespace Er {}
+} // namespace Er::SystemInfo {}

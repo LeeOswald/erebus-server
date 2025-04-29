@@ -7,10 +7,7 @@
 #include <shared_mutex>
 
 
-namespace Er
-{
-
-namespace SystemInfo
+namespace Er::SystemInfo::Private
 {
 
 struct Sources;
@@ -35,6 +32,5 @@ struct Sources
     }
 };
 
-} // namespace SystemInfo {}
 
-} // namespace Er {}
+} // namespace Er::SystemInfo::Private {}
