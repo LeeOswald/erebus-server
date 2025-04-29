@@ -142,46 +142,41 @@ inline bool visit(const PropertyVector& bag, auto&& visitor)
     return true;
 }
 
-
-[[nodiscard]] inline const Property* findProperty(const PropertyMap& bag, std::string_view name) noexcept
+[[nodiscard]] inline const Property* findProperty(const PropertyMap& bag, std::string_view name, std::optional<Property::Type> type = std::nullopt) noexcept
 {
+    const Property* prop = nullptr;
+
     auto it = bag.find(name);
     if (it != bag.end())
     {
         ErAssert(it->second.name() == name);
-        return &it->second;
+        prop = &it->second;
+
+        if (type && prop->type() != *type)
+            return nullptr;
     }
     
-    return nullptr;
+    return prop;
 }
 
-[[nodiscard]] inline const Property* findProperty(const PropertyMap& bag, std::string_view name, Property::Type type) noexcept
+[[nodiscard]] inline const Property* findProperty(const PropertyVector& bag, std::string_view name, std::optional<Property::Type> type = std::nullopt) noexcept
 {
-    auto prop = findProperty(bag, name);
-    if (prop && prop->type() == type)
-        return prop;
+    const Property* prop = nullptr;
 
-    return nullptr;
-}
-
-[[nodiscard]] inline const Property* findProperty(const PropertyVector& bag, std::string_view name) noexcept
-{
-    for (auto& prop : bag)
+    for (auto& pr : bag)
     {
-        if (prop.name() == name)
-            return &prop;
+        if (pr.name() == name)
+        {
+            prop = &pr;
+
+            if (type && prop->type() != *type)
+                return nullptr;
+
+            break;
+        }
     }
 
-    return nullptr;
-}
-
-[[nodiscard]] inline const Property* findProperty(const PropertyVector& bag, std::string_view name, Property::Type type) noexcept
-{
-    auto prop = findProperty(bag, name);
-    if (prop && prop->type() == type)
-        return prop;
-
-    return nullptr;
+    return prop;
 }
 
 
