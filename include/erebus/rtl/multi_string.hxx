@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/rtl/rtl.hxx>
+#include <erebus/rtl/util/string_util.hxx>
 
 #include <boost/functional/hash.hpp>
 
@@ -88,51 +88,7 @@ struct BasicMultiString final
         requires std::is_invocable_v<Callback, Char const*, std::size_t>
     void split(Callback&& callback) const 
     {
-        if (raw.empty())
-            return;
-
-        auto begin = raw.data();
-        auto separatorPos = raw.find(Delimiter);
-
-        decltype(separatorPos) partBegin = 0;
-        for (;;)
-        {
-            if (separatorPos == raw.npos)
-            {
-                // the remainder
-                auto partEnd = raw.length();
-                ErAssert(partBegin <= partEnd);
-            
-                if constexpr (std::is_invocable_r_v<CallbackResult, Callback, Char const*, std::size_t>)
-                {
-                    if (callback(begin + partBegin, partEnd - partBegin) != CallbackResult::Continue)
-                        break;
-                }
-                else
-                {
-                    callback(begin + partBegin, partEnd - partBegin);
-                }
-
-                break;
-            }
-
-            // next part
-            if constexpr (std::is_invocable_r_v<CallbackResult, Callback, Char const*, std::size_t>)
-            {
-                if (callback(begin + partBegin, separatorPos - partBegin) != CallbackResult::Continue)
-                    break;
-            }
-            else
-            {
-                callback(begin + partBegin, separatorPos - partBegin);
-            }
-
-            partBegin = separatorPos + 1;
-            if (partBegin > raw.length())
-                break;
-
-            separatorPos = raw.find(Delimiter, partBegin);
-        }
+        Util::split(raw, Delimiter, std::forward<decltype(callback)>(callback));
     }
 
     String raw;
