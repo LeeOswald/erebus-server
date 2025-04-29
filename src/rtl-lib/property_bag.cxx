@@ -1,5 +1,6 @@
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/property_bag.hxx>
+#include <erebus/rtl/util/string_util.hxx>
 
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
@@ -145,5 +146,110 @@ ER_RTL_EXPORT Property loadJson(std::string_view json, std::size_t depth)
 
     return {};
 }
+
+
+namespace
+{
+
+struct FindByPath
+{
+    constexpr FindByPath(const PropertyMap& bag) noexcept
+        : currentMap(&bag)
+    {
+    }
+
+    constexpr FindByPath(const PropertyVector& bag) noexcept
+        : currentVector(&bag)
+    {
+    }
+
+    CallbackResult operator()(char const* start, std::size_t length) noexcept
+    {
+        const Property* current = nullptr;
+
+        if (currentMap)
+        {
+            current = findProperty(*currentMap, std::string_view(start, length));
+        }
+        else if (currentVector)
+        {
+            current = findProperty(*currentVector, std::string_view(start, length));
+        }
+        else
+        {
+            // this means the search path is not yet ended, 
+            // but the current item is neither a map nor vector
+            // and thus we have nowhere to go
+            found = nullptr;
+            return CallbackResult::Cancel;
+        }
+
+        if (!current)
+            return CallbackResult::Cancel;
+
+        // we don't know yet whether this is the end of path
+        // just save the current results and continue
+        found = current;
+
+        if (current->type() == Property::Type::Map)
+        {
+            currentMap = current->getMap();
+            currentVector = nullptr;
+        }
+        else if (current->type() == Property::Type::Vector)
+        {
+            currentVector = current->getVector();
+            currentMap = nullptr;
+        }
+        else
+        {
+            currentVector = nullptr;
+            currentMap = nullptr;
+        }
+
+        return CallbackResult::Continue;
+    }
+    
+    const PropertyMap* currentMap = nullptr;
+    const PropertyVector* currentVector = nullptr;
+    const Property* found = nullptr;
+};
+
+
+} // namespace {}
+
+
+ER_RTL_EXPORT const Property* findPropertyByPath(const PropertyMap& bag, std::string_view path, char separator, std::optional<Property::Type> type) noexcept
+{
+    FindByPath fbp(bag);
+
+    Util::split(path, separator, fbp);
+
+    // check type
+    if (fbp.found)
+    {
+        if (type && fbp.found->type() != *type)
+            return nullptr;
+    }
+
+    return fbp.found;
+}
+
+ER_RTL_EXPORT const Property* findPropertyByPath(const PropertyVector& bag, std::string_view path, char separator, std::optional<Property::Type> type) noexcept
+{
+    FindByPath fbp(bag);
+
+    Util::split(path, separator, fbp);
+
+    // check type
+    if (fbp.found)
+    {
+        if (type && fbp.found->type() != *type)
+            return nullptr;
+    }
+
+    return fbp.found;
+}
+
 
 } // namespace Er {}

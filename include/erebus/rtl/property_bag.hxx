@@ -180,6 +180,21 @@ inline bool visit(const PropertyVector& bag, auto&& visitor)
 }
 
 
+[[nodiscard]] ER_RTL_EXPORT const Property* findPropertyByPath(
+    const PropertyMap& bag,
+    std::string_view path,
+    char separator = '/',
+    std::optional<Property::Type> type = std::nullopt
+) noexcept;
+
+[[nodiscard]] ER_RTL_EXPORT const Property* findPropertyByPath(
+    const PropertyVector& bag,
+    std::string_view path,
+    char separator = '/',
+    std::optional<Property::Type> type = std::nullopt
+) noexcept;
+
+
 [[nodiscard]] ER_RTL_EXPORT Property loadJson(std::string_view json, std::size_t maxDepth = 256);
 
 } // namespace Er {}

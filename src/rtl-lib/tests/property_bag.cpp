@@ -212,6 +212,204 @@ TEST(PropertyBag, find)
     EXPECT_TRUE(*p->getMap() == m1);
 }
 
+TEST(PropertyBag, findPropertyByPathMap)
+{
+    PropertyMap top;
+    {
+        addProperty(top, { "0bool", true });
+        addProperty(top, { "0int32", std::int32_t(-12) });
+        addProperty(top, { "0string", "string 0" });
+
+        {
+            PropertyVector v;
+
+            addProperty(v, { "1int32", std::int32_t(11) });
+
+            {
+                PropertyMap m;
+
+                addProperty(m, { "2int32", std::int32_t(-6) });
+                addProperty(m, { "2string", "string 2" });
+
+                addProperty(v, { "1map", std::move(m) });
+            }
+
+            addProperty(v, { "1double", -9.9 });
+
+            addProperty(top, { "0vector", std::move(v) });
+        }
+    }
+
+    // empty path
+    auto prop = findPropertyByPath(top, "");
+    EXPECT_EQ(prop, nullptr);
+
+    // top-level item
+    prop = findPropertyByPath(top, "0bool", '/', Property::Type::Bool);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Bool);
+    EXPECT_EQ(*prop->getBool(), true);
+
+    // wrong type
+    prop = findPropertyByPath(top, "0bool", '/', Property::Type::UInt32);
+    EXPECT_EQ(prop, nullptr);
+
+    // wrong name
+    prop = findPropertyByPath(top, "2bool", '/', Property::Type::Bool);
+    EXPECT_EQ(prop, nullptr);
+
+    prop = findPropertyByPath(top, "0int32", '/', Property::Type::Int32);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Int32);
+    EXPECT_EQ(*prop->getInt32(), -12);
+
+    prop = findPropertyByPath(top, "0string", '/', Property::Type::String);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::String);
+    EXPECT_STREQ(prop->getString()->c_str(), "string 0");
+
+    prop = findPropertyByPath(top, "0vector", '/', Property::Type::Vector);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Vector);
+    EXPECT_EQ(prop->getVector()->size(), 3);
+
+    // level 1
+    prop = findPropertyByPath(top, "0vector/1int32", '/', Property::Type::Int32);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Int32);
+    EXPECT_EQ(*prop->getInt32(), 11);
+
+    prop = findPropertyByPath(top, "0vector/1double", '/', Property::Type::Double);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Double);
+    EXPECT_DOUBLE_EQ(*prop->getDouble(), -9.9);
+
+    prop = findPropertyByPath(top, "0vector/1map", '/', Property::Type::Map);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Map);
+    EXPECT_EQ(prop->getMap()->size(), 2);
+
+    // level 2
+    prop = findPropertyByPath(top, "0vector/1map/2int32", '/', Property::Type::Int32);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Int32);
+    EXPECT_EQ(*prop->getInt32(), -6);
+
+    prop = findPropertyByPath(top, "0vector/1map/2string", '/', Property::Type::String);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::String);
+    EXPECT_STREQ(prop->getString()->c_str(), "string 2");
+
+    // wrong paths
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector/1map/3string", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector/1map/2string", '.', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector/1map\\2string", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector//2string", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector/1map/", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "/2string", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "//", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "/", '/', Property::Type::String));
+}
+
+TEST(PropertyBag, findPropertyByPathVector)
+{
+    PropertyVector top;
+    {
+        addProperty(top, { "0bool", true });
+        addProperty(top, { "0int32", std::int32_t(-12) });
+        addProperty(top, { "0string", "string 0" });
+
+        {
+            PropertyVector v;
+
+            addProperty(v, { "1int32", std::int32_t(11) });
+
+            {
+                PropertyMap m;
+
+                addProperty(m, { "2int32", std::int32_t(-6) });
+                addProperty(m, { "2string", "string 2" });
+
+                addProperty(v, { "1map", std::move(m) });
+            }
+
+            addProperty(v, { "1double", -9.9 });
+
+            addProperty(top, { "0vector", std::move(v) });
+        }
+    }
+
+    // empty path
+    auto prop = findPropertyByPath(top, "");
+    EXPECT_EQ(prop, nullptr);
+
+    // top-level item
+    prop = findPropertyByPath(top, "0bool", '/', Property::Type::Bool);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Bool);
+    EXPECT_EQ(*prop->getBool(), true);
+
+    // wrong type
+    prop = findPropertyByPath(top, "0bool", '/', Property::Type::UInt32);
+    EXPECT_EQ(prop, nullptr);
+
+    // wrong name
+    prop = findPropertyByPath(top, "2bool", '/', Property::Type::Bool);
+    EXPECT_EQ(prop, nullptr);
+
+    prop = findPropertyByPath(top, "0int32", '/', Property::Type::Int32);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Int32);
+    EXPECT_EQ(*prop->getInt32(), -12);
+
+    prop = findPropertyByPath(top, "0string", '/', Property::Type::String);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::String);
+    EXPECT_STREQ(prop->getString()->c_str(), "string 0");
+
+    prop = findPropertyByPath(top, "0vector", '/', Property::Type::Vector);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Vector);
+    EXPECT_EQ(prop->getVector()->size(), 3);
+
+    // level 1
+    prop = findPropertyByPath(top, "0vector/1int32", '/', Property::Type::Int32);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Int32);
+    EXPECT_EQ(*prop->getInt32(), 11);
+
+    prop = findPropertyByPath(top, "0vector/1double", '/', Property::Type::Double);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Double);
+    EXPECT_DOUBLE_EQ(*prop->getDouble(), -9.9);
+
+    prop = findPropertyByPath(top, "0vector/1map", '/', Property::Type::Map);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Map);
+    EXPECT_EQ(prop->getMap()->size(), 2);
+
+    // level 2
+    prop = findPropertyByPath(top, "0vector/1map/2int32", '/', Property::Type::Int32);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::Int32);
+    EXPECT_EQ(*prop->getInt32(), -6);
+
+    prop = findPropertyByPath(top, "0vector/1map/2string", '/', Property::Type::String);
+    ASSERT_NE(prop, nullptr);
+    ASSERT_EQ(prop->type(), Property::Type::String);
+    EXPECT_STREQ(prop->getString()->c_str(), "string 2");
+
+    // wrong paths
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector/1map/3string", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector/1map/2string", '.', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector/1map\\2string", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector//2string", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "0vector/1map/", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "/2string", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "//", '/', Property::Type::String));
+    EXPECT_EQ(nullptr, findPropertyByPath(top, "/", '/', Property::Type::String));
+}
+
 TEST(PropertyBag, loadJson)
 {
 const std::string_view kSource =
