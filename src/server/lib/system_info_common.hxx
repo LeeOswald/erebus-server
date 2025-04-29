@@ -1,10 +1,10 @@
 #pragma once
 
-#include <erebus/rtl/format.hxx>
+
 #include <erebus/server/system_info.hxx>
 
-#include <functional>
-#include <map>
+#include <mutex>
+#include <shared_mutex>
 
 
 namespace Er
@@ -13,17 +13,27 @@ namespace Er
 namespace SystemInfo
 {
 
-namespace Private
+struct Sources;
+
+void registerSources(Sources&);
+
+
+struct Sources
 {
+    std::shared_mutex mutex;
+    std::map<std::string_view, Source> map;
 
-using SystemInfoSource = std::function<Property(std::string_view)>;
-using SystemInfoSources = std::map<std::string_view, SystemInfoSource>;
+    Sources()
+    {
+        registerSources(*this);
+    }
 
-
-SystemInfoSources registerSources();
-std::map<std::string_view, SystemInfoSource> const& sources();
-
-} // namespace Private {}
+    static Sources& instance()
+    {
+        static Sources s;
+        return s;
+    }
+};
 
 } // namespace SystemInfo {}
 

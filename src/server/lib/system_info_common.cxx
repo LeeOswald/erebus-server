@@ -2,30 +2,22 @@
 
 #include <erebus/rtl/util/pattern.hxx>
 
+
 namespace Er
 {
 
 namespace SystemInfo
 {
 
-namespace Private
-{
-
-
-std::map<std::string_view, SystemInfoSource> const& sources()
-{
-    static std::map<std::string_view, SystemInfoSource> m = registerSources();
-    return m;
-}
-
-} // namespace Private {}
-
 
 ER_SERVER_EXPORT PropertyBag get(std::string_view name)
 {
     PropertyBag bag;
 
-    auto& m = Private::sources();
+    auto& sources = Sources::instance();
+    std::shared_lock l(sources.mutex);
+    
+    auto& m = sources.map;
     
     
     if (std::find_if(name.begin(), name.end(), [](char c) { return (c == '?') || (c == '*'); }) == name.end())
@@ -50,6 +42,15 @@ ER_SERVER_EXPORT PropertyBag get(std::string_view name)
     }
     
     return bag;
+}
+
+ER_SERVER_EXPORT void registerSource(std::string_view name, Source&& src)
+{
+    auto& sources = Sources::instance();
+    std::unique_lock l(sources.mutex);
+    
+    auto& m = sources.map;
+    m.insert({ name, std::move(src) });
 }
 
 

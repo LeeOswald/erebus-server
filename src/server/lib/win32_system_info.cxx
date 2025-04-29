@@ -1,7 +1,10 @@
 #include "erebus-version.h"
+
 #include "system_info_common.hxx"
 
+#include <erebus/rtl/format.hxx>
 #include <erebus/rtl/system/unwindows.h>
+
 
 namespace Er
 {
@@ -9,7 +12,7 @@ namespace Er
 namespace SystemInfo
 {
 
-namespace Private
+namespace 
 {
 
 
@@ -34,18 +37,17 @@ Property osVersion(std::string_view)
     return Property{ OsVersion , std::string("n/a")};
 }
 
-SystemInfoSources registerSources()
+} // namespace {}
+
+
+void registerSources(Sources& s)
 {
-    std::map<std::string_view, SystemInfoSource> m;
+    std::unique_lock l(s.mutex);
 
-    m.insert({ ServerVersion, { serverVersion } });
-    m.insert({ OsType, { osType } });
-    m.insert({ OsVersion, { osVersion } });
-    return m;
+    s.map.insert({ ServerVersion, { serverVersion } });
+    s.map.insert({ OsType, { osType } });
+    s.map.insert({ OsVersion, { osVersion } });
 }
-
-
-} // namespace Private {}
 
 } // namespace SystemInfo {}
 
