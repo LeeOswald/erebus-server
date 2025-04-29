@@ -20,6 +20,7 @@ add_library(${TARGET_NAME} SHARED)
 
 target_sources(${TARGET_NAME}
 	PRIVATE
+        plugin_mgr.cxx
         system_info_common.hxx
         system_info_common.cxx
         ${PLATFORM_SOURCES}
@@ -29,6 +30,8 @@ target_sources(${TARGET_NAME}
             BASE_DIRS 
                 ${ER_INCLUDE_DIR} 
             FILES
+                ${ER_INCLUDE_DIR}/server/iplugin.hxx
+                ${ER_INCLUDE_DIR}/server/plugin_mgr.hxx
                 ${ER_INCLUDE_DIR}/server/server_lib.hxx
                 ${ER_INCLUDE_DIR}/server/system_info.hxx
 )
