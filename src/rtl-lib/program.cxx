@@ -374,6 +374,8 @@ int Program::exec(int argc, char** argv)
         dispatchException(std::current_exception(), xcptLogger);
     }
 
+    Er::Log::get()->flush();
+
     globalShutdown();
 
     return resut;
