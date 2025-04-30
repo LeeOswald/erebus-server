@@ -18,11 +18,11 @@ struct IService
 {
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IService";
 
-    using Ptr = std::shared_ptr<IService>;
-
-    virtual ~IService() = default;
     virtual ::grpc::Service* grpc() noexcept = 0;
     virtual std::string_view name() const noexcept = 0;
+
+protected:
+    virtual ~IService() = default;
 };
 
 } // namespace Er::Ipc::Grpc {}

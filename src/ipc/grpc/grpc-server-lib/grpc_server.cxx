@@ -4,6 +4,9 @@
 #include <erebus/ipc/grpc/server/grpc_server.hxx>
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/util/file.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
+
+#include <mutex>
 
 
 namespace Er::Ipc::Grpc
@@ -13,10 +16,9 @@ namespace
 {
 
 class ServerImpl
-    : public IServer
-    , public std::enable_shared_from_this<ServerImpl>
+    : public Util::UnknownBase<std::mutex, IServer>
 {
-    struct PrivateTag {};
+    using Base = Util::UnknownBase<std::mutex, IServer>;
 
 public:
     ~ServerImpl()
@@ -32,8 +34,9 @@ public:
         ::grpc_shutdown();
     }
 
-    ServerImpl(PrivateTag, const PropertyMap& parameters, Log::ILogger::Ptr log)
-        : m_log(log)
+    ServerImpl(const PropertyMap& parameters, Log::ILogger::Ptr log, IUnknown* owner)
+        : Base(owner)
+        , m_log(log)
         , m_endpoints(parseEndpoints(parameters))
     {
         if (m_endpoints.empty())
@@ -46,20 +49,15 @@ public:
         ::grpc_init();
     }
 
-    static IServer::Ptr make(const PropertyMap& parameters, Log::ILogger::Ptr log)
-    {
-        return std::make_shared<ServerImpl>(PrivateTag{}, parameters, log);
-    }
-
-    IUnknown::Ptr queryInterface(std::string_view iid) noexcept override
+    IUnknown* queryInterface(std::string_view iid) noexcept override
     {
         if ((iid == IServer::IID) ||
             (iid == IUnknown::IID))
         {
-            return shared_from_this();
+            return this;
         }
 
-        return {};
+        return nullptr;
     }
 
     ::grpc::Server* grpc() noexcept override
@@ -67,7 +65,7 @@ public:
         return m_server.get();
     }
 
-    void addService(IService::Ptr service) override
+    void addService(IService* service) override
     {
         if (m_server)
             ErThrow("Cannot add new services to a running server instance");
@@ -192,7 +190,7 @@ private:
     Log::ILogger::Ptr m_log;
     std::vector<Endpoint> m_endpoints;
     bool m_keepalive = false;
-    std::vector<IService::Ptr> m_services;
+    std::vector<IService*> m_services;
     std::unique_ptr<::grpc::Server> m_server;
 };
 
@@ -200,9 +198,9 @@ private:
 } // namespace {}
 
 
-IServer::Ptr createServer(const PropertyMap& parameters, Log::ILogger::Ptr log)
+IServer* createServer(const PropertyMap& parameters, Log::ILogger::Ptr log, IUnknown* owner)
 {
-    return ServerImpl::make(parameters, log);
+    return new ServerImpl(parameters, log, owner);
 }
 
 

@@ -150,14 +150,15 @@ bool ServerApplication::createServer()
     Er::Util::ExceptionLogger xcptHandler(Er::Log::get());
     try
     {
-        auto sysInfoLogger = Er::Log::makeSyncLogger("system_info");
-        sysInfoLogger->addSink("main", Er::Log::global());
-        auto sysInfoService = Er::Ipc::Grpc::createSystemInfoService(sysInfoLogger);
-
+        
         auto serverLogger = Er::Log::makeSyncLogger("grpc_server");
         serverLogger->addSink("main", Er::Log::global());
+        m_grpcServer = Er::DisposablePtr<Er::Ipc::Grpc::IServer>(Er::Ipc::Grpc::createServer(settings, serverLogger, nullptr));
 
-        m_grpcServer = Er::Ipc::Grpc::createServer(settings, serverLogger);
+        auto sysInfoLogger = Er::Log::makeSyncLogger("system_info");
+        sysInfoLogger->addSink("main", Er::Log::global());
+        auto sysInfoService = Er::Ipc::Grpc::createSystemInfoService(sysInfoLogger, m_grpcServer.get());
+        
         m_grpcServer->addService(sysInfoService);
     }
     catch (...)

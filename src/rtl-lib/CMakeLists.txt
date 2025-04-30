@@ -109,6 +109,7 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/rtl/util/pid_file.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/string_util.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/thread_data.hxx
+                ${ER_INCLUDE_DIR}/rtl/util/unknown_base.hxx
                 ${ER_INCLUDE_DIR}/rtl/util/utf16.hxx
 )
 

@@ -39,7 +39,7 @@ private:
 
     void run(std::stop_token stop) noexcept
     {
-        auto client = Er::Ipc::Grpc::createSystemInfoClient(m_channel, Er::Log::global());
+        auto client = Er::DisposablePtr<Er::Ipc::Grpc::ISystemInfoClient>(Er::Ipc::Grpc::createSystemInfoClient(m_channel, Er::Log::global(), nullptr));
         auto n = m_iterations;
 
         do

@@ -18,12 +18,12 @@ struct IServer
 {
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IServer";
 
-    using Ptr = std::shared_ptr<IServer>;
-
-    virtual ~IServer() = default;
     virtual ::grpc::Server* grpc() noexcept = 0;
-    virtual void addService(IService::Ptr service) = 0;
+    virtual void addService(IService* service) = 0;
     virtual void start() = 0;
+
+protected:
+    virtual ~IServer() = default;
 };
 
 

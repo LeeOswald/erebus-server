@@ -8,8 +8,8 @@
 namespace Er::Ipc::Grpc
 {
 
-[[nodiscard]] IServer::Ptr createServer(const PropertyMap& parameters, Log::ILogger::Ptr log);
+[[nodiscard]] IServer* createServer(const PropertyMap& parameters, Log::ILogger::Ptr log, IUnknown* owner);
 
-[[nodiscard]] IService::Ptr createSystemInfoService(Log::ILogger::Ptr log);
+[[nodiscard]] IService* createSystemInfoService(Log::ILogger::Ptr log, IUnknown* owner);
 
 } // namespace Er::Ipc::Grpc {}

@@ -3,9 +3,12 @@
 #include <erebus/ipc/grpc/protocol.hxx>
 #include <erebus/ipc/grpc/server/iservice.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
 #include <erebus/server/system_info.hxx>
 
 #include "trace.hxx"
+
+#include <mutex>
 
 
 namespace Er::Ipc::Grpc
@@ -15,11 +18,10 @@ namespace
 {
 
 class SystemInfoImpl
-    : public IService
+    : public Util::UnknownBase<std::mutex, IService>
     , public erebus::SystemInfo::CallbackService
-    , public std::enable_shared_from_this<SystemInfoImpl>
 {
-    struct PrivateTag {};
+    using Base = Util::UnknownBase<std::mutex, IService>;
 
 public:
     ~SystemInfoImpl()
@@ -27,26 +29,22 @@ public:
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::~SystemInfoImpl", Er::Format::ptr(this));
     }
 
-    SystemInfoImpl(PrivateTag, Log::ILogger::Ptr log)
-        : m_log(log)
+    SystemInfoImpl(Log::ILogger::Ptr log, IUnknown* owner)
+        : Base(owner)
+        , m_log(log)
     {
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::SystemInfoImpl", Er::Format::ptr(this));
     }
 
-    static IService::Ptr create(Log::ILogger::Ptr log)
-    {
-        return std::make_shared<SystemInfoImpl>(PrivateTag{}, log);
-    }
-
-    IUnknown::Ptr queryInterface(std::string_view iid) noexcept override
+    IUnknown* queryInterface(std::string_view iid) noexcept override
     {
         if ((iid == IService::IID) ||
             (iid == IUnknown::IID))
         {
-            return shared_from_this();
+            return this;
         }
 
-        return {};
+        return nullptr;
     }
 
     ::grpc::Service* grpc() noexcept override
@@ -229,9 +227,9 @@ private:
 } // namespace {}
 
 
-IService::Ptr createSystemInfoService(Log::ILogger::Ptr log)
+IService* createSystemInfoService(Log::ILogger::Ptr log, IUnknown* owner)
 {
-    return SystemInfoImpl::create(log);
+    return new SystemInfoImpl(log, owner);
 }
 
 } // namespace Er::Ipc::Grpc {}

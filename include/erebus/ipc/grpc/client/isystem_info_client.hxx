@@ -13,8 +13,6 @@ struct ISystemInfoClient
 {
     static constexpr std::string_view IID = "Er.Ipc.Grpc.ISystemInfoClient";
 
-    using Ptr = std::shared_ptr<ISystemInfoClient>;
-
     struct PingMessage
     {
         Er::Time timestamp;
@@ -39,10 +37,12 @@ struct ISystemInfoClient
         virtual ~ISystemInfoCompletion() = default;
         virtual CallbackResult onProperty(Property&& prop) = 0;
     };
-
-    virtual ~ISystemInfoClient() = default;
+    
     virtual void ping(PingMessage&& ping, IPingCompletion::Ptr handler) = 0;
     virtual void getSystemInfo(const std::string& pattern, ISystemInfoCompletion::Ptr handler) = 0;
+
+protected:
+    virtual ~ISystemInfoClient() = default;
 };
 
 

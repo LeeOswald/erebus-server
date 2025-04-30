@@ -13,14 +13,14 @@ struct IPlugin
 {
     static constexpr std::string_view IID = "Er.IPlugin";
 
-    using Ptr = std::shared_ptr<IPlugin>;
-
-    virtual ~IPlugin() = default;
     virtual PropertyBag info() = 0;
+
+protected:
+    virtual ~IPlugin() = default;
 };
 
 
-using CreatePluginFn = IPlugin::Ptr(*)(IUnknown::Ptr owner, Log::ILogger::Ptr log, const PropertyBag& args);
+using CreatePluginFn = IPlugin*(*)(IUnknown* owner, Log::ILogger::Ptr log, const PropertyBag& args);
 
 } // namespace Er {}
 

@@ -4,6 +4,7 @@
 #include <erebus/ipc/grpc/client/isystem_info_client.hxx>
 #include <erebus/ipc/grpc/protocol.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
 
 #include "trace.hxx"
 
@@ -20,10 +21,9 @@ namespace
 {
 
 class SystemInfoClientImpl
-    : public ISystemInfoClient
-    , public std::enable_shared_from_this<SystemInfoClientImpl>
+    : public Util::UnknownBase<std::mutex, ISystemInfoClient>
 {
-    struct PrivateTag {};
+    using Base = Util::UnknownBase<std::mutex, ISystemInfoClient>;
 
 public:
     ~SystemInfoClientImpl()
@@ -35,28 +35,24 @@ public:
         ::grpc_shutdown();
     }
 
-    SystemInfoClientImpl(PrivateTag, ChannelPtr channel, Log::ILogger::Ptr log)
-        : m_grpcReady(grpcInit())
+    SystemInfoClientImpl(ChannelPtr channel, Log::ILogger::Ptr log, IUnknown* owner)
+        : Base(owner)
+        , m_grpcReady(grpcInit())
         , m_stub(erebus::SystemInfo::NewStub(channel))
         , m_log(log)
     {
         ClientTrace2(m_log.get(), "{}.SystemInfoClientImpl::SystemInfoClientImpl", Er::Format::ptr(this));
     }
 
-    static ISystemInfoClient::Ptr make(ChannelPtr channel, Log::ILogger::Ptr log)
-    {
-        return std::make_shared<SystemInfoClientImpl>(PrivateTag{}, channel, log);
-    }
-
-    IUnknown::Ptr queryInterface(std::string_view iid) noexcept override
+    IUnknown* queryInterface(std::string_view iid) noexcept override
     {
         if ((iid == IClient::IID) ||
             (iid == IUnknown::IID))
         {
-            return shared_from_this();
+            return this;
         }
 
-        return {};
+        return nullptr;
     }
 
     void ping(PingMessage&& ping, IPingCompletion::Ptr handler) override
@@ -314,9 +310,9 @@ private:
 } // namespace {}
 
 
-ISystemInfoClient::Ptr createSystemInfoClient(ChannelPtr channel, Log::ILogger::Ptr log)
+ISystemInfoClient* createSystemInfoClient(ChannelPtr channel, Log::ILogger::Ptr log, IUnknown* owner)
 {
-    return SystemInfoClientImpl::make(channel, log);
+    return new SystemInfoClientImpl(channel, log, owner);
 }
 
 

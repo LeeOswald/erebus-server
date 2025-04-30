@@ -5,6 +5,7 @@
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/property_bag.hxx>
 
+
 namespace grpc
 {
 
@@ -25,10 +26,6 @@ struct IClient
 {
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IClient";
 
-    using Ptr = std::shared_ptr<IClient>;
-
-    virtual ~IClient() = default;
-
     struct ICompletion
     {
         using Ptr = std::shared_ptr<ICompletion>;
@@ -37,6 +34,9 @@ struct IClient
 
         virtual void onError(Er::ResultCode result, std::string&& message) noexcept = 0;
     };
+
+protected:
+    virtual ~IClient() = default;
 };
 
 } // namespace Er::Ipc::Grpc {}

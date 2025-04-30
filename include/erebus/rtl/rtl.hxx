@@ -20,15 +20,3 @@
 #include <erebus/rtl/assert.hxx>
 #include <erebus/rtl/bool.hxx>
 
-
-namespace Er
-{
-
-enum class CallbackResult
-{
-    Cancel = 0,
-    Continue = 1
-};
-
-
-} // namespace Er {}

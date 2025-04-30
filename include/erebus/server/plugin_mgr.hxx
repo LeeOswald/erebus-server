@@ -25,37 +25,31 @@ public:
         m_plugins.clear();
     }
     
-    explicit PluginMgr(IUnknown::Ptr owner, Log::ILogger::Ptr log)
+    explicit PluginMgr(IUnknown* owner, Log::ILogger::Ptr log)
         : m_owner(owner)
         , m_log(log)
     {
     }
 
-    IPlugin::Ptr load(const std::string& path, const PropertyBag& args);
+    IPlugin* load(const std::string& path, const PropertyBag& args);
 
 private:
     struct PluginInfo
         : public boost::noncopyable
     {
         std::string path;
-        Log::ILogger* log;
         boost::dll::shared_library dll;
-        IPlugin::Ptr ref;
+        IPlugin* ptr = nullptr;
 
-        ~PluginInfo()
-        {
-            if (dll.is_loaded())
-                Er::Log::info(log, "Unloading plugin [{}]", path);
-        }
+        ~PluginInfo() = default;
 
-        explicit PluginInfo(const std::string& path, Log::ILogger* log)
+        explicit PluginInfo(const std::string& path) noexcept
             : path(path)
-            , log(log)
         {
         }
     };
 
-    IUnknown::Ptr m_owner;
+    IUnknown* m_owner;
     Log::ILogger::Ptr const m_log;
     std::mutex m_mutex;
     std::vector<std::unique_ptr<PluginInfo>> m_plugins;

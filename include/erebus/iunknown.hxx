@@ -13,18 +13,31 @@ struct IUnknown
 {
     static constexpr std::string_view IID = "Er.IUnknown";
 
-    using Ptr = std::shared_ptr<IUnknown>;
+    virtual void dispose() noexcept = 0;
 
-    virtual ~IUnknown() = default;
-    virtual Ptr queryInterface(std::string_view iid) noexcept = 0;
+    virtual void adopt(IUnknown* child) = 0;
+    virtual void orphan(IUnknown* child) noexcept = 0;
 
-    template <class Interface>
-        requires std::is_base_of_v<IUnknown, Interface>
-    std::shared_ptr<Interface> queryInterface() noexcept
+    virtual IUnknown* queryInterface(std::string_view iid) noexcept = 0;
+
+    template <class _Interface>
+        requires std::is_base_of_v<IUnknown, _Interface>
+    _Interface queryInterface() noexcept
     {
-        return std::static_pointer_cast<Interface>(queryInterface(Interface::IID));
+        return static_cast<_Interface*>(queryInterface(_Interface::IID));
     }
+
+protected:
+    virtual ~IUnknown() = default;
 };
+
+
+template <typename _Iface>
+    requires requires(_Iface* p)
+    {
+        p->dispose();
+    }
+using DisposablePtr = std::unique_ptr<_Iface, decltype([](_Iface* p) { p->dispose(); })>;
 
 
 } // namespace Er {}

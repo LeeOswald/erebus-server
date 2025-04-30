@@ -5,9 +5,9 @@
 namespace Er::Private
 {
 
-IPlugin::Ptr PluginMgr::load(const std::string& path, const PropertyBag& args)
+IPlugin* PluginMgr::load(const std::string& path, const PropertyBag& args)
 {
-    auto info = std::make_unique<PluginInfo>(path, m_log.get());
+    auto info = std::make_unique<PluginInfo>(path);
 
     boost::system::error_code ec;
     info->dll.load(path, boost::dll::load_mode::default_mode, ec);
@@ -29,8 +29,8 @@ IPlugin::Ptr PluginMgr::load(const std::string& path, const PropertyBag& args)
     auto entry = info->dll.get<Er::CreatePluginFn>("createPlugin");
     ErAssert(entry);
 
-    info->ref = entry(m_owner, m_log, args);
-    if (!info->ref)
+    info->ptr = entry(m_owner, m_log, args);
+    if (!info->ptr)
     {
         ErThrow(Er::format("createPlugin of [{}] returned NULL", path));
     }
@@ -38,7 +38,7 @@ IPlugin::Ptr PluginMgr::load(const std::string& path, const PropertyBag& args)
     Util::ExceptionLogger xcptHandler(m_log.get());
     try
     {
-        auto props = info->ref->info();
+        auto props = info->ptr->info();
 
         ErLogIndent2(m_log.get(), Log::Level::Info, "Loaded plugin {}", path);
         for (auto& prop : props)
@@ -60,7 +60,7 @@ IPlugin::Ptr PluginMgr::load(const std::string& path, const PropertyBag& args)
         m_plugins.push_back(std::move(info));
     }
 
-    return info->ref;
+    return info->ptr;
 }
 
 } // namespace Er::Private {}
