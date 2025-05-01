@@ -102,7 +102,7 @@ private:
             if (m_wait)
             {
                 auto w = completion->queryInterface<Er::IWaitable>();
-                if (!w->wait(std::uint32_t(5000)))
+                if (!w->wait(std::chrono::seconds(5)))
                 {
                     ErLogError("Completion timed out");
                 }

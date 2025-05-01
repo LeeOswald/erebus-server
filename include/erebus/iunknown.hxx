@@ -2,6 +2,7 @@
 
 #include <erebus/rtl/rtl.hxx>
 
+#include <chrono>
 #include <string_view>
 
 
@@ -188,6 +189,12 @@ struct IWaitable
     static constexpr std::uint32_t Infinite = std::uint32_t(-1);
 
     virtual bool wait(std::uint32_t milliseconds) noexcept = 0;
+
+    template <class _Rep, class _Period>
+    bool wait(std::chrono::duration<_Rep, _Period> timeout) noexcept
+    {
+        return wait(std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+    }
 
 protected:
     virtual ~IWaitable() = default;
