@@ -6,8 +6,6 @@
 #include <erebus/rtl/util/file.hxx>
 #include <erebus/rtl/util/unknown_base.hxx>
 
-#include <mutex>
-
 
 namespace Er::Ipc::Grpc
 {
@@ -16,13 +14,15 @@ namespace
 {
 
 class ServerImpl
-    : public Util::UnknownBase<std::mutex, IServer>
+    : public Util::DisposableParentBase<Util::DisposableBase<Util::ObjectBase<IServer, IDisposable, IDisposableParent>>>
 {
-    using Base = Util::UnknownBase<std::mutex, IServer>;
+    using Base = Util::DisposableParentBase<Util::DisposableBase<Util::ObjectBase<IServer, IDisposable, IDisposableParent>>>;
 
 public:
     ~ServerImpl()
     {
+        ErLogDebug2(m_log.get(), "{}.ServerImpl::~ServerImpl()", Er::Format::ptr(this));
+
         if (m_server)
         {
             m_server->Shutdown();
@@ -34,11 +34,13 @@ public:
         ::grpc_shutdown();
     }
 
-    ServerImpl(const PropertyMap& parameters, Log::ILogger::Ptr log, IUnknown* owner)
+    ServerImpl(const PropertyMap& parameters, Log::ILogger::Ptr log, IDisposableParent* owner)
         : Base(owner)
         , m_log(log)
         , m_endpoints(parseEndpoints(parameters))
     {
+        ErLogDebug2(m_log.get(), "{}.ServerImpl::ServerImpl()", Er::Format::ptr(this));
+
         if (m_endpoints.empty())
             ErThrow("No valid gRPC endpoints specified");
 
@@ -47,17 +49,6 @@ public:
             m_keepalive = *keepalive->getBool();
 
         ::grpc_init();
-    }
-
-    IUnknown* queryInterface(std::string_view iid) noexcept override
-    {
-        if ((iid == IServer::IID) ||
-            (iid == IUnknown::IID))
-        {
-            return this;
-        }
-
-        return nullptr;
     }
 
     ::grpc::Server* grpc() noexcept override
@@ -198,7 +189,7 @@ private:
 } // namespace {}
 
 
-IServer* createServer(const PropertyMap& parameters, Log::ILogger::Ptr log, IUnknown* owner)
+IServer* createServer(const PropertyMap& parameters, Log::ILogger::Ptr log, IDisposableParent* owner)
 {
     return new ServerImpl(parameters, log, owner);
 }

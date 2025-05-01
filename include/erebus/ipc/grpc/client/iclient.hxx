@@ -22,7 +22,7 @@ using ChannelPtr = std::shared_ptr<grpc::Channel>;
 
 
 struct IClient
-    : public IUnknown
+    : public IDisposable
 {
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IClient";
 

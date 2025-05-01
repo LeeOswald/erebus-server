@@ -14,7 +14,7 @@ namespace Er::Ipc::Grpc
 {
 
 struct IServer
-    : public Er::IUnknown
+    : public IDisposable
 {
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IServer";
 

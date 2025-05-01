@@ -8,8 +8,6 @@
 
 #include "trace.hxx"
 
-#include <mutex>
-
 
 namespace Er::Ipc::Grpc
 {
@@ -18,10 +16,10 @@ namespace
 {
 
 class SystemInfoImpl
-    : public Util::UnknownBase<std::mutex, IService>
+    : public Util::DisposableBase<Util::ObjectBase<IService, IDisposable>>
     , public erebus::SystemInfo::CallbackService
 {
-    using Base = Util::UnknownBase<std::mutex, IService>;
+    using Base = Util::DisposableBase<Util::ObjectBase<IService, IDisposable>>;
 
 public:
     ~SystemInfoImpl()
@@ -29,22 +27,11 @@ public:
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::~SystemInfoImpl", Er::Format::ptr(this));
     }
 
-    SystemInfoImpl(Log::ILogger::Ptr log, IUnknown* owner)
+    SystemInfoImpl(Log::ILogger::Ptr log, IDisposableParent* owner)
         : Base(owner)
         , m_log(log)
     {
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::SystemInfoImpl", Er::Format::ptr(this));
-    }
-
-    IUnknown* queryInterface(std::string_view iid) noexcept override
-    {
-        if ((iid == IService::IID) ||
-            (iid == IUnknown::IID))
-        {
-            return this;
-        }
-
-        return nullptr;
     }
 
     ::grpc::Service* grpc() noexcept override
@@ -227,7 +214,7 @@ private:
 } // namespace {}
 
 
-IService* createSystemInfoService(Log::ILogger::Ptr log, IUnknown* owner)
+IService* createSystemInfoService(Log::ILogger::Ptr log, IDisposableParent* owner)
 {
     return new SystemInfoImpl(log, owner);
 }

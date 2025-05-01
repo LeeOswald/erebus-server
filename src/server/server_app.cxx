@@ -157,7 +157,7 @@ bool ServerApplication::createServer()
 
         auto sysInfoLogger = Er::Log::makeSyncLogger("system_info");
         sysInfoLogger->addSink("main", Er::Log::global());
-        auto sysInfoService = Er::Ipc::Grpc::createSystemInfoService(sysInfoLogger, m_grpcServer.get());
+        auto sysInfoService = Er::Ipc::Grpc::createSystemInfoService(sysInfoLogger, m_grpcServer->queryInterface<Er::IDisposableParent>());
         
         m_grpcServer->addService(sysInfoService);
     }

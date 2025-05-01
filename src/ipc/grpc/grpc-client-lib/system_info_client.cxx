@@ -21,9 +21,9 @@ namespace
 {
 
 class SystemInfoClientImpl
-    : public Util::UnknownBase<std::mutex, ISystemInfoClient>
+    : public Util::DisposableBase<Util::ObjectBase<ISystemInfoClient, IDisposable>>
 {
-    using Base = Util::UnknownBase<std::mutex, ISystemInfoClient>;
+    using Base = Util::DisposableBase<Util::ObjectBase<ISystemInfoClient, IDisposable>>;
 
 public:
     ~SystemInfoClientImpl()
@@ -35,24 +35,13 @@ public:
         ::grpc_shutdown();
     }
 
-    SystemInfoClientImpl(ChannelPtr channel, Log::ILogger::Ptr log, IUnknown* owner)
+    SystemInfoClientImpl(ChannelPtr channel, Log::ILogger::Ptr log, IDisposableParent* owner)
         : Base(owner)
         , m_grpcReady(grpcInit())
         , m_stub(erebus::SystemInfo::NewStub(channel))
         , m_log(log)
     {
         ClientTrace2(m_log.get(), "{}.SystemInfoClientImpl::SystemInfoClientImpl", Er::Format::ptr(this));
-    }
-
-    IUnknown* queryInterface(std::string_view iid) noexcept override
-    {
-        if ((iid == IClient::IID) ||
-            (iid == IUnknown::IID))
-        {
-            return this;
-        }
-
-        return nullptr;
     }
 
     void ping(PingMessage&& ping, IPingCompletion::Ptr handler) override
@@ -310,7 +299,7 @@ private:
 } // namespace {}
 
 
-ISystemInfoClient* createSystemInfoClient(ChannelPtr channel, Log::ILogger::Ptr log, IUnknown* owner)
+ISystemInfoClient* createSystemInfoClient(ChannelPtr channel, Log::ILogger::Ptr log, IDisposableParent* owner)
 {
     return new SystemInfoClientImpl(channel, log, owner);
 }

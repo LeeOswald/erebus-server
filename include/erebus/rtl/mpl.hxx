@@ -40,7 +40,7 @@ struct Identity
 
 
 template <typename... _Base>
-struct Inherit 
+struct Inherit
     : _Base...
 {
 };
@@ -238,6 +238,18 @@ struct IfC_impl<true>
     };
 };
 
+} // namespace __{}
+
+
+template <bool Condition, typename True, typename... Else>
+using IfC = typename __::IfC_impl<Condition>::template apply<True, Else...>::type;
+
+template <typename Condition, typename True, typename... Else>
+using If = typename __::IfC_impl<static_cast<bool>(Condition::value)>::template apply<True, Else...>::type;
+
+
+namespace __
+{
 
 template <typename L, template <typename...> class P>
 struct RemoveIf_impl
@@ -483,14 +495,67 @@ struct Get_impl
 };
 
 
+template <typename L, typename U, template <typename...> class F>
+struct LeftFold_impl
+{
+};
+
+template <template <typename...> class L, typename U, template <typename...> class F>
+struct LeftFold_impl<L<>, U, F>
+{
+    using type = U;
+};
+
+template <template <typename...> class L, typename T1, typename... T, typename U, template <typename...> class F>
+struct LeftFold_impl<L<T1, T...>, U, F>
+{
+    using type = typename LeftFold_impl<L<T...>, F<U, T1>, F>::type;
+};
+
+template <template <typename...> class L, typename T1, typename T2, typename... T, typename U, template <typename...> class F>
+struct LeftFold_impl<L<T1, T2, T...>, U, F>
+{
+    using type = typename LeftFold_impl<L<T...>, F<F<U, T1>, T2>, F>::type;
+};
+
+template <template <typename...> class L, typename T1, typename T2, typename T3, typename T4, typename T5, typename... T, typename U, template <typename...> class F>
+struct LeftFold_impl<L<T1, T2, T3, T4, T5, T...>, U, F>
+{
+    using type = typename LeftFold_impl<L<T...>, F<F<F<F<F<U, T1>, T2>, T3>, T4>, T5>, F>::type;
+};
+
+
+template <typename L, typename U, template <typename...> class F>
+struct RightFold_impl
+{
+};
+
+template <template <typename...> class L, typename U, template <typename...> class F>
+struct RightFold_impl<L<>, U, F>
+{
+    using type = U;
+};
+
+template <template <typename...> class L, typename T1, typename... T, typename U, template <typename...> class F>
+struct RightFold_impl<L<T1, T...>, U, F>
+{
+    using type = F<T1, typename RightFold_impl<L<T...>, U, F>::type>;
+};
+
+template <template <typename...> class L, typename T1, typename T2, typename... T, typename U, template <typename...> class F>
+struct RightFold_impl<L<T1, T2, T...>, U, F>
+{
+    using type = F<T1, F<T2, typename RightFold_impl<L<T...>, U, F>::type>>;
+};
+
+template <template <typename...> class L, typename T1, typename T2, typename T3, typename T4, typename T5, typename... T, typename U, template <typename...> class F>
+struct RightFold_impl<L<T1, T2, T3, T4, T5, T...>, U, F>
+{
+    using type = F<T1, F<T2, F<T3, F<T4, F<T5, typename RightFold_impl<L<T...>, U, F>::type>>>>>;
+};
+
+
 } // namespace __{}
-
-
-template <bool Condition, typename True, typename... Else>
-using IfC = typename __::IfC_impl<Condition>::template apply<True, Else...>::type;
-
-template <typename Condition, typename True, typename... Else>
-using If = typename __::IfC_impl<static_cast<bool>(Condition::value)>::template apply<True, Else...>::type;
 
 
 template <typename... L>
@@ -534,6 +599,18 @@ using Transform = typename __::Transform_impl<F, L...>::type;
 
 template <typename Q, typename... L>
 using TransformQ = typename __::Transform_impl<Q::template apply, L...>::type;
+
+
+// LeftFold<List<>, U, F>           => U
+// LeftFold<List<T1, T2, T3>, U, F> => F<F<F<U, T1>, T2>, T3>
+template <typename L, typename U, template <typename...> class F>
+using LeftFold = typename __::LeftFold_impl<L, U, F>::type;
+
+// RightFold<List<>, U, F>           => U
+// RightFold<List<T1, T2, T3>, U, F> => F<T1, F<T2, F<T3, U>>>
+template <typename L, typename U, template <typename...> class F>
+using RightFold = typename __::RightFold_impl<L, U, F>::type;
+
 
 
 } // namespace Er::Mpl {}
