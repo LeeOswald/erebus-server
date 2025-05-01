@@ -21,16 +21,31 @@ public:
     }
 
 private:
-    struct PingCompletion
+    class PingCompletion
         : public Completion<Er::Ipc::Grpc::ISystemInfoClient::IPingCompletion>
     {
         using Base = Completion<Er::Ipc::Grpc::ISystemInfoClient::IPingCompletion>;
 
-        PingCompletion(RunnerBase* owner)
-            : Base(owner)
+        struct PrivateTag {};
+
+    public:
+        ~PingCompletion()
         {
+            ErLogDebug("{}.PingCompletion::~PingCompletion()", Er::Format::ptr(this));
         }
 
+        PingCompletion(PrivateTag, RunnerBase* owner)
+            : Base(owner)
+        {
+            ErLogDebug("{}.PingCompletion::PingCompletion()", Er::Format::ptr(this));
+        }
+
+        static auto make(RunnerBase* owner)
+        {
+            return Er::SharedPtr<IPingCompletion>{ new PingCompletion(PrivateTag{}, owner) };
+        }
+
+    private:
         void onReply(Er::Ipc::Grpc::ISystemInfoClient::PingMessage&& ping, Er::Ipc::Grpc::ISystemInfoClient::PingMessage&& reply) override
         {
             auto now = Er::Time::now();
@@ -81,12 +96,13 @@ private:
             pm.timestamp = Er::Time::now();
             pm.sequence = m_sequence.fetch_add(1, std::memory_order_relaxed);
 
-            auto completion = std::make_shared<PingCompletion>(this);
+            auto completion = PingCompletion::make(this);
 
             client->ping(std::move(pm), completion);
             if (m_wait)
             {
-                if (!completion->wait())
+                auto w = completion->queryInterface<Er::IWaitable>();
+                if (!w->wait(std::uint32_t(5000)))
                 {
                     ErLogError("Completion timed out");
                 }

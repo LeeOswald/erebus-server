@@ -18,16 +18,25 @@ public:
     }
 
 private:
-    struct SystemInfoCompletion
+    class SystemInfoCompletion
         : public Completion<Er::Ipc::Grpc::ISystemInfoClient::ISystemInfoCompletion>
     {
         using Base = Completion<Er::Ipc::Grpc::ISystemInfoClient::ISystemInfoCompletion>;
+        
+        struct PrivateTag {};
 
-        SystemInfoCompletion(RunnerBase* owner)
+    public:
+        SystemInfoCompletion(PrivateTag, RunnerBase* owner)
             : Base(owner)
         {
         }
 
+        static auto make(RunnerBase* owner)
+        {
+            return Er::SharedPtr<ISystemInfoCompletion>{ new SystemInfoCompletion(PrivateTag{}, owner) };
+        }
+
+    private:
         Er::CallbackResult onProperty(Er::Property&& prop) override
         {
             ErLogInfo("{} = {}", prop.name(), prop.str());
@@ -52,12 +61,13 @@ private:
                 --n;
             }
 
-            auto completion = std::make_shared<SystemInfoCompletion>(this);
+            auto completion = SystemInfoCompletion::make(this);
             client->getSystemInfo(m_pattern, completion);
 
             if (m_wait)
             {
-                if (!completion->wait())
+                auto w = completion->queryInterface<Er::IWaitable>();
+                if (!w->wait(std::uint32_t(5000)))
                 {
                     ErLogError("Completion timed out");
                 }

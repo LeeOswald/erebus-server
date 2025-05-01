@@ -27,12 +27,12 @@ struct IClient
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IClient";
 
     struct ICompletion
+        : public IShared
     {
-        using Ptr = std::shared_ptr<ICompletion>;
-
-        virtual ~ICompletion() = default;
-
         virtual void onError(Er::ResultCode result, std::string&& message) noexcept = 0;
+
+    protected:
+        virtual ~ICompletion() = default;
     };
 
 protected:

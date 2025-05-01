@@ -4,6 +4,7 @@
 #include <erebus/ipc/grpc/client/grpc_client.hxx>
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
 
 #include <atomic>
 #include <chrono>
@@ -37,8 +38,10 @@ public:
 protected:
     template <class Interface>
     struct Completion
-        : public Interface
+        : public Er::Util::SharedBase<Er::Util::ObjectBase<Interface, Er::IWaitable>>
     {
+        using Base = Er::Util::SharedBase<Er::Util::ObjectBase<Interface, Er::IWaitable>>;
+
         ~Completion()
         {
             m_owner->idle();
@@ -57,10 +60,17 @@ protected:
             done();
         }
 
-        bool wait(std::chrono::seconds timeout = std::chrono::seconds(5))
+        bool wait(std::uint32_t milliseconds) noexcept override
         {
             std::unique_lock l(m_mutex);
-            return m_cv.wait_for(l, timeout, [this]() { return m_done; });
+
+            if (milliseconds == Er::IWaitable::Infinite)
+            {
+                m_cv.wait(l, [this]() { return m_done; });
+                return m_done;
+            }
+
+            return m_cv.wait_for(l, std::chrono::milliseconds(milliseconds), [this]() { return m_done; });
         }
 
     protected:
@@ -75,7 +85,7 @@ protected:
         }
 
         RunnerBase* m_owner;
-        std::mutex m_mutex;
+        mutable std::mutex m_mutex;
         std::condition_variable m_cv;
         bool m_done = false;
     };

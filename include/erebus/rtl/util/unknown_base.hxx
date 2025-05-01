@@ -3,10 +3,11 @@
 #include <erebus/iunknown.hxx>
 #include <erebus/rtl/mpl.hxx>
 
-#include <array>
+#include <atomic>
 #include <mutex>
 #include <unordered_map>
-#include <vector>
+
+#include <erebus/rtl/log.hxx>
 
 
 namespace Er::Util
@@ -304,5 +305,35 @@ private:
     bool m_destructing = false;
 };
 
+
+template <class _Base>
+struct SharedBase
+    : public _Base
+{
+    ~SharedBase() = default;
+
+    template <typename... _Args>
+    explicit SharedBase(_Args... args)
+        : _Base(std::forward<_Args>(args)...)
+        , m_refs(1)
+    {
+    }
+
+    void addRef() noexcept override
+    {
+        ++m_refs;
+    }
+
+    void release() noexcept override
+    {
+        if (m_refs.fetch_sub(1, std::memory_order_acq_rel) == 1)
+        {
+            delete this;
+        }
+    }
+
+private:
+    std::atomic<std::size_t> m_refs;
+};
 
 } // namespace Er::Util {}

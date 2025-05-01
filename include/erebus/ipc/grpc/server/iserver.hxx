@@ -19,7 +19,7 @@ struct IServer
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IServer";
 
     virtual ::grpc::Server* grpc() noexcept = 0;
-    virtual void addService(IService* service) = 0;
+    virtual void addService(IService* service) = 0; // non-owning reference
     virtual void start() = 0;
 
 protected:
