@@ -84,6 +84,7 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_traits.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_tuple.hxx
                 ${ER_INCLUDE_DIR}/rtl/luaxx/luaxx_util.hxx
+                ${ER_INCLUDE_DIR}/rtl/mpl.hxx
                 ${ER_INCLUDE_DIR}/rtl/multi_string.hxx
                 ${ER_INCLUDE_DIR}/rtl/rtl.hxx
                 ${ER_INCLUDE_DIR}/rtl/program.hxx
