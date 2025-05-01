@@ -21,9 +21,9 @@ namespace
 {
 
 class SystemInfoClientImpl
-    : public Util::DisposableBase<Util::ObjectBase<ISystemInfoClient, IDisposable>>
+    : public Util::DisposableBase<Util::ObjectBase<ISystemInfoClient>>
 {
-    using Base = Util::DisposableBase<Util::ObjectBase<ISystemInfoClient, IDisposable>>;
+    using Base = Util::DisposableBase<Util::ObjectBase<ISystemInfoClient>>;
 
 public:
     ~SystemInfoClientImpl()

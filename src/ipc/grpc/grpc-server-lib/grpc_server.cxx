@@ -14,9 +14,9 @@ namespace
 {
 
 class ServerImpl
-    : public Util::DisposableParentBase<Util::DisposableBase<Util::ObjectBase<IServer, IDisposable, IDisposableParent>>>
+    : public Util::DisposableParentBase<Util::DisposableBase<Util::ObjectBase<IServer, IDisposableParent>>>
 {
-    using Base = Util::DisposableParentBase<Util::DisposableBase<Util::ObjectBase<IServer, IDisposable, IDisposableParent>>>;
+    using Base = Util::DisposableParentBase<Util::DisposableBase<Util::ObjectBase<IServer, IDisposableParent>>>;
 
 public:
     ~ServerImpl()

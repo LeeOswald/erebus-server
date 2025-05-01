@@ -16,10 +16,10 @@ namespace
 {
 
 class SystemInfoImpl
-    : public Util::DisposableBase<Util::ObjectBase<IService, IDisposable>>
+    : public Util::DisposableBase<Util::ObjectBase<IService>>
     , public erebus::SystemInfo::CallbackService
 {
-    using Base = Util::DisposableBase<Util::ObjectBase<IService, IDisposable>>;
+    using Base = Util::DisposableBase<Util::ObjectBase<IService>>;
 
 public:
     ~SystemInfoImpl()

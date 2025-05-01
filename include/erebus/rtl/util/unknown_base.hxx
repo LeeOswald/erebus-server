@@ -226,8 +226,7 @@ struct DisposableBase
     {
         if (m_owner)
         {
-            auto u = _Base::getControllingIUnknown();
-            m_owner->orphan(u->queryInterface<IDisposable>());
+            m_owner->orphan(this);
         }
     }
 
@@ -238,8 +237,7 @@ struct DisposableBase
     {
         if (m_owner)
         {
-            auto u = _Base::getControllingIUnknown();
-            m_owner->adopt(u->queryInterface<IDisposable>());
+            m_owner->adopt(this);
         }
     }
 
