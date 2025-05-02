@@ -12,7 +12,7 @@ class DebuggerSink
     : public SinkBase
 {
 public:
-    DebuggerSink(FormatterPtr&& formatter, Filter&& filter)
+    DebuggerSink(FormatterPtr&& formatter, FilterPtr&& filter)
         : SinkBase(std::move(formatter), std::move(filter))
     {
     }
@@ -47,7 +47,7 @@ public:
 } // namespace {}
 
 
-ER_RTL_EXPORT ISink::Ptr makeDebuggerSink(FormatterPtr&& formatter, Filter&& filter)
+ER_RTL_EXPORT ISink::Ptr makeDebuggerSink(FormatterPtr&& formatter, FilterPtr&& filter)
 {
     return std::make_shared<DebuggerSink>(std::move(formatter), std::move(filter));
 }

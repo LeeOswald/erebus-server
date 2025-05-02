@@ -4,6 +4,7 @@
 #if ER_WINDOWS
     #include <erebus/rtl/logger/win32_debugger_sink.hxx>
 #endif
+#include <erebus/rtl/logger/simple_filter.hxx>
 #include <erebus/rtl/logger/simple_formatter.hxx>
 #include <erebus/rtl/logger/ostream_sink.hxx>
 
@@ -53,7 +54,7 @@ void TestApplication::addLoggers(Er::Log::ITee* main)
     {
         auto sink = Er::Log::makeDebuggerSink(
             Er::Log::SimpleFormatter::make(formatOptions),
-            Er::Log::Filter{}
+            Er::Log::FilterPtr{}
         );
 
         main->addSink("debugger", sink);
@@ -64,10 +65,7 @@ void TestApplication::addLoggers(Er::Log::ITee* main)
         auto sink = Er::Log::makeOStreamSink(
             std::cout,
             Er::Log::SimpleFormatter::make(formatOptions),
-            [](const Er::Log::IRecord* r)
-            {
-                return r->level() < Er::Log::Level::Error;
-            }
+            Er::Log::makeLevelFilter(Er::Log::Level::Debug, Er::Log::Level::Info)
         );
 
         main->addSink("std::cout", sink);
@@ -77,10 +75,7 @@ void TestApplication::addLoggers(Er::Log::ITee* main)
         auto sink = Er::Log::makeOStreamSink(
             std::cerr,
             Er::Log::SimpleFormatter::make(formatOptions),
-            [](const Er::Log::IRecord* r)
-            {
-                return r->level() >= Er::Log::Level::Error;
-            }
+            Er::Log::makeLevelFilter(Er::Log::Level::Warning)
         );
 
         main->addSink("std::cerr", sink);

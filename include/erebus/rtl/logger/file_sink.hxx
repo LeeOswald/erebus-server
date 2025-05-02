@@ -11,7 +11,7 @@ ER_RTL_EXPORT ISink::Ptr makeFileSink(
     FormatterPtr&& formatter,
     unsigned logsToKeep, 
     std::uint64_t maxFileSize,
-    Filter&& filter = Filter{}
+    FilterPtr&& filter = FilterPtr{}
 );
 
 } // namespace Er::Log {}

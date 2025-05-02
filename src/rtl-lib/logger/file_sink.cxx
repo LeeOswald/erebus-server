@@ -59,7 +59,7 @@ public:
     {
     }
 
-    FileSink(std::string_view fileName, FormatterPtr&& formatter, unsigned logsToKeep, std::uint64_t maxFileSize, Filter&& filter)
+    FileSink(std::string_view fileName, FormatterPtr&& formatter, unsigned logsToKeep, std::uint64_t maxFileSize, FilterPtr&& filter)
         : SinkBase(std::move(formatter), std::move(filter))
         , m_fileName(fileName)
         , m_logsToKeep(logsToKeep)
@@ -176,7 +176,7 @@ ER_RTL_EXPORT ISink::Ptr makeFileSink(
     FormatterPtr&& formatter,
     unsigned logsToKeep, 
     std::uint64_t maxFileSize, 
-    Filter&& filter
+    FilterPtr&& filter
 )
 {
     if (mode == ThreadSafe::No)

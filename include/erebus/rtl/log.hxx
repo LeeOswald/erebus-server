@@ -73,7 +73,7 @@ ER_RTL_EXPORT [[nodiscard]] AtomicRecordPtr makeAtomicRecord();
 
 
 struct IFormatter
-    : IDisposable
+    : public IDisposable
 {
     static constexpr std::string_view IID = "Er.Log.IFormatter";
 
@@ -86,7 +86,18 @@ protected:
 using FormatterPtr = DisposablePtr<IFormatter>;
 
 
-using Filter = std::function<bool(const IRecord*)>;
+struct IFilter
+    : public IDisposable
+{
+    static constexpr std::string_view IID = "Er.Log.IFilter";
+
+    [[nodiscard]] virtual bool filter(const IRecord* r) const noexcept = 0;
+
+protected:
+    virtual ~IFilter() = default;
+};
+
+using FilterPtr = DisposablePtr<IFilter>;
 
 
 struct ISink
@@ -105,14 +116,14 @@ struct SinkBase
     : public ISink
     , public boost::noncopyable
 {
-    SinkBase(FormatterPtr&& formatter, auto&& filter) noexcept
+    SinkBase(FormatterPtr&& formatter, FilterPtr&& filter) noexcept
         : m_formatter(std::move(formatter))
-        , m_filter(std::forward<decltype(filter)>(filter))
+        , m_filter(std::move(filter))
     {}
 
     bool filter(const IRecord* r) const 
     {
-        if (m_filter && !m_filter(r))
+        if (m_filter && !m_filter->filter(r))
             return false;
 
         return true;
@@ -125,7 +136,7 @@ struct SinkBase
 
 private:
     FormatterPtr m_formatter;
-    Filter m_filter;
+    FilterPtr m_filter;
 };
 
 

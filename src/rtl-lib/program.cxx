@@ -11,6 +11,7 @@
 #endif
 
 #include <erebus/rtl/logger/ostream_sink.hxx>
+#include <erebus/rtl/logger/simple_filter.hxx>
 #include <erebus/rtl/logger/simple_formatter.hxx>
 
 #include <boost/stacktrace.hpp>
@@ -235,7 +236,7 @@ void Program::addLoggers(Log::ITee* main)
     {
         auto sink = Log::makeDebuggerSink(
             Log::SimpleFormatter::make(formatOptions),
-            Log::Filter{}
+            Log::FilterPtr{}
         );
 
         main->addSink("debugger", sink);
@@ -248,7 +249,7 @@ void Program::addLoggers(Log::ITee* main)
         auto sink = Log::makeSyslogSink(
             "erebus", 
             Log::SimpleFormatter::make(formatOptions),
-            [](const Log::IRecord* r) { return r->level() >= Log::Level::Error; }
+            Log::makeLevelFilter(Log::Level::Error)
         );
 
         main->addSink("syslog", sink);
@@ -260,10 +261,7 @@ void Program::addLoggers(Log::ITee* main)
         auto sink = makeOStreamSink(
             std::cout,
             Log::SimpleFormatter::make(formatOptions),
-            [](const Log::IRecord* r)
-            {
-                return r->level() < Er::Log::Level::Error;
-            }
+            Log::makeLevelFilter(Log::Level::Debug, Log::Level::Info)
         );
 
         main->addSink("std::cout", sink);
@@ -274,10 +272,7 @@ void Program::addLoggers(Log::ITee* main)
         auto sink = makeOStreamSink(
             std::cerr,
             Log::SimpleFormatter::make(formatOptions),
-            [](const Log::IRecord* r)
-            {
-                return r->level() >= Er::Log::Level::Error;
-            }
+            Log::makeLevelFilter(Log::Level::Warning)
         );
 
         main->addSink("std::cerr", sink);
