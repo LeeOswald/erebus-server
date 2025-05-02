@@ -15,6 +15,7 @@ target_sources(${TARGET_NAME}
         logger/record.cxx
         logger/simple_filter.cxx
         logger/simple_formatter.cxx
+        logger/sink_base.hxx
         logger/sync_logger.cxx
         logger/tee.cxx
         luaxx.cxx

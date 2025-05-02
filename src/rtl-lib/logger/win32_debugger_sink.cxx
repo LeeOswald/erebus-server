@@ -1,6 +1,8 @@
 #include <erebus/rtl/logger/win32_debugger_sink.hxx>
 #include <erebus/rtl/util/utf16.hxx>
 
+#include "sink_base.hxx"
+
 
 namespace Er::Log
 {
@@ -9,11 +11,12 @@ namespace
 {
 
 class DebuggerSink
-    : public SinkBase
+    : public ISink
+    , public Private::SinkBase
 {
 public:
     DebuggerSink(FormatterPtr&& formatter, FilterPtr&& filter)
-        : SinkBase(std::move(formatter), std::move(filter))
+        : Private::SinkBase(std::move(formatter), std::move(filter))
     {
     }
 

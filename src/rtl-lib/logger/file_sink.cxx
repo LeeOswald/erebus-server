@@ -19,6 +19,9 @@
 #endif
 
 
+#include "sink_base.hxx"
+
+
 namespace Er::Log
 {
 
@@ -52,7 +55,8 @@ void rotateLogs(std::string_view logFileName, int keepCount)
 
 template <class MutexT>
 class FileSink
-    : public SinkBase
+    : public ISink
+    , public Private::SinkBase
 {
 public:
     ~FileSink()
@@ -60,7 +64,7 @@ public:
     }
 
     FileSink(std::string_view fileName, FormatterPtr&& formatter, unsigned logsToKeep, std::uint64_t maxFileSize, FilterPtr&& filter)
-        : SinkBase(std::move(formatter), std::move(filter))
+        : Private::SinkBase(std::move(formatter), std::move(filter))
         , m_fileName(fileName)
         , m_logsToKeep(logsToKeep)
         , m_maxFileSize(maxFileSize)

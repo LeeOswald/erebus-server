@@ -1,5 +1,7 @@
 #include <erebus/rtl/logger/ostream_sink.hxx>
 
+#include "sink_base.hxx"
+
 
 namespace Er::Log
 {
@@ -8,11 +10,12 @@ namespace
 {
 
 class OStreamSink
-    : public SinkBase
+    : public ISink
+    , public Private::SinkBase
 {
 public:
     OStreamSink(std::ostream& stream, FormatterPtr&& formatter, FilterPtr&& filter)
-        : SinkBase(std::move(formatter), std::move(filter))
+        : Private::SinkBase(std::move(formatter), std::move(filter))
         , m_stream(stream)
     {
     }
