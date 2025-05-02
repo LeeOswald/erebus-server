@@ -2,6 +2,7 @@
 
 #include <syslog.h>
 
+#include "sink_base.hxx"
 
 
 namespace Er::Log
@@ -11,7 +12,7 @@ namespace
 {
 
 class SyslogSink
-    : public SinkBase
+    : public Private::SinkBase
 {
 public:
     ~SyslogSink()
@@ -19,13 +20,13 @@ public:
         ::closelog();
     }
 
-    SyslogSink(const char* tag, IFormatter::Ptr formatter, Filter&& filter)
-        : SinkBase(std::move(formatter), std::move(filter))
+    SyslogSink(const char* tag, FormatterPtr&& formatter, FilterPtr&& filter)
+        : Private::SinkBase(std::move(formatter), std::move(filter))
     {
         ::openlog(tag, LOG_CONS, LOG_DAEMON);
     }
 
-    void write(Record::Ptr r) override
+    void write(RecordPtr r) override
     {
         if (!filter(r.get()))
             return;
@@ -48,9 +49,9 @@ public:
         ::syslog(priority, "%s", formatted.c_str());
     }
 
-    void write(AtomicRecord a) override
+    void write(AtomicRecordPtr&& a) override
     {
-        for (auto r: a)
+        while (auto r = a->pop())
             write(r);
     }
 
@@ -63,9 +64,9 @@ public:
 } // namespace {}
 
 
-ER_RTL_EXPORT ISink::Ptr makeSyslogSink(const char* tag, IFormatter::Ptr formatter, Filter&& filter)
+ER_RTL_EXPORT SinkPtr makeSyslogSink(const char* tag, FormatterPtr&& formatter, FilterPtr&& filter)
 {
-    return std::make_shared<SyslogSink>(tag, std::move(formatter), std::move(filter));
+    return SinkPtr(new SyslogSink(tag, std::move(formatter), std::move(filter)));
 }
 
 

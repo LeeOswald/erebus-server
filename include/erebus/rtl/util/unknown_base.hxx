@@ -147,7 +147,7 @@ class SimpleObjectBaseInterfaceImpl
 public:
     IUnknown* internalQueryInterfaceImpl(std::string_view iid) noexcept
     {
-        if (iid == IIDOf<_IfaceWrapper::IFace>::value)
+        if (iid == IIDOf<typename _IfaceWrapper::IFace>::value)
         {
             return static_cast<_IfaceWrapper*>(this);
         }

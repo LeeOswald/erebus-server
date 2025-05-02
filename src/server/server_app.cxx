@@ -95,7 +95,7 @@ void ServerApplication::addLoggers(Er::Log::ITee* main)
         Er::Log::SimpleFormatter::Option::Option::Component
     };
 
-    auto fileSink = Er::Log::makeFileSink(Er::ThreadSafe::No, logFileName, Er::Log::SimpleFormatter::make(formatOptions), logsToKeep, maxLogSize);
+    auto fileSink = Er::Log::makeFileSink(Er::ThreadSafe::No, logFileName, Er::Log::makeSimpleFormatter(formatOptions), logsToKeep, maxLogSize);
     main->addSink("file", fileSink);
 }
 

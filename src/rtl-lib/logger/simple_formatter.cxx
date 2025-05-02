@@ -135,7 +135,8 @@ private:
 
 } // namespace {}
 
-FormatterPtr SimpleFormatter::make(SimpleFormatter::Options options, unsigned indentSize)
+
+ER_RTL_EXPORT FormatterPtr makeSimpleFormatter(SimpleFormatter::Options options, unsigned indentSize)
 {
     return FormatterPtr(new SimpleFormatterImpl(options, indentSize));
 }

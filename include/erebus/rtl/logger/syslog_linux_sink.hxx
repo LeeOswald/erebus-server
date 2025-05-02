@@ -5,7 +5,7 @@
 namespace Er::Log
 {
 
-ER_RTL_EXPORT ISink::Ptr makeSyslogSink(const char* tag, FormatterPtr&& formatter, Filter&& filter = Filter{});
+ER_RTL_EXPORT SinkPtr makeSyslogSink(const char* tag, FormatterPtr&& formatter, FilterPtr&& filter = FilterPtr{});
 
 
 } // namespace Er::Log {}

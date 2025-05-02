@@ -12,7 +12,6 @@ namespace Er::Log
 
 struct ER_RTL_EXPORT SimpleFormatter
 {
-public:
     struct Option
     {
         static constexpr Flag DateTime = 0;   
@@ -28,12 +27,20 @@ public:
     };
 
     using Options = FlagsPack<32, Option>;
-
-    static FormatterPtr make(
-        Options options = Options{ Option::Time, Option::Level, Option::Tid, Option::TzLocal, Option::Lf, Option::Component }, 
-        unsigned indentSize = 4
-        );
 };
 
+
+ER_RTL_EXPORT [[nodiscard]] FormatterPtr makeSimpleFormatter(
+    SimpleFormatter::Options options = SimpleFormatter::Options
+    { 
+        SimpleFormatter::Option::Time, 
+        SimpleFormatter::Option::Level, 
+        SimpleFormatter::Option::Tid, 
+        SimpleFormatter::Option::TzLocal, 
+        SimpleFormatter::Option::Lf, 
+        SimpleFormatter::Option::Component 
+    }, 
+    unsigned indentSize = 4
+);
 
 } // namespace Er::Log {}

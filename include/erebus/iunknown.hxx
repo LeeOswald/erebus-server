@@ -60,12 +60,18 @@ protected:
 };
 
 
+struct DisposableDeleter final
+{
+    void operator()(IDisposable* p) noexcept
+    {
+        ErAssert(p);
+        p->dispose();
+    }
+};
+
 template <typename _Iface>
     requires std::derived_from<_Iface, IDisposable>
-using DisposablePtr = std::unique_ptr<_Iface, decltype([](_Iface* p)
-{
-    p->dispose();
-})>;
+using DisposablePtr = std::unique_ptr<_Iface, DisposableDeleter>;
 
 
 struct IShared

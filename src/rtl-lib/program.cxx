@@ -248,7 +248,7 @@ void Program::addLoggers(Log::ITee* main)
     {
         auto sink = Log::makeSyslogSink(
             "erebus", 
-            Log::SimpleFormatter::make(formatOptions),
+            Log::makeSimpleFormatter(formatOptions),
             Log::makeLevelFilter(Log::Level::Error)
         );
 
@@ -260,7 +260,7 @@ void Program::addLoggers(Log::ITee* main)
     {
         auto sink = makeOStreamSink(
             std::cout,
-            Log::SimpleFormatter::make(formatOptions),
+            Log::makeSimpleFormatter(formatOptions),
             Log::makeLevelFilter(Log::Level::Debug, Log::Level::Info)
         );
 
@@ -271,7 +271,7 @@ void Program::addLoggers(Log::ITee* main)
     {
         auto sink = makeOStreamSink(
             std::cerr,
-            Log::SimpleFormatter::make(formatOptions),
+            Log::makeSimpleFormatter(formatOptions),
             Log::makeLevelFilter(Log::Level::Warning)
         );
 

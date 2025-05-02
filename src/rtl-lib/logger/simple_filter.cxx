@@ -38,7 +38,7 @@ private:
 } // namespace {}
 
 
-ER_RTL_EXPORT [[nodiscard]] FilterPtr makeLevelFilter(Level min, Level max)
+ER_RTL_EXPORT FilterPtr makeLevelFilter(Level min, Level max)
 {
     return FilterPtr{ new LevelFilter(min, max) };
 }
