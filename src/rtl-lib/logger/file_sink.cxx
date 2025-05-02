@@ -69,7 +69,7 @@ public:
         makeLog();
     }
 
-    void write(Record::Ptr r) override
+    void write(RecordPtr r) override
     {
         if (!filter(r.get()))
             return;

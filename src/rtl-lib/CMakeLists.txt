@@ -12,6 +12,7 @@ target_sources(${TARGET_NAME}
         logger/async_logger.cxx
         logger/file_sink.cxx
         logger/ostream_sink.cxx
+        logger/record.cxx
         logger/simple_formatter.cxx
         logger/sync_logger.cxx
         logger/tee.cxx

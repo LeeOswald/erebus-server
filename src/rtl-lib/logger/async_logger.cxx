@@ -31,7 +31,7 @@ public:
     {
     }
     
-    void doWrite(Record::Ptr r) override
+    void doWrite(RecordPtr r) override
     {
         bool thresholdReached = false;
         {
@@ -78,7 +78,7 @@ public:
             std::unique_lock l(m_mutexQueue);
 
             // issue an empty record to force flushing all sinks
-            m_queue.emplace(Record::Ptr{});
+            m_queue.emplace(RecordPtr{});
         }
 
         m_queueNotEmpty.notify_one();
@@ -93,7 +93,7 @@ public:
     }
     
 private:
-    using AnyRecord = std::variant<Record::Ptr, AtomicRecord>;
+    using AnyRecord = std::variant<RecordPtr, AtomicRecord>;
     using RecordQueue = std::queue<AnyRecord>;
 
     void run(std::stop_token stop)
@@ -143,7 +143,7 @@ private:
             auto any = records.front();
             records.pop();
 
-            auto r = std::get_if<Record::Ptr>(&any);
+            auto r = std::get_if<RecordPtr>(&any);
 
             if (r)
             {

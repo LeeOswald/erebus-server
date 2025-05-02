@@ -42,7 +42,7 @@ public:
     CapturedStderr() = default;
     ~CapturedStderr() = default;
 
-    void write(Er::Log::Record::Ptr r) override
+    void write(Er::Log::RecordPtr r) override
     {
         std::lock_guard l(m_mutex);
         m_out << r->message() << "\n";

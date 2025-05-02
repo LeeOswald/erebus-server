@@ -18,7 +18,7 @@ class Tee
     , public boost::noncopyable
 {
 public:
-    void write(Record::Ptr r) override
+    void write(RecordPtr r) override
     {
         std::shared_lock l(m_mutex);
         for (auto& sink : m_sinks)

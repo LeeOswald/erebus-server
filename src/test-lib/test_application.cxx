@@ -64,7 +64,7 @@ void TestApplication::addLoggers(Er::Log::ITee* main)
         auto sink = Er::Log::makeOStreamSink(
             std::cout,
             Er::Log::SimpleFormatter::make(formatOptions),
-            [](const Er::Log::Record* r)
+            [](const Er::Log::IRecord* r)
             {
                 return r->level() < Er::Log::Level::Error;
             }
@@ -77,7 +77,7 @@ void TestApplication::addLoggers(Er::Log::ITee* main)
         auto sink = Er::Log::makeOStreamSink(
             std::cerr,
             Er::Log::SimpleFormatter::make(formatOptions),
-            [](const Er::Log::Record* r)
+            [](const Er::Log::IRecord* r)
             {
                 return r->level() >= Er::Log::Level::Error;
             }

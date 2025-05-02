@@ -29,7 +29,7 @@ struct NullLogger
     {
     }
 
-    void write(Record::Ptr r) override
+    void write(RecordPtr r) override
     {
         auto& s = state();
 
@@ -47,7 +47,7 @@ struct NullLogger
             s.pending.push(r);
     }
 
-    Record::Ptr pop()
+    RecordPtr pop()
     {
         auto& s = state();
 
@@ -82,7 +82,7 @@ private:
     struct State
     {
         std::mutex mutex;
-        std::queue<Record::Ptr> pending;
+        std::queue<RecordPtr> pending;
     };
 
     static State& state() noexcept

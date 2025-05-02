@@ -27,7 +27,7 @@ public:
     {
     }
 
-    void write(Record::Ptr r) override
+    void write(RecordPtr r) override
     {
         if (!r) [[unlikely]]
             return;
@@ -125,10 +125,10 @@ public:
     }
 
 protected:
-    virtual void doWrite(Record::Ptr r) = 0;
+    virtual void doWrite(RecordPtr r) = 0;
     virtual void doWrite(AtomicRecord a) = 0;
 
-    void writeImpl(Record::Ptr r)
+    void writeImpl(RecordPtr r)
     {
         auto& td = m_threadData.data();
         if (td.block > 0)

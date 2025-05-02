@@ -248,7 +248,7 @@ void Program::addLoggers(Log::ITee* main)
         auto sink = Log::makeSyslogSink(
             "erebus", 
             Log::SimpleFormatter::make(formatOptions),
-            [](const Log::Record* r) { return r->level() >= Log::Level::Error; }
+            [](const Log::IRecord* r) { return r->level() >= Log::Level::Error; }
         );
 
         main->addSink("syslog", sink);
@@ -260,7 +260,7 @@ void Program::addLoggers(Log::ITee* main)
         auto sink = makeOStreamSink(
             std::cout,
             Log::SimpleFormatter::make(formatOptions),
-            [](const Log::Record* r)
+            [](const Log::IRecord* r)
             {
                 return r->level() < Er::Log::Level::Error;
             }
@@ -274,7 +274,7 @@ void Program::addLoggers(Log::ITee* main)
         auto sink = makeOStreamSink(
             std::cerr,
             Log::SimpleFormatter::make(formatOptions),
-            [](const Log::Record* r)
+            [](const Log::IRecord* r)
             {
                 return r->level() >= Er::Log::Level::Error;
             }

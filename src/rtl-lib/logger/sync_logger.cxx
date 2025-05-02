@@ -22,7 +22,7 @@ public:
     {
     }
 
-    void doWrite(Record::Ptr r) override
+    void doWrite(RecordPtr r) override
     {
         m_tee->write(r);
     }

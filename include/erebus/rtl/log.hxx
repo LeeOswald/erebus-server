@@ -1,5 +1,6 @@
 #pragma once
 
+#include <erebus/iunknown.hxx>
 #include <erebus/rtl/format.hxx>
 #include <erebus/rtl/time.hxx>
 #include <erebus/rtl/system/thread.hxx>
@@ -25,97 +26,31 @@ enum class Level
 };
 
 
-struct Record
-    : public boost::noncopyable
+struct IRecord
+    : public IShared
 {
-private:
-    struct PrivateOnly{};
+    [[nodiscard]] virtual Level level() const noexcept = 0;
+    [[nodiscard]] virtual Time::ValueType time() const noexcept = 0;
+    [[nodiscard]] virtual std::uintptr_t tid() const noexcept = 0;
+    [[nodiscard]] virtual std::string_view component() const noexcept = 0;
+    [[nodiscard]] virtual const std::string& message() const noexcept = 0;
+    [[nodiscard]] virtual std::uint32_t indent() const noexcept = 0;
 
-public:
-    using Ptr = std::shared_ptr<Record>;
-
-    Record(PrivateOnly, Level level, Time::ValueType time, uintptr_t tid, auto&& message)
-        : m_level(level)
-        , m_time(time)
-        , m_tid(tid)
-        , m_message(std::forward<decltype(message)>(message))
-    {
-    }
-
-    Record(PrivateOnly, std::string_view component, Level level, Time::ValueType time, uintptr_t tid, auto&& message)
-        : m_component(component)
-        , m_level(level)
-        , m_time(time)
-        , m_tid(tid)
-        , m_message(std::forward<decltype(message)>(message))
-    {
-    }
-
-    [[nodiscard]] constexpr auto level() const noexcept
-    {
-        return m_level;
-    }
-
-    [[nodiscard]] constexpr auto time() const noexcept
-    {
-        return m_time;
-    }
-
-    [[nodiscard]] constexpr auto tid() const noexcept
-    {
-        return m_tid;
-    }
-
-    [[nodiscard]] constexpr const auto& component() const noexcept
-    {
-        return m_component;
-    }
-
-    [[nodiscard]] constexpr const auto& message() const noexcept
-    {
-        return m_message;
-    }
-
-    [[nodiscard]] constexpr auto indent() const noexcept
-    {
-        return m_indent;
-    }
-
-    void setComponent(std::string_view component) noexcept
-    {
-        // use in the top level logger only
-        // since the structure may be shared between many consumers
-        m_component = component;
-    }
-
-    void setIndent(unsigned indent) noexcept
-    {
-        // use in the top level logger only
-        // since the structure may be shared between many consumers
-        m_indent = indent;
-    }
-
-    [[nodiscard]] static auto make(Level level, Time::ValueType time, uintptr_t tid, auto&& message)
-    {
-        return std::make_shared<Record>(PrivateOnly{}, level, time, tid, std::forward<decltype(message)>(message));
-    }
-
-    [[nodiscard]] static auto make(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, auto&& message)
-    {
-        return std::make_shared<Record>(PrivateOnly{}, component, level, time, tid, std::forward<decltype(message)>(message));
-    }
-
-private:
-    std::string_view m_component;
-    const Level m_level = Level::Info;
-    const Time::ValueType m_time;
-    const uintptr_t m_tid = 0;
-    const std::string m_message;
-    unsigned m_indent = 0;
+    // use in the top level logger only
+    // since the structure may be shared between many consumers
+    virtual void setComponent(std::string_view component) noexcept = 0;
+    virtual void setIndent(std::uint32_t indent) noexcept = 0;
 };
 
 
-using AtomicRecord = std::vector<Record::Ptr>;
+using RecordPtr = SharedPtr<IRecord>;
+
+
+ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, const std::string& message);
+ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, std::string&& message);
+
+
+using AtomicRecord = std::vector<RecordPtr>;
 
 
 struct IFormatter
@@ -124,7 +59,7 @@ struct IFormatter
 
     virtual ~IFormatter() = default;
 
-    [[nodiscard]] virtual std::string format(const Record* r) const = 0;
+    [[nodiscard]] virtual std::string format(const IRecord* r) const = 0;
 };
 
 
@@ -139,7 +74,7 @@ public:
     {
     }
 
-    [[nodiscard]] std::string format(const Record* r) const override
+    [[nodiscard]] std::string format(const IRecord* r) const override
     {
         return r->message();
     }
@@ -151,7 +86,7 @@ public:
 };
 
 
-using Filter = std::function<bool(const Record*)>;
+using Filter = std::function<bool(const IRecord*)>;
 
 
 struct ISink
@@ -160,7 +95,7 @@ struct ISink
 
     virtual ~ISink() = default;
 
-    virtual void write(Record::Ptr r) = 0;
+    virtual void write(RecordPtr r) = 0;
     virtual void write(AtomicRecord a) = 0;
     virtual void flush() = 0;
 };
@@ -175,7 +110,7 @@ struct SinkBase
         , m_filter(std::forward<decltype(filter)>(filter))
     {}
 
-    bool filter(const Record* r) const 
+    bool filter(const IRecord* r) const 
     {
         if (m_filter && !m_filter(r))
             return false;
@@ -183,7 +118,7 @@ struct SinkBase
         return true;
     }
 
-    std::string format(const Record* r) const
+    std::string format(const IRecord* r) const
     {
         return m_formatter->format(r);
     }
@@ -290,7 +225,7 @@ struct IndentScope
         
         if (m_enable)
         {
-            log->write(Record::make(
+            log->write(makeRecord(
                 level,
                 Time::now(),
                 System::CurrentThread::id(),
@@ -309,7 +244,7 @@ private:
 
 inline void writeln(ILogger* sink, Level level, const std::string& text)
 {
-    sink->write(Record::make(
+    sink->write(makeRecord(
         level,
         Time::now(),
         System::CurrentThread::id(),
@@ -319,7 +254,7 @@ inline void writeln(ILogger* sink, Level level, const std::string& text)
 
 inline void writeln(ILogger* sink, Level level, std::string&& text)
 {
-    sink->write(Record::make(
+    sink->write(makeRecord(
         level,
         Time::now(),
         System::CurrentThread::id(),
@@ -330,7 +265,7 @@ inline void writeln(ILogger* sink, Level level, std::string&& text)
 template <class... Args>
 void write(ILogger* sink, Level level, std::string_view format, Args&&... args)
 {
-    sink->write(Record::make(
+    sink->write(makeRecord(
         level, 
         Time::now(), 
         System::CurrentThread::id(), 
