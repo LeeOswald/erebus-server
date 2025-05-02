@@ -58,15 +58,15 @@ public:
             m_queueNotEmpty.notify_one();
     }
 
-    void doWrite(AtomicRecord a) override
+    void doWrite(AtomicRecordPtr&& a) override
     {
-        if (a.empty())
+        if (a->empty())
             return;
 
         {
             std::unique_lock l(m_mutexQueue);
 
-            m_queue.emplace(a);
+            m_queue.emplace(std::move(a));
         }
 
         m_queueNotEmpty.notify_one();
@@ -93,7 +93,7 @@ public:
     }
     
 private:
-    using AnyRecord = std::variant<RecordPtr, AtomicRecord>;
+    using AnyRecord = std::variant<RecordPtr, AtomicRecordPtr>;
     using RecordQueue = std::queue<AnyRecord>;
 
     void run(std::stop_token stop)
@@ -140,7 +140,7 @@ private:
     {
         while (!records.empty())
         {
-            auto any = records.front();
+            auto any = std::move(records.front());
             records.pop();
 
             auto r = std::get_if<RecordPtr>(&any);
@@ -155,9 +155,9 @@ private:
             }
             else
             {
-                auto a = std::get_if<AtomicRecord>(&any);
+                auto a = std::get_if<AtomicRecordPtr>(&any);
                 if (a)
-                    m_tee->write(*a);
+                    m_tee->write(std::move(*a));
             }
 
             if (stop.stop_requested())

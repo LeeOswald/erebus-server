@@ -32,9 +32,9 @@ public:
         m_stream.write(data, available);
     }
 
-    void write(AtomicRecord a) override
+    void write(AtomicRecordPtr&& a) override
     {
-        for (auto r : a)
+        while (auto r = a->pop())
             write(r);
     }
 

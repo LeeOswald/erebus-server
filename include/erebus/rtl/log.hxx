@@ -40,17 +40,32 @@ struct IRecord
     // since the structure may be shared between many consumers
     virtual void setComponent(std::string_view component) noexcept = 0;
     virtual void setIndent(std::uint32_t indent) noexcept = 0;
+
+protected:
+    virtual ~IRecord() = default;
 };
 
-
 using RecordPtr = SharedPtr<IRecord>;
-
 
 ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, const std::string& message);
 ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, std::string&& message);
 
 
-using AtomicRecord = std::vector<RecordPtr>;
+struct IAtomicRecord // not thread-safe
+    : public IDisposable
+{
+    virtual bool empty() const noexcept = 0;
+    virtual void push(RecordPtr r) = 0;
+    virtual RecordPtr pop() = 0;
+    virtual IAtomicRecord* clone() const = 0;
+
+protected:
+    virtual ~IAtomicRecord() = default;
+};
+
+using AtomicRecordPtr = DisposablePtr<IAtomicRecord>;
+
+ER_RTL_EXPORT [[nodiscard]] AtomicRecordPtr makeAtomicRecord();
 
 
 struct IFormatter
@@ -60,29 +75,6 @@ struct IFormatter
     virtual ~IFormatter() = default;
 
     [[nodiscard]] virtual std::string format(const IRecord* r) const = 0;
-};
-
-
-struct NullFormatter
-    : public IFormatter
-{
-private:
-    struct PrivateOnly{};
-
-public:
-    NullFormatter(PrivateOnly) noexcept
-    {
-    }
-
-    [[nodiscard]] std::string format(const IRecord* r) const override
-    {
-        return r->message();
-    }
-
-    [[nodiscard]] static auto make()
-    {
-        return std::make_shared<NullFormatter>(PrivateOnly{});
-    }
 };
 
 
@@ -96,7 +88,7 @@ struct ISink
     virtual ~ISink() = default;
 
     virtual void write(RecordPtr r) = 0;
-    virtual void write(AtomicRecord a) = 0;
+    virtual void write(AtomicRecordPtr&& a) = 0;
     virtual void flush() = 0;
 };
 

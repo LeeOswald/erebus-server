@@ -33,9 +33,9 @@ public:
         ::OutputDebugStringW(u16.c_str());
     }
 
-    void write(AtomicRecord a) override
+    void write(AtomicRecordPtr&& a) override
     {
-        for (auto r : a)
+        while (auto r = a->pop())
             write(r);
     }
 

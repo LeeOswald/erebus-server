@@ -27,12 +27,12 @@ public:
         }
     }
 
-    void write(AtomicRecord a) override
+    void write(AtomicRecordPtr&& a) override
     {
         std::shared_lock l(m_mutex);
         for (auto& sink : m_sinks)
         {
-            sink.second->write(a);
+            sink.second->write(AtomicRecordPtr{ a->clone() });
         }
     }
 

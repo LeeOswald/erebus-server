@@ -37,13 +37,13 @@ struct NullLogger
         s.pending.push(r);
     }
 
-    void write(AtomicRecord a) override
+    void write(AtomicRecordPtr&& a) override
     {
         auto& s = state();
 
         std::lock_guard l(s.mutex);
 
-        for (auto r : a)
+        while (auto r = a->pop())
             s.pending.push(r);
     }
 
