@@ -29,6 +29,8 @@ enum class Level
 struct IRecord
     : public IShared
 {
+    static constexpr std::string_view IID = "Er.Log.IRecord";
+
     [[nodiscard]] virtual Level level() const noexcept = 0;
     [[nodiscard]] virtual Time::ValueType time() const noexcept = 0;
     [[nodiscard]] virtual std::uintptr_t tid() const noexcept = 0;
@@ -54,6 +56,8 @@ ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType ti
 struct IAtomicRecord // not thread-safe
     : public IDisposable
 {
+    static constexpr std::string_view IID = "Er.Log.IAtomicRecord";
+
     virtual bool empty() const noexcept = 0;
     virtual void push(RecordPtr r) = 0;
     virtual RecordPtr pop() = 0;
@@ -69,13 +73,17 @@ ER_RTL_EXPORT [[nodiscard]] AtomicRecordPtr makeAtomicRecord();
 
 
 struct IFormatter
+    : IDisposable
 {
-    using Ptr = std::unique_ptr<IFormatter>;
-
-    virtual ~IFormatter() = default;
+    static constexpr std::string_view IID = "Er.Log.IFormatter";
 
     [[nodiscard]] virtual std::string format(const IRecord* r) const = 0;
+
+protected:
+    virtual ~IFormatter() = default;
 };
+
+using FormatterPtr = DisposablePtr<IFormatter>;
 
 
 using Filter = std::function<bool(const IRecord*)>;
@@ -97,7 +105,7 @@ struct SinkBase
     : public ISink
     , public boost::noncopyable
 {
-    SinkBase(IFormatter::Ptr&& formatter, auto&& filter) noexcept
+    SinkBase(FormatterPtr&& formatter, auto&& filter) noexcept
         : m_formatter(std::move(formatter))
         , m_filter(std::forward<decltype(filter)>(filter))
     {}
@@ -116,7 +124,7 @@ struct SinkBase
     }
 
 private:
-    IFormatter::Ptr m_formatter;
+    FormatterPtr m_formatter;
     Filter m_filter;
 };
 

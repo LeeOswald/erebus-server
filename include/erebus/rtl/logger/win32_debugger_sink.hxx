@@ -6,7 +6,7 @@
 namespace Er::Log
 {
 
-ER_RTL_EXPORT ISink::Ptr makeDebuggerSink(IFormatter::Ptr&& formatter, Filter&& filter = Filter{});
+ER_RTL_EXPORT ISink::Ptr makeDebuggerSink(FormatterPtr&& formatter, Filter&& filter = Filter{});
 
 
 } // namespace Er::Log {}

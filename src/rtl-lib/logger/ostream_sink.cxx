@@ -11,7 +11,7 @@ class OStreamSink
     : public SinkBase
 {
 public:
-    OStreamSink(std::ostream& stream, IFormatter::Ptr&& formatter, Filter&& filter)
+    OStreamSink(std::ostream& stream, FormatterPtr&& formatter, Filter&& filter)
         : SinkBase(std::move(formatter), std::move(filter))
         , m_stream(stream)
     {
@@ -50,7 +50,7 @@ private:
 } // namespace {}
 
 
-ER_RTL_EXPORT ISink::Ptr makeOStreamSink(std::ostream& stream, IFormatter::Ptr&& formatter, Filter&& filter)
+ER_RTL_EXPORT ISink::Ptr makeOStreamSink(std::ostream& stream, FormatterPtr&& formatter, Filter&& filter)
 {
     return std::make_shared<OStreamSink>(stream, std::move(formatter), std::move(filter));
 }

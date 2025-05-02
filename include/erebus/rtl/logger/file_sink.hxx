@@ -8,7 +8,7 @@ namespace Er::Log
 ER_RTL_EXPORT ISink::Ptr makeFileSink(
     ThreadSafe mode, 
     std::string_view fileName,
-    IFormatter::Ptr&& formatter,
+    FormatterPtr&& formatter,
     unsigned logsToKeep, 
     std::uint64_t maxFileSize,
     Filter&& filter = Filter{}

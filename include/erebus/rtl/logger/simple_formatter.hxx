@@ -29,7 +29,7 @@ public:
 
     using Options = FlagsPack<32, Option>;
 
-    static IFormatter::Ptr make(
+    static FormatterPtr make(
         Options options = Options{ Option::Time, Option::Level, Option::Tid, Option::TzLocal, Option::Lf, Option::Component }, 
         unsigned indentSize = 4
         );

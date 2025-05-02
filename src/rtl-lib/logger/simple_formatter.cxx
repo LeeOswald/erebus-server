@@ -1,4 +1,5 @@
 #include <erebus/rtl/logger/simple_formatter.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
 
 #include <algorithm>
 
@@ -9,9 +10,11 @@ namespace
 {
 
 class SimpleFormatterImpl
-    : public IFormatter
+    : public Util::DisposableBase<Util::ObjectBase<IFormatter>>
     , public SimpleFormatter
 {
+    using Base = Util::DisposableBase<Util::ObjectBase<IFormatter>>;
+
 public:
     ~SimpleFormatterImpl() = default;
 
@@ -113,7 +116,8 @@ public:
     }
     
     SimpleFormatterImpl(Options options, unsigned indentSize)
-        : m_options(options)
+        : Base(nullptr)
+        , m_options(options)
         , m_indent(std::clamp(indentSize, 1u, MaxIndent), ' ')
     {
         m_needPrefix = m_options[Option::DateTime] | m_options[Option::Time] |
@@ -131,9 +135,9 @@ private:
 
 } // namespace {}
 
-IFormatter::Ptr SimpleFormatter::make(SimpleFormatter::Options options, unsigned indentSize)
+FormatterPtr SimpleFormatter::make(SimpleFormatter::Options options, unsigned indentSize)
 {
-    return std::make_unique<SimpleFormatterImpl>(options, indentSize);
+    return FormatterPtr(new SimpleFormatterImpl(options, indentSize));
 }
 
 } // namespace Er::Log {}
