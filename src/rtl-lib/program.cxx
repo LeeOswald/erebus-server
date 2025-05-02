@@ -235,7 +235,7 @@ void Program::addLoggers(Log::ITee* main)
     if (isDebuggerPresent())
     {
         auto sink = Log::makeDebuggerSink(
-            Log::SimpleFormatter::make(formatOptions),
+            Log::makeSimpleFormatter(formatOptions),
             Log::FilterPtr{}
         );
 

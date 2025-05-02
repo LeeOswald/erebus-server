@@ -53,7 +53,7 @@ void TestApplication::addLoggers(Er::Log::ITee* main)
     if (Er::isDebuggerPresent())
     {
         auto sink = Er::Log::makeDebuggerSink(
-            Er::Log::SimpleFormatter::make(formatOptions),
+            Er::Log::makeSimpleFormatter(formatOptions),
             Er::Log::FilterPtr{}
         );
 
