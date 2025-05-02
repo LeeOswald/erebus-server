@@ -3,8 +3,8 @@
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/system/thread.hxx>
 #include <erebus/rtl/util/thread_data.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
 
-#include <boost/noncopyable.hpp>
 
 
 namespace Er::Log::Private
@@ -13,16 +13,16 @@ namespace Er::Log::Private
 template <class UserThreadData>
     requires std::is_nothrow_default_constructible_v<UserThreadData>
 class LoggerBase
-    : public ILogger
-    , public boost::noncopyable
+    : public Util::SharedBase<Util::ObjectBase<ILogger>>
 {
-public:
-    ~LoggerBase()
-    {
-    }
+    using Base = Util::SharedBase<Util::ObjectBase<ILogger>>;
 
-    LoggerBase(std::string_view component, ITee::Ptr tee)
-        : m_component(component)
+public:
+    ~LoggerBase() = default;
+
+    LoggerBase(std::string_view component, TeePtr tee)
+        : Base()
+        , m_component(component)
         , m_tee(tee)
     {
     }
@@ -109,7 +109,7 @@ public:
         }
     }
 
-    void addSink(std::string_view name, ISink::Ptr sink) override
+    void addSink(std::string_view name, SinkPtr sink) override
     {
         m_tee->addSink(name, sink);
     }
@@ -119,7 +119,7 @@ public:
         m_tee->removeSink(name);
     }
 
-    ISink::Ptr findSink(std::string_view name) override
+    SinkPtr findSink(std::string_view name) override
     {
         return m_tee->findSink(name);
     }
@@ -165,7 +165,7 @@ protected:
 
     using ThreadDataHolder = ThreadData<PerThread>;
     std::string_view m_component;
-    ITee::Ptr m_tee;
+    TeePtr m_tee;
     ThreadDataHolder m_threadData;
 };
 

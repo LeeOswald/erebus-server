@@ -9,9 +9,9 @@
 
 auto getCapture()
 {
-    auto tee = static_cast<Er::Log::ITee*>(Er::Log::get()->findSink("tee").get());
+    auto tee = Er::Log::get()->findSink("tee").cast<Er::Log::ITee>();
     ErAssert(tee);
-    auto capturePtr = static_cast<CapturedStderr*>(tee->findSink("capture").get());
+    auto capturePtr = tee->findSink("capture").cast<CapturedStderr>();
     ErAssert(capturePtr);
     return capturePtr;
 }

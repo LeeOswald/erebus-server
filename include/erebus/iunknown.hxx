@@ -84,6 +84,8 @@ template <typename _Iface>
 class SharedPtr
 {
 public:
+    using Type = _Iface;
+
     ~SharedPtr() noexcept
     {
         if (m_p)
@@ -174,6 +176,16 @@ public:
             m_p->release();
             m_p = nullptr;
         }
+    }
+
+    template <class _Type>
+    SharedPtr<_Type> cast() noexcept
+    {
+        if (!m_p)
+            return {};
+
+        m_p->addRef();
+        return SharedPtr<_Type>(static_cast<_Type*>(m_p));
     }
 
 protected:

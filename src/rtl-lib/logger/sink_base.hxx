@@ -1,14 +1,21 @@
 #pragma once
 
 #include <erebus/rtl/log.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
+
 
 namespace Er::Log::Private
 {
 
-struct SinkBase
+class SinkBase
+    : public Util::SharedBase<Util::ObjectBase<ISink>>
 {
+    using Base = Util::SharedBase<Util::ObjectBase<ISink>>;
+
+public:
     SinkBase(FormatterPtr&& formatter, FilterPtr&& filter) noexcept
-        : m_formatter(std::move(formatter))
+        : Base()
+        , m_formatter(std::move(formatter))
         , m_filter(std::move(filter))
     {}
 

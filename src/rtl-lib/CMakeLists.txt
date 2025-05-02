@@ -11,6 +11,7 @@ target_sources(${TARGET_NAME}
         logger/logger_base.hxx
         logger/async_logger.cxx
         logger/file_sink.cxx
+        logger/null_logger.hxx
         logger/ostream_sink.cxx
         logger/record.cxx
         logger/simple_filter.cxx
@@ -59,7 +60,6 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/rtl/format.hxx
                 ${ER_INCLUDE_DIR}/rtl/log.hxx
                 ${ER_INCLUDE_DIR}/rtl/logger/file_sink.hxx
-                ${ER_INCLUDE_DIR}/rtl/logger/null_logger.hxx
                 ${ER_INCLUDE_DIR}/rtl/logger/ostream_sink.hxx
                 ${ER_INCLUDE_DIR}/rtl/logger/simple_filter.hxx
                 ${ER_INCLUDE_DIR}/rtl/logger/simple_formatter.hxx

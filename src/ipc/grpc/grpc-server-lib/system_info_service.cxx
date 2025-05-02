@@ -27,7 +27,7 @@ public:
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::~SystemInfoImpl", Er::Format::ptr(this));
     }
 
-    SystemInfoImpl(Log::ILogger::Ptr log, IDisposableParent* owner)
+    SystemInfoImpl(Log::LoggerPtr log, IDisposableParent* owner)
         : Base(owner)
         , m_log(log)
     {
@@ -111,7 +111,7 @@ private:
             ServerTrace2(m_log.get(), "{}.PingReplyReactor::~PingReplyReactor", Er::Format::ptr(this));
         }
 
-        PingReplyReactor(Log::ILogger::Ptr log) noexcept
+        PingReplyReactor(Log::LoggerPtr log) noexcept
             : m_log(log)
         {
             ServerTrace2(m_log.get(), "{}.PingReplyReactor::PingReplyReactor", Er::Format::ptr(this));
@@ -130,7 +130,7 @@ private:
             ServerTrace2(m_log.get(), "{}.PingReplyReactor::OnCancel", Er::Format::ptr(this));
         }
 
-        Log::ILogger::Ptr m_log;
+        Log::LoggerPtr m_log;
     };
 
     class SystemInfoReplyReactor
@@ -142,7 +142,7 @@ private:
             ServerTrace2(m_log.get(), "{}.SystemInfoReplyReactor::~SystemInfoReplyReactor", Er::Format::ptr(this));
         }
 
-        SystemInfoReplyReactor(Log::ILogger::Ptr log)
+        SystemInfoReplyReactor(Log::LoggerPtr log)
             : m_log(log)
             , m_bag()
             , m_next(m_bag.end())
@@ -201,20 +201,20 @@ private:
             }
         }
 
-        Log::ILogger::Ptr m_log;
+        Log::LoggerPtr m_log;
         PropertyBag m_bag;
         PropertyBag::const_iterator m_next;
         erebus::Property m_reply;
     };
 
-    Log::ILogger::Ptr m_log;
+    Log::LoggerPtr m_log;
 };
 
 
 } // namespace {}
 
 
-IService* createSystemInfoService(Log::ILogger::Ptr log, IDisposableParent* owner)
+IService* createSystemInfoService(Log::LoggerPtr log, IDisposableParent* owner)
 {
     return new SystemInfoImpl(log, owner);
 }

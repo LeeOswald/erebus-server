@@ -6,6 +6,6 @@
 namespace Er::Ipc::Grpc
 {
     
-ISystemInfoClient* createSystemInfoClient(ChannelPtr channel, Log::ILogger::Ptr log, IDisposableParent* owner);
+ISystemInfoClient* createSystemInfoClient(ChannelPtr channel, Log::LoggerPtr log, IDisposableParent* owner);
     
 } // namespace Er::Ipc::Grpc {}

@@ -178,9 +178,9 @@ private:
 } // namespace {}
 
 
-ER_RTL_EXPORT ILogger::Ptr makeLogger(std::string_view component, std::chrono::milliseconds threshold)
+ER_RTL_EXPORT LoggerPtr makeLogger(std::string_view component, std::chrono::milliseconds threshold)
 {
-    return std::make_shared<AsyncLogger>(component, threshold);
+    return LoggerPtr(new AsyncLogger(component, threshold));
 }
 
 } // namespace Er::Log {}

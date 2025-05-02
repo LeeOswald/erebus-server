@@ -25,7 +25,7 @@ public:
         m_plugins.clear();
     }
     
-    explicit PluginMgr(IUnknown* owner, Log::ILogger::Ptr log)
+    explicit PluginMgr(IUnknown* owner, Log::LoggerPtr log)
         : m_owner(owner)
         , m_log(log)
     {
@@ -50,7 +50,7 @@ private:
     };
 
     IUnknown* m_owner;
-    Log::ILogger::Ptr const m_log;
+    Log::LoggerPtr const m_log;
     std::mutex m_mutex;
     std::vector<std::unique_ptr<PluginInfo>> m_plugins;
 };

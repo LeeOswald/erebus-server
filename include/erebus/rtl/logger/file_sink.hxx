@@ -5,7 +5,7 @@
 namespace Er::Log
 {
 
-ER_RTL_EXPORT ISink::Ptr makeFileSink(
+ER_RTL_EXPORT SinkPtr makeFileSink(
     ThreadSafe mode, 
     std::string_view fileName,
     FormatterPtr&& formatter,

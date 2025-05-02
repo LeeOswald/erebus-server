@@ -11,8 +11,7 @@ namespace
 {
 
 class DebuggerSink
-    : public ISink
-    , public Private::SinkBase
+    : public Private::SinkBase
 {
 public:
     DebuggerSink(FormatterPtr&& formatter, FilterPtr&& filter)
@@ -50,9 +49,9 @@ public:
 } // namespace {}
 
 
-ER_RTL_EXPORT ISink::Ptr makeDebuggerSink(FormatterPtr&& formatter, FilterPtr&& filter)
+ER_RTL_EXPORT SinkPtr makeDebuggerSink(FormatterPtr&& formatter, FilterPtr&& filter)
 {
-    return std::make_shared<DebuggerSink>(std::move(formatter), std::move(filter));
+    return SinkPtr(new DebuggerSink(std::move(formatter), std::move(filter)));
 }
 
 } // namespace Er::Log {}

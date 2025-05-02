@@ -34,7 +34,7 @@ public:
         ::grpc_shutdown();
     }
 
-    ServerImpl(const PropertyMap& parameters, Log::ILogger::Ptr log, IDisposableParent* owner)
+    ServerImpl(const PropertyMap& parameters, Log::LoggerPtr log, IDisposableParent* owner)
         : Base(owner)
         , m_log(log)
         , m_endpoints(parseEndpoints(parameters))
@@ -178,7 +178,7 @@ private:
         return result;
     }
 
-    Log::ILogger::Ptr m_log;
+    Log::LoggerPtr m_log;
     std::vector<Endpoint> m_endpoints;
     bool m_keepalive = false;
     std::vector<IService*> m_services;
@@ -189,7 +189,7 @@ private:
 } // namespace {}
 
 
-IServer* createServer(const PropertyMap& parameters, Log::ILogger::Ptr log, IDisposableParent* owner)
+IServer* createServer(const PropertyMap& parameters, Log::LoggerPtr log, IDisposableParent* owner)
 {
     return new ServerImpl(parameters, log, owner);
 }

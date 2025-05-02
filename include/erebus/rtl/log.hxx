@@ -101,39 +101,43 @@ using FilterPtr = DisposablePtr<IFilter>;
 
 
 struct ISink
+    : public IShared
 {
-    using Ptr = std::shared_ptr<ISink>;
-
-    virtual ~ISink() = default;
+    static constexpr std::string_view IID = "Er.Log.ISink";
 
     virtual void write(RecordPtr r) = 0;
     virtual void write(AtomicRecordPtr&& a) = 0;
     virtual void flush() = 0;
+
+protected:
+    virtual ~ISink() = default;
 };
+
+using SinkPtr = SharedPtr<ISink>;
 
 
 struct ITee
     : public ISink
 {
-    using Ptr = std::shared_ptr<ITee>;
+    static constexpr std::string_view IID = "Er.Log.ITee";
 
-    virtual ~ITee() = default;
-
-    virtual void addSink(std::string_view name, ISink::Ptr sink) = 0;
+    virtual void addSink(std::string_view name, SinkPtr sink) = 0;
     virtual void removeSink(std::string_view name) = 0;
-    virtual ISink::Ptr findSink(std::string_view name) = 0;
+    virtual SinkPtr findSink(std::string_view name) = 0;
+
+protected:
+    virtual ~ITee() = default;
 };
 
+using TeePtr = SharedPtr<ITee>;
 
-ER_RTL_EXPORT ITee::Ptr makeTee(ThreadSafe mode);
+ER_RTL_EXPORT TeePtr makeTee(ThreadSafe mode);
 
 
 struct ILogger
     : public ITee
 {
-    using Ptr = std::shared_ptr<ILogger>;
-
-    virtual ~ILogger() = default;
+    static constexpr std::string_view IID = "Er.Log.ILogger";
 
     Level level() const noexcept
     {
@@ -153,11 +157,15 @@ struct ILogger
     virtual void endBlock() noexcept = 0;
 
 protected:
+    virtual ~ILogger() = default;
+
     Level m_level = Level::Debug;
 };
 
-ER_RTL_EXPORT ILogger::Ptr makeLogger(std::string_view component = {}, std::chrono::milliseconds threshold = {});
-ER_RTL_EXPORT ILogger::Ptr makeSyncLogger(std::string_view component = {});
+using LoggerPtr = SharedPtr<ILogger>;
+
+ER_RTL_EXPORT LoggerPtr makeLogger(std::string_view component = {}, std::chrono::milliseconds threshold = {});
+ER_RTL_EXPORT LoggerPtr makeSyncLogger(std::string_view component = {});
 
 
 struct AtomicBlock
@@ -300,7 +308,7 @@ inline bool verbose() noexcept
     return g_verbose;
 }
 
-ER_RTL_EXPORT ILogger::Ptr global() noexcept;
+ER_RTL_EXPORT LoggerPtr global() noexcept;
 
 } // namespace Er::Log {}
 
@@ -311,7 +319,7 @@ namespace Erp::Log
 // not thread-safe
 //
 
-ER_RTL_EXPORT void setGlobal(Er::Log::ILogger::Ptr log) noexcept;
+ER_RTL_EXPORT void setGlobal(Er::Log::LoggerPtr log) noexcept;
 
 } // namespace Erp::Log {}
 

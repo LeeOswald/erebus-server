@@ -42,9 +42,9 @@ public:
 } // namespace {}
 
 
-ER_RTL_EXPORT ILogger::Ptr makeSyncLogger(std::string_view component)
+ER_RTL_EXPORT LoggerPtr makeSyncLogger(std::string_view component)
 {
-    return std::make_shared<SyncLogger>(component);
+    return LoggerPtr(new SyncLogger(component));
 }
 
 } // namespace Er::Log {}

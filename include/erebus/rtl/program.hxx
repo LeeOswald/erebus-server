@@ -31,7 +31,7 @@ public:
     virtual ~Program();
     Program(int options = 0) noexcept;
 
-    Log::ILogger::Ptr log() noexcept
+    Log::LoggerPtr log() noexcept
     {
         return m_logger;
     }
@@ -149,7 +149,7 @@ private:
 
     boost::program_options::variables_map m_args;
     unsigned m_loggerThreshold = 0;
-    Log::ILogger::Ptr m_logger;
+    Log::LoggerPtr m_logger;
 };
 
 

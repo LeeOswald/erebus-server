@@ -35,7 +35,7 @@ public:
         ::grpc_shutdown();
     }
 
-    SystemInfoClientImpl(ChannelPtr channel, Log::ILogger::Ptr log, IDisposableParent* owner)
+    SystemInfoClientImpl(ChannelPtr channel, Log::LoggerPtr log, IDisposableParent* owner)
         : Base(owner)
         , m_grpcReady(grpcInit())
         , m_stub(erebus::SystemInfo::NewStub(channel))
@@ -284,7 +284,7 @@ private:
 
     const bool m_grpcReady;
     const std::unique_ptr<erebus::SystemInfo::Stub> m_stub;
-    Log::ILogger::Ptr m_log;
+    Log::LoggerPtr m_log;
     
     struct RunningContexts
     {
@@ -299,7 +299,7 @@ private:
 } // namespace {}
 
 
-ISystemInfoClient* createSystemInfoClient(ChannelPtr channel, Log::ILogger::Ptr log, IDisposableParent* owner)
+ISystemInfoClient* createSystemInfoClient(ChannelPtr channel, Log::LoggerPtr log, IDisposableParent* owner)
 {
     return new SystemInfoClientImpl(channel, log, owner);
 }

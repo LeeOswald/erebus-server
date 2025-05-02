@@ -3,6 +3,7 @@
 #include <erebus/rtl/util/null_mutex.hxx>
 #include <erebus/rtl/util/generic_handle.hxx>
 
+
 #include <filesystem>
 #include <mutex>
 
@@ -55,8 +56,7 @@ void rotateLogs(std::string_view logFileName, int keepCount)
 
 template <class MutexT>
 class FileSink
-    : public ISink
-    , public Private::SinkBase
+    : public Private::SinkBase
 {
 public:
     ~FileSink()
@@ -174,7 +174,7 @@ private:
 
 } // namespace {}
 
-ER_RTL_EXPORT ISink::Ptr makeFileSink(
+ER_RTL_EXPORT SinkPtr makeFileSink(
     ThreadSafe mode, 
     std::string_view fileName,
     FormatterPtr&& formatter,
@@ -184,9 +184,9 @@ ER_RTL_EXPORT ISink::Ptr makeFileSink(
 )
 {
     if (mode == ThreadSafe::No)
-        return std::make_shared<FileSink<Util::NullMutex>>(fileName, std::move(formatter), logsToKeep, maxFileSize, std::move(filter));
+        return SinkPtr(new FileSink<Util::NullMutex>(fileName, std::move(formatter), logsToKeep, maxFileSize, std::move(filter)));
     else
-        return std::make_shared<FileSink<std::mutex>>(fileName, std::move(formatter), logsToKeep, maxFileSize, std::move(filter));
+        return SinkPtr(new FileSink<std::mutex>(fileName, std::move(formatter), logsToKeep, maxFileSize, std::move(filter)));
 }
 
 

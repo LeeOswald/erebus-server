@@ -21,7 +21,7 @@ private:
         Base::addLoggers(main);
 
         {
-            auto sink = std::make_shared<CapturedStderr>();
+            auto sink = Er::Log::SinkPtr(new CapturedStderr());
             main->addSink("capture", sink);
         }
     }

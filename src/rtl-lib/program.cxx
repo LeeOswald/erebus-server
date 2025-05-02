@@ -333,14 +333,14 @@ void Program::globalMakeLogger()
     if (m_options & SyncLogger)
     {
         auto tee = Log::makeTee(ThreadSafe::Yes);
-        m_logger->addSink("tee", std::static_pointer_cast<Log::ISink>(tee));
+        m_logger->addSink("tee", tee.cast<Log::ISink>());
 
         addLoggers(tee.get());
     }
     else
     {
         auto tee = Log::makeTee(ThreadSafe::No); // tee is called from the single logger thread
-        m_logger->addSink("tee", std::static_pointer_cast<Log::ISink>(tee));
+        m_logger->addSink("tee", tee.cast<Log::ISink>());
 
         addLoggers(tee.get());
     }

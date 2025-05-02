@@ -20,7 +20,7 @@ protected:
 };
 
 
-using CreatePluginFn = IPlugin*(*)(IUnknown* owner, Log::ILogger::Ptr log, const PropertyBag& args);
+using CreatePluginFn = IPlugin*(*)(IUnknown* owner, Log::LoggerPtr log, const PropertyBag& args);
 
 } // namespace Er {}
 

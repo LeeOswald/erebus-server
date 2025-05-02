@@ -2,11 +2,12 @@
 
 #include <gtest/gtest.h>
 
-
 #include <erebus/rtl/log.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
 
 #include <iostream>
 #include <mutex>
+#include <sstream>
 
 
 struct InstanceCounter
@@ -36,11 +37,18 @@ struct InstanceCounter
 };
 
 class CapturedStderr
-    : public Er::Log::ISink
+    : public Er::Util::SharedBase<Er::Util::ObjectBase<Er::Log::ISink>>
 {
+    using Base = Er::Util::SharedBase<Er::Util::ObjectBase<Er::Log::ISink>>;
+
 public:
-    CapturedStderr() = default;
     ~CapturedStderr() = default;
+
+    CapturedStderr() noexcept
+        : Base()
+    {
+    }
+    
 
     void write(Er::Log::RecordPtr r) override
     {

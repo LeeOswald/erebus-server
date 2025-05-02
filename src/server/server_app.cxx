@@ -152,11 +152,11 @@ bool ServerApplication::createServer()
     {
         
         auto serverLogger = Er::Log::makeSyncLogger("grpc_server");
-        serverLogger->addSink("main", Er::Log::global());
+        serverLogger->addSink("main", Er::Log::global().cast<Er::Log::ISink>());
         m_grpcServer = Er::DisposablePtr<Er::Ipc::Grpc::IServer>(Er::Ipc::Grpc::createServer(settings, serverLogger, nullptr));
 
         auto sysInfoLogger = Er::Log::makeSyncLogger("system_info");
-        sysInfoLogger->addSink("main", Er::Log::global());
+        sysInfoLogger->addSink("main", Er::Log::global().cast<Er::Log::ISink>());
         auto sysInfoService = Er::Ipc::Grpc::createSystemInfoService(sysInfoLogger, m_grpcServer->queryInterface<Er::IDisposableParent>());
         
         m_grpcServer->addService(sysInfoService);

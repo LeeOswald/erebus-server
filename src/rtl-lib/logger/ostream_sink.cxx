@@ -10,8 +10,7 @@ namespace
 {
 
 class OStreamSink
-    : public ISink
-    , public Private::SinkBase
+    : public Private::SinkBase
 {
 public:
     OStreamSink(std::ostream& stream, FormatterPtr&& formatter, FilterPtr&& filter)
@@ -53,9 +52,9 @@ private:
 } // namespace {}
 
 
-ER_RTL_EXPORT ISink::Ptr makeOStreamSink(std::ostream& stream, FormatterPtr&& formatter, FilterPtr&& filter)
+ER_RTL_EXPORT SinkPtr makeOStreamSink(std::ostream& stream, FormatterPtr&& formatter, FilterPtr&& filter)
 {
-    return std::make_shared<OStreamSink>(stream, std::move(formatter), std::move(filter));
+    return SinkPtr(new OStreamSink(stream, std::move(formatter), std::move(filter)));
 }
 
 } // namespace Er::Log {}

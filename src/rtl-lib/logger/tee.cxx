@@ -1,5 +1,6 @@
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/util/null_mutex.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
 
 #include <mutex>
 #include <shared_mutex>
@@ -14,10 +15,18 @@ namespace
 
 template <class MutexT>
 class Tee
-    : public ITee
-    , public boost::noncopyable
+    : public Util::SharedBase<Util::ObjectBase<ITee>>
 {
+    using Base = Util::SharedBase<Util::ObjectBase<ITee>>;
+
 public:
+    ~Tee() = default;
+
+    Tee() noexcept
+        : Base()
+    {
+    }
+
     void write(RecordPtr r) override
     {
         std::shared_lock l(m_mutex);
@@ -45,7 +54,7 @@ public:
         }
     }
 
-    void addSink(std::string_view name, ISink::Ptr sink) override
+    void addSink(std::string_view name, SinkPtr sink) override
     {
         std::unique_lock l(m_mutex);
         auto r = m_sinks.insert({ std::string(name), sink });
@@ -58,28 +67,28 @@ public:
         m_sinks.erase(std::string(name));
     }
 
-    ISink::Ptr findSink(std::string_view name) override
+    SinkPtr findSink(std::string_view name) override
     {
         std::unique_lock l(m_mutex);
         auto it = m_sinks.find(std::string(name));
-        return (it != m_sinks.end()) ? it->second : ISink::Ptr();
+        return (it != m_sinks.end()) ? it->second : SinkPtr();
     }
 
 private:
     MutexT m_mutex;
-    std::unordered_map<std::string, ISink::Ptr> m_sinks;
+    std::unordered_map<std::string, SinkPtr> m_sinks;
 };
 
 
 } // namespace {}
 
 
-ER_RTL_EXPORT ITee::Ptr makeTee(ThreadSafe mode)
+ER_RTL_EXPORT TeePtr makeTee(ThreadSafe mode)
 {
     if (mode == ThreadSafe::Yes)
-        return std::make_shared<Tee<std::shared_mutex>>();
+        return TeePtr(new Tee<std::shared_mutex>());
     else
-        return std::make_shared<Tee<Util::NullSharedMutex>>();
+        return TeePtr(new Tee<Util::NullSharedMutex>());
 }
 
 
