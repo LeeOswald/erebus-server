@@ -9,9 +9,9 @@ namespace Er::Log::Private
 {
 
 class NullLogger
-    : public Util::SharedBase<Util::ObjectBase<ILogger>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<ILogger>>
 {
-    using Base = Util::SharedBase<Util::ObjectBase<ILogger>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<ILogger>>;
 
 public:
     ~NullLogger() = default;

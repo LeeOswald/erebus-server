@@ -37,9 +37,9 @@ struct InstanceCounter
 };
 
 class CapturedStderr
-    : public Er::Util::SharedBase<Er::Util::ObjectBase<Er::Log::ISink>>
+    : public Er::Util::ReferenceCountedBase<Er::Util::ObjectBase<Er::Log::ISink>>
 {
-    using Base = Er::Util::SharedBase<Er::Util::ObjectBase<Er::Log::ISink>>;
+    using Base = Er::Util::ReferenceCountedBase<Er::Util::ObjectBase<Er::Log::ISink>>;
 
 public:
     ~CapturedStderr() = default;

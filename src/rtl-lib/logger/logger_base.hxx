@@ -13,9 +13,9 @@ namespace Er::Log::Private
 template <class UserThreadData>
     requires std::is_nothrow_default_constructible_v<UserThreadData>
 class LoggerBase
-    : public Util::SharedBase<Util::ObjectBase<ILogger>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<ILogger>>
 {
-    using Base = Util::SharedBase<Util::ObjectBase<ILogger>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<ILogger>>;
 
 public:
     ~LoggerBase() = default;

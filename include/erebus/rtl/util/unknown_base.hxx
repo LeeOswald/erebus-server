@@ -326,13 +326,13 @@ private:
 
 
 template <class _Base>
-struct SharedBase
+struct ReferenceCountedBase
     : public _Base
 {
-    ~SharedBase() = default;
+    ~ReferenceCountedBase() = default;
 
     template <typename... _Args>
-    explicit SharedBase(_Args... args)
+    explicit ReferenceCountedBase(_Args... args)
         : _Base(std::forward<_Args>(args)...)
         , m_refs(1)
     {

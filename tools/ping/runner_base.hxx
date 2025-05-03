@@ -38,9 +38,9 @@ public:
 protected:
     template <class Interface>
     struct Completion
-        : public Er::Util::SharedBase<Er::Util::ObjectBase<Interface, Er::IWaitable>>
+        : public Er::Util::ReferenceCountedBase<Er::Util::ObjectBase<Interface, Er::IWaitable>>
     {
-        using Base = Er::Util::SharedBase<Er::Util::ObjectBase<Interface, Er::IWaitable>>;
+        using Base = Er::Util::ReferenceCountedBase<Er::Util::ObjectBase<Interface, Er::IWaitable>>;
 
         ~Completion()
         {

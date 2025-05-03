@@ -27,7 +27,7 @@ struct IClient
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IClient";
 
     struct ICompletion
-        : public IShared
+        : public IReferenceCounted
     {
         virtual void onError(Er::ResultCode result, std::string&& message) noexcept = 0;
 

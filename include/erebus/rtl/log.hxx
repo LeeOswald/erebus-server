@@ -27,7 +27,7 @@ enum class Level
 
 
 struct IRecord
-    : public IShared
+    : public IReferenceCounted
 {
     static constexpr std::string_view IID = "Er.Log.IRecord";
 
@@ -49,7 +49,7 @@ ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(std::string_view component, Lev
 
 
 struct IAtomicRecord
-    : public IShared
+    : public IReferenceCounted
 {
     static constexpr std::string_view IID = "Er.Log.IAtomicRecord";
 
@@ -94,7 +94,7 @@ using FilterPtr = DisposablePtr<IFilter>;
 
 
 struct ISink
-    : public IShared
+    : public IReferenceCounted
 {
     static constexpr std::string_view IID = "Er.Log.ISink";
 

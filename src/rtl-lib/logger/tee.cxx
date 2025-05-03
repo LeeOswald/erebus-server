@@ -15,9 +15,9 @@ namespace
 
 template <class MutexT>
 class Tee
-    : public Util::SharedBase<Util::ObjectBase<ITee>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<ITee>>
 {
-    using Base = Util::SharedBase<Util::ObjectBase<ITee>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<ITee>>;
 
 public:
     ~Tee() = default;

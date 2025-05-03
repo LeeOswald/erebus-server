@@ -11,7 +11,7 @@ namespace
 {
 
 struct Record
-    : public Util::SharedBase<Util::ObjectBase<IRecord>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<IRecord>>
 {
 public:
     ~Record() = default;
@@ -67,9 +67,9 @@ private:
 
 
 class AtomicRecord
-    : public Util::SharedBase<Util::ObjectBase<IAtomicRecord>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<IAtomicRecord>>
 {
-    using Base = Util::SharedBase<Util::ObjectBase<IAtomicRecord>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<IAtomicRecord>>;
 
 public:
     ~AtomicRecord() = default;

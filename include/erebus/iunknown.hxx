@@ -78,19 +78,19 @@ template <typename _Iface>
 using DisposablePtr = std::unique_ptr<_Iface, DisposableDeleter>;
 
 
-struct IShared
+struct IReferenceCounted
     : public IUnknown
 {
     virtual void addRef() noexcept = 0;
     virtual void release() noexcept = 0;
     
 protected:
-    virtual ~IShared() = default;
+    virtual ~IReferenceCounted() = default;
 };
 
 
 template <typename _Iface>
-    requires std::derived_from<_Iface, IShared>
+    requires std::derived_from<_Iface, IReferenceCounted>
 class SharedPtr
 {
 public:

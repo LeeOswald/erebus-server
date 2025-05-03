@@ -8,9 +8,9 @@ namespace Er::Log::Private
 {
 
 class SinkBase
-    : public Util::SharedBase<Util::ObjectBase<ISink>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<ISink>>
 {
-    using Base = Util::SharedBase<Util::ObjectBase<ISink>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<ISink>>;
 
 public:
     SinkBase(FormatterPtr&& formatter, FilterPtr&& filter) noexcept
