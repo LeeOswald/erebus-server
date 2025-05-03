@@ -21,9 +21,9 @@ namespace
 {
 
 class SystemInfoClientImpl
-    : public Util::DisposableBase<Util::ObjectBase<ISystemInfoClient>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<ISystemInfoClient>>
 {
-    using Base = Util::DisposableBase<Util::ObjectBase<ISystemInfoClient>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<ISystemInfoClient>>;
 
 public:
     ~SystemInfoClientImpl()
@@ -35,9 +35,8 @@ public:
         ::grpc_shutdown();
     }
 
-    SystemInfoClientImpl(ChannelPtr channel, Log::LoggerPtr log, IDisposableParent* owner)
-        : Base(owner)
-        , m_grpcReady(grpcInit())
+    SystemInfoClientImpl(ChannelPtr channel, Log::LoggerPtr log)
+        : m_grpcReady(grpcInit())
         , m_stub(erebus::SystemInfo::NewStub(channel))
         , m_log(log)
     {
@@ -299,9 +298,9 @@ private:
 } // namespace {}
 
 
-ISystemInfoClient* createSystemInfoClient(ChannelPtr channel, Log::LoggerPtr log, IDisposableParent* owner)
+SystemInfoClientPtr createSystemInfoClient(ChannelPtr channel, Log::LoggerPtr log)
 {
-    return new SystemInfoClientImpl(channel, log, owner);
+    return SystemInfoClientPtr{ new SystemInfoClientImpl(channel, log) };
 }
 
 

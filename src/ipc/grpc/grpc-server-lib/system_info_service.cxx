@@ -16,10 +16,10 @@ namespace
 {
 
 class SystemInfoImpl
-    : public Util::DisposableBase<Util::ObjectBase<IService>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<IService>>
     , public erebus::SystemInfo::CallbackService
 {
-    using Base = Util::DisposableBase<Util::ObjectBase<IService>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<IService>>;
 
 public:
     ~SystemInfoImpl()
@@ -27,9 +27,8 @@ public:
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::~SystemInfoImpl", Er::Format::ptr(this));
     }
 
-    SystemInfoImpl(Log::LoggerPtr log, IDisposableParent* owner)
-        : Base(owner)
-        , m_log(log)
+    SystemInfoImpl(Log::LoggerPtr log)
+        : m_log(log)
     {
         ServerTrace2(m_log.get(), "{}.SystemInfoImpl::SystemInfoImpl", Er::Format::ptr(this));
     }
@@ -214,9 +213,9 @@ private:
 } // namespace {}
 
 
-IService* createSystemInfoService(Log::LoggerPtr log, IDisposableParent* owner)
+ServicePtr createSystemInfoService(Log::LoggerPtr log)
 {
-    return new SystemInfoImpl(log, owner);
+    return ServicePtr{ new SystemInfoImpl(log) };
 }
 
 } // namespace Er::Ipc::Grpc {}

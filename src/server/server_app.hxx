@@ -18,7 +18,7 @@ protected:
     std::string m_cfgFile;
     Er::Property m_configRoot;
     Er::PropertyMap const* m_config = nullptr;
-    Er::DisposablePtr<Er::Ipc::Grpc::IServer> m_grpcServer;
+    Er::Ipc::Grpc::ServerPtr m_grpcServer;
 
     void addCmdLineOptions(boost::program_options::options_description& options) override;
     bool loadConfiguration() override;

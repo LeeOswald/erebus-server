@@ -14,7 +14,7 @@ namespace Er::Ipc::Grpc
 {
 
 struct IService
-    : public IDisposable
+    : public IReferenceCounted
 {
     static constexpr std::string_view IID = "Er.Ipc.Grpc.IService";
 
@@ -26,7 +26,7 @@ protected:
 };
 
 
-using ServicePtr = DisposablePtr<IService>;
+using ServicePtr = ReferenceCountedPtr<IService>;
 
 
 } // namespace Er::Ipc::Grpc {}

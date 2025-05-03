@@ -66,7 +66,7 @@ ER_RTL_EXPORT [[nodiscard]] AtomicRecordPtr makeAtomicRecord(std::vector<RecordP
 
 
 struct IFormatter
-    : public IDisposable
+    : public IReferenceCounted
 {
     static constexpr std::string_view IID = "Er.Log.IFormatter";
 
@@ -76,11 +76,11 @@ protected:
     virtual ~IFormatter() = default;
 };
 
-using FormatterPtr = DisposablePtr<IFormatter>;
+using FormatterPtr = ReferenceCountedPtr<IFormatter>;
 
 
 struct IFilter
-    : public IDisposable
+    : public IReferenceCounted
 {
     static constexpr std::string_view IID = "Er.Log.IFilter";
 
@@ -90,7 +90,7 @@ protected:
     virtual ~IFilter() = default;
 };
 
-using FilterPtr = DisposablePtr<IFilter>;
+using FilterPtr = ReferenceCountedPtr<IFilter>;
 
 
 struct ISink

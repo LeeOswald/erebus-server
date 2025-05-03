@@ -46,4 +46,7 @@ protected:
 };
 
 
+using SystemInfoClientPtr = ReferenceCountedPtr<ISystemInfoClient>;
+
+
 } // namespace Er::Ipc::Grpc {}

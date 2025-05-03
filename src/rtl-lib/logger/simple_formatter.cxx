@@ -10,10 +10,10 @@ namespace
 {
 
 class SimpleFormatterImpl
-    : public Util::DisposableBase<Util::ObjectBase<IFormatter>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<IFormatter>>
     , public SimpleFormatter
 {
-    using Base = Util::DisposableBase<Util::ObjectBase<IFormatter>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<IFormatter>>;
 
 public:
     ~SimpleFormatterImpl() = default;
@@ -116,8 +116,7 @@ public:
     }
     
     SimpleFormatterImpl(Options options, unsigned indentSize)
-        : Base(nullptr)
-        , m_options(options)
+        : m_options(options)
         , m_indent(std::clamp(indentSize, 1u, MaxIndent), ' ')
     {
         m_needPrefix = m_options[Option::DateTime] | m_options[Option::Time] |

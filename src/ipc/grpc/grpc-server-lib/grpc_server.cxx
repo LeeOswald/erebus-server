@@ -14,9 +14,9 @@ namespace
 {
 
 class ServerImpl
-    : public Util::DisposableParentBase<Util::DisposableBase<Util::ObjectBase<IServer, IDisposableParent>>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<IServer>>
 {
-    using Base = Util::DisposableParentBase<Util::DisposableBase<Util::ObjectBase<IServer, IDisposableParent>>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<IServer>>;
 
 public:
     ~ServerImpl()
@@ -34,9 +34,8 @@ public:
         ::grpc_shutdown();
     }
 
-    ServerImpl(const PropertyMap& parameters, Log::LoggerPtr log, IDisposableParent* owner)
-        : Base(owner)
-        , m_log(log)
+    ServerImpl(const PropertyMap& parameters, Log::LoggerPtr log)
+        : m_log(log)
         , m_endpoints(parseEndpoints(parameters))
     {
         ErLogDebug2(m_log.get(), "{}.ServerImpl::ServerImpl()", Er::Format::ptr(this));
@@ -56,19 +55,16 @@ public:
         return m_server.get();
     }
 
-    void addService(ServicePtr&& service) override
+    void addService(ServicePtr service) override
     {
         ErAssert(service);
 
         if (m_server)
             ErThrow("Cannot add new services to a running server instance");
 
-        service->setParent(this);
-        
-        auto ptr = service.release();
-        m_services.push_back(ptr);
+        m_services.push_back(service);
 
-        ErLogInfo2(m_log.get(), "Service {} added", ptr->name());
+        ErLogInfo2(m_log.get(), "Service {} added", service->name());
     }
 
     void start() override
@@ -186,7 +182,7 @@ private:
     Log::LoggerPtr m_log;
     std::vector<Endpoint> m_endpoints;
     bool m_keepalive = false;
-    std::vector<IService*> m_services; // weak reference
+    std::vector<ServicePtr> m_services;
     std::unique_ptr<::grpc::Server> m_server;
 };
 
@@ -194,9 +190,9 @@ private:
 } // namespace {}
 
 
-IServer* createServer(const PropertyMap& parameters, Log::LoggerPtr log, IDisposableParent* owner)
+ServerPtr createServer(const PropertyMap& parameters, Log::LoggerPtr log)
 {
-    return new ServerImpl(parameters, log, owner);
+    return ServerPtr{ new ServerImpl(parameters, log) };
 }
 
 

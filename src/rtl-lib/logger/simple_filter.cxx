@@ -9,16 +9,15 @@ namespace
 {
 
 class LevelFilter
-    : public Util::DisposableBase<Util::ObjectBase<IFilter>>
+    : public Util::ReferenceCountedBase<Util::ObjectBase<IFilter>>
 {
-    using Base = Util::DisposableBase<Util::ObjectBase<IFilter>>;
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<IFilter>>;
 
 public:
     ~LevelFilter() = default;
 
     explicit LevelFilter(Level min, Level max) noexcept
-        : Base(nullptr)
-        , m_minLevel(min)
+        : m_minLevel(min)
         , m_maxLevel(max)
     {
     }
