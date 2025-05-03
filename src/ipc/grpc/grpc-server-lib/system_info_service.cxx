@@ -61,7 +61,7 @@ public:
         Er::Util::ExceptionLogger xcptHandler(m_log.get());
         try
         {
-            auto props = SystemInfo::get(pattern);
+            auto props = Er::Server::SystemInfo::get(pattern);
             reactor->Begin(std::move(props));
         }
         catch (...)

@@ -6,7 +6,7 @@
 #include <erebus/rtl/system/unwindows.h>
 
 
-namespace Er::SystemInfo::Private
+namespace Er::Server::SystemInfo::Private
 {
 
 namespace 
@@ -15,12 +15,12 @@ namespace
 
 Property serverVersion(std::string_view)
 {
-    return Property{ ServerVersion, Er::format("{}.{}.{}", ER_VERSION_MAJOR, ER_VERSION_MINOR, ER_VERSION_PATCH) };
+    return Property{ Er::SystemInfo::ServerVersion, Er::format("{}.{}.{}", ER_VERSION_MAJOR, ER_VERSION_MINOR, ER_VERSION_PATCH) };
 }
 
 Property osType(std::string_view)
 {
-    return Property{ OsType, std::string{"Windows"} };
+    return Property{ Er::SystemInfo::OsType, std::string{"Windows"} };
 }
 
 Property osVersion(std::string_view)
@@ -28,10 +28,10 @@ Property osVersion(std::string_view)
     RTL_OSVERSIONINFOEXW versionInfo = {};
     if (NT_SUCCESS(RtlGetVersion(&versionInfo)))
     {
-        return Property{ OsVersion, Er::format("{}.{}.{}", versionInfo.dwMajorVersion, versionInfo.dwMinorVersion, versionInfo.dwBuildNumber) };
+        return Property{ Er::SystemInfo::OsVersion, Er::format("{}.{}.{}", versionInfo.dwMajorVersion, versionInfo.dwMinorVersion, versionInfo.dwBuildNumber) };
     }
 
-    return Property{ OsVersion , std::string("n/a")};
+    return Property{ Er::SystemInfo::OsVersion , std::string("n/a")};
 }
 
 } // namespace {}
@@ -41,9 +41,9 @@ void registerSources(Sources& s)
 {
     std::unique_lock l(s.mutex);
 
-    s.map.insert({ ServerVersion, { serverVersion } });
-    s.map.insert({ OsType, { osType } });
-    s.map.insert({ OsVersion, { osVersion } });
+    s.map.insert({ Er::SystemInfo::ServerVersion, { serverVersion } });
+    s.map.insert({ Er::SystemInfo::OsType, { osType } });
+    s.map.insert({ Er::SystemInfo::OsVersion, { osVersion } });
 }
 
-} // namespace Er::SystemInfo::Private {}
+} // namespace Er::Server::SystemInfo::Private {}

@@ -2,7 +2,7 @@
 #include <erebus/server/plugin_mgr.hxx>
 
 
-namespace Er::Private
+namespace Er::Server
 {
 
 IPlugin* PluginMgr::load(const std::string& path, const PropertyBag& args)
@@ -63,4 +63,5 @@ IPlugin* PluginMgr::load(const std::string& path, const PropertyBag& args)
     return info->ptr;
 }
 
-} // namespace Er::Private {}
+} // namespace Er::Server {}
+

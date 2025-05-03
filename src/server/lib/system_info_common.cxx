@@ -3,7 +3,7 @@
 #include <erebus/rtl/util/pattern.hxx>
 
 
-namespace Er::SystemInfo
+namespace Er::Server::SystemInfo
 {
 
 
@@ -51,4 +51,4 @@ ER_SERVER_EXPORT void registerSource(std::string_view name, Source&& src)
 }
 
 
-} // namespace Er::SystemInfo {}
+} // namespace Er::Server::SystemInfo {}

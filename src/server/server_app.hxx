@@ -6,7 +6,7 @@
 #include <erebus/rtl/property_bag.hxx>
 
 
-class ServerApplication
+class ServerApplication final
     : public Er::Program
 {
     using Base = Er::Program;
@@ -14,12 +14,7 @@ class ServerApplication
 public:
     ServerApplication() noexcept;
 
-protected:
-    std::string m_cfgFile;
-    Er::Property m_configRoot;
-    Er::PropertyMap const* m_config = nullptr;
-    Er::Ipc::Grpc::ServerPtr m_grpcServer;
-
+private:
     void addCmdLineOptions(boost::program_options::options_description& options) override;
     bool loadConfiguration() override;
     void addLoggers(Er::Log::ITee* main) override;
@@ -29,4 +24,9 @@ protected:
     bool startServer();
 
     int run(int argc, char** argv) override;
+
+    std::string m_cfgFile;
+    Er::Property m_configRoot;
+    Er::PropertyMap const* m_config = nullptr;
+    Er::Ipc::Grpc::ServerPtr m_grpcServer;
 };

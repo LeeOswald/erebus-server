@@ -12,7 +12,7 @@
 #include <vector>
 
 
-namespace Er::Private
+namespace Er::Server
 {
 
 
@@ -55,4 +55,4 @@ private:
     std::vector<std::unique_ptr<PluginInfo>> m_plugins;
 };
 
-} // namespace Er::Private {}
+} // namespace Er::Server {}
