@@ -220,6 +220,11 @@ public:
         return m_name;
     }
 
+    [[nodiscard]] constexpr std::string_view nameStr() const noexcept
+    {
+        return { m_name.data(), m_name.length() };
+    }
+
     [[nodiscard]] constexpr Bool const* getBool() const noexcept
     {
         return std::get_if<Bool>(&m_storage);
