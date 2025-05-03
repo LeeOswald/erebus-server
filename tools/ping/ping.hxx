@@ -42,7 +42,7 @@ private:
 
         static auto make(RunnerBase* owner)
         {
-            return Er::SharedPtr<IPingCompletion>{ new PingCompletion(PrivateTag{}, owner) };
+            return Er::ReferenceCountedPtr<IPingCompletion>{ new PingCompletion(PrivateTag{}, owner) };
         }
 
     private:

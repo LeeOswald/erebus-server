@@ -44,7 +44,7 @@ public:
         ClientTrace2(m_log.get(), "{}.SystemInfoClientImpl::SystemInfoClientImpl", Er::Format::ptr(this));
     }
 
-    void ping(PingMessage&& ping, Er::SharedPtr<IPingCompletion> handler) override
+    void ping(PingMessage&& ping, Er::ReferenceCountedPtr<IPingCompletion> handler) override
     {
         ClientTraceIndent2(m_log.get(), "{}.SystemInfoClientImpl::ping(size={})", Er::Format::ptr(this), ping.payload.size());
 
@@ -60,7 +60,7 @@ public:
             });
     }
 
-    void getSystemInfo(const std::string& pattern, Er::SharedPtr<ISystemInfoCompletion> handler) override
+    void getSystemInfo(const std::string& pattern, Er::ReferenceCountedPtr<ISystemInfoCompletion> handler) override
     {
         ClientTraceIndent2(m_log.get(), "{}.SystemInfoClientImpl::getSystemInfo(pattern={})", Er::Format::ptr(this), pattern);
 
@@ -100,7 +100,7 @@ private:
             ClientTrace2(m_log, "{}.PingContext::~PingContext()", Er::Format::ptr(this));
         }
 
-        PingContext(SystemInfoClientImpl* owner, Er::Log::ILogger* log, PingMessage&& ping, Er::SharedPtr<IPingCompletion> handler)
+        PingContext(SystemInfoClientImpl* owner, Er::Log::ILogger* log, PingMessage&& ping, Er::ReferenceCountedPtr<IPingCompletion> handler)
             : ContextBase(owner, log)
             , handler(handler)
             , ping(std::move(ping))
@@ -112,7 +112,7 @@ private:
             request.set_payload(this->ping.payload.bytes());
         }
 
-        Er::SharedPtr<IPingCompletion> handler;
+        Er::ReferenceCountedPtr<IPingCompletion> handler;
         PingMessage ping;
         erebus::PingMessage request;
         erebus::PingMessage reply;
@@ -132,7 +132,7 @@ private:
             Er::Log::ILogger* log,
             erebus::SystemInfo::Stub* stub,
             const std::string& pattern, 
-            Er::SharedPtr<ISystemInfoCompletion> handler
+            Er::ReferenceCountedPtr<ISystemInfoCompletion> handler
         )
             : ContextBase(owner, log)
             , m_handler(handler)
@@ -203,7 +203,7 @@ private:
             delete this;
         }
 
-        Er::SharedPtr<ISystemInfoCompletion> m_handler;
+        Er::ReferenceCountedPtr<ISystemInfoCompletion> m_handler;
         erebus::SystemInfoRequest m_request;
         erebus::Property m_reply;
     };

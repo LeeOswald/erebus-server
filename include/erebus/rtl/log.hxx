@@ -42,7 +42,7 @@ protected:
     virtual ~IRecord() = default;
 };
 
-using RecordPtr = SharedPtr<IRecord>;
+using RecordPtr = ReferenceCountedPtr<IRecord>;
 
 ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, const std::string& message, std::uint32_t indent);
 ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, std::string&& message, std::uint32_t indent);
@@ -60,7 +60,7 @@ protected:
     virtual ~IAtomicRecord() = default;
 };
 
-using AtomicRecordPtr = SharedPtr<IAtomicRecord>;
+using AtomicRecordPtr = ReferenceCountedPtr<IAtomicRecord>;
 
 ER_RTL_EXPORT [[nodiscard]] AtomicRecordPtr makeAtomicRecord(std::vector<RecordPtr>&& v);
 
@@ -108,7 +108,7 @@ protected:
     virtual ~ISink() = default;
 };
 
-using SinkPtr = SharedPtr<ISink>;
+using SinkPtr = ReferenceCountedPtr<ISink>;
 
 
 struct ITee
@@ -124,7 +124,7 @@ protected:
     virtual ~ITee() = default;
 };
 
-using TeePtr = SharedPtr<ITee>;
+using TeePtr = ReferenceCountedPtr<ITee>;
 
 ER_RTL_EXPORT TeePtr makeTee(ThreadSafe mode);
 
@@ -157,7 +157,7 @@ protected:
     Level m_level = Level::Debug;
 };
 
-using LoggerPtr = SharedPtr<ILogger>;
+using LoggerPtr = ReferenceCountedPtr<ILogger>;
 
 ER_RTL_EXPORT LoggerPtr makeLogger(std::string_view component = {}, std::chrono::milliseconds threshold = {});
 ER_RTL_EXPORT LoggerPtr makeSyncLogger(std::string_view component = {});

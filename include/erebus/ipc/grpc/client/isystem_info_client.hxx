@@ -38,8 +38,8 @@ struct ISystemInfoClient
         virtual ~ISystemInfoCompletion() = default;
     };
     
-    virtual void ping(PingMessage&& ping, SharedPtr<IPingCompletion> handler) = 0;
-    virtual void getSystemInfo(const std::string& pattern, SharedPtr<ISystemInfoCompletion> handler) = 0;
+    virtual void ping(PingMessage&& ping, ReferenceCountedPtr<IPingCompletion> handler) = 0;
+    virtual void getSystemInfo(const std::string& pattern, ReferenceCountedPtr<ISystemInfoCompletion> handler) = 0;
 
 protected:
     virtual ~ISystemInfoClient() = default;

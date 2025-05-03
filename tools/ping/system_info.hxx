@@ -33,7 +33,7 @@ private:
 
         static auto make(RunnerBase* owner)
         {
-            return Er::SharedPtr<ISystemInfoCompletion>{ new SystemInfoCompletion(PrivateTag{}, owner) };
+            return Er::ReferenceCountedPtr<ISystemInfoCompletion>{ new SystemInfoCompletion(PrivateTag{}, owner) };
         }
 
     private:

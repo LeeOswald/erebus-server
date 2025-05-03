@@ -91,64 +91,64 @@ protected:
 
 template <typename _Iface>
     requires std::derived_from<_Iface, IReferenceCounted>
-class SharedPtr
+class ReferenceCountedPtr
 {
 public:
     using Type = _Iface;
 
-    ~SharedPtr() noexcept
+    ~ReferenceCountedPtr() noexcept
     {
         if (m_p)
             m_p->release();
     }
 
-    constexpr SharedPtr() noexcept
+    constexpr ReferenceCountedPtr() noexcept
         : m_p(nullptr)
     {
     }
 
-    explicit constexpr SharedPtr(_Iface* p) noexcept
+    explicit constexpr ReferenceCountedPtr(_Iface* p) noexcept
         : m_p(p)
     {
         // no addRef() here
     }
 
-    SharedPtr(const SharedPtr& o) noexcept
-        : SharedPtr(o.m_p)
+    ReferenceCountedPtr(const ReferenceCountedPtr& o) noexcept
+        : ReferenceCountedPtr(o.m_p)
     {
         if (m_p)
             m_p->addRef();
     }
 
-    SharedPtr& operator=(const SharedPtr& o) noexcept
+    ReferenceCountedPtr& operator=(const ReferenceCountedPtr& o) noexcept
     {
         if (m_p != o.m_p)
         {
-            SharedPtr tmp(o);
+            ReferenceCountedPtr tmp(o);
             swap(tmp);
         }
 
         return *this;
     }
 
-    SharedPtr(SharedPtr&& o) noexcept
-        : SharedPtr()
+    ReferenceCountedPtr(ReferenceCountedPtr&& o) noexcept
+        : ReferenceCountedPtr()
     {
         swap(o);
     }
 
-    SharedPtr& operator=(SharedPtr&& o) noexcept
+    ReferenceCountedPtr& operator=(ReferenceCountedPtr&& o) noexcept
     {
         if (m_p != o.m_p)
         {
-            SharedPtr tmp(std::move(o));
+            ReferenceCountedPtr tmp(std::move(o));
             swap(tmp);
         }
 
         return *this;
     }
 
-    constexpr void swap(SharedPtr& o) noexcept
+    constexpr void swap(ReferenceCountedPtr& o) noexcept
     {
         using std::swap;
         swap(m_p, o.m_p);
@@ -189,13 +189,13 @@ public:
     }
 
     template <class _Type>
-    SharedPtr<_Type> cast() noexcept
+    ReferenceCountedPtr<_Type> cast() noexcept
     {
         if (!m_p)
             return {};
 
         m_p->addRef();
-        return SharedPtr<_Type>(static_cast<_Type*>(m_p));
+        return ReferenceCountedPtr<_Type>(static_cast<_Type*>(m_p));
     }
 
 protected:
