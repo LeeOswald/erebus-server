@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/erebus-rtl-tests",
-            "args": [ ],
+            "args": [ "-v" ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
@@ -38,7 +38,7 @@
             "cwd": "${fileDirname}",
             "environment": [],
             "externalConsole": false,
-            /*"miDebuggerPath": "/home/ursus/Projects/debug.sh"*/,
+            /*"miDebuggerPath": "/home/ursus/Projects/debug.sh",*/
             "MIMode": "gdb",
             "setupCommands": [
                 {
