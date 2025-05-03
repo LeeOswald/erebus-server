@@ -25,4 +25,8 @@ protected:
     virtual ~IService() = default;
 };
 
+
+using ServicePtr = DisposablePtr<IService>;
+
+
 } // namespace Er::Ipc::Grpc {}

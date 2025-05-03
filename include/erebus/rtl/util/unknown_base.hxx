@@ -247,9 +247,23 @@ struct DisposableBase
         delete this;
     }
 
-    constexpr IDisposableParent* owner() const noexcept
+    IDisposableParent* parent() const noexcept
     {
         return m_owner;
+    }
+
+    void setParent(IDisposableParent* parent) noexcept
+    {
+        if (m_owner)
+            m_owner->orphan(this);
+
+        m_owner = nullptr;
+
+        if (parent)
+        {
+            parent->adopt(this);
+            m_owner = parent;
+        }
     }
 
 private:
@@ -276,6 +290,8 @@ struct DisposableParentBase
 
     void adopt(IDisposable* child) override
     {
+        ErAssert(child);
+        ErAssert(!child->parent());
         ErAssert(!m_destructing);
 
         std::lock_guard l(m_mutex);
@@ -288,6 +304,9 @@ struct DisposableParentBase
     {
         if (m_destructing)
             return;
+
+        ErAssert(child);
+        ErAssert(child->parent() == this);
 
         std::lock_guard l(m_mutex);
         

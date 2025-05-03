@@ -35,12 +35,16 @@ struct IIDOf
 };
 
 
+struct IDisposableParent;
+
 struct IDisposable
     : public IUnknown
 {
     static constexpr std::string_view IID = "Er.IDisposable";
 
     virtual void dispose() noexcept = 0;
+    virtual IDisposableParent* parent() const noexcept = 0;
+    virtual void setParent(IDisposableParent* parent) noexcept = 0; // calls IDisposableParent.adopt()/orphan()
 
 protected:
     virtual ~IDisposable() = default;
@@ -52,8 +56,8 @@ struct IDisposableParent
 {
     static constexpr std::string_view IID = "Er.IDisposableParent";
 
-    virtual void adopt(IDisposable* child) = 0;
-    virtual void orphan(IDisposable* child) noexcept = 0;
+    virtual void adopt(IDisposable* child) = 0;                    // does NOT call IDisposable.setParent()
+    virtual void orphan(IDisposable* child) noexcept = 0;          // does NOT call IDisposable.setParent()
 
 protected:
     virtual ~IDisposableParent() = default;

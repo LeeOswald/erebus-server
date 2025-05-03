@@ -56,14 +56,19 @@ public:
         return m_server.get();
     }
 
-    void addService(IService* service) override
+    void addService(ServicePtr&& service) override
     {
+        ErAssert(service);
+
         if (m_server)
             ErThrow("Cannot add new services to a running server instance");
 
-        m_services.push_back(service);
+        service->setParent(this);
+        
+        auto ptr = service.release();
+        m_services.push_back(ptr);
 
-        ErLogInfo2(m_log.get(), "Service {} added", service->name());
+        ErLogInfo2(m_log.get(), "Service {} added", ptr->name());
     }
 
     void start() override
@@ -181,7 +186,7 @@ private:
     Log::LoggerPtr m_log;
     std::vector<Endpoint> m_endpoints;
     bool m_keepalive = false;
-    std::vector<IService*> m_services;
+    std::vector<IService*> m_services; // weak reference
     std::unique_ptr<::grpc::Server> m_server;
 };
 
