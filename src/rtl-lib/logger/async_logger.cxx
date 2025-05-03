@@ -58,9 +58,9 @@ public:
             m_queueNotEmpty.notify_one();
     }
 
-    void doWrite(AtomicRecordPtr&& a) override
+    void doWrite(AtomicRecordPtr a) override
     {
-        if (a->empty())
+        if (!a->size())
             return;
 
         {
@@ -157,7 +157,7 @@ private:
             {
                 auto a = std::get_if<AtomicRecordPtr>(&any);
                 if (a)
-                    m_tee->write(std::move(*a));
+                    m_tee->write(*a);
             }
 
             if (stop.stop_requested())

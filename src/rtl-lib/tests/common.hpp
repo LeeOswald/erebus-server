@@ -56,12 +56,14 @@ public:
         m_out << r->message() << "\n";
     }
 
-    void write(Er::Log::AtomicRecordPtr&& a) override
+    void write(Er::Log::AtomicRecordPtr a) override
     {
         std::lock_guard l(m_mutex);
 
-        while (auto r = a->pop())
+        auto count = a->size();
+        for (decltype(count) i = 0; i < count; ++i)
         {
+            auto r = a->get(i);
             m_out << r->message() << "\n";
         }
     }

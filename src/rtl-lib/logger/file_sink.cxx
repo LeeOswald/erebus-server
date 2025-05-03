@@ -127,10 +127,11 @@ public:
         }
     }
 
-    void write(AtomicRecordPtr&& a) override
+    void write(AtomicRecordPtr a) override
     {
-        while (auto r = a->pop())
-            write(r);
+        auto count = a->size();
+        for (decltype(count) i = 0; i < count; ++i)
+            write(a->get(i));
     }
 
     void flush() override

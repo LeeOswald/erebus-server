@@ -53,23 +53,21 @@ ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType ti
 ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, std::string&& message);
 
 
-struct IAtomicRecord // not thread-safe
-    : public IDisposable
+struct IAtomicRecord
+    : public IShared
 {
     static constexpr std::string_view IID = "Er.Log.IAtomicRecord";
 
-    virtual bool empty() const noexcept = 0;
-    virtual void push(RecordPtr r) = 0;
-    virtual RecordPtr pop() = 0;
-    virtual IAtomicRecord* clone() const = 0;
+    virtual std::size_t size() const noexcept = 0;
+    virtual RecordPtr get(std::size_t index) const noexcept = 0;
 
 protected:
     virtual ~IAtomicRecord() = default;
 };
 
-using AtomicRecordPtr = DisposablePtr<IAtomicRecord>;
+using AtomicRecordPtr = SharedPtr<IAtomicRecord>;
 
-ER_RTL_EXPORT [[nodiscard]] AtomicRecordPtr makeAtomicRecord();
+ER_RTL_EXPORT [[nodiscard]] AtomicRecordPtr makeAtomicRecord(std::vector<RecordPtr>&& v);
 
 
 struct IFormatter
@@ -106,7 +104,7 @@ struct ISink
     static constexpr std::string_view IID = "Er.Log.ISink";
 
     virtual void write(RecordPtr r) = 0;
-    virtual void write(AtomicRecordPtr&& a) = 0;
+    virtual void write(AtomicRecordPtr a) = 0;
     virtual void flush() = 0;
 
 protected:

@@ -75,53 +75,40 @@ private:
 
 
 class AtomicRecord
-    : public Util::DisposableBase<Util::ObjectBase<IAtomicRecord>>
+    : public Util::SharedBase<Util::ObjectBase<IAtomicRecord>>
 {
-    using Base = Util::DisposableBase<Util::ObjectBase<IAtomicRecord>>;
+    using Base = Util::SharedBase<Util::ObjectBase<IAtomicRecord>>;
 
 public:
     ~AtomicRecord() = default;
 
     AtomicRecord()
-        : Base(nullptr)
+        : Base()
     {
     }
 
-    explicit AtomicRecord(const std::queue<RecordPtr> records)
-        : Base(nullptr)
-        , m_records(records)
+    explicit AtomicRecord(std::vector<RecordPtr>&& records)
+        : Base()
+        , m_records(std::move(records))
     {
     }
 
-    bool empty() const noexcept
+    std::size_t size() const noexcept override
     {
-        return m_records.empty();
+        return m_records.size();
     }
 
-    void push(RecordPtr r) override
+    RecordPtr get(std::size_t index) const noexcept override
     {
-        m_records.push(r);
-    }
-
-    RecordPtr pop() override
-    {
-        if (!m_records.empty())
-        {
-            auto r = m_records.front();
-            m_records.pop();
-            return r;
-        }
+        ErAssert(index < m_records.size());
+        if (index < m_records.size())
+            return m_records[index];
 
         return {};
     }
 
-    IAtomicRecord* clone() const override
-    {
-        return new AtomicRecord{ m_records };
-    }
-
 private:
-    std::queue<RecordPtr> m_records;
+    std::vector<RecordPtr> m_records;
 };
 
 
@@ -138,9 +125,9 @@ ER_RTL_EXPORT RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t 
     return RecordPtr{ new Record(level, time, tid, std::move(message)) };
 }
 
-ER_RTL_EXPORT AtomicRecordPtr makeAtomicRecord()
+ER_RTL_EXPORT AtomicRecordPtr makeAtomicRecord(std::vector<RecordPtr>&& v)
 {
-    return AtomicRecordPtr{ new AtomicRecord() };
+    return AtomicRecordPtr{ new AtomicRecord(std::move(v)) };
 }
 
 } // namespace Er::Log {}

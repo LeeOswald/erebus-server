@@ -45,17 +45,21 @@ public:
         writeImpl(r);
     }
 
-    void write(AtomicRecordPtr&& a) override
+    void write(AtomicRecordPtr a) override
     {
-        if (a->empty())
+        auto count = a->size();
+        if (!count)
             return;
 
-        auto filtered = makeAtomicRecord();
+        std::vector<RecordPtr> filtered;
+        filtered.reserve(count);
 
         auto indent = m_threadData.data().indent;
 
-        while (auto r = a->pop())
+        for (decltype(count) i = 0; i < count; ++i)
         {
+            auto r = a->get(i);
+
             if (!r)
                 continue;
 
@@ -68,11 +72,11 @@ public:
             if (!m_component.empty() && r->component().empty())
                 r->setComponent(m_component);
 
-            filtered->push(r);
+            filtered.push_back(r);
         }
 
-        if (!filtered->empty())
-            writeImpl(std::move(filtered));
+        if (!filtered.empty())
+            writeImpl(makeAtomicRecord(std::move(filtered)));
     }
 
     void indent() noexcept override
@@ -100,11 +104,11 @@ public:
         ErAssert(td.block > 0);
         if (--td.block == 0)
         {
-            if (!td.atomic->empty())
+            if (!td.atomic.empty())
             {
-                doWrite(std::move(td.atomic));
-                auto a = makeAtomicRecord();
-                td.atomic.swap(a);
+                doWrite(makeAtomicRecord(std::move(td.atomic)));
+                
+                ErAssert(td.atomic.empty());
             }
         }
     }
@@ -126,14 +130,14 @@ public:
 
 protected:
     virtual void doWrite(RecordPtr r) = 0;
-    virtual void doWrite(AtomicRecordPtr&& a) = 0;
+    virtual void doWrite(AtomicRecordPtr a) = 0;
 
     void writeImpl(RecordPtr r)
     {
         auto& td = m_threadData.data();
         if (td.block > 0)
         {
-            td.atomic->push(r);
+            td.atomic.push_back(r);
         }
         else
         {
@@ -141,17 +145,18 @@ protected:
         }
     }
 
-    void writeImpl(AtomicRecordPtr&& a)
+    void writeImpl(AtomicRecordPtr a)
     {
         auto& td = m_threadData.data();
         if (td.block > 0)
         {
-            while (auto r = a->pop ())
-                td.atomic->push(r);
+            auto count = a->size();
+            for (decltype(count) i = 0; i < count; ++i)
+                td.atomic.push_back(a->get(i));
         }
         else
         {
-            doWrite(std::move(a));
+            doWrite(a);
         }
     }
 
@@ -160,7 +165,7 @@ protected:
     {
         unsigned indent = 0;
         unsigned block = 0;
-        AtomicRecordPtr atomic = makeAtomicRecord();
+        std::vector<RecordPtr> atomic;
     };
 
     using ThreadDataHolder = ThreadData<PerThread>;

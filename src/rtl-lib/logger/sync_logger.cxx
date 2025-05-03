@@ -27,9 +27,9 @@ public:
         m_tee->write(r);
     }
 
-    void doWrite(AtomicRecordPtr&& a) override
+    void doWrite(AtomicRecordPtr a) override
     {
-        m_tee->write(std::move(a));
+        m_tee->write(a);
     }
 
     void flush() override

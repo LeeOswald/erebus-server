@@ -43,12 +43,13 @@ public:
         m_pending.push(r);
     }
 
-    void write(AtomicRecordPtr&& a) override
+    void write(AtomicRecordPtr a) override
     {
         std::lock_guard l(m_mutex);
 
-        while (auto r = a->pop())
-            m_pending.push(r);
+        auto count = a->size();
+        for (decltype(count) i = 0; i < count; ++i)
+            m_pending.push(a->get(i));
     }
 
     RecordPtr pop()
