@@ -49,6 +49,15 @@ public:
     {
     }
     
+    void write(Er::Log::Level level, Er::Time::ValueType time, uintptr_t tid, const std::string& message) override
+    {
+        write(Er::Log::makeRecord({}, level, time, tid, message, 0));
+    }
+
+    void write(Er::Log::Level level, Er::Time::ValueType time, uintptr_t tid, std::string&& message) override
+    {
+        write(Er::Log::makeRecord({}, level, time, tid, std::move(message), 0));
+    }
 
     void write(Er::Log::RecordPtr r) override
     {

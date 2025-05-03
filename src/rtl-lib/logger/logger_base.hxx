@@ -27,6 +27,24 @@ public:
     {
     }
 
+    void write(Level level, Time::ValueType time, uintptr_t tid, const std::string& message) override
+    {
+        if (level < m_level)
+            return;
+
+        auto indent = m_threadData.data().indent;
+        write(makeRecord(m_component, level, time, tid, message, indent));
+    }
+
+    void write(Level level, Time::ValueType time, uintptr_t tid, std::string&& message) override
+    {
+        if (level < m_level)
+            return;
+
+        auto indent = m_threadData.data().indent;
+        write(makeRecord(m_component, level, time, tid, std::move(message), indent));
+    }
+
     void write(RecordPtr r) override
     {
         if (!r) [[unlikely]]
@@ -34,13 +52,6 @@ public:
 
         if (r->level() < m_level)
             return;
-
-        auto indent = m_threadData.data().indent;
-        if (indent > 0)
-            r->setIndent(r->indent() + indent);
-
-        if (!m_component.empty() && r->component().empty())
-            r->setComponent(m_component);
 
         writeImpl(r);
     }
@@ -54,8 +65,6 @@ public:
         std::vector<RecordPtr> filtered;
         filtered.reserve(count);
 
-        auto indent = m_threadData.data().indent;
-
         for (decltype(count) i = 0; i < count; ++i)
         {
             auto r = a->get(i);
@@ -65,12 +74,6 @@ public:
 
             if (r->level() < m_level)
                 continue;
-
-            if (indent > 0)
-                r->setIndent(r->indent() + indent);
-
-            if (!m_component.empty() && r->component().empty())
-                r->setComponent(m_component);
 
             filtered.push_back(r);
         }

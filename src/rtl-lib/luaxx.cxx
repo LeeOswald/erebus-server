@@ -68,17 +68,9 @@ int LuaState::print()
         
         lua_pop(m_l, 1);
     }
-
-    auto r = Er::Log::makeRecord(
-        Er::Log::Level::Info,
-        Er::Time::now(),
-        Er::System::CurrentThread::id(),
-        ss.str()
-    );
-
-    r->setComponent("lua");
-
-    m_log->write(r);
+    
+    static const std::string_view Component("lua");
+    m_log->write(Er::Log::makeRecord(Component, Er::Log::Level::Info, Er::Time::now(), Er::System::CurrentThread::id(), ss.str(), 0));
 
     return 0;
 }

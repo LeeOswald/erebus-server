@@ -16,11 +16,13 @@ struct Record
 public:
     ~Record() = default;
 
-    Record(Level level, Time::ValueType time, uintptr_t tid, auto&& message)
-        : m_level(level)
+    Record(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, auto&& message, std::uint32_t indent)
+        : m_component(component)
+        , m_level(level)
         , m_time(time)
         , m_tid(tid)
         , m_message(std::forward<decltype(message)>(message))
+        , m_indent(indent)
     {
     }
 
@@ -54,23 +56,13 @@ public:
         return m_indent;
     }
 
-    void setComponent(std::string_view component) noexcept override
-    {
-        m_component = component;
-    }
-
-    void setIndent(unsigned indent) noexcept override
-    {
-        m_indent = indent;
-    }
-
 private:
-    std::string_view m_component;
+    const std::string_view m_component;
     const Level m_level = Level::Info;
     const Time::ValueType m_time;
     const uintptr_t m_tid = 0;
     const std::string m_message;
-    std::uint32_t m_indent = 0;
+    const std::uint32_t m_indent = 0;
 };
 
 
@@ -115,14 +107,14 @@ private:
 } // namespace {}
 
 
-ER_RTL_EXPORT RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, const std::string& message)
+ER_RTL_EXPORT RecordPtr makeRecord(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, const std::string& message, std::uint32_t indent)
 {
-    return RecordPtr{ new Record(level, time, tid, message) };
+    return RecordPtr{ new Record(component, level, time, tid, message, indent) };
 }
 
-ER_RTL_EXPORT RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, std::string&& message)
+ER_RTL_EXPORT RecordPtr makeRecord(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, std::string&& message, std::uint32_t indent)
 {
-    return RecordPtr{ new Record(level, time, tid, std::move(message)) };
+    return RecordPtr{ new Record(component, level, time, tid, std::move(message), indent) };
 }
 
 ER_RTL_EXPORT AtomicRecordPtr makeAtomicRecord(std::vector<RecordPtr>&& v)

@@ -37,6 +37,16 @@ public:
     {
     }
 
+    void write(Level level, Time::ValueType time, uintptr_t tid, const std::string& message) override
+    {
+        write(makeRecord({}, level, time, tid, message, 0));
+    }
+
+    void write(Level level, Time::ValueType time, uintptr_t tid, std::string&& message) override
+    {
+        write(makeRecord({}, level, time, tid, std::move(message), 0));
+    }
+
     void write(RecordPtr r) override
     {
         std::lock_guard l(m_mutex);

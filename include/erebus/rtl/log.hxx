@@ -38,19 +38,14 @@ struct IRecord
     [[nodiscard]] virtual const std::string& message() const noexcept = 0;
     [[nodiscard]] virtual std::uint32_t indent() const noexcept = 0;
 
-    // use in the top level logger only
-    // since the structure may be shared between many consumers
-    virtual void setComponent(std::string_view component) noexcept = 0;
-    virtual void setIndent(std::uint32_t indent) noexcept = 0;
-
 protected:
     virtual ~IRecord() = default;
 };
 
 using RecordPtr = SharedPtr<IRecord>;
 
-ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, const std::string& message);
-ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(Level level, Time::ValueType time, uintptr_t tid, std::string&& message);
+ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, const std::string& message, std::uint32_t indent);
+ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, std::string&& message, std::uint32_t indent);
 
 
 struct IAtomicRecord
@@ -103,6 +98,8 @@ struct ISink
 {
     static constexpr std::string_view IID = "Er.Log.ISink";
 
+    virtual void write(Level level, Time::ValueType time, uintptr_t tid, const std::string& message) = 0;
+    virtual void write(Level level, Time::ValueType time, uintptr_t tid, std::string&& message) = 0;
     virtual void write(RecordPtr r) = 0;
     virtual void write(AtomicRecordPtr a) = 0;
     virtual void flush() = 0;
@@ -214,12 +211,12 @@ struct IndentScope
         
         if (m_enable)
         {
-            log->write(makeRecord(
+            log->write(
                 level,
                 Time::now(),
                 System::CurrentThread::id(),
                 Format::vformat(format, Format::make_format_args(args...))
-            ));
+            );
 
             log->indent();
         }
@@ -233,33 +230,33 @@ private:
 
 inline void writeln(ILogger* sink, Level level, const std::string& text)
 {
-    sink->write(makeRecord(
+    sink->write(
         level,
         Time::now(),
         System::CurrentThread::id(),
         text
-    ));
+    );
 }
 
 inline void writeln(ILogger* sink, Level level, std::string&& text)
 {
-    sink->write(makeRecord(
+    sink->write(
         level,
         Time::now(),
         System::CurrentThread::id(),
         std::move(text)
-    ));
+    );
 }
 
 template <class... Args>
 void write(ILogger* sink, Level level, std::string_view format, Args&&... args)
 {
-    sink->write(makeRecord(
+    sink->write(
         level, 
         Time::now(), 
         System::CurrentThread::id(), 
         Format::vformat(format, Format::make_format_args(args...))
-    ));
+    );
 }
 
 template <class... Args>
