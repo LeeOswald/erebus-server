@@ -213,6 +213,10 @@ bool ServerApplication::loadPlugins()
         if (args)
             pluginArgs = args->getMap();
 
+        static Er::PropertyMap const emptyArgs;
+        if (!pluginArgs)
+            pluginArgs = &emptyArgs;
+
 
         Er::Util::ExceptionLogger xcptHandler(Er::Log::get());
         try

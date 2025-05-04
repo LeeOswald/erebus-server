@@ -23,7 +23,17 @@ protected:
 using PluginPtr = ReferenceCountedPtr<IPlugin>;
 
 
-using CreatePluginFn = PluginPtr(*)(IUnknown* host, Log::LoggerPtr log, const PropertyMap& args);
+typedef PluginPtr(CreatePluginFn)(IUnknown* host, Log::LoggerPtr log, const PropertyMap& args);
+
+
+namespace PluginProps
+{
+
+constexpr std::string_view Name{ "name" };
+constexpr std::string_view Brief{ "brief" };
+constexpr std::string_view VersionString{ "version_string" };
+
+} // namespace PluginProps {}
 
 } // namespace Er::Server {}
 

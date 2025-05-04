@@ -5,6 +5,7 @@ add_library(${TARGET_NAME} SHARED)
 target_sources(${TARGET_NAME}
     PRIVATE
         linux/procfs.cxx
+        plugin.cxx
         process_props.cxx
         
     PUBLIC

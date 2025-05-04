@@ -41,7 +41,7 @@ private:
     {
         std::string path;
         boost::dll::shared_library dll;
-        Er::Server::CreatePluginFn entry = nullptr;
+        Er::Server::CreatePluginFn* entry = nullptr;
 
         ~PluginModule() = default;
 

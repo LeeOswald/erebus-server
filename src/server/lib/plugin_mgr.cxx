@@ -45,14 +45,16 @@ PluginPtr PluginMgr::loadPlugin(const std::string& path, const PropertyMap& args
         ErThrow(Er::format("No createPlugin symbol found in [{}]", path));
     }
 
-    info->entry = info->dll.get<Er::Server::CreatePluginFn>("createPlugin");
-    ErAssert(info->entry);
+    auto entry = info->dll.get<Er::Server::CreatePluginFn>("createPlugin");
+    ErAssert(entry);
 
-    auto handle = info->entry(this, m_log, args);
+    auto handle = entry(this, m_log, args);
     if (!handle)
     {
         ErThrow(Er::format("createPlugin of [{}] returned NULL", info->path));
     }
+
+    info->entry = entry;
 
     {
         std::lock_guard l(m_mutex);
