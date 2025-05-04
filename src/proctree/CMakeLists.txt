@@ -7,7 +7,10 @@ target_sources(${TARGET_NAME}
         linux/procfs.cxx
         plugin.cxx
         process_props.cxx
-        
+        proctree_service.cxx
+        protocol.cxx
+        trace.hxx
+
     PUBLIC
         FILE_SET headers TYPE HEADERS
             BASE_DIRS 
@@ -16,6 +19,7 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/proctree/linux/procfs.hxx
                 ${ER_INCLUDE_DIR}/proctree/process_props.hxx
                 ${ER_INCLUDE_DIR}/proctree/proctree.hxx
+                ${ER_INCLUDE_DIR}/proctree/protocol.hxx
 )
 
 
@@ -23,6 +27,7 @@ target_link_libraries(
     ${TARGET_NAME}
     PUBLIC
     erebus::rtl_lib
+    erebus::grpc_server_lib
     fmt::fmt
     ${Boost_LIBRARIES}
 )

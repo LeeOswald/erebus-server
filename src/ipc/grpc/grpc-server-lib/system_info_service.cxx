@@ -15,7 +15,7 @@ namespace Er::Ipc::Grpc
 namespace
 {
 
-class SystemInfoImpl
+class SystemInfoImpl final
     : public Util::ReferenceCountedBase<Util::ObjectBase<IService>>
     , public erebus::SystemInfo::CallbackService
 {
