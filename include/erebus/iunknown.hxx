@@ -136,13 +136,14 @@ public:
         return !!m_p;
     }
 
-    void reset() noexcept
+    void reset(_Iface* p = nullptr) noexcept
     {
         if (m_p)
         {
             m_p->release();
-            m_p = nullptr;
         }
+
+        m_p = p;
     }
 
     template <class _Type>

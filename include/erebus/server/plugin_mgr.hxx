@@ -2,7 +2,8 @@
 
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/property_bag.hxx>
-#include <erebus/server/iplugin.hxx>
+#include <erebus/rtl/util/unknown_base.hxx>
+#include <erebus/server/iplugin_host.hxx>
 #include <erebus/server/server_lib.hxx>
 
 #include <boost/dll.hpp>
@@ -16,43 +17,43 @@ namespace Er::Server
 {
 
 
-class  ER_SERVER_EXPORT PluginMgr final
-    : public boost::noncopyable
+class ER_SERVER_EXPORT PluginMgr final
+    : public Util::ReferenceCountedBase<Util::ObjectBase<IPluginHost>>
 {
+    using Base = Util::ReferenceCountedBase<Util::ObjectBase<IPluginHost>>;
+
 public:
     ~PluginMgr()
     {
         m_plugins.clear();
     }
     
-    explicit PluginMgr(IUnknown* owner, Log::LoggerPtr log)
-        : m_owner(owner)
-        , m_log(log)
+    explicit PluginMgr(Log::LoggerPtr log)
+        : m_log(log)
     {
     }
 
-    IPlugin* load(const std::string& path, const PropertyBag& args);
+    PluginPtr loadPlugin(const std::string& path, const PropertyMap& args) override;
 
 private:
-    struct PluginInfo
+    struct PluginModule
         : public boost::noncopyable
     {
         std::string path;
         boost::dll::shared_library dll;
-        IPlugin* ptr = nullptr;
+        Er::Server::CreatePluginFn entry = nullptr;
 
-        ~PluginInfo() = default;
+        ~PluginModule() = default;
 
-        explicit PluginInfo(const std::string& path) noexcept
+        explicit PluginModule(const std::string& path) noexcept
             : path(path)
         {
         }
     };
 
-    IUnknown* m_owner;
     Log::LoggerPtr const m_log;
     std::mutex m_mutex;
-    std::vector<std::unique_ptr<PluginInfo>> m_plugins;
+    std::vector<std::unique_ptr<PluginModule>> m_plugins;
 };
 
 } // namespace Er::Server {}

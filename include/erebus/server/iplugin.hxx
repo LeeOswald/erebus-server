@@ -4,24 +4,27 @@
 #include <erebus/rtl/property_bag.hxx>
 
 
-namespace Er
+namespace Er::Server
 {
 
 
 struct IPlugin
-    : public IUnknown
+    : public IReferenceCounted
 {
-    static constexpr std::string_view IID = "Er.IPlugin";
+    static constexpr std::string_view IID = "Er.Server.IPlugin";
 
-    virtual PropertyBag info() = 0;
+    virtual PropertyBag info() const = 0;
 
 protected:
     virtual ~IPlugin() = default;
 };
 
 
-using CreatePluginFn = IPlugin*(*)(IUnknown* owner, Log::LoggerPtr log, const PropertyBag& args);
+using PluginPtr = ReferenceCountedPtr<IPlugin>;
 
-} // namespace Er {}
+
+using CreatePluginFn = PluginPtr(*)(IUnknown* host, Log::LoggerPtr log, const PropertyMap& args);
+
+} // namespace Er::Server {}
 
 

@@ -1,13 +1,32 @@
-#include <erebus/rtl/util/exception_util.hxx>
+#include <erebus/rtl/exception.hxx>
 #include <erebus/server/plugin_mgr.hxx>
 
 
 namespace Er::Server
 {
 
-IPlugin* PluginMgr::load(const std::string& path, const PropertyBag& args)
+PluginPtr PluginMgr::loadPlugin(const std::string& path, const PropertyMap& args)
 {
-    auto info = std::make_unique<PluginInfo>(path);
+    // check if already loaded
+    {
+        std::unique_lock l(m_mutex);
+        for (auto& info : m_plugins)
+        {
+            if (info->path == path)
+            {
+                auto handle = info->entry(this, m_log, args);
+                if (!handle)
+                {
+                    ErThrow(Er::format("createPlugin of [{}] returned NULL", info->path));
+                }
+
+                return handle;
+            }
+        }
+    }
+
+    // try loading
+    auto info = std::make_unique<PluginModule>(path);
 
     boost::system::error_code ec;
     info->dll.load(path, boost::dll::load_mode::default_mode, ec);
@@ -18,7 +37,7 @@ IPlugin* PluginMgr::load(const std::string& path, const PropertyBag& args)
         if (err)
             Er::Log::writeln(m_log.get(), Log::Level::Error, err);
 #endif
-        ErThrow(Er::format("Failed to load plugin [{}]", path), Property{ ExceptionProps::DecodedError, ec.message() });
+        ErThrow(Er::format("Failed to load [{}]", path), Property{ ExceptionProps::DecodedError, ec.message() });
     }
 
     if (!info->dll.has("createPlugin"))
@@ -26,33 +45,13 @@ IPlugin* PluginMgr::load(const std::string& path, const PropertyBag& args)
         ErThrow(Er::format("No createPlugin symbol found in [{}]", path));
     }
 
-    auto entry = info->dll.get<Er::CreatePluginFn>("createPlugin");
-    ErAssert(entry);
+    info->entry = info->dll.get<Er::Server::CreatePluginFn>("createPlugin");
+    ErAssert(info->entry);
 
-    info->ptr = entry(m_owner, m_log, args);
-    if (!info->ptr)
+    auto handle = info->entry(this, m_log, args);
+    if (!handle)
     {
-        ErThrow(Er::format("createPlugin of [{}] returned NULL", path));
-    }
-
-    Util::ExceptionLogger xcptHandler(m_log.get());
-    try
-    {
-        auto props = info->ptr->info();
-
-        ErLogIndent2(m_log.get(), Log::Level::Info, "Loaded plugin {}", path);
-        for (auto& prop : props)
-        {
-            ErLogInfo2(m_log.get(), "{}: {}", prop.name(), prop.str());
-        }
-
-    }
-    catch (...)
-    {
-        dispatchException(std::current_exception(), xcptHandler);
-        ErLogError2(m_log.get(), "Failed to load plugin [{}]", path);
-
-        return {};
+        ErThrow(Er::format("createPlugin of [{}] returned NULL", info->path));
     }
 
     {
@@ -60,7 +59,7 @@ IPlugin* PluginMgr::load(const std::string& path, const PropertyBag& args)
         m_plugins.push_back(std::move(info));
     }
 
-    return info->ptr;
+    return handle;
 }
 
 } // namespace Er::Server {}

@@ -7,6 +7,7 @@
 #include <erebus/rtl/util/exception_util.hxx>
 #include <erebus/rtl/util/file.hxx>
 #include <erebus/rtl/util/pid_file.hxx>
+#include <erebus/server/plugin_mgr.hxx>
 
 #include <iostream>
 
@@ -171,6 +172,77 @@ bool ServerApplication::createServer()
     return true;
 }
 
+bool ServerApplication::loadPlugins()
+{
+    ErAssert(m_config);
+
+    auto prop = Er::findProperty(*m_config, "plugins", Er::Property::Type::Vector);
+    if (!prop)
+    {
+        Er::Log::warning(Er::Log::get(), "No plugin settings found");
+        return true; // run even w/out plugins
+    }
+
+    auto settings = *prop->getVector();
+    if (settings.empty())
+    {
+        Er::Log::warning(Er::Log::get(), "No plugins to load");
+        return true;
+    }
+
+    m_pluginMgr.reset(new Er::Server::PluginMgr(Er::Log::global()));
+
+    for (auto& entry : settings)
+    {
+        auto m = entry.getMap();
+        if (!m)
+        {
+            Er::Log::error(Er::Log::get(), "Plugin settings entry is not an object");
+            continue;
+        }
+
+        auto path = Er::findProperty(*m, "path", Er::Property::Type::String);
+        if (!path)
+        {
+            Er::Log::error(Er::Log::get(), "Plugin path expected");
+            continue;
+        }
+
+        const Er::PropertyMap* pluginArgs = nullptr;
+        auto args = Er::findProperty(*m, "args", Er::Property::Type::Map);
+        if (args)
+            pluginArgs = args->getMap();
+
+
+        Er::Util::ExceptionLogger xcptHandler(Er::Log::get());
+        try
+        {
+            auto plugin = m_pluginMgr->loadPlugin(*path->getString(), *pluginArgs);
+
+            auto props = plugin->info();
+
+            Er::Log::AtomicBlock a(Er::Log::get());
+
+            ErLogIndent2(Er::Log::get(), Er::Log::Level::Info, "Loaded plugin {}", *path->getString());
+            for (auto& prop : props)
+            {
+                ErLogInfo2(Er::Log::get(), "{}: {}", prop.name(), prop.str());
+            }
+
+            m_plugins.push_back(plugin);
+        }
+        catch (...)
+        {
+            Er::dispatchException(std::current_exception(), xcptHandler);
+
+            Er::Log::error(Er::Log::get(), "Failed to load plugin from [{}]", *path->getString());
+        }
+    }
+
+    return true;
+
+}
+
 bool ServerApplication::startServer()
 {
     Er::Util::ExceptionLogger xcptHandler(Er::Log::get());
@@ -197,6 +269,9 @@ int ServerApplication::run(int argc, char** argv)
         return EXIT_FAILURE;
 
     if (!createServer())
+        return EXIT_FAILURE;
+
+    if (!loadPlugins())
         return EXIT_FAILURE;
 
     if (!startServer())

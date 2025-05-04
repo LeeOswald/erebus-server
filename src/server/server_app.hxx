@@ -4,6 +4,9 @@
 #include <erebus/ipc/grpc/server/iserver.hxx>
 #include <erebus/rtl/program.hxx>
 #include <erebus/rtl/property_bag.hxx>
+#include <erebus/server/iplugin_host.hxx>
+
+#include <vector>
 
 
 class ServerApplication final
@@ -22,6 +25,7 @@ private:
     bool createPidfile();
     bool createServer();
     bool startServer();
+    bool loadPlugins();
 
     int run(int argc, char** argv) override;
 
@@ -29,4 +33,6 @@ private:
     Er::Property m_configRoot;
     Er::PropertyMap const* m_config = nullptr;
     Er::Ipc::Grpc::ServerPtr m_grpcServer;
+    Er::Server::PluginHostPtr m_pluginMgr;
+    std::vector<Er::Server::PluginPtr> m_plugins;
 };

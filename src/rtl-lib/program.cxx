@@ -22,6 +22,9 @@
 #include <filesystem>
 #include <iostream>
 
+#if ER_WINDOWS
+    #include <WerApi.h>
+#endif
 
 
 namespace Er
@@ -148,6 +151,9 @@ void Program::globalStartup(int argc, char** argv) noexcept
 #if ER_WINDOWS
     ::SetConsoleCP(CP_UTF8);
     ::SetConsoleOutputCP(CP_UTF8);
+
+    ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+    ::WerSetFlags(WER_FAULT_REPORTING_NO_UI);
 #endif
 
     std::string locale("en_US.UTF-8");
