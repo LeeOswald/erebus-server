@@ -168,7 +168,7 @@ struct ISink
 
     virtual void write(RecordPtr r) = 0;
     virtual void write(AtomicRecordPtr a) = 0;
-    virtual void flush() = 0;
+    virtual bool flush(std::chrono::milliseconds timeout) = 0;
 
 protected:
     virtual ~ISink() = default;
@@ -225,7 +225,7 @@ protected:
 
 using LoggerPtr = ReferenceCountedPtr<ILogger>;
 
-ER_RTL_EXPORT LoggerPtr makeLogger(std::string_view component = {}, std::chrono::milliseconds threshold = {});
+ER_RTL_EXPORT LoggerPtr makeLogger(std::string_view component = {}, std::chrono::milliseconds threshold = {}, std::int32_t maxQueueSize = 8192);
 ER_RTL_EXPORT LoggerPtr makeSyncLogger(std::string_view component = {});
 
 

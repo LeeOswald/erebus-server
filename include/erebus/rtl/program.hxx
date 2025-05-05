@@ -132,7 +132,7 @@ private:
             else
             {
                 Log::fatal(Log::get(), "Signal handler failed: {}", ec.to_string());
-                Log::get()->flush();
+                Log::get()->flush(std::chrono::milliseconds(5000));
 
                 std::abort();
             }

@@ -41,9 +41,10 @@ public:
             write(r);
     }
 
-    void flush() override
+    bool flush(std::chrono::milliseconds) override
     {
         m_stream.flush();
+        return true;
     }
 
 private:

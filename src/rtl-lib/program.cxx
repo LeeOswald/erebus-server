@@ -74,7 +74,7 @@ void Program::terminateHandler()
     ss << boost::stacktrace::stacktrace();
 
     Log::fatal(Er::Log::get(), "std::terminate() called from\n{}", ss.str());
-    Er::Log::get()->flush();
+    Er::Log::get()->flush(std::chrono::milliseconds(5000));
 
     std::abort();
 }
@@ -94,7 +94,7 @@ void Program::staticPrintAssertFn(std::string_view message)
 void Program::printAssertFn(std::string_view message)
 {
     Log::writeln(Er::Log::get(), Log::Level::Fatal, std::string(message));
-    Er::Log::get()->flush();
+    Er::Log::get()->flush(std::chrono::milliseconds(5000));
 }
 
 bool Program::setLocale(const char* locale)
@@ -375,7 +375,7 @@ int Program::exec(int argc, char** argv)
         dispatchException(std::current_exception(), xcptLogger);
     }
 
-    Er::Log::get()->flush();
+    Er::Log::get()->flush(std::chrono::milliseconds(5000));
 
     globalShutdown();
 

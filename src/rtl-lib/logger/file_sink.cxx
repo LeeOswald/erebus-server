@@ -134,7 +134,7 @@ public:
             write(r);
     }
 
-    void flush() override
+    bool flush(std::chrono::milliseconds) override
     {
         std::unique_lock l(m_mutex);
 #if ER_POSIX
@@ -142,6 +142,7 @@ public:
 #elif ER_WINDOWS
         ::FlushFileBuffers(m_file);
 #endif
+        return true;
     }
 
 private:

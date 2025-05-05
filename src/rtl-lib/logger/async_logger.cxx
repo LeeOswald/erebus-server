@@ -24,21 +24,31 @@ class AsyncLogger
 public:
     ~AsyncLogger() = default;
 
-    AsyncLogger(std::string_view component, std::chrono::milliseconds threshold)
+    AsyncLogger(std::string_view component, std::chrono::milliseconds threshold, std::int32_t maxQueueSize)
         : Base(component, makeTee(ThreadSafe::Yes))
         , m_threshold(threshold)
+        , MaxQueueSize(maxQueueSize)
         , m_worker([this](std::stop_token stop) { run(stop); })
     {
     }
     
     void doWrite(RecordPtr r) override
     {
+        std::int32_t discarded = 0;
         bool thresholdReached = false;
         {
-            std::unique_lock l(m_mutexQueue);
-            m_queue.emplace(r);
+            std::unique_lock l(m_mutexWQueue);
 
-            if (m_queue.size() == 1)
+            // avoid queue overflow
+            while (m_wQueue.size() + 1 > MaxQueueSize)
+            {
+                m_wQueue.pop();
+                ++discarded;
+            }
+
+            m_wQueue.push(r);
+
+            if (m_wQueue.size() == 1)
             {
                 // remember the oldest record's timestamp
                 m_last = std::chrono::steady_clock::now(); 
@@ -54,38 +64,73 @@ public:
             }
         }
 
+        {
+            std::unique_lock l(m_mutexRQueue);
+            ++m_pendingRecords;
+            m_pendingRecords -= discarded;
+        }
+
         if (thresholdReached)
-            m_queueNotEmpty.notify_one();
+            m_wQueueNotEmpty.notify_one();
     }
 
     void doWrite(AtomicRecordPtr a) override
     {
+        std::int32_t discarded = 0;
         {
-            std::unique_lock l(m_mutexQueue);
+            std::unique_lock l(m_mutexWQueue);
 
-            m_queue.emplace(a);
+            // avoid queue overflow
+            while (m_wQueue.size() + 1 > MaxQueueSize)
+            {
+                ++discarded;
+                m_wQueue.pop();
+            }
+
+            m_wQueue.push(a);
         }
 
-        m_queueNotEmpty.notify_one();
+        {
+            std::unique_lock l(m_mutexRQueue);
+            ++m_pendingRecords;
+            m_pendingRecords -= discarded;
+        }
+
+        // ignore m_threshold when we see an atomic record
+        m_wQueueNotEmpty.notify_one();
     }
     
-    void flush() override
+    bool flush(std::chrono::milliseconds timeout) override
     {
+        std::int32_t discarded = 0;
         {
-            std::unique_lock l(m_mutexQueue);
+            std::unique_lock l(m_mutexWQueue);
+
+            // avoid queue overflow
+            while (m_wQueue.size() + 1 > MaxQueueSize)
+            {
+                ++discarded;
+                m_wQueue.pop();
+            }
 
             // issue an empty record to force flushing all sinks
-            m_queue.emplace(RecordPtr{});
+            m_wQueue.push(RecordPtr{});
         }
 
-        m_queueNotEmpty.notify_one();
+        {
+            std::unique_lock l(m_mutexRQueue);
+            m_pendingRecords += 1;
+            m_pendingRecords -= discarded;
+        }
+
+        m_wQueueNotEmpty.notify_one();
 
         // wait until really flushed
         {
             auto stop = m_worker.get_stop_token();
             
-            std::unique_lock l(m_mutexQueue);
-            m_queueEmpty.wait(l, stop, [this]() { return m_queue.empty(); });
+            std::unique_lock l(m_mutexRQueue);
+            return m_queuesEmpty.wait_for(l, stop, timeout, [this]() { return m_pendingRecords == 0; });
         }
     }
     
@@ -99,15 +144,10 @@ private:
 
         do
         {
-            RecordQueue q;
-
             {
-                std::unique_lock lw(m_mutexQueue);
+                std::unique_lock lw(m_mutexWQueue);
                 
-                if (m_queue.empty())
-                    m_queueEmpty.notify_all();
-
-                if (!m_queueNotEmpty.wait_for(lw, stop, m_threshold, [this]() { return !m_queue.empty(); }))
+                if (!m_wQueueNotEmpty.wait_for(lw, stop, m_threshold, [this]() { return !m_wQueue.empty(); }))
                 {
                     if (stop.stop_requested())
                         break;
@@ -115,30 +155,32 @@ private:
                     continue;
                 }
                 
-                if (m_queue.empty())
-                    m_queueEmpty.notify_all();
-
-                q.swap(m_queue);
+                // swap queues
+                {
+                    std::unique_lock lr(m_mutexRQueue);
+                    m_rQueue.swap(m_wQueue);
+                }
 
                 // clean the oldest record's timestamp
                 m_last = std::chrono::time_point<std::chrono::steady_clock>::min();
             }
 
-            // queue is now unlocked
-            if (!q.empty())
-            {
-                sendToSinks(q, stop);
-            }
+            // wQueue is now unlocked - writers can go on
+            sendToSinks(stop);
 
         } while (!stop.stop_requested());
     }
 
-    void sendToSinks(RecordQueue& records, std::stop_token stop)
+    void sendToSinks(std::stop_token stop)
     {
-        while (!records.empty())
+        std::unique_lock lr(m_mutexRQueue);
+
+        auto count = m_rQueue.size();
+
+        while (!m_rQueue.empty())
         {
-            auto any = std::move(records.front());
-            records.pop();
+            auto any = std::move(m_rQueue.front());
+            m_rQueue.pop();
 
             auto r = std::get_if<RecordPtr>(&any);
 
@@ -146,7 +188,7 @@ private:
             {
                 auto record = *r;
                 if (!record)
-                    m_tee->flush(); // empty record means forced flush
+                    m_tee->flush(std::chrono::milliseconds(0)); // empty record means forced flush
                 else
                     m_tee->write(record);
             }
@@ -160,13 +202,27 @@ private:
             if (stop.stop_requested())
                 break;
         }
+
+        m_pendingRecords -= count;
+        if (m_pendingRecords == 0)
+        {
+            lr.unlock();
+            m_queuesEmpty.notify_all();
+        }
     }
     
-    std::chrono::milliseconds m_threshold;
-    std::mutex m_mutexQueue;
-    std::condition_variable_any m_queueNotEmpty;
-    std::condition_variable_any m_queueEmpty;
-    RecordQueue m_queue;
+    const std::chrono::milliseconds m_threshold;
+    const std::int32_t MaxQueueSize;
+    
+    std::mutex m_mutexWQueue;
+    std::condition_variable_any m_wQueueNotEmpty;
+    RecordQueue m_wQueue;
+
+    std::mutex m_mutexRQueue;
+    std::int32_t m_pendingRecords = 0; 
+    std::condition_variable_any m_queuesEmpty;
+    RecordQueue m_rQueue;
+    
     std::chrono::time_point<std::chrono::steady_clock> m_last = std::chrono::time_point<std::chrono::steady_clock>::min();
     std::jthread m_worker;
 };
@@ -175,9 +231,9 @@ private:
 } // namespace {}
 
 
-ER_RTL_EXPORT LoggerPtr makeLogger(std::string_view component, std::chrono::milliseconds threshold)
+ER_RTL_EXPORT LoggerPtr makeLogger(std::string_view component, std::chrono::milliseconds threshold, std::int32_t maxQueueSize)
 {
-    return LoggerPtr(new AsyncLogger(component, threshold));
+    return LoggerPtr(new AsyncLogger(component, threshold, maxQueueSize));
 }
 
 } // namespace Er::Log {}

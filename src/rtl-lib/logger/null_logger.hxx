@@ -88,8 +88,9 @@ public:
         return r;
     }
 
-    void flush() override
+    bool flush(std::chrono::milliseconds) override
     {
+        return true;
     }
 
     void addSink(std::string_view name, SinkPtr sink) override

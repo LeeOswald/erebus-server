@@ -32,9 +32,9 @@ public:
         m_tee->write(a);
     }
 
-    void flush() override
+    bool flush(std::chrono::milliseconds timeout) override
     {
-        m_tee->flush();
+        return m_tee->flush(timeout);
     }
 };
 

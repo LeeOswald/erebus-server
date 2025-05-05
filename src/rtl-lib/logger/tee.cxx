@@ -45,13 +45,16 @@ public:
         }
     }
 
-    void flush() override
+    bool flush(std::chrono::milliseconds timeout) override
     {
+        bool ok = false;
         std::shared_lock l(m_mutex);
         for (auto& sink : m_sinks)
         {
-            sink.second->flush();
+            ok = ok || sink.second->flush(timeout); // at least one succeeded
         }
+
+        return ok;
     }
 
     void addSink(std::string_view name, SinkPtr sink) override

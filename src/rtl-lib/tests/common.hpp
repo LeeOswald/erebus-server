@@ -64,9 +64,10 @@ public:
             m_out << r->message() << "\n";
     }
 
-    void flush() override
+    bool flush(std::chrono::milliseconds) override
     {
         m_out.flush();
+        return true;
     }
 
     std::string grab()
