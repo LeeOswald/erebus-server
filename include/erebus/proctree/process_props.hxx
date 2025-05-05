@@ -36,6 +36,8 @@ struct ProcessProperties
     
     static_assert(_FieldCount == FieldCount);
 
+    using Mask = FieldSet;
+
     std::uint64_t pid;
     std::uint64_t ppid;
     std::uint64_t pgrp;

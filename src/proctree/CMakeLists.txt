@@ -4,10 +4,13 @@ add_library(${TARGET_NAME} SHARED)
 
 target_sources(${TARGET_NAME}
     PRIVATE
+        linux/process_props_collector.cxx
+        linux/process_props_collector.hxx
         linux/procfs.cxx
         plugin.cxx
         process_props.cxx
         proctree_service.cxx
+        proctree_service.hxx
         protocol.cxx
         trace.hxx
 

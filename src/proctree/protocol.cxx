@@ -62,4 +62,26 @@ void marshalProcessProperties(const ProcessProperties& source, erebus::ProcessPr
         dest.set_env(source.env.raw);
 }
 
+ProcessProperties::Mask unmarshalProcessPropertyMask(const erebus::ProcessPropsRequest& req)
+{
+    ProcessProperties::Mask mask;
+    
+    auto count = req.fields_size();
+    if (count == 0)
+    {
+        // if no fields explicitly specified, assume 'everything'
+        mask.set();
+    }
+    else
+    {
+        for (decltype(count) i = 0; i < count; ++i)
+        {
+            auto f = req.fields()[i];
+            mask.set(f);
+        }
+    }
+
+    return mask;
+}
+
 } // namespace Er::ProcessTree {}

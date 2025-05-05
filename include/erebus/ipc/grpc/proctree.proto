@@ -8,7 +8,6 @@ option optimize_for = LITE_RUNTIME;
 
 
 service ProcessList {
-
     rpc GetProcessProps(ProcessPropsRequest) returns(ProcessPropsReply) {}
     rpc ListProcesses(ProcessPropsRequest) returns(stream ProcessPropsReply) {}
 }
@@ -35,13 +34,27 @@ message ProcessProps {
     optional string userName = 18;
 }
 
+
+message RequestHeader {
+    optional uint64 context_id = 1;
+    optional uint64 timestamp = 2;
+}
+
+message ReplyHeader {
+    optional uint64 context_id = 1;
+    optional uint64 timestamp = 2;
+    optional uint64 duration = 3;
+    optional Exception exception = 4;
+}
+
 message ProcessPropsRequest {
-    optional uint64 pid = 1;
-    repeated uint32 fields = 2;
+    RequestHeader header = 1;
+    uint64 pid = 2;
+    repeated uint32 fields = 3;
 }
 
 message ProcessPropsReply {
-    optional Exception exception = 1;
+    ReplyHeader header = 1;
     optional ProcessProps props = 2;
 }
 

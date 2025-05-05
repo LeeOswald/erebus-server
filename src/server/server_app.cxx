@@ -190,7 +190,7 @@ bool ServerApplication::loadPlugins()
         return true;
     }
 
-    m_pluginMgr.reset(new Er::Server::PluginMgr(Er::Log::global()));
+    m_pluginMgr.reset(new Er::Server::PluginMgr(Er::Log::global(), m_grpcServer.get()));
 
     for (auto& entry : settings)
     {
@@ -291,6 +291,8 @@ int ServerApplication::run(int argc, char** argv)
     }
 
     ErLogInfo("Server shutting down");
+
+    m_plugins.clear();
 
     m_grpcServer.reset();
 

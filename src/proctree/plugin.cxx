@@ -3,6 +3,8 @@
 #include <erebus/server/iplugin_host.hxx>
 
 #include "erebus-version.h"
+#include "proctree_service.hxx"
+
 
 namespace Er::ProcessTree::Private
 {
@@ -27,6 +29,8 @@ public:
         m_log->addSink("main", log.cast<Log::ISink>());
 
         ErLogDebug2(m_log.get(), "{}.ProctreePlugin::ProctreePlugin()", Er::Format::ptr(this));
+
+        startServices();
     }
 
     Er::PropertyBag info() const override
@@ -39,6 +43,14 @@ public:
     }
 
 private:
+    void startServices()
+    {
+        auto grpcServer = m_host->server();
+
+        auto proctreeSvc = createProcessListService(m_log.get());
+        grpcServer->addService(proctreeSvc);
+    }
+
     Server::PluginHostPtr m_host;
     Er::Log::LoggerPtr m_log;
     Er::PropertyMap const m_args;

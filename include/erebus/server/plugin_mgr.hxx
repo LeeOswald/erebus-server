@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/property_bag.hxx>
 #include <erebus/rtl/util/unknown_base.hxx>
@@ -28,12 +29,18 @@ public:
         m_plugins.clear();
     }
     
-    explicit PluginMgr(Log::LoggerPtr log)
+    explicit PluginMgr(Log::LoggerPtr log, Ipc::Grpc::IServer* server)
         : m_log(log)
+        , m_server(server)
     {
     }
 
     PluginPtr loadPlugin(const std::string& path, const PropertyMap& args) override;
+
+    Ipc::Grpc::IServer* server() noexcept override
+    {
+        return m_server;
+    }
 
 private:
     struct PluginModule
@@ -52,6 +59,7 @@ private:
     };
 
     Log::LoggerPtr const m_log;
+    Ipc::Grpc::IServer* const m_server;
     std::mutex m_mutex;
     std::vector<std::unique_ptr<PluginModule>> m_plugins;
 };

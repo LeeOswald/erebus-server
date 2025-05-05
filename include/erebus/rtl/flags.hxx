@@ -78,6 +78,12 @@ public:
         return *this;
     }
 
+    FlagsPack& set() noexcept
+    {
+        m_bits.set();
+        return *this;
+    }
+
     FlagsPack& reset(Flag f) noexcept
     {
         ErAssert(f < Size);
