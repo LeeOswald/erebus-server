@@ -60,13 +60,10 @@ public:
 
     void doWrite(AtomicRecordPtr a) override
     {
-        if (!a->size())
-            return;
-
         {
             std::unique_lock l(m_mutexQueue);
 
-            m_queue.emplace(std::move(a));
+            m_queue.emplace(a);
         }
 
         m_queueNotEmpty.notify_one();

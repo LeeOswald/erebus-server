@@ -26,43 +26,111 @@ enum class Level
 };
 
 
-struct IRecord
-    : public IReferenceCounted
+struct ER_RTL_EXPORT Record final
 {
-    static constexpr std::string_view IID = "Er.Log.IRecord";
+private:
+    struct PrivateTag {};
 
-    [[nodiscard]] virtual Level level() const noexcept = 0;
-    [[nodiscard]] virtual Time::ValueType time() const noexcept = 0;
-    [[nodiscard]] virtual std::uintptr_t tid() const noexcept = 0;
-    [[nodiscard]] virtual std::string_view component() const noexcept = 0;
-    [[nodiscard]] virtual const std::string& message() const noexcept = 0;
-    [[nodiscard]] virtual std::uint32_t indent() const noexcept = 0;
+public:
+    ~Record() = default;
 
-protected:
-    virtual ~IRecord() = default;
+    Record(PrivateTag, Level level, Time::ValueType time, uintptr_t tid, auto&& message)
+        : m_component()
+        , m_level(level)
+        , m_time(time)
+        , m_tid(tid)
+        , m_message(std::forward<decltype(message)>(message))
+        , m_indent(0)
+    {
+    }
+
+    static [[nodiscard]] std::shared_ptr<Record> make(Level level, Time::ValueType time, uintptr_t tid, auto&& message)
+    {
+        return std::make_shared<Record>(PrivateTag{}, level, time, tid, std::forward<decltype(message)>(message));
+    }
+
+    [[nodiscard]] Level level() const noexcept
+    {
+        return m_level;
+    }
+
+    [[nodiscard]] Time::ValueType time() const noexcept
+    {
+        return m_time;
+    }
+
+    [[nodiscard]] std::uintptr_t tid() const noexcept
+    {
+        return m_tid;
+    }
+
+    [[nodiscard]] std::string_view component() const noexcept
+    {
+        return m_component;
+    }
+
+    [[nodiscard]] const std::string& message() const noexcept
+    {
+        return m_message;
+    }
+
+    [[nodiscard]] std::uint32_t indent() const noexcept
+    {
+        return m_indent;
+    }
+
+    // use the following methods in top logger only 
+    // (i.e. while there's no other owners referencing this record)
+    void setComponent(std::string_view component) noexcept
+    {
+        m_component = component;
+    }
+
+    void setIndent(std::uint32_t indent) noexcept
+    {
+        m_indent = indent;
+    }
+
+private:
+    std::string_view m_component;
+    const Level m_level;
+    const Time::ValueType m_time;
+    const uintptr_t m_tid;
+    const std::string m_message;
+    std::uint32_t m_indent;
 };
 
-using RecordPtr = ReferenceCountedPtr<IRecord>;
-
-ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, const std::string& message, std::uint32_t indent);
-ER_RTL_EXPORT [[nodiscard]] RecordPtr makeRecord(std::string_view component, Level level, Time::ValueType time, uintptr_t tid, std::string&& message, std::uint32_t indent);
+using RecordPtr = std::shared_ptr<Record>;
 
 
-struct IAtomicRecord
-    : public IReferenceCounted
+struct ER_RTL_EXPORT AtomicRecord final
 {
-    static constexpr std::string_view IID = "Er.Log.IAtomicRecord";
+private:
+    struct PrivateTag {};
 
-    virtual std::size_t size() const noexcept = 0;
-    virtual RecordPtr get(std::size_t index) const noexcept = 0;
+public:
+    ~AtomicRecord() = default;
 
-protected:
-    virtual ~IAtomicRecord() = default;
+    explicit AtomicRecord(PrivateTag, std::vector<RecordPtr>&& records) noexcept
+        : m_records(std::move(records))
+    {
+    }
+
+    static [[nodiscard]] std::shared_ptr<AtomicRecord> make(std::vector<RecordPtr>&& records) noexcept
+    {
+        return std::make_shared<AtomicRecord>(PrivateTag{}, std::move(records));
+    }
+
+    const auto& get() const noexcept
+    {
+        return m_records;
+    }
+
+private:
+    std::vector<RecordPtr> m_records;
 };
 
-using AtomicRecordPtr = ReferenceCountedPtr<IAtomicRecord>;
-
-ER_RTL_EXPORT [[nodiscard]] AtomicRecordPtr makeAtomicRecord(std::vector<RecordPtr>&& v);
+using AtomicRecordPtr = std::shared_ptr<AtomicRecord>;
 
 
 struct IFormatter
@@ -70,7 +138,7 @@ struct IFormatter
 {
     static constexpr std::string_view IID = "Er.Log.IFormatter";
 
-    [[nodiscard]] virtual std::string format(const IRecord* r) const = 0;
+    [[nodiscard]] virtual std::string format(const Record* r) const = 0;
 
 protected:
     virtual ~IFormatter() = default;
@@ -84,7 +152,7 @@ struct IFilter
 {
     static constexpr std::string_view IID = "Er.Log.IFilter";
 
-    [[nodiscard]] virtual bool filter(const IRecord* r) const noexcept = 0;
+    [[nodiscard]] virtual bool filter(const Record* r) const noexcept = 0;
 
 protected:
     virtual ~IFilter() = default;
@@ -98,8 +166,6 @@ struct ISink
 {
     static constexpr std::string_view IID = "Er.Log.ISink";
 
-    virtual void write(Level level, Time::ValueType time, uintptr_t tid, const std::string& message) = 0;
-    virtual void write(Level level, Time::ValueType time, uintptr_t tid, std::string&& message) = 0;
     virtual void write(RecordPtr r) = 0;
     virtual void write(AtomicRecordPtr a) = 0;
     virtual void flush() = 0;
@@ -230,33 +296,33 @@ private:
 
 inline void writeln(ILogger* sink, Level level, const std::string& text)
 {
-    sink->write(
+    sink->write(Record::make(
         level,
         Time::now(),
         System::CurrentThread::id(),
         text
-    );
+    ));
 }
 
 inline void writeln(ILogger* sink, Level level, std::string&& text)
 {
-    sink->write(
+    sink->write(Record::make(
         level,
         Time::now(),
         System::CurrentThread::id(),
         std::move(text)
-    );
+    ));
 }
 
 template <class... Args>
 void write(ILogger* sink, Level level, std::string_view format, Args&&... args)
 {
-    sink->write(
+    sink->write(Record::make(
         level, 
         Time::now(), 
         System::CurrentThread::id(), 
         Format::vformat(format, Format::make_format_args(args...))
-    );
+    ));
 }
 
 template <class... Args>

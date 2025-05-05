@@ -13,7 +13,6 @@ target_sources(${TARGET_NAME}
         logger/file_sink.cxx
         logger/null_logger.hxx
         logger/ostream_sink.cxx
-        logger/record.cxx
         logger/simple_filter.cxx
         logger/simple_formatter.cxx
         logger/sink_base.hxx

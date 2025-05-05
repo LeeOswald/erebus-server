@@ -9,16 +9,34 @@ namespace Er::Log::Private
 {
 
 class NullLogger
-    : public Util::ReferenceCountedBase<Util::ObjectBase<ILogger>>
+    : public ILogger
 {
-    using Base = Util::ReferenceCountedBase<Util::ObjectBase<ILogger>>;
-
 public:
     ~NullLogger() = default;
 
     NullLogger() noexcept
-        : Base()
     {
+    }
+
+    void addRef() noexcept override
+    {
+    }
+
+    void release() noexcept override
+    {
+    }
+
+    IUnknown* queryInterface(std::string_view iid) noexcept
+    {
+        if ((IID == IUnknown::IID) ||
+            (IID == ISink::IID) ||
+            (IID == ITee::IID) ||
+            (IID == ILogger::IID))
+        {
+            return this;
+        }
+
+        return nullptr;
     }
 
     void indent() noexcept override
@@ -37,39 +55,35 @@ public:
     {
     }
 
-    void write(Level level, Time::ValueType time, uintptr_t tid, const std::string& message) override
-    {
-        write(makeRecord({}, level, time, tid, message, 0));
-    }
-
-    void write(Level level, Time::ValueType time, uintptr_t tid, std::string&& message) override
-    {
-        write(makeRecord({}, level, time, tid, std::move(message), 0));
-    }
-
     void write(RecordPtr r) override
     {
-        std::lock_guard l(m_mutex);
-        m_pending.push(r);
+        auto& s = state();
+
+        std::lock_guard l(s.mutex);
+        s.pending.push(r);
     }
 
     void write(AtomicRecordPtr a) override
     {
-        std::lock_guard l(m_mutex);
+        auto& s = state();
 
-        auto count = a->size();
-        for (decltype(count) i = 0; i < count; ++i)
-            m_pending.push(a->get(i));
+        std::lock_guard l(s.mutex);
+
+        auto& recs = a->get();
+        for (auto& r: recs)
+            s.pending.push(r);
     }
 
     RecordPtr pop()
     {
-        std::lock_guard l(m_mutex);
-        if (m_pending.empty())
+        auto& s = state();
+
+        std::lock_guard l(s.mutex);
+        if (s.pending.empty())
             return {};
 
-        auto r = m_pending.front();
-        m_pending.pop();
+        auto r = s.pending.front();
+        s.pending.pop();
 
         return r;
     }
@@ -88,12 +102,21 @@ public:
 
     SinkPtr findSink(std::string_view name) override
     {
-        return SinkPtr();
+        return SinkPtr{};
     }
 
 private:
-    std::mutex m_mutex;
-    std::queue<RecordPtr> m_pending;
+    struct State
+    {
+        std::mutex mutex;
+        std::queue<RecordPtr> pending;
+    };
+
+    static State& state()
+    {
+        static State s;
+        return s;
+    }
 };
 
 

@@ -19,7 +19,7 @@ public:
         , m_filter(std::move(filter))
     {}
 
-    bool filter(const IRecord* r) const 
+    bool filter(const Record* r) const 
     {
         if (m_filter && !m_filter->filter(r))
             return false;
@@ -27,7 +27,7 @@ public:
         return true;
     }
 
-    std::string format(const IRecord* r) const
+    std::string format(const Record* r) const
     {
         return m_formatter->format(r);
     }

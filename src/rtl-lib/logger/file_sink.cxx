@@ -73,16 +73,6 @@ public:
         makeLog();
     }
 
-    void write(Level level, Time::ValueType time, uintptr_t tid, const std::string& message) override
-    {
-        write(makeRecord({}, level, time, tid, message, 0));
-    }
-
-    void write(Level level, Time::ValueType time, uintptr_t tid, std::string&& message) override
-    {
-        write(makeRecord({}, level, time, tid, std::move(message), 0));
-    }
-
     void write(RecordPtr r) override
     {
         if (!filter(r.get()))
@@ -139,9 +129,9 @@ public:
 
     void write(AtomicRecordPtr a) override
     {
-        auto count = a->size();
-        for (decltype(count) i = 0; i < count; ++i)
-            write(a->get(i));
+        auto& recs = a->get();
+        for (auto& r : recs)
+            write(r);
     }
 
     void flush() override

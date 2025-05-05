@@ -3,19 +3,12 @@
 
 
 static Er::Log::LoggerPtr s_global;
-
-static Er::Log::ILogger* null()
-{
-    static Er::Log::LoggerPtr _null = Er::Log::LoggerPtr{ new Er::Log::Private::NullLogger() };
-    return _null.get();
-}
-
-static Er::Log::ILogger* s_null = null();
+static Er::Log::Private::NullLogger s_null;
 
 namespace Er::Log
 {
 
-ER_RTL_EXPORT ILogger* g_global = null();
+ER_RTL_EXPORT ILogger* g_global = &s_null;
 ER_RTL_EXPORT bool g_verbose = false;
 
 
@@ -32,15 +25,18 @@ namespace Erp::Log
 
 ER_RTL_EXPORT void setGlobal(Er::Log::LoggerPtr log) noexcept
 {
-    bool drainPending = (Er::Log::g_global == s_null) && !!log;
+    bool drainPending = (Er::Log::g_global == &s_null) && !!log;
 
     s_global = log;
-    Er::Log::g_global = log ? log.get() : s_null;
+    if (log)
+        Er::Log::g_global = log.get();
+    else 
+        Er::Log::g_global = &s_null;
 
     // drain what has been captured by NullLogger
     if (drainPending)
     {
-        auto _null = static_cast<Er::Log::Private::NullLogger*>(s_null);
+        auto _null = static_cast<Er::Log::Private::NullLogger*>(&s_null);
 
         auto r = _null->pop();
         while (r)

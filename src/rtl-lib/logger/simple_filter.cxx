@@ -22,7 +22,7 @@ public:
     {
     }
 
-    bool filter(const IRecord* r) const noexcept override
+    bool filter(const Record* r) const noexcept override
     {
         auto l = r->level();
         return (l >= m_minLevel) && (l <= m_maxLevel);

@@ -70,7 +70,9 @@ int LuaState::print()
     }
     
     static const std::string_view Component("lua");
-    m_log->write(Er::Log::makeRecord(Component, Er::Log::Level::Info, Er::Time::now(), Er::System::CurrentThread::id(), ss.str(), 0));
+    auto r = Log::Record::make(Er::Log::Level::Info, Er::Time::now(), Er::System::CurrentThread::id(), ss.str());
+    r->setComponent(Component);
+    m_log->write(r);
 
     return 0;
 }

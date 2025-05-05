@@ -18,7 +18,7 @@ class SimpleFormatterImpl
 public:
     ~SimpleFormatterImpl() = default;
 
-    std::string format(const IRecord* r) const override
+    std::string format(const Record* r) const override
     {
         std::tm time{};
         std::uint32_t msec = 0;

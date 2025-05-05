@@ -27,24 +27,6 @@ public:
     {
     }
 
-    void write(Level level, Time::ValueType time, uintptr_t tid, const std::string& message) override
-    {
-        if (level < m_level)
-            return;
-
-        auto indent = m_threadData.data().indent;
-        write(makeRecord(m_component, level, time, tid, message, indent));
-    }
-
-    void write(Level level, Time::ValueType time, uintptr_t tid, std::string&& message) override
-    {
-        if (level < m_level)
-            return;
-
-        auto indent = m_threadData.data().indent;
-        write(makeRecord(m_component, level, time, tid, std::move(message), indent));
-    }
-
     void write(RecordPtr r) override
     {
         if (!r) [[unlikely]]
@@ -53,33 +35,43 @@ public:
         if (r->level() < m_level)
             return;
 
+        auto& td = m_threadData.data();
+        r->setIndent(td.indent);
+
+        if (r->component().empty() && !m_component.empty())
+            r->setComponent(m_component);
+
         writeImpl(r);
     }
 
     void write(AtomicRecordPtr a) override
     {
-        auto count = a->size();
-        if (!count)
+        auto& records = a->get();
+        if (records.empty())
             return;
 
         std::vector<RecordPtr> filtered;
-        filtered.reserve(count);
+        filtered.reserve(records.size());
 
-        for (decltype(count) i = 0; i < count; ++i)
+        for (auto& r: records)
         {
-            auto r = a->get(i);
-
             if (!r)
                 continue;
 
             if (r->level() < m_level)
                 continue;
 
+            auto& td = m_threadData.data();
+            r->setIndent(td.indent);
+
+            if (r->component().empty() && !m_component.empty())
+                r->setComponent(m_component);
+
             filtered.push_back(r);
         }
 
         if (!filtered.empty())
-            writeImpl(makeAtomicRecord(std::move(filtered)));
+            writeImpl(AtomicRecord::make(std::move(filtered)));
     }
 
     void indent() noexcept override
@@ -109,7 +101,7 @@ public:
         {
             if (!td.atomic.empty())
             {
-                doWrite(makeAtomicRecord(std::move(td.atomic)));
+                doWrite(AtomicRecord::make(std::move(td.atomic)));
                 
                 ErAssert(td.atomic.empty());
             }
@@ -153,9 +145,9 @@ protected:
         auto& td = m_threadData.data();
         if (td.block > 0)
         {
-            auto count = a->size();
-            for (decltype(count) i = 0; i < count; ++i)
-                td.atomic.push_back(a->get(i));
+            auto& recs = a->get();
+            for (auto& r: recs)
+                td.atomic.push_back(r);
         }
         else
         {
