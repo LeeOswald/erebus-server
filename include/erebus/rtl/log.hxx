@@ -44,7 +44,7 @@ public:
     {
     }
 
-    static [[nodiscard]] std::shared_ptr<Record> make(Level level, Time::ValueType time, uintptr_t tid, auto&& message)
+    [[nodiscard]] static std::shared_ptr<Record> make(Level level, Time::ValueType time, uintptr_t tid, auto&& message)
     {
         return std::make_shared<Record>(PrivateTag{}, level, time, tid, std::forward<decltype(message)>(message));
     }
@@ -116,7 +116,7 @@ public:
     {
     }
 
-    static [[nodiscard]] std::shared_ptr<AtomicRecord> make(std::vector<RecordPtr>&& records) noexcept
+    [[nodiscard]] static std::shared_ptr<AtomicRecord> make(std::vector<RecordPtr>&& records) noexcept
     {
         return std::make_shared<AtomicRecord>(PrivateTag{}, std::move(records));
     }
