@@ -56,8 +56,9 @@ public:
             write(r);
     }
 
-    void flush() override
+    bool flush(std::chrono::milliseconds) override
     {
+        return true;
     }
 };
 
