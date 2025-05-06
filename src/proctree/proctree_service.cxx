@@ -5,6 +5,7 @@
 #include <erebus/rtl/util/exception_util.hxx>
 #include <erebus/rtl/util/unknown_base.hxx>
 
+#include "linux/process_props_collector.hxx"
 #include "proctree_service.hxx"
 #include "trace.hxx"
 
@@ -29,6 +30,7 @@ public:
 
     ProctreeService(Log::ILogger* log)
         : m_log(log)
+        , m_procFs()
     {
         ProctreeTraceIndent2(m_log, "{}.ProctreeService::ProctreeService", Er::Format::ptr(this));
     }
@@ -66,6 +68,8 @@ public:
         auto pid = request->pid();
         auto mask = unmarshalProcessPropertyMask(*request);
 
+        auto props_ = Linux::collectProcessProps(m_procFs, pid, mask, m_log);
+
         return reactor.release();
     }
 
@@ -102,6 +106,7 @@ private:
     };
 
     Log::ILogger* m_log;
+    Linux::ProcFs m_procFs;
 };
 
 

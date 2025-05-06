@@ -3,7 +3,7 @@
 #include <erebus/rtl/system/user.hxx>
 
 
-namespace Er::ProcessTree
+namespace Er::ProcessTree::Linux
 {
 
 namespace
@@ -138,4 +138,4 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
     return { std::move(out) };
 }
 
-} // namespace Er::ProcessTree {}
+} // namespace Er::ProcessTree::Linux {}
