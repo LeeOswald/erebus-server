@@ -49,63 +49,63 @@ TEST(PropertyBag, visit)
 
         bool operator()(const Property& prop, const Bool& v)
         {
-            bool_visited = (prop.name() == Property::Name("test/bool")) && (v == True);
+            bool_visited = (prop.name() == Property::NameType("test/bool")) && (v == True);
             addProperty(bag, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::int32_t& v)
         {
-            int32_visited = (prop.name() == Property::Name("test/int32")) && (v == -12);
+            int32_visited = (prop.name() == Property::NameType("test/int32")) && (v == -12);
             addProperty(bag, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::uint32_t& v)
         {
-            uint32_visited = (prop.name() == Property::Name("test/uint32")) && (v == 13);
+            uint32_visited = (prop.name() == Property::NameType("test/uint32")) && (v == 13);
             addProperty(bag, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::int64_t& v)
         {
-            int64_visited = (prop.name() == Property::Name("test/int64")) && (v == -125);
+            int64_visited = (prop.name() == Property::NameType("test/int64")) && (v == -125);
             addProperty(bag, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::uint64_t& v)
         {
-            uint64_visited = (prop.name() == Property::Name("test/uint64")) && (v == 555);
+            uint64_visited = (prop.name() == Property::NameType("test/uint64")) && (v == 555);
             addProperty(bag, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const double& v)
         {
-            double_visited = (prop.name() == Property::Name("test/double")) && (v == -0.1);
+            double_visited = (prop.name() == Property::NameType("test/double")) && (v == -0.1);
             addProperty(bag, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::string& v)
         {
-            string_visited = (prop.name() == Property::Name("test/string")) && (v == std::string("xa xa xa"));
+            string_visited = (prop.name() == Property::NameType("test/string")) && (v == std::string("xa xa xa"));
             addProperty(bag, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const Binary& v)
         {
-            binary_visited = (prop.name() == Property::Name("test/binary")) && (v == Binary(std::string("xo xo xo")));
+            binary_visited = (prop.name() == Property::NameType("test/binary")) && (v == Binary(std::string("xo xo xo")));
             addProperty(bag, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const PropertyMap& v)
         {
-            map_visited = (prop.name() == Property::Name("test/map"));
+            map_visited = (prop.name() == Property::NameType("test/map"));
 
             for (auto& p : v)
             {
@@ -118,7 +118,7 @@ TEST(PropertyBag, visit)
 
         bool operator()(const Property& prop, const PropertyVector& v)
         {
-            vector_visited = (prop.name() == Property::Name("test/vector"));
+            vector_visited = (prop.name() == Property::NameType("test/vector"));
 
             addProperty(bag, { prop.name(), v });
             return true;

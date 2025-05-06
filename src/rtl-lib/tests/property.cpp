@@ -154,7 +154,7 @@ TEST(Property, Construction)
         Property v1("test/bool", True);
         Property v2("test/int32", std::int32_t(-12));
 
-        Property::Map m;
+        Property::MapType m;
         addProperty(m, v);
         addProperty(m, v1);
         addProperty(m, v2);
@@ -183,7 +183,7 @@ TEST(Property, Construction)
         EXPECT_EQ(*it->second.getInt32(), -12);
 
         // from Map&&
-        Property::Map m2(m);
+        Property::MapType m2(m);
         
         Property p2("test/map", std::move(m2));
 
@@ -210,8 +210,8 @@ TEST(Property, Construction)
     }
 
     ErLogInfo("sizeof(Property) = {}", sizeof(Property));
-    ErLogInfo("sizeof(Property::Map) = {}", sizeof(Property::Map));
-    ErLogInfo("sizeof(Property::Vector) = {}", sizeof(Property::Vector));
+    ErLogInfo("sizeof(Property::Map) = {}", sizeof(Property::MapType));
+    ErLogInfo("sizeof(Property::Vector) = {}", sizeof(Property::VectorType));
     ErLogInfo("sizeof(std::string) = {}", sizeof(std::string));
 }
 
@@ -371,7 +371,7 @@ TEST(Property, Copying)
         Property v1("test/bool", True);
         Property v2("test/int32", std::int32_t(-12));
 
-        Property::Map m;
+        Property::MapType m;
         addProperty(m, v);
         addProperty(m, v1);
         addProperty(m, v2);
@@ -510,7 +510,7 @@ TEST(Property, Moving)
         Property v1("test/bool", True);
         Property v2("test/int32", std::int32_t(-12));
 
-        Property::Map m;
+        Property::MapType m;
         addProperty(m, v);
         addProperty(m, v1);
         addProperty(m, v2);
@@ -650,8 +650,8 @@ TEST(Property, Equality)
     EXPECT_FALSE(vBinary1 == vBinary3);
         
 
-    Property::Map m1;
-    Property::Map m2;
+    Property::MapType m1;
+    Property::MapType m2;
     {
         {
             Property v;
@@ -687,13 +687,13 @@ TEST(Property, str)
 {
     Property top;
     {
-        Property::Map m0;
+        Property::MapType m0;
         m0.insert({ "top/empty", Property() });
         m0.insert({ "top/int32", Property("top/int32", std::int32_t(-12)) });
         m0.insert({ "top/uint32", Property("top/uint32", std::int32_t(121)) });
 
         {
-            Property::Map m1;
+            Property::MapType m1;
             m1.insert({ "level1/empty", Property() });
             m1.insert({ "level1/double", Property("level1/double", -0.2) });
             m1.insert({ "level1/string", Property("level1/string", std::string("xa xa xa")) });
@@ -757,63 +757,63 @@ TEST(Property, visit)
 
         bool operator()(const Property& prop, const Bool& v)
         {
-            bool_visited = (prop.name() == Property::Name("test/bool")) && (v == True);
+            bool_visited = (prop.name() == Property::NameType("test/bool")) && (v == True);
             addProperty(m, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::int32_t& v)
         {
-            int32_visited = (prop.name() == Property::Name("test/int32")) && (v == -12);
+            int32_visited = (prop.name() == Property::NameType("test/int32")) && (v == -12);
             addProperty(m, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::uint32_t& v)
         {
-            uint32_visited = (prop.name() == Property::Name("test/uint32")) && (v == 13);
+            uint32_visited = (prop.name() == Property::NameType("test/uint32")) && (v == 13);
             addProperty(m, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::int64_t& v)
         {
-            int64_visited = (prop.name() == Property::Name("test/int64")) && (v == -125);
+            int64_visited = (prop.name() == Property::NameType("test/int64")) && (v == -125);
             addProperty(m, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::uint64_t& v)
         {
-            uint64_visited = (prop.name() == Property::Name("test/uint64")) && (v == 555);
+            uint64_visited = (prop.name() == Property::NameType("test/uint64")) && (v == 555);
             addProperty(m, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const double& v)
         {
-            double_visited = (prop.name() == Property::Name("test/double")) && (v == -0.1);
+            double_visited = (prop.name() == Property::NameType("test/double")) && (v == -0.1);
             addProperty(m, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const std::string& v)
         {
-            string_visited = (prop.name() == Property::Name("test/string")) && (v == std::string("xa xa xa"));
+            string_visited = (prop.name() == Property::NameType("test/string")) && (v == std::string("xa xa xa"));
             addProperty(m, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const Binary& v)
         {
-            binary_visited = (prop.name() == Property::Name("test/binary")) && (v == Binary(std::string("xo xo xo")));
+            binary_visited = (prop.name() == Property::NameType("test/binary")) && (v == Binary(std::string("xo xo xo")));
             addProperty(m, { prop.name(), v });
             return true;
         }
 
         bool operator()(const Property& prop, const PropertyMap& v)
         {
-            map_visited = (prop.name() == Property::Name("test/map"));
+            map_visited = (prop.name() == Property::NameType("test/map"));
 
             for (auto& p : v)
             {
@@ -826,7 +826,7 @@ TEST(Property, visit)
 
         bool operator()(const Property& prop, const PropertyVector& v)
         {
-            vector_visited = (prop.name() == Property::Name("test/vector"));
+            vector_visited = (prop.name() == Property::NameType("test/vector"));
 
             addProperty(m, { prop.name(), v });
             return true;

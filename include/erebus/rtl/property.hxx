@@ -15,13 +15,13 @@
 namespace Er
 {
 
-class ER_RTL_EXPORT Property final
+class ER_RTL_EXPORT Property
 {
 public:
     static constexpr std::size_t MaxNameLength = 32;
-    using Name = boost::static_string<MaxNameLength>;
-    using Map = std::map<Name, Property, std::less<>>;
-    using Vector = std::vector<Property>;
+    using NameType = boost::static_string<MaxNameLength>;
+    using MapType = std::map<NameType, Property, std::less<>>;
+    using VectorType = std::vector<Property>;
 
     enum class Type: std::uint32_t
     {
@@ -138,28 +138,28 @@ public:
     {
     }
 
-    constexpr Property(auto&& name, const Map& v, SemanticCode semantics = Semantics::Default) noexcept
+    constexpr Property(auto&& name, const MapType& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
         , m_semantics(semantics)
     {
     }
 
-    constexpr Property(auto&& name, Map&& v, SemanticCode semantics = Semantics::Default) noexcept
+    constexpr Property(auto&& name, MapType&& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(std::move(v))
         , m_semantics(semantics)
     {
     }
 
-    constexpr Property(auto&& name, const Vector& v, SemanticCode semantics = Semantics::Default) noexcept
+    constexpr Property(auto&& name, const VectorType& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(v)
         , m_semantics(semantics)
     {
     }
 
-    constexpr Property(auto&& name, Vector&& v, SemanticCode semantics = Semantics::Default) noexcept
+    constexpr Property(auto&& name, VectorType&& v, SemanticCode semantics = Semantics::Default) noexcept
         : m_name(std::forward<decltype(name)>(name))
         , m_storage(std::move(v))
         , m_semantics(semantics)
@@ -215,7 +215,7 @@ public:
         return type() == Type::Empty;
     }
 
-    [[nodiscard]] constexpr const Name& name() const noexcept
+    [[nodiscard]] constexpr const NameType& name() const noexcept
     {
         return m_name;
     }
@@ -305,24 +305,24 @@ public:
         return std::get_if<Binary>(&m_storage);
     }
 
-    [[nodiscard]] constexpr Map const* getMap() const noexcept
+    [[nodiscard]] constexpr MapType const* getMap() const noexcept
     {
-        return std::get_if<Map>(&m_storage);
+        return std::get_if<MapType>(&m_storage);
     }
 
-    [[nodiscard]] constexpr Map* getMap() noexcept
+    [[nodiscard]] constexpr MapType* getMap() noexcept
     {
-        return std::get_if<Map>(&m_storage);
+        return std::get_if<MapType>(&m_storage);
     }
 
-    [[nodiscard]] constexpr Vector const* getVector() const noexcept
+    [[nodiscard]] constexpr VectorType const* getVector() const noexcept
     {
-        return std::get_if<Vector>(&m_storage);
+        return std::get_if<VectorType>(&m_storage);
     }
 
-    [[nodiscard]] constexpr Vector* getVector() noexcept
+    [[nodiscard]] constexpr VectorType* getVector() noexcept
     {
-        return std::get_if<Vector>(&m_storage);
+        return std::get_if<VectorType>(&m_storage);
     }
 
     [[nodiscard]] bool operator==(const Property& other) const noexcept
@@ -346,8 +346,8 @@ private:
         double,
         std::string,
         Binary,
-        Map,
-        Vector
+        MapType,
+        VectorType
     >;
 
     bool _eq(const Property& other) const noexcept;
@@ -376,10 +376,15 @@ private:
     std::string _strMap() const;
     std::string _strVector() const;
 
-    Name m_name;
+    NameType m_name;
     Storage m_storage;
     SemanticCode m_semantics;
 };
+
+
+template <class _Prop>
+concept IsProperty = std::derived_from<_Prop, Property>;
+
 
 
 template <typename T>
@@ -442,14 +447,14 @@ template <>
 }
 
 template <>
-[[nodiscard]] inline const Property::Map& get<>(const Property& v) noexcept
+[[nodiscard]] inline const Property::MapType& get<>(const Property& v) noexcept
 {
     ErAssert(v.type() == Property::Type::Map);
     return *v.getMap();
 }
 
 template <>
-[[nodiscard]] inline const Property::Vector& get<>(const Property& v) noexcept
+[[nodiscard]] inline const Property::VectorType& get<>(const Property& v) noexcept
 {
     ErAssert(v.type() == Property::Type::Vector);
     return *v.getVector();

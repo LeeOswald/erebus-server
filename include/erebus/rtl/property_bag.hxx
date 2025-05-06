@@ -6,10 +6,10 @@
 namespace Er
 {
 
-using PropertyBag = Property::Vector;
+using PropertyBag = Property::VectorType;
 
-using PropertyVector = Property::Vector;
-using PropertyMap = Property::Map;
+using PropertyVector = Property::VectorType;
+using PropertyMap = Property::MapType;
 
 
 inline bool visit(const Property& prop, auto&& visitor)
