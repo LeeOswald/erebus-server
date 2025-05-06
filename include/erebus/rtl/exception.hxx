@@ -21,13 +21,18 @@ class ER_RTL_EXPORT Exception
     : public std::exception
 {
 public:
-    explicit Exception(std::source_location location, auto&& message) noexcept
-        : m_context(std::make_shared<Context>(location, std::forward<decltype(message)>(message)))
+    template <typename _Message>
+        requires std::is_constructible_v<std::string, _Message>
+    explicit Exception(std::source_location location, _Message&& message) noexcept
+        : m_context(std::make_shared<Context>(location, std::forward<_Message>(message)))
     {
     }
 
-    explicit Exception(std::source_location location, auto&& message, auto&& prop, auto&&... props) noexcept
-        : m_context(std::make_shared<Context>(location, std::forward<decltype(message)>(message), std::forward<decltype(prop)>(prop), std::forward<decltype(props)>(props)...))
+    template <typename _Message, typename _Property, typename... _Properties>
+        requires std::is_constructible_v<std::string, _Message> &&
+            std::is_constructible_v<Property, _Property> && (std::is_constructible_v<Property, _Properties> && ...)
+    explicit Exception(std::source_location location, _Message&& message, _Property&& prop, _Properties&&... props) noexcept
+        : m_context(std::make_shared<Context>(location, std::forward<_Message>(message), std::forward<_Property>(prop), std::forward<_Properties>(props)...))
     {
     }
 

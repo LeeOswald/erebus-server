@@ -6,6 +6,7 @@ target_sources(${TARGET_NAME}
     PRIVATE
         assert.cxx
         debug.cxx
+        error.cxx
         exception.cxx
         logger/logger.cxx
         logger/logger_base.hxx
@@ -54,6 +55,7 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/rtl/debug.hxx
                 ${ER_INCLUDE_DIR}/rtl/empty.hxx
                 ${ER_INCLUDE_DIR}/rtl/condition.hxx
+                ${ER_INCLUDE_DIR}/rtl/error.hxx
                 ${ER_INCLUDE_DIR}/rtl/exception.hxx
                 ${ER_INCLUDE_DIR}/rtl/flags.hxx
                 ${ER_INCLUDE_DIR}/rtl/format.hxx
