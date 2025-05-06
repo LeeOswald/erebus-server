@@ -4,20 +4,14 @@
 
 #include <pwd.h>
 
+#include <boost/scope_exit.hpp>
+
+
 namespace Er::System
 {
 
 namespace User
 {
-
-ER_RTL_EXPORT std::string name(uid_t id)
-{
-    struct passwd* pw = ::getpwuid(id);
-    if (pw)
-        return std::string(pw->pw_name);
-
-    return std::string();
-}
 
 ER_RTL_EXPORT std::optional<Info> lookup(uid_t uid)
 {
@@ -70,6 +64,10 @@ ER_RTL_EXPORT std::vector<Info> enumerate()
     buffer.resize(size_t(required));
         
     ::setpwent();
+    BOOST_SCOPE_EXIT(void) {
+        ::endpwent();
+    } BOOST_SCOPE_EXIT_END
+
     while (true) 
     {
         struct passwd pwd = {};

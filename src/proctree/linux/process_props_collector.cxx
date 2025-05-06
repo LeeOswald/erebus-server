@@ -1,8 +1,31 @@
 #include "process_props_collector.hxx"
 
+#include <erebus/rtl/system/user.hxx>
+
 
 namespace Er::ProcessTree
 {
+
+namespace
+{
+
+std::string lookupUserName(std::uint64_t uid) 
+{
+    try
+    {
+        auto info = System::User::lookup(uid);
+        if (info)
+            return info->name;
+    }
+    catch (...)
+    {
+    }
+
+    return {};
+}
+
+} // namespace {}
+
 
 std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs, Pid pid, const ProcessProperties::Mask& mask, Log::ILogger* log)
 {
@@ -79,6 +102,38 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
 
     if (mask[ProcessProperties::State])
         ErSet(ProcessProperties, State, out, state, stat.state); 
+
+    if (mask[ProcessProperties::UserName])
+    {
+        auto user = lookupUserName(stat.ruid);
+        if (!user.empty())
+            ErSet(ProcessProperties, UserName, out, userName, std::move(user));
+    }
+
+    if (mask[ProcessProperties::ThreadCount])
+        ErSet(ProcessProperties, ThreadCount, out, threadCount, stat.num_threads);
+
+    if (mask[ProcessProperties::STime])
+        ErSet(ProcessProperties, STime, out, sTime, Linux::ProcFs::timeFromTicks(stat.stime));
+
+    if (mask[ProcessProperties::UTime])
+        ErSet(ProcessProperties, UTime, out, uTime, Linux::ProcFs::timeFromTicks(stat.utime));
+
+    if (mask[ProcessProperties::Tty])
+        ErSet(ProcessProperties, Tty, out, tty, stat.tty_nr);
+        
+    if (mask[ProcessProperties::Env])
+    {
+        auto env_ = procFs.readEnv(pid);
+        if (!env_.has_value())
+        {
+            ErLogWarning2(log, "Could not read /proc/{}/env: {}", pid, env_.error());
+        }
+        else
+        {
+            ErSet(ProcessProperties, Env, out, env, std::move(env_.value()));
+        }
+    }
 
     return { std::move(out) };
 }
