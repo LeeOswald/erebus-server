@@ -30,9 +30,14 @@ ER_RTL_EXPORT std::string win32ErrorToString(DWORD r, HMODULE module)
         s = std::wstring(buffer.get(), cch);
 
         // Windows appends ".\r\n" to error messages for some reason
-        while (s.size() && (s[s.size() - 1] == L'\n' || s[s.size() - 1] == L'\r' || s[s.size() - 1] == L'.'))
+        while (s.size() && (s[s.size() - 1] == L'\n' || s[s.size() - 1] == L'\r'))
         {
-            s.erase(s.size() - 1);
+            s.resize(s.size() - 1);
+        }
+
+        if (s.size() && (s[s.size() - 1] == L'.'))
+        {
+            s.resize(s.size() - 1);
         }
     }
 
