@@ -34,7 +34,7 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
     auto stat_ = procFs.readStat(pid);
     if (!stat_.has_value())
     {
-        ErLogWarning2(log, "Could not read /proc/{}/stat: {}", pid, stat_.error());
+        ErLogWarning2(log, "Could not read /proc/{}/stat: {}", pid, stat_.error().message());
         return std::unexpected(stat_.error());
     }
 
@@ -62,7 +62,7 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
         auto comm_ = procFs.readComm(pid);
         if (!comm_.has_value())
         {
-            ErLogWarning2(log, "Could not read /proc/{}/comm: {}", pid, comm_.error());
+            ErLogWarning2(log, "Could not read /proc/{}/comm: {}", pid, comm_.error().message());
             ErSet(ProcessProperties, Comm, out, comm, std::move(stat.comm));
         }
         else
@@ -76,7 +76,7 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
         auto cmd_ = procFs.readCmdLine(pid);
         if (!cmd_.has_value())
         {
-            ErLogWarning2(log, "Could not read /proc/{}/cmdline: {}", pid, cmd_.error());
+            ErLogWarning2(log, "Could not read /proc/{}/cmdline: {}", pid, cmd_.error().message());
         }
         else
         {
@@ -89,7 +89,7 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
         auto exe_ = procFs.readExePath(pid);
         if (!exe_.has_value())
         {
-            ErLogWarning2(log, "Could not read /proc/{}/exe: {}", pid, exe_.error());
+            ErLogWarning2(log, "Could not read /proc/{}/exe: {}", pid, exe_.error().message());
         }
         else
         {
@@ -127,7 +127,7 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
         auto env_ = procFs.readEnv(pid);
         if (!env_.has_value())
         {
-            ErLogWarning2(log, "Could not read /proc/{}/env: {}", pid, env_.error());
+            ErLogWarning2(log, "Could not read /proc/{}/env: {}", pid, env_.error().message());
         }
         else
         {

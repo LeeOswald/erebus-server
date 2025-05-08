@@ -1,7 +1,8 @@
+
+#include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/system/process.hxx>
 
 #if ER_POSIX
-    #include <erebus/rtl/system/posix_error.hxx>
     #include <cstring>
     #include <fcntl.h>
     #include <signal.h>
@@ -31,7 +32,7 @@ ER_RTL_EXPORT std::string exe()
     exe.resize(size + 1, '\0');
     auto r = ::readlink("/proc/self/exe", exe.data(), size); // readlink does not append '\0'
     if (r < 0)
-        ErThrowPosixError("Failed to read /proc/self/exe", int(errno));
+        throw Exception(std::source_location::current(), Error(int(errno), PosixError), ExceptionProperties::ObjectName("/proc/self/exe"));
 
     exe.resize(std::strlen(exe.c_str())); // cut extra '\0'
 

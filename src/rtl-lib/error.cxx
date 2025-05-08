@@ -130,7 +130,7 @@ struct GenericErrorCategory
 
 static GenericErrorCategory g_GenericError;
 
-ER_RTL_EXPORT IErrorCategory const* const GenericError = &g_GenericError;
+IErrorCategory const* const GenericError = &g_GenericError;
 
 
 struct PosixErrorCategory
@@ -173,7 +173,7 @@ struct PosixErrorCategory
 
 static PosixErrorCategory g_PosixError;
 
-ER_RTL_EXPORT IErrorCategory const* const PosixError = &g_PosixError;
+IErrorCategory const* const PosixError = &g_PosixError;
 
 
 #if ER_WINDOWS
@@ -244,7 +244,7 @@ private:
 
 static Win32ErrorCategory g_Win32Error;
 
-ER_RTL_EXPORT IErrorCategory const* const Win32Error = &g_Win32Error;
+IErrorCategory const* const Win32Error = &g_Win32Error;
 
 #endif // ER_WINDOWS
 
@@ -261,7 +261,6 @@ struct CxxErrorCategory
         : m_cat(cat)
         , m_name(name)
     {
-        registerErrorCategory(m_name, this);
     }
 
     bool local() const noexcept override
@@ -285,6 +284,22 @@ private:
 };
 
 
+ER_RTL_EXPORT IErrorCategory const* registerCxxErrorCategory(std::error_category const& cat)
+{
+    auto name = CxxErrorCategory::makeName(cat);
+
+    auto& reg = registry();
+
+    std::unique_lock l(reg.mutex);
+    auto it = reg.map.find(name);
+    if (it != reg.map.end())
+        return it->second;
+
+    [[maybe_unused]] auto res = reg.map.insert({ name, new CxxErrorCategory(cat, name) });
+    ErAssert(res.second);
+
+    return res.first->second;
+}
 
 Error::Error(std::error_code ec)
 {
@@ -304,14 +319,7 @@ Error::Error(std::error_code ec)
     }
 #endif
 
-    auto name = CxxErrorCategory::makeName(ec.category());
-    auto cat = lookupErrorCategory(name);
-    if (!cat)
-    {
-        auto ptr = new CxxErrorCategory(ec.category(), name);
-        registerErrorCategory(name, ptr);
-        cat = ptr;
-    }
+    auto cat = registerCxxErrorCategory(ec.category());
 
     m_code = ec.value();
     m_category = cat;

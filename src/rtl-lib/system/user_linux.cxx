@@ -1,6 +1,5 @@
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/system/user.hxx>
-#include <erebus/rtl/system/posix_error.hxx>
 
 #include <pwd.h>
 
@@ -29,7 +28,7 @@ ER_RTL_EXPORT std::optional<Info> lookup(uid_t uid)
         if (result == 0)
             return std::nullopt;
 
-        ErThrowPosixError(Er::format("Could not lookup user {}", uid), result);
+        throw Exception(std::source_location::current(), Error(result, PosixError));
     }
 
     Info info;
@@ -46,8 +45,9 @@ ER_RTL_EXPORT std::optional<Info> lookup(uid_t uid)
 ER_RTL_EXPORT Info current()
 {
     auto info = lookup(::getuid());
+    ErAssert(info);
     if (!info)
-        ErThrow(Er::format("Could not lookup user {}", ::getuid()));
+        return {};
 
     return *info;
 }
@@ -78,7 +78,7 @@ ER_RTL_EXPORT std::vector<Info> enumerate()
             if ((result == 0) || (result == ENOENT))
                 break;
 
-            ErThrowPosixError("Failed to enumerate users", result);
+            throw Exception(std::source_location::current(), Error(result, PosixError));
         }
         
         Info info;

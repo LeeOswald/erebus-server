@@ -1,6 +1,7 @@
 #pragma once
 
 #include <erebus/proctree/proctree.hxx>
+#include <erebus/rtl/error.hxx>
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/multi_string.hxx>
 #include <erebus/rtl/time.hxx>
@@ -90,12 +91,12 @@ public:
 
     static Time timeFromTicks(std::uint64_t ticks) noexcept;
 
-    std::expected<std::vector<Pid>, int> enumeratePids();
-    std::expected<Stat, int> readStat(Pid pid);
-    std::expected<std::string, int> readComm(Pid pid);
-    std::expected<std::string, int> readExePath(Pid pid);
-    std::expected<MultiStringZ, int> readCmdLine(Pid pid);
-    std::expected<MultiStringZ, int> readEnv(Pid pid);
+    std::expected<std::vector<Pid>, Error> enumeratePids();
+    std::expected<Stat, Error> readStat(Pid pid);
+    std::expected<std::string, Error> readComm(Pid pid);
+    std::expected<std::string, Error> readExePath(Pid pid);
+    std::expected<MultiStringZ, Error> readCmdLine(Pid pid);
+    std::expected<MultiStringZ, Error> readEnv(Pid pid);
 
 private:
     std::uint64_t getBootTimeImpl();

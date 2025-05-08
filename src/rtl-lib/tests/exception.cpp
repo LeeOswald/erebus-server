@@ -38,7 +38,7 @@ TEST(Exception, construction)
         EXPECT_EQ(prop3.nameStr(), std::string_view("Int32"));
         EXPECT_EQ(*prop3.getInt32(), -123);
 
-        ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64"> prop4(0x8000000010002000ULL);
+        ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64"> prop4(std::uint64_t{0x8000000010002000ULL});
 
         EXPECT_EQ(prop4.type(), Property::Type::UInt64);
         EXPECT_EQ(prop4.nameStr(), std::string_view("UInt64"));
@@ -79,7 +79,7 @@ TEST(Exception, construction)
         ExceptionProperty<std::string, Property::Type::String, "String"> prop1("Test string 1");
         ExceptionProperty<std::string, Property::Type::String, "String"> prop2("Test string 2");
         ExceptionProperty<std::int32_t, Property::Type::Int32, "Int32"> prop3(-123);
-        ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64"> prop4(0x8000000010002000ULL);
+        ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64"> prop4(std::uint64_t{0x8000000010002000ULL});
 
         Exception e(std::source_location::current(), Error{ ENOENT, PosixError });
         e.add(prop1).add(std::move(prop2)).add(prop3).add(std::move(prop4));
@@ -123,7 +123,7 @@ TEST(Exception, copymove)
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 1"),
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 2"),
             ExceptionProperty<std::int32_t, Property::Type::Int32, "Int32">(-123),
-            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(0x8000000010002000ULL)
+            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(std::uint64_t{0x8000000010002000ULL})
         );
 
         Exception e2(e1);
@@ -181,7 +181,7 @@ TEST(Exception, copymove)
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 1"),
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 2"),
             ExceptionProperty<std::int32_t, Property::Type::Int32, "Int32">(-123),
-            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(0x8000000010002000ULL)
+            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(std::uint64_t{0x8000000010002000ULL})
         );
 
         Exception e2(
@@ -245,7 +245,7 @@ TEST(Exception, copymove)
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 1"),
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 2"),
             ExceptionProperty<std::int32_t, Property::Type::Int32, "Int32">(-123),
-            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(0x8000000010002000ULL)
+            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(std::uint64_t{0x8000000010002000ULL})
         );
 
         Exception e2(std::move(e1));
@@ -283,7 +283,7 @@ TEST(Exception, copymove)
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 1"),
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 2"),
             ExceptionProperty<std::int32_t, Property::Type::Int32, "Int32">(-123),
-            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(0x8000000010002000ULL)
+            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(std::uint64_t{0x8000000010002000ULL})
         );
 
         Exception e2(
@@ -330,7 +330,7 @@ TEST(Exception, log)
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 1"),
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 2"),
             ExceptionProperty<std::int32_t, Property::Type::Int32, "Int32">(-123),
-            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(0x8000000010002000ULL)
+            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(std::uint64_t{0x8000000010002000ULL})
         );
 
         Util::logException(Log::get(), Log::Level::Info, e);
@@ -345,7 +345,7 @@ TEST(Exception, log)
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 1"),
             ExceptionProperty<std::string, Property::Type::String, "String">("Test string 2"),
             ExceptionProperty<std::int32_t, Property::Type::Int32, "Int32">(-123),
-            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(0x8000000010002000ULL)
+            ExceptionProperty<std::uint64_t, Property::Type::UInt64, "UInt64">(std::uint64_t{0x8000000010002000ULL})
         );
 
         Util::logException(Log::get(), Log::Level::Info, e);

@@ -109,6 +109,7 @@ extern ER_RTL_EXPORT IErrorCategory const* const Win32Error;
 
 
 ER_RTL_EXPORT void registerErrorCategory(std::string_view name, IErrorCategory* cat);
+ER_RTL_EXPORT IErrorCategory const* registerCxxErrorCategory(std::error_category const& cat);
 ER_RTL_EXPORT void unregisterErrorCategory(IErrorCategory* cat) noexcept;
 ER_RTL_EXPORT IErrorCategory const* lookupErrorCategory(std::string_view name) noexcept;
 

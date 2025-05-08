@@ -1,7 +1,6 @@
 #include "common.hpp"
 
 #include <erebus/proctree/linux/procfs.hxx>
-#include <erebus/rtl/system/posix_error.hxx>
 #include <erebus/rtl/util/string_util.hxx>
 
 using namespace Er;
@@ -15,7 +14,7 @@ static void dumpStat(Pid pid, ProcFs& proc)
     auto stat_ = proc.readStat(pid);
     if (!stat_.has_value())
     {
-        ErLogError("Failed to read /proc/{}/stat: {} ({})", pid, stat_.error(), System::posixErrorToString(stat_.error()));
+        ErLogError("Failed to read /proc/{}/stat: {}", pid, stat_.error().message());
         return;
     }
 
@@ -38,7 +37,7 @@ static void dumpStat(Pid pid, ProcFs& proc)
     auto comm_ = proc.readComm(pid);
     if (!comm_.has_value())
     {
-        ErLogError("Failed to read /proc/{}/comm: {} ({})", pid, comm_.error(), System::posixErrorToString(comm_.error()));
+        ErLogError("Failed to read /proc/{}/comm: {}", pid, comm_.error().message());
     }
     else
     {
@@ -51,7 +50,7 @@ static void dumpStat(Pid pid, ProcFs& proc)
         if (exe_.error() == ENOENT)
             ErLogInfo("/exe: [n/a]");
         else
-            ErLogError("Failed to read /proc/{}/exe: {} ({})", pid, exe_.error(), System::posixErrorToString(exe_.error()));
+            ErLogError("Failed to read /proc/{}/exe: {}", pid, exe_.error().message());
     }
     else
     {
@@ -61,7 +60,7 @@ static void dumpStat(Pid pid, ProcFs& proc)
     auto cmd_ = proc.readCmdLine(pid);
     if (!cmd_.has_value())
     {
-        ErLogError("Failed to read /proc/{}/cmdline: {} ({})", pid, cmd_.error(), System::posixErrorToString(cmd_.error()));
+        ErLogError("Failed to read /proc/{}/cmdline: {}", pid, cmd_.error().message());
     }
     else
     {
@@ -74,7 +73,7 @@ static void dumpStat(Pid pid, ProcFs& proc)
     auto env_ = proc.readEnv(pid);
     if (!env_.has_value())
     {
-        ErLogError("Failed to read /proc/{}/env: {} ({})", pid, env_.error(), System::posixErrorToString(env_.error()));
+        ErLogError("Failed to read /proc/{}/env: {}", pid, env_.error().message());
     }
     else
     {

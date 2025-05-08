@@ -1,7 +1,6 @@
 #include <erebus/proctree/linux/procfs.hxx>
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/format.hxx>
-#include <erebus/rtl/system/posix_error.hxx>
 #include <erebus/rtl/util/auto_ptr.hxx>
 #include <erebus/rtl/util/file.hxx>
 #include <erebus/rtl/util/string_util.hxx>
@@ -33,8 +32,7 @@ ProcFs::ProcFs(std::string_view procFsRoot)
 
     if (::access(m_procFsRoot.c_str(), R_OK) == -1)
     {
-        auto err = errno;
-        ErThrowPosixError(Er::format("Failed to access {}", m_procFsRoot), err);
+        throw Exception(std::source_location::current(), Error(int(errno), PosixError), ExceptionProperties::ObjectName(m_procFsRoot));
     }
 }
 
@@ -46,7 +44,7 @@ Time ProcFs::timeFromTicks(std::uint64_t ticks) noexcept
     return Time::fromMilliseconds(ticks * 1000 / TicksPerSecond);
 }
 
-std::expected<std::vector<Pid>, int> ProcFs::enumeratePids()
+std::expected<std::vector<Pid>, Error> ProcFs::enumeratePids()
 {
     std::vector<Pid> result;
 
@@ -58,7 +56,7 @@ std::expected<std::vector<Pid>, int> ProcFs::enumeratePids()
     DirHolder dir(::opendir(m_procFsRoot.c_str()));
     if (!dir)
     {
-        return std::unexpected(errno);
+        return std::unexpected(Error(errno, PosixError));
     }
 
     for (auto ent = ::readdir(dir); ent != nullptr; ent = ::readdir(dir))
@@ -76,7 +74,7 @@ std::expected<std::vector<Pid>, int> ProcFs::enumeratePids()
     return {std::move(result)};
 }
 
-std::expected<ProcFs::Stat, int> ProcFs::readStat(Pid pid)
+std::expected<ProcFs::Stat, Error> ProcFs::readStat(Pid pid)
 {
     ErAssert(pid != KernelPid);
 
@@ -91,7 +89,7 @@ std::expected<ProcFs::Stat, int> ProcFs::readStat(Pid pid)
     struct ::stat64 fileStat;
     if (::stat64(path.c_str(), &fileStat) == -1)
     {
-        return std::unexpected(errno);
+        return std::unexpected(Error(errno, PosixError));
     }
 
     result.ruid = fileStat.st_uid;
@@ -120,7 +118,7 @@ std::expected<ProcFs::Stat, int> ProcFs::readStat(Pid pid)
                 end = std::strrchr(end, ')'); // avoid process names like ":-) 1 2 3"
                 if (!end || !*end)
                 {
-                    return std::unexpected(EINVAL);
+                    return std::unexpected(Error(EINVAL, PosixError));
                 }
             }
 
@@ -309,7 +307,7 @@ std::uint64_t ProcFs::getBootTimeImpl()
     std::ifstream stream(path);
     if (!stream.good())
     {
-        ErThrow(Er::format("Failed to open {}", path));
+        throw Exception(std::source_location::current(), Error(int(errno), PosixError), ExceptionProperties::ObjectName(path));
     }
 
     std::string s;
@@ -327,11 +325,10 @@ std::uint64_t ProcFs::getBootTimeImpl()
         }
     }
 
-    ErThrow(Er::format("No \'btime\' field in {}", path));
-    return 0;
+    throw Exception(std::source_location::current(), Error(Result::InvalidInput, GenericError), Exception::Message("No \'btime\' field in /proc/stat"), ExceptionProperties::ObjectName(path));
 }
 
-std::expected<std::string, int> ProcFs::readComm(Pid pid)
+std::expected<std::string, Error> ProcFs::readComm(Pid pid)
 {
     if (pid == KernelPid)
         return std::string();
@@ -351,7 +348,7 @@ std::expected<std::string, int> ProcFs::readComm(Pid pid)
     return Er::Util::rtrim(comm.bytes());
 }
 
-std::expected<std::string, int> ProcFs::readExePath(Pid pid)
+std::expected<std::string, Error> ProcFs::readExePath(Pid pid)
 {
     if (pid == KernelPid || pid == KThreadDPid)
         return std::string();
@@ -361,10 +358,10 @@ std::expected<std::string, int> ProcFs::readExePath(Pid pid)
     path.append(std::to_string(pid));
     path.append("/exe");
 
-    return Util::resolveSymlink(path);
+    return Util::tryResolveSymlink(path);
 }
 
-std::expected<MultiStringZ, int> ProcFs::readCmdLine(Pid pid)
+std::expected<MultiStringZ, Error> ProcFs::readCmdLine(Pid pid)
 {
     auto path = m_procFsRoot;
     if (pid != KernelPid)
@@ -384,7 +381,7 @@ std::expected<MultiStringZ, int> ProcFs::readCmdLine(Pid pid)
     return loaded.value().release();
 }
 
-std::expected<MultiStringZ, int> ProcFs::readEnv(Pid pid)
+std::expected<MultiStringZ, Error> ProcFs::readEnv(Pid pid)
 {
     if (pid == KernelPid)
         return MultiStringZ{};
