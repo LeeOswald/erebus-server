@@ -84,7 +84,7 @@ bool ClientApplication::startTasks()
     if (args().contains("ping"))
     {
         auto payloadSize = args()["ping"].as<unsigned>();
-        m_pingRunner.reset(new PingRunner([this]() { exitCondition().setAndNotifyOne(true); }, m_channel, m_parallel, m_wait, m_iterations, payloadSize));
+        m_pingRunner.reset(new PingRunner([this]() { exitCondition().setAndNotifyOne(true); }, m_channel, m_parallel, m_iterations, m_wait, payloadSize));
         return true;
     }
     else if (args().contains("sysinfo"))
