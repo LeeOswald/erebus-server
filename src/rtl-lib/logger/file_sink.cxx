@@ -1,4 +1,5 @@
 
+#include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/logger/file_sink.hxx>
 #include <erebus/rtl/util/null_mutex.hxx>
 #include <erebus/rtl/util/generic_handle.hxx>
@@ -10,13 +11,10 @@
 #if ER_POSIX
     #include <fcntl.h>
     #include <sys/file.h>
-
-    #include <erebus/rtl/system/posix_error.hxx>
 #endif
 
 #if ER_WINDOWS
     #include <erebus/rtl/util/utf16.hxx>
-    #include <erebus/rtl/system/win32_error.hxx>
 #endif
 
 
@@ -97,7 +95,7 @@ public:
                 if (errno == EINTR)
                     continue;
 
-                ErThrowPosixError("Log file write failed", int(errno));
+                throw Exception(std::source_location::current(), Error(int(errno), PosixError), ExceptionProperties::ObjectName(m_fileName));
             }
             else
             {
@@ -108,7 +106,7 @@ public:
             DWORD wr = 0;
             if (!::WriteFile(m_file, data + written, available - written, &wr, nullptr))
             {
-                ErThrowWin32Error("Log file write failed", ::GetLastError());
+                throw Exception(std::source_location::current(), Error(::GetLastError(), Win32Error), ExceptionProperties::ObjectName(m_fileName));
             }
             else
             {
@@ -156,10 +154,20 @@ private:
 
 #if ER_POSIX
         if (!m_file.valid())
-            ErThrowPosixError("Log file could not be created", int(errno));
+        {
+            throw Exception(std::source_location::current(),
+                Error(int(errno), PosixError),
+                ExceptionProperties::ObjectName(m_fileName)
+            );
+        }
 #elif ER_WINDOWS
         if (m_file == INVALID_HANDLE_VALUE)
-            ErThrowWin32Error("Log file could not be created", ::GetLastError());
+        {
+            throw Exception(std::source_location::current(), 
+                Error(::GetLastError(), Win32Error), 
+                ExceptionProperties::ObjectName(m_fileName)
+            );
+        }
 #endif
 
         m_currentSize = 0;

@@ -41,7 +41,7 @@ public:
         ErLogDebug2(m_log.get(), "{}.ServerImpl::ServerImpl()", Er::Format::ptr(this));
 
         if (m_endpoints.empty())
-            ErThrow("No valid gRPC endpoints specified");
+            throw Exception(std::source_location::current(), Error(Result::BadConfiguration, GenericError), Exception::Message("No valid gRPC endpoints specified"));
 
         auto keepalive = findProperty(parameters, "keepalive", Property::Type::Bool);
         if (keepalive)
@@ -60,7 +60,7 @@ public:
         ErAssert(service);
 
         if (m_server)
-            ErThrow("Cannot add new services to a running server instance");
+            throw Exception(std::source_location::current(), Error(Result::FailedPrecondition, GenericError), Exception::Message("Cannot add new services to a running server instance"));
 
         m_services.push_back(service);
 
@@ -70,7 +70,7 @@ public:
     void start() override
     {
         if (m_server)
-            ErThrow("Server instance is already running");
+            throw Exception(std::source_location::current(), Error(Result::FailedPrecondition, GenericError), Exception::Message("Server instance is already running"));
 
         grpc::ServerBuilder builder;
 
@@ -113,7 +113,7 @@ public:
         // finally assemble the server
         auto server = builder.BuildAndStart();
         if (!server)
-            ErThrow("Failed to start the gRPC server");
+            throw Exception(std::source_location::current(), Error(Result::Internal, GenericError), Exception::Message("Failed to start the gRPC server"));
 
         m_server.swap(server);
     }
@@ -132,7 +132,7 @@ private:
     {
         auto endpoints = findProperty(parameters, "endpoints", Property::Type::Vector);
         if (!endpoints || endpoints->empty())
-            ErThrow("No gRPC endpoints specified");
+            throw Exception(std::source_location::current(), Error(Result::BadConfiguration, GenericError), Exception::Message("No gRPC endpoints specified"));
 
         std::vector<Endpoint> result;
 
@@ -145,7 +145,7 @@ private:
                 auto m = it->getMap();
                 auto address = findProperty(*m, "endpoint", Property::Type::String);
                 if (!address)
-                    ErThrow("Endpoint address is missing");
+                    throw Exception(std::source_location::current(), Error(Result::BadConfiguration, GenericError), Exception::Message("gRPC endpoint address is missing"));
 
                 Endpoint ep;
                 ep.address = *address->getString();
@@ -157,15 +157,27 @@ private:
 
                     auto certificatePath = findProperty(*m, "certificate", Property::Type::String);
                     if (!certificatePath)
-                        ErThrow(Er::format("TLS certificate file path is missing for {}", ep.address));
+                        throw Exception(std::source_location::current(), 
+                            Error(Result::BadConfiguration, GenericError), 
+                            Exception::Message("TLS certificate file path is missing"),
+                            ExceptionProperties::ObjectName(ep.address)
+                        );
 
                     auto keyPath = findProperty(*m, "private_key", Property::Type::String);
                     if (!keyPath)
-                        ErThrow(Er::format("TLS private key file path is missing for {}", ep.address));
+                        throw Exception(std::source_location::current(),
+                            Error(Result::BadConfiguration, GenericError),
+                            Exception::Message("TLS private key file path is missing"),
+                            ExceptionProperties::ObjectName(ep.address)
+                        );
 
                     auto rootCertPath = findProperty(*m, "root_certificates", Property::Type::String);
                     if (!rootCertPath)
-                        ErThrow(Er::format("TLS root certificates file path is missing for {}", ep.address));
+                        throw Exception(std::source_location::current(),
+                            Error(Result::BadConfiguration, GenericError),
+                            Exception::Message("TLS root certificates file path is missing"),
+                            ExceptionProperties::ObjectName(ep.address)
+                        );
 
                     ep.certificate = Util::loadFile(*certificatePath->getString()).release();
                     ep.key = Util::loadFile(*keyPath->getString()).release();

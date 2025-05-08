@@ -1,5 +1,6 @@
 #pragma once
 
+#include <grpcpp/grpcpp.h>
 
 #include <erebus/ipc/grpc/client/grpc_client.hxx>
 #include <erebus/rtl/log.hxx>
@@ -53,9 +54,9 @@ protected:
             owner->busy();
         }
 
-        void onError(Er::ResultCode result, std::string&& message) noexcept override
+        void onError(grpc::Status const& status) noexcept override
         {
-            ErLogError("Request completed with an error {}: {}", int(result), message);
+            ErLogError("Request completed with an error {}: {}", int(status.error_code()), status.error_message());
 
             done();
         }

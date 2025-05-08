@@ -1,96 +1,146 @@
 #pragma once
 
+#include <erebus/rtl/error.hxx>
 #include <erebus/rtl/format.hxx>
-#include <erebus/rtl/property_bag.hxx>
-#include <erebus/result.hxx>
+
+#include <boost/stacktrace.hpp>
 
 #include <stdexcept>
 #include <vector>
 
 
-//
-// exception class with (almost) arbitrary properties
-// that can be marshaled through RPC
-//
+/**
+* exception class with (almost) arbitrary properties
+* that can be marshaled through RPC
+*/
 
 namespace Er
 {
 
+template <typename _DataType, Property::Type _TypeId, StringLiteral _Name>
+struct ExceptionProperty
+    : public Property
+{
+    using DataType = _DataType;
+    static constexpr Property::Type TypeId = _TypeId;
+    static constexpr std::string_view Name{ _Name.data(), _Name.size() };
+
+    template <typename _Ty>
+        requires std::is_constructible_v<_DataType, _Ty>
+    explicit ExceptionProperty(_Ty&& v)
+        : Property(Name, std::forward<_Ty>(v))
+    {
+    }
+};
+
+
+namespace ExceptionProperties
+{
+
+//  a brief message provided while issuing the error, e.g., throw Exception(..."Failed to create log");
+using Brief = ExceptionProperty<std::string, Property::Type::String, "brief">;
+
+// textual description from the error code, e.g., obtained from strerror() of FormatMessage()
+using Message = ExceptionProperty<std::string, Property::Type::String, "message">;
+
+// failed object name, e.g., file name that could not be opened
+using ObjectName = ExceptionProperty<std::string, Property::Type::String, "object">;
+
+
+} // namespace ExceptionProperties {}
+
 
 class ER_RTL_EXPORT Exception
     : public std::exception
+    , public Error
 {
 public:
-    template <typename _Message>
-        requires std::is_constructible_v<std::string, _Message>
-    explicit Exception(std::source_location location, _Message&& message) noexcept
-        : m_context(std::make_shared<Context>(location, std::forward<_Message>(message)))
+    template <typename... _Properties>
+        requires (std::is_base_of_v<Property, std::remove_cvref_t<_Properties>> && ...)
+    Exception(std::source_location location, const Error& e, _Properties&&... props)
+        : Error(e.code(), e.category())
+        , m_location(location)
     {
+        (add(std::forward<_Properties>(props)), ...);
     }
 
-    template <typename _Message, typename _Property, typename... _Properties>
-        requires std::is_constructible_v<std::string, _Message> &&
-            std::is_constructible_v<Property, _Property> && (std::is_constructible_v<Property, _Properties> && ...)
-    explicit Exception(std::source_location location, _Message&& message, _Property&& prop, _Properties&&... props) noexcept
-        : m_context(std::make_shared<Context>(location, std::forward<_Message>(message), std::forward<_Property>(prop), std::forward<_Properties>(props)...))
+    template <typename _Brief, typename... _Properties>
+        requires std::is_constructible_v<std::string, _Brief> && (std::is_base_of_v<Property, std::remove_cvref_t<_Properties>> && ...)
+    Exception(std::source_location location, const Error& e, _Brief&& brief, _Properties&&... props)
+        : Error(e.code(), e.category())
+        , m_location(location)
     {
+        add(ExceptionProperties::Brief(std::forward<_Brief>(brief)));
+        (add(std::forward<_Properties>(props)), ...);
     }
 
-    const char* what() const noexcept override
+    struct Message
     {
-        return m_context->message.c_str();
+        template <typename _Message>
+            requires std::is_constructible_v<std::string, _Message>
+        explicit Message(_Message&& message)
+            : message(std::forward<_Message>(message))
+        {
+        }
+
+        std::string message;
+    };
+
+    template <typename... _Properties>
+        requires (std::is_base_of_v<Property, std::remove_cvref_t<_Properties>> && ...)
+    Exception(std::source_location location, const Error& e, Message&& message, _Properties&&... props)
+        : Error(e.code(), e.category())
+        , m_location(location)
+    {
+        add(ExceptionProperties::Message(std::move(message.message)));
+        (add(std::forward<_Properties>(props)), ...);
     }
 
-    const auto& message() const
+    Exception(const Exception&) = default;
+    Exception& operator=(const Exception&) = default;
+
+    Exception(Exception&&) noexcept = default;
+    Exception& operator=(Exception&&) noexcept = default;
+
+    char const* what() const noexcept override
     {
-        return m_context->message;
+        if (m_message.empty())
+            m_message = message();
+
+        return m_message.c_str();
     }
 
-    auto location() const noexcept
+    std::string const& message() const noexcept;
+
+    std::source_location location() const noexcept
     {
-        return m_context->location;
+        return m_location;
     }
 
-    const auto& properties() const noexcept
+    PropertyBag const& properties() const noexcept
     {
-        return m_context->properties;
+        return m_properties;
     }
 
-    Exception& add(auto&& prop)
+    PropertyBag& properties() noexcept
     {
-        m_context->addProp(std::forward<decltype(prop)>(prop), true);
+        return m_properties;
+    }
+
+    template <typename _Property>
+        requires std::is_base_of_v<Property, std::remove_cvref_t<_Property>>
+    Exception const& add(_Property&& prop) const // 'const' because we want the ability to add props on the fly
+    {
+        m_properties.push_back(std::forward<_Property>(prop));
         return *this;
     }
 
+    std::string const* decode() const;
+
 protected:
-    struct Context final
-    {
-        std::source_location location;
-        std::string message;
-        PropertyBag properties;
-       
-        Context(std::source_location location, auto&& message)
-            : location(location)
-            , message(std::forward<decltype(message)>(message))
-        {
-        }
-
-        Context(std::source_location location, auto&& message, auto&& prop, auto&&... props)
-            : Context(location, std::forward<decltype(message)>(message), std::forward<decltype(props)>(props)...)
-        {
-            addProp(std::forward<decltype(prop)>(prop), false);
-        }
-
-        void addProp(auto&& prop, bool back)
-        {
-            if (back)
-                properties.push_back(std::forward<decltype(prop)>(prop));
-            else
-                properties.insert(properties.begin(), std::forward<decltype(prop)>(prop));
-        }
-    };
-
-    std::shared_ptr<Context> m_context;
+    std::source_location m_location;
+    mutable std::string m_message;
+    mutable PropertyBag m_properties; // yep, 'mutable'; we want the ability to add props on the fly
 };
 
 
@@ -223,23 +273,4 @@ inline exceptionStackRange currentExceptionStack() noexcept
 }
 
 
-namespace ExceptionProps
-{
-
-constexpr std::string_view ResultCode{ "result_code" };
-constexpr std::string_view DecodedError{ "decoded_error" };
-
-} // namespace ExceptionProps {}
-
-
-ER_RTL_EXPORT [[nodiscard]] Exception makeExceptionFromResult(std::source_location location, std::string&& message, ResultCode code);
-
 } // namespace Er {}
-
-
-#define ErThrow(message, ...) \
-    throw ::Er::Exception(std::source_location::current(), message, ##__VA_ARGS__)
-
-#define ErThrowResult(message, code) \
-    throw ::Er::makeExceptionFromResult(std::source_location::current(), std::move(message), code)
-

@@ -2,11 +2,7 @@
 #include <erebus/rtl/util/file.hxx>
 
 #if ER_WINDOWS
-    #include <erebus/rtl/system/win32_error.hxx>
-    #include <erebus/rtl/system/unwindows.h>
     #include <erebus/rtl/util/utf16.hxx>
-#elif ER_POSIX
-    #include <erebus/rtl/system/posix_error.hxx>
 #endif
 
 #include <cstdio>
@@ -19,20 +15,16 @@ namespace Er::Util
 
 ER_RTL_EXPORT Binary loadFile(const std::string& path)
 {
-#if ER_POSIX
     auto result = tryLoadFile(path);
     if (!result.has_value())
-        ErThrowPosixError(Er::format("Failed to open {}", path), result.error());
-#elif ER_WINDOWS
-    auto result = tryLoadFile(path);
-    if (!result.has_value())
-        ErThrowWin32Error(Er::format("Failed to open {}", path), result.error());
-#endif
+    {
+        throw Exception(std::source_location::current(), result.error(), ExceptionProperties::ObjectName(path));
+    }
 
     return result.value();
 }
 
-ER_RTL_EXPORT std::expected<std::string, int> resolveSymlink(const std::string& path, unsigned maxDepth) noexcept
+ER_RTL_EXPORT std::expected<std::string, Error> tryResolveSymlink(const std::string& path, unsigned maxDepth) noexcept
 {
     std::filesystem::path fspath(path);
     for (;;)
@@ -41,7 +33,7 @@ ER_RTL_EXPORT std::expected<std::string, int> resolveSymlink(const std::string& 
         auto link = std::filesystem::is_symlink(fspath, ec);
 
         if (ec)
-            return std::unexpected(ec.value());
+            return std::unexpected(Error(ec));
 
         if (!link)
         {
@@ -59,13 +51,13 @@ ER_RTL_EXPORT std::expected<std::string, int> resolveSymlink(const std::string& 
         fspath = std::filesystem::read_symlink(fspath, ec);
         
         if (ec)
-            return std::unexpected(ec.value());
+            return std::unexpected(Error(ec));
 
         --maxDepth;
     }
 
     // too many nested links
-    return std::unexpected(ELOOP);
+    return std::unexpected(Error(Result::BadSymlink, GenericError));
 }
 
 

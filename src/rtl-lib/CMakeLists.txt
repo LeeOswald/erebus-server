@@ -31,8 +31,6 @@ target_sources(${TARGET_NAME}
         property.cxx
         property_bag.cxx
         property_format.cxx
-        result.cxx
-        system/posix_error.cxx
         system/process.cxx
         system/thread.cxx
         time.cxx
@@ -48,7 +46,6 @@ target_sources(${TARGET_NAME}
             FILES
                 ${ER_INCLUDE_DIR}/iunknown.hxx
                 ${ER_INCLUDE_DIR}/platform.hxx
-                ${ER_INCLUDE_DIR}/result.hxx
                 ${ER_INCLUDE_DIR}/rtl/assert.hxx
                 ${ER_INCLUDE_DIR}/rtl/binary.hxx
                 ${ER_INCLUDE_DIR}/rtl/bool.hxx
@@ -98,7 +95,6 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/rtl/property_bag.hxx
                 ${ER_INCLUDE_DIR}/rtl/reflectable.hxx
                 ${ER_INCLUDE_DIR}/rtl/string_literal.hxx
-                ${ER_INCLUDE_DIR}/rtl/system/posix_error.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/process.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/thread.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/user.hxx
@@ -124,7 +120,6 @@ if(ER_WINDOWS)
         PRIVATE
             logger/win32_debugger_sink.cxx
             system/user_win32.cxx
-            system/win32_error.cxx
             util/win32_file.cxx
             util/win32_utf16.cxx
         PUBLIC
@@ -133,7 +128,6 @@ if(ER_WINDOWS)
                 ${ER_INCLUDE_DIR}
             FILES
                 ${ER_INCLUDE_DIR}/rtl/logger/win32_debugger_sink.hxx
-                ${ER_INCLUDE_DIR}/rtl/system/win32_error.hxx
     )
         
 elseif(ER_POSIX)

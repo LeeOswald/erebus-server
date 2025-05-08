@@ -10,6 +10,8 @@ namespace grpc
 {
 
 class Channel;
+class Status;
+
 
 } // namespace grpc {}
 
@@ -29,7 +31,7 @@ struct IClient
     struct ICompletion
         : public IReferenceCounted
     {
-        virtual void onError(Er::ResultCode result, std::string&& message) noexcept = 0;
+        virtual void onError(grpc::Status const& status) noexcept = 0;
 
     protected:
         virtual ~ICompletion() = default;

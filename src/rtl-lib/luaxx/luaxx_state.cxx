@@ -19,7 +19,7 @@ State::State(Er::Log::ILogger* log, bool openLibs)
     , m_owner(true)
 {
     if (!m_l)
-        throw Er::Exception(std::source_location::current(), "Failed to allocate a Lua state");
+        throw Exception(std::source_location::current(), Error{ Result::OutOfMemory, GenericError }, "Failed to allocate a Lua state");
 
     if (openLibs)
         luaL_openlibs(m_l);

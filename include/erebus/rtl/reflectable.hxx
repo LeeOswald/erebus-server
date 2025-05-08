@@ -1,7 +1,7 @@
 #pragma once
 
 #include <erebus/rtl/flags.hxx>
-#include <erebus/rtl/property_format.hxx>
+#include <erebus/rtl/property.hxx>
 #include <erebus/rtl/string_literal.hxx>
 #include <erebus/rtl/type_id.hxx>
 

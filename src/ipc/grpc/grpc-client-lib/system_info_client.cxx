@@ -184,11 +184,9 @@ private:
                 {
                     if (!status.ok())
                     {
-                        auto resultCode = mapGrpcStatus(status.error_code());
-                        auto errorMsg = status.error_message();
-                        ErLogError2(m_log, "Stream from terminated with an error: {} ({})", resultCode, errorMsg);
+                        ErLogError2(m_log, "Stream from terminated with an error: {} ({})", int(status.error_code()), status.error_message());
 
-                        m_handler->onError(resultCode, std::move(errorMsg));
+                        m_handler->onError(status);
                     }
                 }
                 catch (...)
@@ -218,11 +216,9 @@ private:
             if (!status.ok())
             {
                 // transport failure or something
-                auto resultCode = mapGrpcStatus(status.error_code());
-                auto errorMsg = status.error_message();
-                ErLogError2(m_log.get(), "Failed to ping {}: {} ({})", ctx->grpcContext.peer(), resultCode, errorMsg);
+                ErLogError2(m_log.get(), "Failed to ping {}: {} ({})", ctx->grpcContext.peer(), int(status.error_code()), status.error_message());
 
-                ctx->handler->onError(resultCode, std::move(errorMsg));
+                ctx->handler->onError(status);
             }
             else
             {

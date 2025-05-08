@@ -52,8 +52,6 @@
 
 #endif // _countof
 
-#include <erebus/result.hxx>
-
 
 namespace Er
 {

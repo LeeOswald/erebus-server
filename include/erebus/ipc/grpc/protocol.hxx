@@ -16,8 +16,5 @@ Property unmarshalProperty(const erebus::Property& source);
 void marshalException(const Exception& source, erebus::Exception& dest);
 Exception unmarshalException(const erebus::Exception& source);
 
-Er::ResultCode mapGrpcStatus(grpc::StatusCode status) noexcept;
-grpc::StatusCode resultToGrpcStatus(Er::ResultCode code) noexcept;
-
 
 } // namespace Er::Ipc::Grpc {}

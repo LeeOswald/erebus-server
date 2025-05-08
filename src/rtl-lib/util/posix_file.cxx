@@ -10,18 +10,18 @@
 namespace Er::Util
 {
 
-ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) noexcept
+ER_RTL_EXPORT std::expected<Binary, Error> tryLoadFile(const std::string& path) noexcept
 {
     FileHandle file(::open(path.c_str(), O_RDONLY));
     if (!file.valid())
     {
-        return std::unexpected(errno);
+        return std::unexpected(Error(errno, PosixError));
     }
 
     struct ::stat64 fileStat;
     if (::stat64(path.c_str(), &fileStat) == -1)
     {
-        return std::unexpected(errno);
+        return std::unexpected(Error(errno, PosixError));
     }
 
     const std::size_t blockSize = 8192;
@@ -45,7 +45,7 @@ ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) no
             rd = ::read(file, buffer.data(), buffer.size());
             if (rd < 0)
             {
-                return std::unexpected(errno);
+                return std::unexpected(Error(errno, PosixError));
             }
 
             if (rd > 0)
@@ -57,7 +57,7 @@ ER_RTL_EXPORT std::expected<Binary, int> tryLoadFile(const std::string& path) no
     }
     catch (std::bad_alloc&)
     {
-        return std::unexpected(ENOMEM);
+        return std::unexpected(Error(ENOMEM, PosixError));
     }
 
     return {std::move(out)};

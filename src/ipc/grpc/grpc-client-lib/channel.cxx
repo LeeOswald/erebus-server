@@ -12,7 +12,7 @@ ChannelPtr createChannel(const PropertyMap& parameters)
 {
     auto prop = findProperty(parameters, "endpoint", Property::Type::String);
     if (!prop)
-        ErThrow("Endpoint address expected");
+        throw Exception(std::source_location::current(), Error(Result::BadConfiguration, GenericError), Exception::Message("Endpoint address expected"));
 
     std::string endpoint = *prop->getString();
 
@@ -34,19 +34,19 @@ ChannelPtr createChannel(const PropertyMap& parameters)
     {
         prop = findProperty(parameters, "certificate", Property::Type::String);
         if (!prop)
-            ErThrow("TLS certificate file name expected");
+            throw Exception(std::source_location::current(), Error(Result::BadConfiguration, GenericError), Exception::Message("TLS certificate file name expected"));
         
         certificate = Util::loadFile(*prop->getString()).release();
 
         prop = findProperty(parameters, "private_key", Property::Type::String);
         if (!prop)
-            ErThrow("TLS private key file name expected");
+            throw Exception(std::source_location::current(), Error(Result::BadConfiguration, GenericError), Exception::Message("TLS private key file name expected"));
 
         key = Util::loadFile(*prop->getString()).release();
 
         prop = findProperty(parameters, "root_certificates", Property::Type::String);
         if (!prop)
-            ErThrow("TLS root certificates file name expected");
+            throw Exception(std::source_location::current(), Error(Result::BadConfiguration, GenericError), Exception::Message("TLS root certificates file name expected"));
 
         rootCerts = Util::loadFile(*prop->getString()).release();
     }

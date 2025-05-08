@@ -5,6 +5,7 @@ add_executable(${TARGET_NAME})
 target_sources(${TARGET_NAME}
     PRIVATE
         error.cpp
+        exception.cpp
         flags.cpp
         luaxx_class.cpp
         luaxx_error.cpp

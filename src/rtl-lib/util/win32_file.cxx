@@ -7,18 +7,18 @@
 namespace Er::Util
 {
 
-ER_RTL_EXPORT std::expected<Binary, std::uint32_t> tryLoadFile(const std::string& path) noexcept
+ER_RTL_EXPORT std::expected<Binary, Error> tryLoadFile(const std::string& path) noexcept
 {
     FileHandle file(::CreateFileW(Er::Util::utf8ToUtf16(path).c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0));
     if (!file.valid())
     {
-        return std::unexpected(::GetLastError());
+        return std::unexpected(Error(::GetLastError(), Win32Error));
     }
 
     LARGE_INTEGER li;
     if (!::GetFileSizeEx(file, &li))
     {
-        return std::unexpected(::GetLastError());
+        return std::unexpected(Error(::GetLastError(), Win32Error));
     }
 
     auto sizeHint = static_cast<std::size_t>(li.QuadPart);
@@ -41,7 +41,7 @@ ER_RTL_EXPORT std::expected<Binary, std::uint32_t> tryLoadFile(const std::string
         {
             if (!::ReadFile(file, buffer.data(), buffer.size(), &rd, nullptr))
             {
-                return std::unexpected(::GetLastError());
+                return std::unexpected(Error(::GetLastError(), Win32Error));
             }
 
             if (rd > 0)
@@ -53,7 +53,7 @@ ER_RTL_EXPORT std::expected<Binary, std::uint32_t> tryLoadFile(const std::string
     }
     catch (std::bad_alloc&)
     {
-        return std::unexpected(ERROR_NOT_ENOUGH_MEMORY);
+        return std::unexpected(Error(ERROR_NOT_ENOUGH_MEMORY, Win32Error));
     }
 
     return {std::move(out)};

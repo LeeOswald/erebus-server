@@ -5,6 +5,8 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
+#undef GetObject
+
 namespace Er
 {
 
@@ -17,7 +19,7 @@ PropertyMap loadObject(auto&& o, std::size_t depth);
 PropertyVector loadArray(auto&& a, std::size_t depth)
 {
     if (depth < 1)
-        ErThrow("JSON is too nested");
+        throw Exception(std::source_location::current(), Error{ Result::InvalidInput, GenericError }, Exception::Message("JSON is too nested"));
 
     PropertyVector v;
 
@@ -69,7 +71,7 @@ PropertyVector loadArray(auto&& a, std::size_t depth)
 PropertyMap loadObject(auto&& o, std::size_t depth)
 {
     if (depth < 1)
-        ErThrow("JSON is too nested");
+        throw Exception(std::source_location::current(), Error{ Result::InvalidInput, GenericError }, Exception::Message("JSON is too nested"));
 
     PropertyMap m;
 
@@ -132,7 +134,11 @@ ER_RTL_EXPORT Property loadJson(std::string_view json, std::size_t depth)
     {
         auto err = doc.GetParseError();
         std::string text = rapidjson::GetParseError_En(err);
-        ErThrow(Er::format("Invalid JSON at offset {}: {}", doc.GetErrorOffset(), std::move(text)));
+        throw Exception(
+            std::source_location::current(), 
+            Error{ Result::InvalidInput, GenericError },
+            Exception::Message(Er::format("Invalid JSON at offset {}: {}", doc.GetErrorOffset(), std::move(text)))
+        );
     }
 
     if (doc.IsArray())

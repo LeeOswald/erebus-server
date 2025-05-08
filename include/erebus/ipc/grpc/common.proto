@@ -39,6 +39,7 @@ message Property {
 }
 
 message Exception {
-    string message = 1;
-    repeated Property properties = 2;
+    optional int32 code = 1;
+    optional string category = 2;
+    repeated Property properties = 3;
 }

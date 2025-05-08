@@ -3,10 +3,7 @@
 #if ER_POSIX
     #include <fcntl.h>
     #include <sys/file.h>
-
-    #include <erebus/rtl/system/posix_error.hxx>
 #elif ER_WINDOWS
-    #include <erebus/rtl/system/win32_error.hxx>    
     #include <erebus/rtl/util/utf16.hxx>
 #endif
 
@@ -40,16 +37,19 @@ LockFile::LockFile(const std::string& path)
 {
 #if ER_POSIX
     if (m_file == -1)
-        ErThrowPosixError(Er::format("Failed to create the lockfile {}", m_path), errno);
+    {
+        throw Exception(std::source_location::current(), Error{ int(errno), PosixError }, ExceptionProperties::ObjectName(m_path));
+    }
 
     if (::flock(m_file, LOCK_EX | LOCK_NB) == -1)
-        ErThrowPosixError(Er::format("Failed to acquire the lockfile {}", m_path), errno);
+    {
+        throw Exception(std::source_location::current(), Error{ int(errno), PosixError }, ExceptionProperties::ObjectName(m_path));
+    }
 
  #elif ER_WINDOWS
     if (m_file == INVALID_HANDLE_VALUE)
     {
-        auto e = ::GetLastError();
-        ErThrowWin32Error(Er::format("Failed to acquire the lockfile {}", m_path), e);
+        throw Exception(std::source_location::current(), Error(::GetLastError(), Win32Error), ExceptionProperties::ObjectName(m_path));
     }
 #endif
 }
@@ -62,7 +62,9 @@ void LockFile::put(std::string_view data)
     const ssize_t written = ::write(m_file, data.data(), data.length());
 
     if (written != static_cast<ssize_t>(data.length()))
-        ErThrow("Failed to write to the lockfile");
+    {
+        throw Exception(std::source_location::current(), Error{ int(errno), PosixError }, ExceptionProperties::ObjectName(m_path));
+    }
 
     ::fdatasync(m_file);
 
@@ -70,7 +72,9 @@ void LockFile::put(std::string_view data)
     DWORD written = 0;
     ::WriteFile(m_file, data.data(), data.length(), &written, nullptr);
     if (written != static_cast<DWORD>(data.length()))
-        ErThrow("Failed to write to the lockfile");
+    {
+        throw Exception(std::source_location::current(), Error(::GetLastError(), Win32Error), ExceptionProperties::ObjectName(m_path));
+    }
 
     ::FlushFileBuffers(m_file);
 

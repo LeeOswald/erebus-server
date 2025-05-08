@@ -12,7 +12,7 @@ public:
     LuaException() = default;
 
     explicit LuaException(std::source_location location, auto&& message)
-        : Er::Exception(location, std::forward<decltype(message)>(message))
+        : Exception(location, Error{ Result::ScriptError, GenericError }, Exception::Message(std::forward<decltype(message)>(message)))
     {}
 };
 

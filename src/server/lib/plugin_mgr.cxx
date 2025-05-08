@@ -17,7 +17,12 @@ PluginPtr PluginMgr::loadPlugin(const std::string& path, const PropertyMap& args
                 auto handle = info->entry(this, m_log, args);
                 if (!handle)
                 {
-                    ErThrow(Er::format("createPlugin of [{}] returned NULL", info->path));
+                    throw Exception(
+                        std::source_location::current(),
+                        Error(Result::BadPlugin, GenericError),
+                        Exception::Message("createPlugin() returned NULL"),
+                        ExceptionProperties::ObjectName(info->path)
+                    );
                 }
 
                 return handle;
@@ -37,12 +42,17 @@ PluginPtr PluginMgr::loadPlugin(const std::string& path, const PropertyMap& args
         if (err)
             Er::Log::writeln(m_log.get(), Log::Level::Error, err);
 #endif
-        ErThrow(Er::format("Failed to load [{}]", path), Property{ ExceptionProps::DecodedError, ec.message() });
+        throw Exception(std::source_location::current(), Error(ec), ExceptionProperties::ObjectName(path));
     }
 
     if (!info->dll.has("createPlugin"))
     {
-        ErThrow(Er::format("No createPlugin symbol found in [{}]", path));
+        throw Exception(
+            std::source_location::current(),
+            Error(Result::BadPlugin, GenericError),
+            Exception::Message("No createPlugin symbol found"),
+            ExceptionProperties::ObjectName(info->path)
+        );
     }
 
     auto entry = info->dll.get<Er::Server::CreatePluginFn>("createPlugin");
@@ -51,7 +61,12 @@ PluginPtr PluginMgr::loadPlugin(const std::string& path, const PropertyMap& args
     auto handle = entry(this, m_log, args);
     if (!handle)
     {
-        ErThrow(Er::format("createPlugin of [{}] returned NULL", info->path));
+        throw Exception(
+            std::source_location::current(),
+            Error(Result::BadPlugin, GenericError),
+            Exception::Message("reatePlugin returned NULL"),
+            ExceptionProperties::ObjectName(info->path)
+        );
     }
 
     info->entry = entry;

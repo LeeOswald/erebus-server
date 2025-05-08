@@ -170,7 +170,21 @@ void marshalException(const Exception& source, erebus::Exception& dest)
 {
     dest.Clear();
 
-    dest.set_message(source.message());
+    if (source.category()->local())
+    {
+        // we cannot simply marshal error codes of local error categories
+        
+        auto msg = source.category()->message(source.code());
+        ExceptionProperties::Message prop(std::move(msg));
+        
+        auto out = dest.add_properties();
+        marshalProperty(prop, *out);
+    }
+    else
+    {
+        dest.set_code(source.code());
+        dest.set_category(std::string(source.category()->name()));
+    }
 
     for (auto& prop : source.properties())
     {
@@ -181,7 +195,23 @@ void marshalException(const Exception& source, erebus::Exception& dest)
 
 Exception unmarshalException(const erebus::Exception& source)
 {
-    Exception dest(std::source_location::current(), source.message());
+    Error err;
+    if (source.has_category())
+    {
+        auto cat = lookupErrorCategory(source.category());
+        if (cat)
+        {
+            if (source.has_code())
+            {
+                err = Error(source.code(), cat);
+            }
+        }
+    }
+
+    if (!err)
+        err = Error(Result::Internal, GenericError);
+
+    Exception dest(std::source_location::current(), err);
 
     int propCount = source.properties_size();
     for (int i = 0; i < propCount; ++i)
@@ -191,50 +221,6 @@ Exception unmarshalException(const erebus::Exception& source)
     }
 
     return dest;
-}
-
-static constexpr std::pair<grpc::StatusCode, Er::ResultCode> s_grpcStatusMapping[] =
-{
-    { grpc::OK, Er::Result::Ok },
-    { grpc::CANCELLED, Er::Result::Canceled },
-    { grpc::UNKNOWN, Er::Result::Failure },
-    { grpc::INVALID_ARGUMENT, Er::Result::InvalidArgument },
-    { grpc::DEADLINE_EXCEEDED, Er::Result::Timeout },
-    { grpc::NOT_FOUND, Er::Result::NotFound },
-    { grpc::ALREADY_EXISTS, Er::Result::AlreadyExists },
-    { grpc::PERMISSION_DENIED, Er::Result::AccessDenied },
-    { grpc::UNAUTHENTICATED, Er::Result::Unauthenticated },
-    { grpc::RESOURCE_EXHAUSTED, Er::Result::ResourceExhausted },
-    { grpc::FAILED_PRECONDITION, Er::Result::FailedPrecondition },
-    { grpc::ABORTED, Er::Result::Aborted },
-    { grpc::OUT_OF_RANGE, Er::Result::OutOfRange },
-    { grpc::UNIMPLEMENTED, Er::Result::Unimplemented },
-    { grpc::INTERNAL, Er::Result::Internal },
-    { grpc::UNAVAILABLE, Er::Result::Unavailable },
-    { grpc::DATA_LOSS, Er::Result::DataLoss }
-};
-
-
-Er::ResultCode mapGrpcStatus(grpc::StatusCode status) noexcept
-{
-    for (auto& m : s_grpcStatusMapping)
-    {
-        if (m.first == status)
-            return m.second;
-    }
-
-    return Er::Result::Failure;
-}
-
-grpc::StatusCode resultToGrpcStatus(Er::ResultCode code) noexcept
-{
-    for (auto& m : s_grpcStatusMapping)
-    {
-        if (m.second == code)
-            return m.first;
-    }
-
-    return grpc::UNKNOWN;
 }
 
 } // namespace Er::Ipc::Grpc {}

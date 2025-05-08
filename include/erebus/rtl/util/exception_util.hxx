@@ -2,19 +2,14 @@
 
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/log.hxx>
-#include <erebus/result.hxx>
 
-
-namespace Er
-{
-
-ER_RTL_EXPORT [[nodiscard]] const std::string& resultToString(ResultCode code);
-
-} // namespace Er {}
 
 
 namespace Er::Util
 {
+
+ER_RTL_EXPORT void logException(Log::ILogger* log, Log::Level level, const Exception& e);
+
 
 class ER_RTL_EXPORT ExceptionLogger
 {
@@ -23,14 +18,10 @@ public:
         : m_log(log)
     {}
 
-    ResultCode operator()(const Exception& e);
-    ResultCode operator()(const std::bad_alloc& e);
-    ResultCode operator()(const std::bad_cast& e);
-    ResultCode operator()(const std::length_error& e);
-    ResultCode operator()(const std::out_of_range& e);
-    ResultCode operator()(const std::invalid_argument& e);
-    ResultCode operator()(const std::exception& e);
-    ResultCode operator()(const std::exception_ptr& ep);
+    void operator()(const Exception& e);
+    void operator()(const std::bad_alloc& e);
+    void operator()(const std::exception& e);
+    void operator()(const std::exception_ptr& ep);
 
     const std::string& lastError() const noexcept
     {
