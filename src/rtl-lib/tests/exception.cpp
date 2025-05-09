@@ -354,7 +354,6 @@ TEST(Exception, log)
 
 TEST(Exception, throw)
 {
-    std::terminate();
     try
     {
         throw Exception(
