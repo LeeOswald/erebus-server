@@ -2,8 +2,11 @@
 
 #include <erebus/rtl/error.hxx>
 #include <erebus/rtl/format.hxx>
+#include <erebus/rtl/property_bag.hxx>
 
-#include <boost/stacktrace.hpp>
+#if ER_ENABLE_STACKTRACE
+    #include <boost/stacktrace.hpp>
+#endif
 
 #include <stdexcept>
 #include <vector>
@@ -27,8 +30,8 @@ struct ExceptionProperty
 
     template <typename _Ty>
         requires std::is_constructible_v<_DataType, _Ty>
-    explicit ExceptionProperty(_Ty&& v)
-        : Property(Name, std::forward<_Ty>(v))
+    explicit ExceptionProperty(_Ty&& v, SemanticCode semantics = Semantics::Default)
+        : Property(Name, std::forward<_Ty>(v), semantics)
     {
     }
 };
@@ -37,7 +40,7 @@ struct ExceptionProperty
 namespace ExceptionProperties
 {
 
-//  a brief message provided while issuing the error, e.g., throw Exception(..."Failed to create log");
+//  a brief message provided while issuing the error
 using Brief = ExceptionProperty<std::string, Property::Type::String, "brief">;
 
 // textual description from the error code, e.g., obtained from strerror() of FormatMessage()
@@ -54,12 +57,20 @@ class ER_RTL_EXPORT Exception
     : public std::exception
     , public Error
 {
+#if ER_ENABLE_STACKTRACE
+    static constexpr std::size_t StackFramesToSkip = 3;
+    static constexpr std::size_t StackFramesToCapture = 256;
+#endif
+
 public:
     template <typename... _Properties>
         requires (std::is_base_of_v<Property, std::remove_cvref_t<_Properties>> && ...)
     Exception(std::source_location location, const Error& e, _Properties&&... props)
         : Error(e.code(), e.category())
         , m_location(location)
+#if ER_ENABLE_STACKTRACE
+        , m_stack{ StackFramesToSkip, StackFramesToCapture }
+#endif
     {
         (add(std::forward<_Properties>(props)), ...);
     }
@@ -69,6 +80,9 @@ public:
     Exception(std::source_location location, const Error& e, _Brief&& brief, _Properties&&... props)
         : Error(e.code(), e.category())
         , m_location(location)
+#if ER_ENABLE_STACKTRACE
+        , m_stack{ StackFramesToSkip, StackFramesToCapture }
+#endif
     {
         add(ExceptionProperties::Brief(std::forward<_Brief>(brief)));
         (add(std::forward<_Properties>(props)), ...);
@@ -91,6 +105,9 @@ public:
     Exception(std::source_location location, const Error& e, Message&& message, _Properties&&... props)
         : Error(e.code(), e.category())
         , m_location(location)
+#if ER_ENABLE_STACKTRACE
+        , m_stack{ StackFramesToSkip, StackFramesToCapture }
+#endif
     {
         add(ExceptionProperties::Message(std::move(message.message)));
         (add(std::forward<_Properties>(props)), ...);
@@ -117,6 +134,13 @@ public:
         return m_location;
     }
 
+#if ER_ENABLE_STACKTRACE
+    auto const& stack() const noexcept
+    {
+        return m_stack;
+    }
+#endif
+
     PropertyBag const& properties() const noexcept
     {
         return m_properties;
@@ -139,6 +163,9 @@ public:
 
 protected:
     std::source_location m_location;
+#if ER_ENABLE_STACKTRACE
+    boost::stacktrace::stacktrace m_stack;
+#endif
     mutable std::string m_message;
     mutable PropertyBag m_properties; // yep, 'mutable'; we want the ability to add props on the fly
 };

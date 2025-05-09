@@ -277,12 +277,12 @@ struct IndentScope
         
         if (m_enable)
         {
-            log->write(
+            log->write(Record::make(
                 level,
                 Time::now(),
                 System::CurrentThread::id(),
                 Format::vformat(format, Format::make_format_args(args...))
-            );
+            ));
 
             log->indent();
         }

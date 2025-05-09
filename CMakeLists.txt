@@ -30,10 +30,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(ER_BUILD_CLIENT_LIBS_ONLY "Build client libs only" OFF)
 option(ER_ENABLE_ASSERT "Enable asserts even in release build" OFF)
+option(ER_ENABLE_STACKTRACE "Enable stack traces for exceptions & assertions" ON)
 
 if(ER_ENABLE_ASSERT)
     add_definitions(-DER_ENABLE_ASSERT=1)
 endif()    
+
+if(ER_ENABLE_STACKTRACE)
+    add_definitions(-DER_ENABLE_STACKTRACE=1)
+endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
