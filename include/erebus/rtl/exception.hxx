@@ -58,7 +58,11 @@ class ER_RTL_EXPORT Exception
     , public Error
 {
 #if ER_ENABLE_STACKTRACE
+#if ER_DEBUG
     static constexpr std::size_t StackFramesToSkip = 3;
+#else
+    static constexpr std::size_t StackFramesToSkip = 2;
+#endif
     static constexpr std::size_t StackFramesToCapture = 256;
 #endif
 

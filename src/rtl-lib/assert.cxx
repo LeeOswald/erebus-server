@@ -117,8 +117,13 @@ ER_RTL_EXPORT void printFailedAssertion(std::source_location location, const cha
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 #if ER_ENABLE_STACKTRACE
+#if ER_DEBUG
     static const std::size_t StackFramesToSkip = 3;
+#else
+    static const std::size_t StackFramesToSkip = 2;
+#endif
     static const std::size_t StackFramesToCapture = 256;
+
     auto msg = formatFailedAssertion(std::move(location), expression, boost::stacktrace::stacktrace{ StackFramesToSkip, StackFramesToCapture });
 #else
     auto msg = formatFailedAssertion(std::move(location), expression);
