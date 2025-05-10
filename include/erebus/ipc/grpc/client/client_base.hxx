@@ -26,8 +26,6 @@ class ClientBase
 public:
     ~ClientBase()
     {
-        ClientTrace2(m_log.get(), "{}.ClientBase::~ClientBase", Er::Format::ptr(this));
-
         waitRunningContexts();
 
         ::grpc_shutdown();
@@ -37,7 +35,6 @@ public:
         : m_grpcReady(grpcInit())
         , m_log(log)
     {
-        ClientTrace2(m_log.get(), "{}.ClientBase::ClientBase", Er::Format::ptr(this));
     }
 
 protected:
@@ -46,7 +43,6 @@ protected:
     {
         ~ContextBase() noexcept
         {
-            ClientTrace2(m_log, "{}.ContextBase::~ContextBase()", Er::Format::ptr(this));
             m_owner->removeContext();
         }
 
@@ -54,7 +50,6 @@ protected:
             : m_owner(owner)
             , m_log(log)
         {
-            ClientTrace2(m_log, "{}.ContextBase::ContextBase()", Er::Format::ptr(this));
             owner->addContext();
         }
 
@@ -97,13 +92,11 @@ protected:
     {
         while (m_runningContexts.count > 0)
         {
-            ClientTrace2(m_log.get(), "{}.ClientBase::waitRunningContexts(): there are {} running contexts yet", Er::Format::ptr(this), m_runningContexts.count);
+            ErLogDebug2(m_log.get(), "{}.ClientBase::waitRunningContexts(): there are {} running contexts yet", Er::Format::ptr(this), m_runningContexts.count);
 
             std::unique_lock l(m_runningContexts.lock);
             m_runningContexts.cv.wait(l, [this]() { return (m_runningContexts.count <= 0); });
         }
-
-        ClientTrace2(m_log.get(), "{}.ClientBase::waitRunningContexts(): no more running contexts", Er::Format::ptr(this));
     }
 
     const bool m_grpcReady;
