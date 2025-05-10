@@ -26,6 +26,7 @@ void filterStackTrace(const StackTrace& stack, StackFrameCallback&& filter)
         static const std::string_view BadNames[] = 
         {
             {"boost_stacktrace_impl_return_nullptr"},
+            {"boost::stacktrace"},
             {"Er::Exception::Exception"},
             {"Er::printFailedAssertion"},
             {"__static_initialization_and_destruction"},
