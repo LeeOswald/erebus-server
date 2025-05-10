@@ -21,12 +21,28 @@ void filterStackTrace(const StackTrace& stack, StackFrameCallback&& filter)
         }
     };
 
-    auto isBadName = [](std::string const& name)
+    auto isBadName = [](std::string const& name) -> bool
     {
-        return name.empty() ||
-            (name == std::string_view("boost_stacktrace_impl_return_nullptr")) ||
-            (name.starts_with("Er::Exception::Exception")
-        );
+        static const std::string_view BadNames[] = 
+        {
+            {"boost_stacktrace_impl_return_nullptr"},
+            {"Er::Exception::Exception"},
+            {"Er::printFailedAssertion"},
+            {"__static_initialization_and_destruction"},
+            {"Er::Program::terminateHandler"},
+            {"Er::Program::staticTerminateHandler"},
+        };
+
+        if (name.empty())
+            return true;
+
+        for (auto& bad: BadNames)
+        {
+            if (name.starts_with(bad))
+                return true;
+        }
+
+        return false;
     };
 
     auto it = stack.begin();
@@ -55,7 +71,11 @@ void filterStackTrace(const StackTrace& stack, StackFrameCallback&& filter)
         else
         {
             auto name = frame.name();
-            if (isBadName(name))
+            if (name.empty() && frame.address() != 0)
+            {
+                filter(StackFrame{ frame.address(), std::string{"\?\?\?"} });
+            }
+            else if (isBadName(name))
             {
                 ++skipped;
             }

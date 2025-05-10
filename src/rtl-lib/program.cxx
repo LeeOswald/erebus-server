@@ -1,4 +1,5 @@
 #include <erebus/rtl/program.hxx>
+#include <erebus/rtl/stack_trace.hxx>
 #include <erebus/rtl/system/process.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
 
@@ -14,7 +15,6 @@
 #include <erebus/rtl/logger/simple_filter.hxx>
 #include <erebus/rtl/logger/simple_formatter.hxx>
 
-#include <boost/stacktrace.hpp>
 
 #include <clocale>
 #include <csignal>
@@ -71,8 +71,33 @@ void Program::staticTerminateHandler()
 void Program::terminateHandler()
 {
     std::ostringstream ss;
-    ss << boost::stacktrace::stacktrace{};
-
+    
+    filterStackTrace(
+        boost::stacktrace::stacktrace{},
+        [&ss](const StackFrame& frame)
+        {
+            if (frame.type == StackFrame::Unknown)
+            {
+                ss << "    \?\?\?\n";
+            }
+            else if (frame.type == StackFrame::Skipped)
+            {
+                if (frame.skipped == 1)
+                {
+                    ss << "    \?\?\?\n";
+                }
+                else
+                {
+                    ss << "    [" << frame.skipped << " frames skipped]\n";
+                }
+            }
+            else
+            {
+                ss << "    " << frame.address << "!" << frame.symbol << "\n";
+            }
+        }
+    );
+    
     Log::fatal(Er::Log::get(), "std::terminate() called from\n{}", ss.str());
 
     Er::Log::get()->flush(std::chrono::milliseconds(5000));
