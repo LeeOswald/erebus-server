@@ -1,6 +1,6 @@
 #pragma once
 
-#include <erebus/proctree/proctree.hxx>
+#include <erebus/proctree/server/proctree.hxx>
 #include <erebus/rtl/error.hxx>
 #include <erebus/rtl/log.hxx>
 #include <erebus/rtl/multi_string.hxx>

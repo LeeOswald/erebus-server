@@ -1,4 +1,4 @@
-#include <erebus/proctree/linux/procfs.hxx>
+#include <erebus/proctree/server/linux/procfs.hxx>
 #include <erebus/rtl/exception.hxx>
 #include <erebus/rtl/format.hxx>
 #include <erebus/rtl/util/auto_ptr.hxx>

@@ -27,7 +27,7 @@ std::string lookupUserName(std::uint64_t uid)
 } // namespace {}
 
 
-std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs, Pid pid, const ProcessProperties::Mask& mask, Log::ILogger* log)
+std::expected<ProcessProperties, Error> collectProcessProps(Linux::ProcFs& procFs, Pid pid, const ProcessProperties::Mask& mask, Log::ILogger* log)
 {
     ProcessProperties out;
 
@@ -91,7 +91,7 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
         {
             ErLogWarning2(log, "Could not read /proc/{}/exe: {}", pid, exe_.error().message());
         }
-        else
+        else if (!exe_.value().empty())
         {
             ErSet(ProcessProperties, Exe, out, exe, std::move(exe_.value()));
         }
@@ -129,7 +129,7 @@ std::expected<ProcessProperties, int> collectProcessProps(Linux::ProcFs& procFs,
         {
             ErLogWarning2(log, "Could not read /proc/{}/env: {}", pid, env_.error().message());
         }
-        else
+        else if (!env_.value().raw.empty())
         {
             ErSet(ProcessProperties, Env, out, env, std::move(env_.value()));
         }

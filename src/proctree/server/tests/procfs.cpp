@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-#include <erebus/proctree/linux/procfs.hxx>
+#include <erebus/proctree/server/linux/procfs.hxx>
 #include <erebus/rtl/util/string_util.hxx>
 
 using namespace Er;

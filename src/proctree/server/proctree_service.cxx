@@ -49,6 +49,9 @@ public:
     {
         ProctreeTraceIndent2(m_log, "{}.ProctreeService::GetProcessProps", Er::Format::ptr(this));
 
+        auto pid = request->pid();
+        ErLogInfo2(m_log, "ProcessList.GetProcessProps(pid={}) from {}", pid, context->peer());
+
         auto reactor = std::make_unique<ProcessPropsReplyReactor>(m_log);
         if (context->IsCancelled()) [[unlikely]]
         {
@@ -65,10 +68,30 @@ public:
             started = Time::now();
         }
 
-        auto pid = request->pid();
+        
         auto mask = unmarshalProcessPropertyMask(*request);
 
         auto props_ = Linux::collectProcessProps(m_procFs, pid, mask, m_log);
+        if (!props_.has_value())
+        {
+            auto& e = props_.error();
+            Er::Ipc::Grpc::marshalError(e, *reply->mutable_header()->mutable_exception());
+        }
+        else
+        {
+            marshalProcessProperties(props_.value(), *reply->mutable_props());
+
+            if (timestamp)
+            {
+                reply->mutable_header()->set_timestamp(*timestamp);
+            }
+
+            if (started)
+            {
+                auto finished = Time::now();
+                reply->mutable_header()->set_duration(finished - *started);
+            }
+        }
 
         return reactor.release();
     }
