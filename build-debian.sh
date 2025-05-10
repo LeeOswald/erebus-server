@@ -1,6 +1,6 @@
 #!/bin/bash
 pushd build
-cmake --build . --config Release
+cmake --build . --config RelWithDebInfo
 popd
 
 

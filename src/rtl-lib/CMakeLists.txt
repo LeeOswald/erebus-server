@@ -31,6 +31,7 @@ target_sources(${TARGET_NAME}
         property.cxx
         property_bag.cxx
         property_format.cxx
+        stack_trace.cxx
         system/process.cxx
         system/thread.cxx
         time.cxx
@@ -94,6 +95,7 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/rtl/property.hxx
                 ${ER_INCLUDE_DIR}/rtl/property_bag.hxx
                 ${ER_INCLUDE_DIR}/rtl/reflectable.hxx
+                ${ER_INCLUDE_DIR}/rtl/stack_trace.hxx
                 ${ER_INCLUDE_DIR}/rtl/string_literal.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/process.hxx
                 ${ER_INCLUDE_DIR}/rtl/system/thread.hxx

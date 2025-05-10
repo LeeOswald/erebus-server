@@ -16,53 +16,37 @@ ER_RTL_EXPORT void logException(Log::ILogger* log, Log::Level level, const Excep
     if (e.location().file_name())
         Log::write(log, level, "at [{}]:{}", e.location().file_name(), e.location().line());
 
-#if ER_ENABLE_STACKTRACE
+#if ER_ENABLE_EXCEPTION_STACKTRACES
     if (!e.stack().empty())
     {
         {
             Log::IndentScope is(log, level, "backtrace: ------------");
 
-            std::size_t skipped = 0;
-
-            auto printSkipped = [&skipped, log, level]()
-            {
-                if (skipped > 0)
+            filterStackTrace(
+                e.stack(), 
+                [log, level](const StackFrame& frame)
                 {
-                    if (skipped == 1)
+                    if (frame.type == StackFrame::Unknown)
                     {
                         Log::writeln(log, level, "\?\?\?");
                     }
-                    else
+                    else if (frame.type == StackFrame::Skipped)
                     {
-                        Log::write(log, level, "[{} frames skipped]", skipped);
-                    }
-
-                    skipped = 0;
-                }
-            };
-
-            for (auto& frame : e.stack())
-            {
-                if (frame.empty())
-                {
-                    ++skipped;
-                }
-                else
-                {
-                    auto&& name = frame.name();
-                    if (name == "boost_stacktrace_impl_return_nullptr")
-                    {
-                        ++skipped;
+                        if (frame.skipped == 1)
+                        {
+                            Log::writeln(log, level, "\?\?\?");
+                        }
+                        else
+                        {
+                            Log::write(log, level, "[{} frames skipped]", frame.skipped);
+                        }
                     }
                     else
                     {
-                        printSkipped();
-                        Log::writeln(log, level, frame.name());
+                        Log::write(log, level, "{}!{}", Er::Format::ptr(frame.address), frame.symbol);
                     }
                 }
-            }
-
-            printSkipped();
+            );
         }
 
         Log::writeln(log, level, "-----------------------");

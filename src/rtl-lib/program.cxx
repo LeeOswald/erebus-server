@@ -14,9 +14,7 @@
 #include <erebus/rtl/logger/simple_filter.hxx>
 #include <erebus/rtl/logger/simple_formatter.hxx>
 
-#if ER_ENABLE_STACKTRACE
-    #include <boost/stacktrace.hpp>
-#endif
+#include <boost/stacktrace.hpp>
 
 #include <clocale>
 #include <csignal>
@@ -72,20 +70,11 @@ void Program::staticTerminateHandler()
 
 void Program::terminateHandler()
 {
-#if ER_ENABLE_STACKTRACE
-#if ER_DEBUG
-    static const std::size_t StackFramesToSkip = 4;
-#else
-    static const std::size_t StackFramesToSkip = 3;
-#endif
-    static const std::size_t StackFramesToCapture = 256;
     std::ostringstream ss;
-    ss << boost::stacktrace::stacktrace{ StackFramesToSkip, StackFramesToCapture };
+    ss << boost::stacktrace::stacktrace{};
 
     Log::fatal(Er::Log::get(), "std::terminate() called from\n{}", ss.str());
-#else
-    Log::fatal(Er::Log::get(), "std::terminate() called");
-#endif
+
     Er::Log::get()->flush(std::chrono::milliseconds(5000));
 
     std::abort();

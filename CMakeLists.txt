@@ -30,14 +30,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(ER_BUILD_CLIENT_LIBS_ONLY "Build client libs only" OFF)
 option(ER_ENABLE_ASSERT "Enable asserts even in release build" OFF)
-option(ER_ENABLE_STACKTRACE "Enable stack traces for exceptions & assertions" ON)
+option(ER_ENABLE_EXCEPTION_STACKTRACES "Enable stack traces for exceptions" ON)
 
 if(ER_ENABLE_ASSERT)
     add_definitions(-DER_ENABLE_ASSERT=1)
 endif()    
 
-if(ER_ENABLE_STACKTRACE)
-    add_definitions(-DER_ENABLE_STACKTRACE=1)
+if(ER_ENABLE_EXCEPTION_STACKTRACES)
+    add_definitions(-DER_ENABLE_EXCEPTION_STACKTRACES=1)
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -48,10 +48,6 @@ set(ER_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/erebus")
 set(ER_PROTO_GENERATED_DIR "${PROJECT_BINARY_DIR}/protobuf")
 file(MAKE_DIRECTORY ${ER_PROTO_GENERATED_DIR})
 set(ER_PROTO_DIR "${ER_INCLUDE_DIR}/ipc/grpc")
-
-include(debug)
-include(dependencies)
-include(protoc)
 
 # detect OS
 if(WIN32)
@@ -64,6 +60,16 @@ elseif(UNIX AND NOT APPLE)
     add_definitions(-DER_POSIX=1)
 else()
     message(FATAL_ERROR "Unsupported OS")
+endif()
+
+include(debug)
+include(dependencies)
+include(protoc)
+
+#dump_cmake_variables()
+
+if(MSVC)
+    add_compile_options("/utf-8")
 endif()
 
 # -fPIC

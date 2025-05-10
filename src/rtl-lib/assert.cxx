@@ -1,4 +1,4 @@
-#include <erebus/rtl/rtl.hxx>
+#include <erebus/rtl/stack_trace.hxx>
 
 #include <atomic>
 #include <iostream>
@@ -6,9 +6,6 @@
 #include <syncstream>
 #include <thread>
 
-#if ER_ENABLE_STACKTRACE
-    #include <boost/stacktrace.hpp>
-#endif
 
 namespace Er
 {
@@ -33,11 +30,7 @@ void doPrintFailedAssertion(std::string_view message)
         defaultPrintFailedAssertionFn(message);
 }
 
-#if ER_ENABLE_STACKTRACE
 std::string formatFailedAssertion(std::source_location location, const char* expression, boost::stacktrace::stacktrace const& stack)
-#else
-std::string formatFailedAssertion(std::source_location location, const char* expression)
-#endif
 {
     std::ostringstream ss;
     ss << "\n----------------------------------------------------------\n";
@@ -46,56 +39,39 @@ std::string formatFailedAssertion(std::source_location location, const char* exp
     ss << "File: " << location.file_name() << "\n";
     ss << "Line: " << location.line() << "\n";
     ss << "Function: " << location.function_name() << "\n";
-#if ER_ENABLE_STACKTRACE
+
     if (!stack.empty())
     {
         {
             ss << "Backtrace:\n";
 
-            std::size_t skipped = 0;
-
-            auto printSkipped = [&skipped, &ss]()
-            {
-                if (skipped > 0)
+            filterStackTrace(
+                stack,
+                [&ss](const StackFrame& frame)
                 {
-                    if (skipped == 1)
+                    if (frame.type == StackFrame::Unknown)
                     {
                         ss << "    \?\?\?\n";
                     }
-                    else
+                    else if (frame.type == StackFrame::Skipped)
                     {
-                        ss << "    [" << skipped << " frames skipped]\n";
-                    }
-
-                    skipped = 0;
-                }
-            };
-
-            for (auto& frame : stack)
-            {
-                if (frame.empty())
-                {
-                    ++skipped;
-                }
-                else
-                {
-                    auto&& name = frame.name();
-                    if (name == "boost_stacktrace_impl_return_nullptr")
-                    {
-                        ++skipped;
+                        if (frame.skipped == 1)
+                        {
+                            ss << "    \?\?\?\n";
+                        }
+                        else
+                        {
+                            ss << "    [" << frame.skipped << " frames skipped]\n";
+                        }
                     }
                     else
                     {
-                        printSkipped();
-                        ss << "    " << frame.name() << "\n";
+                        ss << "    " << frame.address << "!" << frame.symbol << "\n";
                     }
                 }
-            }
-
-            printSkipped();
+            );
         }
     }
-#endif
 
     ss << "----------------------------------------------------------\n";
     return ss.str();
@@ -116,18 +92,7 @@ ER_RTL_EXPORT void printFailedAssertion(std::source_location location, const cha
     while (!g_activeAssertions.compare_exchange_strong(expected, 1, std::memory_order_acq_rel))
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-#if ER_ENABLE_STACKTRACE
-#if ER_DEBUG
-    static const std::size_t StackFramesToSkip = 3;
-#else
-    static const std::size_t StackFramesToSkip = 2;
-#endif
-    static const std::size_t StackFramesToCapture = 256;
-
-    auto msg = formatFailedAssertion(std::move(location), expression, boost::stacktrace::stacktrace{ StackFramesToSkip, StackFramesToCapture });
-#else
-    auto msg = formatFailedAssertion(std::move(location), expression);
-#endif
+    auto msg = formatFailedAssertion(std::move(location), expression, boost::stacktrace::stacktrace{});
 
     doPrintFailedAssertion(msg);
 

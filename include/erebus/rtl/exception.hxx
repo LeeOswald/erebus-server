@@ -3,10 +3,7 @@
 #include <erebus/rtl/error.hxx>
 #include <erebus/rtl/format.hxx>
 #include <erebus/rtl/property_bag.hxx>
-
-#if ER_ENABLE_STACKTRACE
-    #include <boost/stacktrace.hpp>
-#endif
+#include <erebus/rtl/stack_trace.hxx>
 
 #include <stdexcept>
 #include <vector>
@@ -57,23 +54,14 @@ class ER_RTL_EXPORT Exception
     : public std::exception
     , public Error
 {
-#if ER_ENABLE_STACKTRACE
-#if ER_DEBUG
-    static constexpr std::size_t StackFramesToSkip = 3;
-#else
-    static constexpr std::size_t StackFramesToSkip = 2;
-#endif
-    static constexpr std::size_t StackFramesToCapture = 256;
-#endif
-
 public:
     template <typename... _Properties>
         requires (std::is_base_of_v<Property, std::remove_cvref_t<_Properties>> && ...)
     Exception(std::source_location location, const Error& e, _Properties&&... props)
         : Error(e.code(), e.category())
         , m_location(location)
-#if ER_ENABLE_STACKTRACE
-        , m_stack{ StackFramesToSkip, StackFramesToCapture }
+#if ER_ENABLE_EXCEPTION_STACKTRACES
+        , m_stack{}
 #endif
     {
         (add(std::forward<_Properties>(props)), ...);
@@ -84,8 +72,8 @@ public:
     Exception(std::source_location location, const Error& e, _Brief&& brief, _Properties&&... props)
         : Error(e.code(), e.category())
         , m_location(location)
-#if ER_ENABLE_STACKTRACE
-        , m_stack{ StackFramesToSkip, StackFramesToCapture }
+#if ER_ENABLE_EXCEPTION_STACKTRACES
+        , m_stack{}
 #endif
     {
         add(ExceptionProperties::Brief(std::forward<_Brief>(brief)));
@@ -109,8 +97,8 @@ public:
     Exception(std::source_location location, const Error& e, Message&& message, _Properties&&... props)
         : Error(e.code(), e.category())
         , m_location(location)
-#if ER_ENABLE_STACKTRACE
-        , m_stack{ StackFramesToSkip, StackFramesToCapture }
+#if ER_ENABLE_EXCEPTION_STACKTRACES
+        , m_stack{}
 #endif
     {
         add(ExceptionProperties::Message(std::move(message.message)));
@@ -138,7 +126,7 @@ public:
         return m_location;
     }
 
-#if ER_ENABLE_STACKTRACE
+#if ER_ENABLE_EXCEPTION_STACKTRACES
     auto const& stack() const noexcept
     {
         return m_stack;
@@ -167,7 +155,7 @@ public:
 
 protected:
     std::source_location m_location;
-#if ER_ENABLE_STACKTRACE
+#if ER_ENABLE_EXCEPTION_STACKTRACES
     boost::stacktrace::stacktrace m_stack;
 #endif
     mutable std::string m_message;
