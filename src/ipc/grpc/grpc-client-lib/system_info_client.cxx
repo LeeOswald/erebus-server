@@ -1,17 +1,10 @@
-#include <grpcpp/grpcpp.h>
-
 #include <protobuf/system_info.grpc.pb.h>
-#include <erebus/ipc/grpc/client/isystem_info_client.hxx>
-#include <erebus/ipc/grpc/protocol.hxx>
-#include <erebus/rtl/util/exception_util.hxx>
-#include <erebus/rtl/util/unknown_base.hxx>
 
 #include "trace.hxx"
 
-#include <condition_variable>
-#include <mutex>
+#include <erebus/ipc/grpc/client/client_base.hxx>
+#include <erebus/ipc/grpc/client/isystem_info_client.hxx>
 
-#include <boost/noncopyable.hpp> 
 
 
 namespace Er::Ipc::Grpc
@@ -21,24 +14,19 @@ namespace
 {
 
 class SystemInfoClientImpl
-    : public Util::ReferenceCountedBase<Util::ObjectBase<ISystemInfoClient>>
+    : public ClientBase<ISystemInfoClient>
 {
-    using Base = Util::ReferenceCountedBase<Util::ObjectBase<ISystemInfoClient>>;
+    using Base = ClientBase<ISystemInfoClient>;
 
 public:
     ~SystemInfoClientImpl()
     {
         ClientTrace2(m_log.get(), "{}.SystemInfoClientImpl::~SystemInfoClientImpl", Er::Format::ptr(this));
-
-        waitRunningContexts();
-
-        ::grpc_shutdown();
     }
 
     SystemInfoClientImpl(ChannelPtr channel, Log::LoggerPtr log)
-        : m_grpcReady(grpcInit())
+        : Base(channel, log)
         , m_stub(erebus::SystemInfo::NewStub(channel))
-        , m_log(log)
     {
         ClientTrace2(m_log.get(), "{}.SystemInfoClientImpl::SystemInfoClientImpl", Er::Format::ptr(this));
     }
@@ -67,30 +55,6 @@ public:
     }
 
 private:
-    struct ContextBase
-        : public boost::noncopyable
-    {
-        ~ContextBase() noexcept
-        {
-            ClientTrace2(m_log, "{}.ContextBase::~ContextBase()", Er::Format::ptr(this));
-            m_owner->removeContext();
-        }
-
-        ContextBase(SystemInfoClientImpl* owner, Er::Log::ILogger* log) noexcept
-            : m_owner(owner)
-            , m_log(log)
-        {
-            ClientTrace2(m_log, "{}.ContextBase::ContextBase()", Er::Format::ptr(this));
-            owner->addContext();
-        }
-
-        grpc::ClientContext grpcContext;
-
-    protected:
-        SystemInfoClientImpl* const m_owner;
-        Er::Log::ILogger* const m_log;
-    };
-
     struct PingContext
         : public ContextBase
     {
@@ -236,59 +200,7 @@ private:
         }
     }
 
-    static bool grpcInit() noexcept
-    {
-        ::grpc_init();
-        return true;
-    }
-
-    void addContext() noexcept
-    {
-        std::lock_guard l(m_runningContexts.lock);
-        ++m_runningContexts.count;
-    }
-
-    void removeContext() noexcept
-    {
-        bool needToNotify = false;
-
-        {
-            std::unique_lock l(m_runningContexts.lock);
-            --m_runningContexts.count;
-
-            if (m_runningContexts.count == 0)
-                needToNotify = true;
-        }
-
-        if (needToNotify)
-            m_runningContexts.cv.notify_all();
-    }
-
-    void waitRunningContexts()
-    {
-        while (m_runningContexts.count > 0)
-        {
-            ClientTrace2(m_log.get(), "{}.SystemInfoClientImpl::waitRunningContexts(): there are {} running contexts yet", Er::Format::ptr(this), m_runningContexts.count);
-
-            std::unique_lock l(m_runningContexts.lock);
-            m_runningContexts.cv.wait(l, [this]() { return (m_runningContexts.count <= 0); });
-        }
-
-        ClientTrace2(m_log.get(), "{}.SystemInfoClientImpl::waitRunningContexts(): no more running contexts", Er::Format::ptr(this));
-    }
-
-    const bool m_grpcReady;
     const std::unique_ptr<erebus::SystemInfo::Stub> m_stub;
-    Log::LoggerPtr m_log;
-    
-    struct RunningContexts
-    {
-        std::mutex lock;
-        std::condition_variable cv;
-        std::int32_t count = 0;
-    };
-
-    RunningContexts m_runningContexts;
 };
 
 } // namespace {}

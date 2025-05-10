@@ -1,4 +1,4 @@
-set(TARGET_NAME erebus-proctree)
+set(TARGET_NAME erebus-proctree-client)
 
 add_library(${TARGET_NAME} SHARED)
 
@@ -6,12 +6,7 @@ target_sources(${TARGET_NAME}
     PRIVATE
         ../protocol.cxx
         ../trace.hxx
-        linux/process_props_collector.cxx
-        linux/process_props_collector.hxx
-        linux/procfs.cxx
-        plugin.cxx
-        proctree_service.cxx
-        proctree_service.hxx
+        process_list_client.cxx
 
     PUBLIC
         FILE_SET headers TYPE HEADERS
@@ -21,7 +16,7 @@ target_sources(${TARGET_NAME}
                 ${ER_INCLUDE_DIR}/proctree/process_props.hxx
                 ${ER_INCLUDE_DIR}/proctree/proctree.hxx
                 ${ER_INCLUDE_DIR}/proctree/protocol.hxx
-                ${ER_INCLUDE_DIR}/proctree/server/linux/procfs.hxx
+                ${ER_INCLUDE_DIR}/proctree/client/iprocess_list_client.hxx
 )
 
 
@@ -29,11 +24,10 @@ target_link_libraries(
     ${TARGET_NAME}
     PUBLIC
     erebus::rtl_lib
-    erebus::grpc_server_lib
+    erebus::grpc_client_lib
 )
 
 target_compile_definitions(${TARGET_NAME} PRIVATE ER_PROCTREE_EXPORTS)
 
 set_property(TARGET ${TARGET_NAME} PROPERTY PREFIX "")
 
-add_subdirectory(tests)

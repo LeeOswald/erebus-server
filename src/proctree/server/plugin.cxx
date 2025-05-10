@@ -1,4 +1,4 @@
-#include <erebus/proctree/server/proctree.hxx>
+#include <erebus/proctree/proctree.hxx>
 #include <erebus/rtl/util/unknown_base.hxx>
 #include <erebus/server/iplugin_host.hxx>
 

@@ -6,6 +6,6 @@
 namespace Er::Ipc::Grpc
 {
     
-SystemInfoClientPtr createSystemInfoClient(ChannelPtr channel, Log::LoggerPtr log);
+[[nodiscard]] SystemInfoClientPtr createSystemInfoClient(ChannelPtr channel, Log::LoggerPtr log);
     
 } // namespace Er::Ipc::Grpc {}

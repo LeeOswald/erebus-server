@@ -7,7 +7,7 @@
 
 #include "linux/process_props_collector.hxx"
 #include "proctree_service.hxx"
-#include "trace.hxx"
+#include "../trace.hxx"
 
 namespace Er::ProcessTree::Private
 {

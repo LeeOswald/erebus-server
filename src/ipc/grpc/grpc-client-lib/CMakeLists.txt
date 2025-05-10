@@ -4,6 +4,7 @@ add_library(${TARGET_NAME} SHARED
     channel.cxx
     system_info_client.cxx
     trace.hxx
+    ${ER_INCLUDE_DIR}/ipc/grpc/client/client_base.hxx
     ${ER_INCLUDE_DIR}/ipc/grpc/client/grpc_client.hxx 
     ${ER_INCLUDE_DIR}/ipc/grpc/client/iclient.hxx 
     ${ER_INCLUDE_DIR}/ipc/grpc/client/isystem_info_client.hxx 
