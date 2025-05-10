@@ -1,6 +1,6 @@
 set(TARGET_NAME erebus-grpc-client-lib)
 
-add_library(${TARGET_NAME} STATIC
+add_library(${TARGET_NAME} SHARED
     channel.cxx
     system_info_client.cxx
     trace.hxx

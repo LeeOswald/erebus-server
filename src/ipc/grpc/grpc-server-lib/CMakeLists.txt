@@ -1,6 +1,6 @@
 set(TARGET_NAME erebus-grpc-server-lib)
 
-add_library(${TARGET_NAME} STATIC
+add_library(${TARGET_NAME} SHARED
     grpc_server.cxx
     system_info_service.cxx
     trace.hxx
