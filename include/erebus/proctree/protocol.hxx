@@ -10,7 +10,9 @@ namespace Er::ProcessTree
 {
 
 void marshalProcessProperties(const ProcessProperties& source, erebus::ProcessProps& dest);
+ProcessProperties unmarshalProcessProperties(const erebus::ProcessProps& src);
 
+void marshalProcessPropertyMsk(erebus::ProcessPropsRequest& dest, const ProcessProperties::Mask& required);
 ProcessProperties::Mask unmarshalProcessPropertyMask(const erebus::ProcessPropsRequest& req);
 
 } // namespace Er::ProcessTree {}

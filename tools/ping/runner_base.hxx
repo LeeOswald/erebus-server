@@ -61,6 +61,13 @@ protected:
             done();
         }
 
+        void onException(Er::Exception&& e) noexcept override
+        {
+            ErLogError("Request completed with an exception: {}", e.message());
+
+            done();
+        }
+
         bool wait(std::uint32_t milliseconds) noexcept override
         {
             std::unique_lock l(m_mutex);

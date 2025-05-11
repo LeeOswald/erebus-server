@@ -32,7 +32,7 @@ struct IProcessListClient
 
     using GetProcessPropsCompletionPtr = ReferenceCountedPtr<IGetProcessPropsCompletion>;
 
-    virtual void getProcessProperties(Pid pid, ProcessProperties::Mask required, GetProcessPropsCompletionPtr completion) = 0;
+    virtual void getProcessProperties(Pid pid, const ProcessProperties::Mask& required, GetProcessPropsCompletionPtr completion) = 0;
 };
 
 using ProcessListClientPtr = ReferenceCountedPtr<IProcessListClient>;

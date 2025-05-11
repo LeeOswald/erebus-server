@@ -4,7 +4,7 @@
 
 #include <erebus/ipc/grpc/client/client_base.hxx>
 #include <erebus/proctree/client/iprocess_list_client.hxx>
-
+#include <erebus/proctree/protocol.hxx>
 
 namespace Er::ProcessTree
 {
@@ -30,7 +30,7 @@ public:
         ProctreeTrace2(m_log.get(), "{}.ProcessListClientImpl::ProcessListClientImpl", Er::Format::ptr(this));
     }
 
-    void getProcessProperties(Pid pid, ProcessProperties::Mask required, GetProcessPropsCompletionPtr completion) override
+    void getProcessProperties(Pid pid, const ProcessProperties::Mask& required, GetProcessPropsCompletionPtr completion) override
     {
         ProctreeTrace2(m_log.get(), "{}.ProcessListClientImpl::getProcessProperties(pid={})", Er::Format::ptr(this), pid);
 
@@ -59,7 +59,7 @@ private:
             ProcessListClientImpl* owner, 
             Er::Log::ILogger* log, 
             Pid pid, 
-            ProcessProperties::Mask required, 
+            const ProcessProperties::Mask& required, 
             Er::ReferenceCountedPtr<IGetProcessPropsCompletion> handler
         )
             : ContextBase(owner, log)
@@ -68,9 +68,7 @@ private:
             ProctreeTrace2(m_log, "{}.GetProcessPropertiesContext::GetProcessPropertiesContext()", Er::Format::ptr(this));
 
             request.set_pid(pid);
-            
-            for (std::uint32_t i = 0; i < required.Size; ++i)
-                request.add_fields(i);
+            marshalProcessPropertyMsk(request, required);
         }
 
         Er::ReferenceCountedPtr<IGetProcessPropsCompletion> handler;
@@ -91,7 +89,7 @@ private:
                 // transport failure or something
                 ErLogError2(m_log.get(), "GetProcessProperties() failed for {}: {} ({})", ctx->grpcContext.peer(), int(status.error_code()), status.error_message());
 
-                ctx->handler->onError(status);
+                return ctx->handler->onError(status);
             }
             else
             {
@@ -99,10 +97,34 @@ private:
 
                 if (ctx->reply.has_header())
                 {
-                    
+                    auto& hdr = ctx->reply.header();
+                    if (hdr.has_exception())
+                    {
+                        auto e = Ipc::Grpc::unmarshalException(hdr.exception());
+                        ProctreeTrace2(m_log.get(), "GetProcessProperties() returned an error: {}", e.message());
+                        return ctx->handler->onException(std::move(e));
+                    }
+
+                    if (hdr.has_timestamp())
+                    {
+                        auto now = Time::now();
+                        timings.rtt = now - hdr.timestamp();
+                    }
+
+                    if (hdr.has_duration())
+                    {
+                        timings.processing = hdr.duration();
+                    }
                 }
 
-                ctx->handler->onReply(std::move(ctx->ping), std::move(reply));
+                if (ctx->reply.has_props())
+                {
+                    auto props = unmarshalProcessProperties(ctx->reply.props());
+                    return ctx->handler->onReply(std::move(props), timings);
+                }
+                
+                // looks like an empty reply
+                ctx->handler->onReply(ProcessProperties{}, timings);
             }
         }
         catch (...)

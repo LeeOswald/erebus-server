@@ -62,6 +62,72 @@ void marshalProcessProperties(const ProcessProperties& source, erebus::ProcessPr
         dest.set_env(source.env.raw);
 }
 
+ProcessProperties unmarshalProcessProperties(const erebus::ProcessProps& src)
+{
+    ProcessProperties dest;
+    
+    ErSet(ProcessProperties, Pid, dest, pid, src.pid());
+
+    if (src.has_ppid())
+        ErSet(ProcessProperties, PPid, dest, ppid, src.ppid());
+
+    if (src.has_pgrp())
+        ErSet(ProcessProperties, PGrp, dest, pgrp, src.pgrp());
+
+    if (src.has_tpgid())
+        ErSet(ProcessProperties, Tpgid, dest, tpgid, src.tpgid());
+
+    if (src.has_session())
+        ErSet(ProcessProperties, Session, dest, session, src.session());
+
+    if (src.has_ruid())
+        ErSet(ProcessProperties, Ruid, dest, ruid, src.ruid());
+
+    if (src.has_comm())
+        ErSet(ProcessProperties, Comm, dest, comm, src.comm());
+
+    if (src.has_cmdline())
+        ErSet(ProcessProperties, CmdLine, dest, cmdLine, src.cmdline());
+
+    if (src.has_exe())
+        ErSet(ProcessProperties, Exe, dest, exe, src.exe());
+
+    if (src.has_starttime())
+        ErSet(ProcessProperties, StartTime, dest, startTime, src.starttime());
+
+    if (src.has_state())
+        ErSet(ProcessProperties, State, dest, state, src.state());
+
+    if (src.has_username())
+        ErSet(ProcessProperties, UserName, dest, userName, src.username());
+
+    if (src.has_threadcount())
+        ErSet(ProcessProperties, ThreadCount, dest, threadCount, src.threadcount());
+
+    if (src.has_stime())
+        ErSet(ProcessProperties, STime, dest, sTime, src.stime());
+
+    if (src.has_utime())
+        ErSet(ProcessProperties, UTime, dest, uTime, src.utime());
+
+    if (src.has_cpuusage())
+        ErSet(ProcessProperties, CpuUsage, dest, cpuUsage, src.cpuusage());
+
+    if (src.has_tty())
+        ErSet(ProcessProperties, Tty, dest, tty, src.tty());
+
+    if (src.has_env())
+        ErSet(ProcessProperties, Env, dest, env, src.env());
+
+    return dest;
+}
+
+void marshalProcessPropertyMsk(erebus::ProcessPropsRequest& dest, const ProcessProperties::Mask& required)
+{
+    for (std::uint32_t i = 0; i < required.Size; ++i)
+        dest.add_fields(i);
+}
+
 ProcessProperties::Mask unmarshalProcessPropertyMask(const erebus::ProcessPropsRequest& req)
 {
     ProcessProperties::Mask mask;

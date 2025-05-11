@@ -32,6 +32,7 @@ struct IClient
         : public IReferenceCounted
     {
         virtual void onError(grpc::Status const& status) noexcept = 0;
+        virtual void onException(Exception&& e) noexcept = 0;
 
     protected:
         virtual ~ICompletion() = default;
