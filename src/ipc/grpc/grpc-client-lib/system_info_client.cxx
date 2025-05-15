@@ -2,6 +2,7 @@
 
 #include "trace.hxx"
 
+#include <erebus/ipc/grpc/client/grpc_client.hxx>
 #include <erebus/ipc/grpc/client/client_base.hxx>
 #include <erebus/ipc/grpc/client/isystem_info_client.hxx>
 
@@ -206,7 +207,7 @@ private:
 } // namespace {}
 
 
-SystemInfoClientPtr createSystemInfoClient(ChannelPtr channel, Log::LoggerPtr log)
+ER_GRPC_CLIENT_EXPORT SystemInfoClientPtr createSystemInfoClient(ChannelPtr channel, Log::LoggerPtr log)
 {
     return SystemInfoClientPtr{ new SystemInfoClientImpl(channel, log) };
 }

@@ -18,9 +18,6 @@ class Status;
 namespace Er::Ipc::Grpc
 {
 
-using ChannelPtr = std::shared_ptr<grpc::Channel>;
-
-[[nodiscard]] ChannelPtr createChannel(const PropertyMap& parameters);
 
 
 struct IClient

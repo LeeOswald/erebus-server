@@ -1,6 +1,7 @@
 #include <protobuf/system_info.grpc.pb.h>
 
 #include <erebus/ipc/grpc/protocol.hxx>
+#include <erebus/ipc/grpc/server/grpc_server.hxx>
 #include <erebus/ipc/grpc/server/iservice.hxx>
 #include <erebus/rtl/util/exception_util.hxx>
 #include <erebus/rtl/util/unknown_base.hxx>
@@ -213,7 +214,7 @@ private:
 } // namespace {}
 
 
-ServicePtr createSystemInfoService(Log::LoggerPtr log)
+ER_GRPC_SERVER_EXPORT ServicePtr createSystemInfoService(Log::LoggerPtr log)
 {
     return ServicePtr{ new SystemInfoImpl(log) };
 }

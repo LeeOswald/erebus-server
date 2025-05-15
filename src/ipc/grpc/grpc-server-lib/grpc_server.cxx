@@ -202,7 +202,7 @@ private:
 } // namespace {}
 
 
-ServerPtr createServer(const PropertyMap& parameters, Log::LoggerPtr log)
+ER_GRPC_SERVER_EXPORT ServerPtr createServer(const PropertyMap& parameters, Log::LoggerPtr log)
 {
     return ServerPtr{ new ServerImpl(parameters, log) };
 }

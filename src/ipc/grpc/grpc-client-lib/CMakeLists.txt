@@ -13,3 +13,5 @@ add_library(${TARGET_NAME} SHARED
 set_property(TARGET ${TARGET_NAME} PROPERTY PREFIX "")
 
 target_link_libraries(${TARGET_NAME} PUBLIC erebus::grpc_common_lib fmt::fmt erebus::rtl_lib)
+
+target_compile_definitions(${TARGET_NAME} PRIVATE ER_GRPC_CLIENT_EXPORTS=1)
